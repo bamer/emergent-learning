@@ -30,3 +30,46 @@ Warning: Pass 3 exited with code 2
 
 [2026-01-28T03:41:27.306967] === Pass #4 ===
 [2026-01-28T03:41:27.307048] === Starting big-pickle watcher (Tier 1) ===
+Error from big-pickle: Error calling big-pickle: Command '['opencode', 'run', '-m', 'opencode/big-pickle']' timed out after 30 seconds
+Warning: Failed to record to chronicle: no such table: event_chronicle
+Warning: Pass 4 exited with code 2
+[2026-01-28T03:41:57.346523] Sleeping 30s...
+
+[2026-01-28T03:42:27.346713] === Pass #5 ===
+[2026-01-28T03:42:27.346813] === Starting big-pickle watcher (Tier 1) ===
+Error from big-pickle: Error calling big-pickle: Command '['opencode', 'run', '-m', 'opencode/big-pickle']' timed out after 30 seconds
+Warning: Failed to record to chronicle: no such table: event_chronicle
+Warning: Pass 5 exited with code 2
+[2026-01-28T03:42:57.416738] Sleeping 30s...
+
+[2026-01-28T03:43:27.416942] === Pass #6 ===
+[2026-01-28T03:43:27.417046] === Starting big-pickle watcher (Tier 1) ===
+Error from big-pickle: Error calling big-pickle: Command '['opencode', 'run', '-m', 'opencode/big-pickle']' timed out after 30 seconds
+Warning: Failed to record to chronicle: no such table: event_chronicle
+Warning: Pass 6 exited with code 2
+[2026-01-28T03:43:57.457189] Sleeping 30s...
+
+[2026-01-28T03:44:27.457411] === Pass #7 ===
+[2026-01-28T03:44:27.457530] === Starting big-pickle watcher (Tier 1) ===
+Warning: Failed to record to chronicle: no such table: event_chronicle
+
+[2026-01-28T03:44:51.446034] === Escalating to big-pickle Handler (Tier 2 - CEO) ===
+[2026-01-28T03:44:51.446057] Escalating to handler (big-pickle CEO)...
+Error from handler: Error calling big-pickle: Command '['opencode', 'run', '-m', 'opencode/big-pickle']' timed out after 30 seconds
+Warning: Failed to record to chronicle: no such table: event_chronicle
+Warning: Pass 7 exited with code 2
+[2026-01-28T03:45:21.519415] Sleeping 30s...
+
+[2026-01-28T03:45:51.519573] === Pass #8 ===
+[2026-01-28T03:45:51.519652] === Starting big-pickle watcher (Tier 1) ===
+Error from big-pickle: Error calling big-pickle: Command '['opencode', 'run', '-m', 'opencode/big-pickle']' timed out after 30 seconds
+Warning: Failed to record to chronicle: no such table: event_chronicle
+Warning: Pass 8 exited with code 2
+[2026-01-28T03:46:21.613266] Sleeping 30s...
+
+[2026-01-28T03:46:51.613393] === Pass #9 ===
+[2026-01-28T03:46:51.613455] === Starting big-pickle watcher (Tier 1) ===
+Error from big-pickle: Error calling big-pickle: Command '['opencode', 'run', '-m', 'opencode/big-pickle']' timed out after 30 seconds
+Warning: Failed to record to chronicle: no such table: event_chronicle
+Warning: Pass 9 exited with code 2
+[2026-01-28T03:47:21.681080] Sleeping 30s...

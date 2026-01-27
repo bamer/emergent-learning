@@ -42,21 +42,19 @@ STOP_FILE = COORD_DIR / "watcher-stop"
 def call_bigpickle(prompt: str) -> Tuple[str, bool]:
     """Send prompt to big-pickle and get response via opencode CLI."""
     try:
-        # Use opencode run with big-pickle model
-        # Increased timeout from 30s to 120s for big-pickle processing
+        # Use correct opencode syntax: opencode --model opencode/big-pickle --prompt "..."
         result = subprocess.run(
-            ["opencode", "run", "-m", "opencode/big-pickle"],
-            input=prompt.encode(),
+            ["opencode", "--model", "opencode/big-pickle", "--prompt", prompt],
             capture_output=True,
             timeout=120,
-            text=False,
+            text=True,
         )
-        # Decode output and filter out logs (INFO lines)
-        output = result.stdout.decode()
-        # Filter out INFO log lines
-        lines = output.split('\n')
-        filtered_lines = [line for line in lines if not line.startswith('INFO ')]
-        return '\n'.join(filtered_lines), result.returncode == 0
+        
+        if result.returncode == 0:
+            return result.stdout, True
+        else:
+            return f"Error: big-pickle returned error code {result.returncode}\n{result.stderr}", False
+            
     except subprocess.TimeoutExpired:
         return "Error: big-pickle timed out (>120s). System busy or model response too slow.", False
     except Exception as e:
