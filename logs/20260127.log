@@ -1,0 +1,9 @@
+[2026-01-27 22:47:03,729] [INFO] [record-heuristic] Pre-flight checks passed
+[2026-01-27 22:47:25,816] [INFO] [record-heuristic] Pre-flight checks passed
+[2026-01-27 22:47:25,819] [INFO] [record-heuristic] Script started
+[2026-01-27 22:47:25,819] [INFO] [record-heuristic] Running in non-interactive mode
+[2026-01-27 22:47:25,820] [INFO] [record-heuristic] Recording heuristic: Schema migration failures need auto-repair protocol (domain: general, confidence: 0.7)
+[2026-01-27 22:47:25,824] [INFO] [record-heuristic] Database record created (ID: 1)
+[2026-01-27 22:47:25,825] [INFO] [record-heuristic] Created new domain file: /home/bamer/.opencode/emergent-learning/memory/heuristics/general.md
+[2026-01-27 22:47:25,825] [INFO] [record-heuristic] Appended heuristic to: /home/bamer/.opencode/emergent-learning/memory/heuristics/general.md
+[2026-01-27 22:47:25,825] [INFO] [record-heuristic] Heuristic recorded successfully: Schema migration failures need auto-repair protocol

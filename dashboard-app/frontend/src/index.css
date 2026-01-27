@@ -1,0 +1,458 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   THEME COLOR PALETTES
+   Space-themed color systems
+   ============================================ */
+
+/* Default theme (Black Hole) */
+:root {
+  --theme-bg-primary: #000000;
+  --theme-bg-secondary: #0a0a0a;
+  --theme-bg-card: rgba(0, 0, 0, 0.7);
+  --neon-cyan: #00f3ff;
+  --neon-magenta: #bc13fe;
+  --neon-amber: #ffaa00;
+  --theme-accent: var(--neon-cyan);
+  --theme-accent-glow: rgba(0, 243, 255, 0.5);
+  --theme-accent-rgb: 0, 243, 255;
+  --theme-panel-rgb: 0, 0, 0;
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.03);
+  --theme-text-primary: #ffffff;
+  --theme-text-secondary: #a0a0a0;
+  --theme-text-muted: #606060;
+  --theme-particle-color: 0, 243, 255;
+  --glass-opacity: 0.15;
+
+  color: var(--theme-text-primary);
+  background-color: var(--theme-bg-primary);
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0px) scale(0.8);
+    opacity: 0;
+  }
+
+  20% {
+    transform: translateY(-10px) scale(1.2);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(-50px) scale(1);
+    opacity: 0;
+  }
+}
+
+.animate-float-up {
+  animation: floatUp 1s ease-out forwards;
+}
+
+/* Black Hole (Default) - Inherits :root values */
+
+/* White Dwarf (Light) */
+:root[data-theme='white-dwarf'] {
+  --theme-bg-primary: #f8fafc;
+  --theme-bg-secondary: #e2e8f0;
+  --theme-bg-card: rgba(255, 255, 255, 0.6);
+  --theme-accent: #0ea5e9;
+  --theme-accent-glow: rgba(14, 165, 233, 0.4);
+  --theme-accent-rgb: 14, 165, 233;
+  --theme-panel-rgb: 255, 255, 255;
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-highlight: rgba(255, 255, 255, 0.8);
+  --theme-text-primary: #0f172a;
+  --theme-text-secondary: #475569;
+  --theme-text-muted: #94a3b8;
+  --theme-particle-color: 14, 165, 233;
+}
+
+/* Deep Space (Blue) */
+:root[data-theme='deep-space'] {
+  --theme-bg-primary: #020617;
+  --theme-bg-secondary: #0f172a;
+  --theme-bg-card: rgba(30, 41, 59, 0.6);
+  --theme-accent: #3b82f6;
+  --theme-accent-glow: rgba(59, 130, 246, 0.5);
+  --theme-accent-rgb: 59, 130, 246;
+  --theme-panel-rgb: 15, 23, 42;
+  --theme-text-secondary: #94a3b8;
+  --theme-particle-color: 59, 130, 246;
+}
+
+/* Nebula (Purple) */
+:root[data-theme='nebula'] {
+  --theme-bg-primary: #1e1b4b;
+  /* Indigo 950 */
+  --theme-bg-secondary: #312e81;
+  --theme-bg-card: rgba(49, 46, 129, 0.6);
+  --theme-accent: #a855f7;
+  --theme-accent-glow: rgba(168, 85, 247, 0.5);
+  --theme-accent-rgb: 168, 85, 247;
+  --theme-panel-rgb: 30, 27, 75;
+  --theme-text-secondary: #c7d2fe;
+  --theme-particle-color: 168, 85, 247;
+}
+
+/* Supernova (Orange) */
+:root[data-theme='supernova'] {
+  --theme-bg-primary: #270606;
+  /* Dark Red/Orange */
+  --theme-bg-secondary: #450a0a;
+  --theme-bg-card: rgba(69, 10, 10, 0.6);
+  --theme-accent: #f97316;
+  --theme-accent-glow: rgba(249, 115, 22, 0.5);
+  --theme-accent-rgb: 249, 115, 22;
+  --theme-panel-rgb: 40, 5, 5;
+  --theme-text-secondary: #fdba74;
+  --theme-particle-color: 249, 115, 22;
+}
+
+/* Aurora (Green) */
+:root[data-theme='aurora'] {
+  --theme-bg-primary: #022c22;
+  /* Emerald 950 */
+  --theme-bg-secondary: #064e3b;
+  --theme-bg-card: rgba(6, 78, 59, 0.6);
+  --theme-accent: #34d399;
+  --theme-accent-glow: rgba(52, 211, 153, 0.5);
+  --theme-accent-rgb: 52, 211, 153;
+  --theme-panel-rgb: 2, 44, 34;
+  --theme-text-secondary: #a7f3d0;
+  --theme-particle-color: 52, 211, 153;
+}
+
+/* Solar (Yellow) */
+:root[data-theme='solar'] {
+  --theme-bg-primary: #282003;
+  /* Yellow 950-ish */
+  --theme-bg-secondary: #422006;
+  --theme-bg-card: rgba(66, 32, 6, 0.6);
+  --theme-accent: #fbbf24;
+  --theme-accent-glow: rgba(251, 191, 36, 0.5);
+  --theme-accent-rgb: 251, 191, 36;
+  --theme-panel-rgb: 35, 25, 5;
+  --theme-text-secondary: #fde68a;
+  --theme-particle-color: 251, 191, 36;
+}
+
+/* Crimson (Red) */
+:root[data-theme='crimson'] {
+  --theme-bg-primary: #250303;
+  --theme-bg-secondary: #450a0a;
+  --theme-bg-card: rgba(69, 10, 10, 0.6);
+  --theme-accent: #f87171;
+  --theme-accent-glow: rgba(248, 113, 113, 0.5);
+  --theme-accent-rgb: 248, 113, 113;
+  --theme-panel-rgb: 40, 5, 5;
+  --theme-text-secondary: #fecaca;
+  --theme-particle-color: 248, 113, 113;
+}
+
+/* Cyan (Teal) */
+:root[data-theme='cyan'] {
+  --theme-bg-primary: #042f2e;
+  --theme-bg-secondary: #115e59;
+  --theme-bg-card: rgba(17, 94, 89, 0.6);
+  --theme-accent: #22d3ee;
+  --theme-accent-glow: rgba(34, 211, 238, 0.5);
+  --theme-accent-rgb: 34, 211, 238;
+  --theme-panel-rgb: 4, 47, 46;
+  --theme-text-secondary: #a5f3fc;
+  --theme-particle-color: 34, 211, 238;
+}
+
+/* Rose (Pink) */
+:root[data-theme='rose'] {
+  --theme-bg-primary: #2d0416;
+  /* Rose 950 */
+  --theme-bg-secondary: #4c0519;
+  --theme-bg-card: rgba(76, 5, 25, 0.6);
+  --theme-accent: #fb7185;
+  --theme-accent-glow: rgba(251, 113, 133, 0.5);
+  --theme-accent-rgb: 251, 113, 133;
+  --theme-panel-rgb: 45, 4, 22;
+  --theme-text-secondary: #fecdd3;
+  --theme-particle-color: 251, 113, 133;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  /* cursor: none;  <-- RESTORED DEFAULT CURSOR per user request */
+  /* Hide default cursor, we use UfoCursor */
+  background-color: var(--theme-bg-primary);
+  background-image:
+    radial-gradient(circle at 50% 50%, var(--theme-bg-secondary) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, var(--theme-bg-secondary) 0%, transparent 30%);
+  color: var(--theme-text-primary);
+  min-width: 320px;
+  min-height: 100vh;
+  overflow: hidden;
+  /* Prevent scroll on body for full-screen apps */
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Prevent text selection on header and footer */
+header,
+footer,
+nav,
+header *,
+footer *,
+nav * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ============================================
+   SCROLLBAR STYLES
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(var(--theme-panel-rgb), 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--theme-panel-rgb), 0.8);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-accent);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes live-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.live-indicator {
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-spin-slow {
+  animation: spin 8s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Force hide cursor when UFO is active */
+.cosmic-cursor-hidden,
+.cosmic-cursor-hidden * {
+  cursor: none !important;
+}
+
+@keyframes lightChase {
+  0% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+}
+
+/* Cursor Hiding Utility */
+.cursor-hidden-important {
+  cursor: none !important;
+}
+
+
+/* ============================================
+   TREEMAP STYLES
+   ============================================ */
+
+.treemap-cell {
+  transition: all 0.2s ease;
+}
+
+.treemap-cell:hover {
+  filter: brightness(1.2);
+}
+
+/* ============================================
+   TIMELINE STYLES
+   ============================================ */
+
+
+/* ============================================
+   GLASSMORPHISM AND PANEL STYLES
+   ============================================ */
+
+/* Glass Panel Effect */
+/* Glass Panel Effect - Enhanced */
+.glass-panel {
+  background: rgba(var(--theme-panel-rgb), var(--glass-opacity)) !important;
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
+  opacity: 0.5;
+}
+
+.glass-panel:hover {
+  background: rgba(var(--theme-panel-rgb), 0.5) !important;
+  border-color: var(--theme-accent-glow);
+  box-shadow: 0 0 20px var(--theme-accent-glow);
+}
+
+
+/* Override Tailwind slate backgrounds */
+.bg-slate-700 {
+  background-color: rgba(var(--theme-panel-rgb), 0.8) !important;
+}
+
+.bg-slate-800 {
+  background-color: rgba(var(--theme-panel-rgb), 0.6) !important;
+}
+
+.bg-slate-900 {
+  background-color: rgba(var(--theme-panel-rgb), 0.4) !important;
+}
+
+/* Override slate background variants with opacity */
+.bg-slate-700\/50 {
+  background-color: rgba(var(--theme-panel-rgb), 0.5) !important;
+}
+
+.bg-slate-800\/50 {
+  background-color: rgba(var(--theme-panel-rgb), 0.3) !important;
+}
+
+.bg-slate-800\/80 {
+  background-color: rgba(var(--theme-panel-rgb), 0.48) !important;
+}
+
+/* Text color overrides */
+.text-white {
+  color: var(--theme-text-primary) !important;
+}
+
+.text-slate-300 {
+  color: var(--theme-text-primary) !important;
+}
+
+.text-slate-400 {
+  color: var(--theme-text-secondary) !important;
+}
+
+.text-slate-500 {
+  color: var(--theme-text-muted) !important;
+}
+
+/* ============================================
+   CARD GLOW EFFECTS
+   ============================================ */
+
+.card-glow {
+  box-shadow: 0 0 20px rgba(var(--theme-accent-rgb), 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.card-glow:hover {
+  box-shadow: 0 0 30px var(--theme-accent-glow), 0 0 60px rgba(var(--theme-accent-rgb), 0.15);
+}
+
+/* ============================================
+   THEME UTILITY CLASSES
+   ============================================ */
+
+.theme-bg-primary {
+  background-color: var(--theme-bg-primary) !important;
+  transition: background-color 0.3s ease;
+}
+
+
+.theme-bg-card {
+  background-color: rgba(var(--theme-panel-rgb), var(--glass-opacity)) !important;
+  backdrop-filter: blur(calc(var(--glass-opacity) * 20px));
+  -webkit-backdrop-filter: blur(calc(var(--glass-opacity) * 20px));
+  transition: all 0.3s ease;
+}
+
+.theme-accent {
+  color: var(--theme-accent) !important;
+  transition: color 0.3s ease;
+}
+
+
+/* ============================================
+   MISC STYLES
+   ============================================ */
+
+/* Modal backdrop */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+}
+
+/* UFO Cursor is handled by React UfoCursor component */
+

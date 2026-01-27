@@ -1,0 +1,1457 @@
+.gitignore
+.hooks-installed
+.plan.md
+.shellcheckrc
+CHANGELOG.md
+CLAUDE.md
+CONTRIBUTING.md
+GOLDEN_RULES_QUICKSTART.md
+Makefile
+README.md
+VERSION
+dev.py
+install.ps1
+install.sh
+mypy.ini
+prd.json
+progress.txt
+prompt.md
+pylsp_config.py
+pyproject.toml
+pyrightconfig.json
+requirements.txt
+.agent/rules/workspacerules.md
+.agent/workflows/checkin.md
+.agent/workflows/checkin/step-01-banner.md
+.agent/workflows/checkin/workflow.md
+.agent/workflows/checkout/workflow.md
+.agent/workflows/ralph-loop/workflow.md
+.elf/config.yaml
+.github/FUNDING.yml
+.github/DISCUSSION_TEMPLATE/bug_report.yml
+.github/DISCUSSION_TEMPLATE/ideas.yml
+.github/workflows/claude.yml
+.github/workflows/security-tests.yml
+.github/workflows/tests.yml
+.hooks-templates/README.md
+.hooks-templates/PostToolUse/sync-golden-rules.py
+.vscode/BASH-LSP-SETUP.md
+.vscode/LSP-SETUP.md
+.vscode/extensions.json
+.vscode/pylance-lsp.sh
+.vscode/settings.json
+.vscode/start-bash-lsp-server.sh
+.vscode/start-lsp-server.py
+.vscode/tasks.json
+alerts/.active_alerts
+alerts/alert_1764635353_103099.alert
+alerts/alert_1764635354_103099.alert
+apps/dashboard/.gitignore
+apps/dashboard/README.md
+apps/dashboard/run-dashboard.bat
+apps/dashboard/run-dashboard.ps1
+apps/dashboard/run-dashboard.sh
+apps/dashboard/start.ps1
+apps/dashboard/TalkinHead/apply_mask.py
+apps/dashboard/TalkinHead/config.json
+apps/dashboard/TalkinHead/event_watcher.py
+apps/dashboard/TalkinHead/frame_000000fixedmask.png
+apps/dashboard/TalkinHead/ivy_overlay.py
+apps/dashboard/TalkinHead/main.py
+apps/dashboard/TalkinHead/process-new-phrase.bat
+apps/dashboard/TalkinHead/process_phrases.py
+apps/dashboard/TalkinHead/process_video_alpha.py
+apps/dashboard/TalkinHead/process_video_bg.py
+apps/dashboard/TalkinHead/process_video_png.py
+apps/dashboard/TalkinHead/requirements.txt
+apps/dashboard/TalkinHead/run-talkinhead.bat
+apps/dashboard/TalkinHead/run-talkinhead.sh
+apps/dashboard/TalkinHead/Phrases/phrase-ideas.md
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task.mp3
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task.mp4
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished.mp3
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished.mp4
+apps/dashboard/TalkinHead/Phrases/completed/complete.mp3
+apps/dashboard/TalkinHead/Phrases/completed/complete.mp4
+apps/dashboard/TalkinHead/Phrases/completed/task completed.mp3
+apps/dashboard/TalkinHead/Phrases/completed/task completed.mp4
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000000.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000001.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000002.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000003.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000004.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000005.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000006.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000007.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000008.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000009.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000010.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000011.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000012.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000013.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000014.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000015.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000016.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000017.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000018.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000019.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000020.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000021.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000022.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000023.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000024.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000025.png
+apps/dashboard/TalkinHead/Phrases/completed/Complete_frames/frame_000026.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000000.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000001.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000002.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000003.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000004.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000005.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000006.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000007.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000008.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000009.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000010.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000011.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000012.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000013.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000014.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000015.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000016.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000017.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000018.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000019.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000020.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000021.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000022.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000023.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000024.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000025.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000026.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000027.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000028.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000029.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000030.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000031.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000032.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000033.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000034.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000035.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000036.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000037.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000038.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000039.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000040.png
+apps/dashboard/TalkinHead/Phrases/completed/Done with the task_frames/frame_000041.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000000.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000001.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000002.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000003.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000004.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000005.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000006.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000007.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000008.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000009.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000010.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000011.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000012.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000013.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000014.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000015.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000016.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000017.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000018.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000019.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000020.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000021.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000022.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000023.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000024.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000025.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000026.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000027.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000028.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000029.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000030.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000031.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000032.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000033.png
+apps/dashboard/TalkinHead/Phrases/completed/The task is finished_frames/frame_000034.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000000.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000001.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000002.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000003.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000004.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000005.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000006.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000007.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000008.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000009.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000010.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000011.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000012.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000013.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000014.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000015.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000016.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000017.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000018.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000019.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000020.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000021.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000022.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000023.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000024.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000025.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000026.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000027.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000028.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000029.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000030.png
+apps/dashboard/TalkinHead/Phrases/completed/task completed_frames/frame_000031.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later.mp3
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later.mp4
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000000.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000001.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000002.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000003.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000004.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000005.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000006.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000007.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000008.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000009.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000010.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000011.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000012.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000013.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000014.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000015.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000016.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000017.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000018.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000019.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000020.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000021.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000022.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000023.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000024.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000025.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000026.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000027.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000028.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000029.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000030.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000031.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000032.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000033.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000034.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000035.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000036.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000037.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000038.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000039.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000040.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000041.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000042.png
+apps/dashboard/TalkinHead/Phrases/goodbye/see you later_frames/frame_000043.png
+apps/dashboard/TalkinHead/idle_frames/frame_000000.png
+apps/dashboard/TalkinHead/idle_frames/frame_000001.png
+apps/dashboard/TalkinHead/idle_frames/frame_000002.png
+apps/dashboard/TalkinHead/idle_frames/frame_000003.png
+apps/dashboard/TalkinHead/idle_frames/frame_000004.png
+apps/dashboard/TalkinHead/idle_frames/frame_000005.png
+apps/dashboard/TalkinHead/idle_frames/frame_000006.png
+apps/dashboard/TalkinHead/idle_frames/frame_000007.png
+apps/dashboard/TalkinHead/idle_frames/frame_000008.png
+apps/dashboard/TalkinHead/idle_frames/frame_000009.png
+apps/dashboard/TalkinHead/idle_frames/frame_000010.png
+apps/dashboard/TalkinHead/idle_frames/frame_000011.png
+apps/dashboard/TalkinHead/idle_frames/frame_000012.png
+apps/dashboard/TalkinHead/idle_frames/frame_000013.png
+apps/dashboard/TalkinHead/idle_frames/frame_000014.png
+apps/dashboard/TalkinHead/idle_frames/frame_000015.png
+apps/dashboard/TalkinHead/idle_frames/frame_000016.png
+apps/dashboard/TalkinHead/idle_frames/frame_000017.png
+apps/dashboard/TalkinHead/idle_frames/frame_000018.png
+apps/dashboard/TalkinHead/idle_frames/frame_000019.png
+apps/dashboard/TalkinHead/idle_frames/frame_000020.png
+apps/dashboard/TalkinHead/idle_frames/frame_000021.png
+apps/dashboard/TalkinHead/idle_frames/frame_000022.png
+apps/dashboard/TalkinHead/idle_frames/frame_000023.png
+apps/dashboard/TalkinHead/idle_frames/frame_000024.png
+apps/dashboard/TalkinHead/idle_frames/frame_000025.png
+apps/dashboard/TalkinHead/idle_frames/frame_000026.png
+apps/dashboard/TalkinHead/idle_frames/frame_000027.png
+apps/dashboard/TalkinHead/idle_frames/frame_000028.png
+apps/dashboard/TalkinHead/idle_frames/frame_000029.png
+apps/dashboard/TalkinHead/idle_frames/frame_000030.png
+apps/dashboard/TalkinHead/idle_frames/frame_000031.png
+apps/dashboard/TalkinHead/idle_frames/frame_000032.png
+apps/dashboard/TalkinHead/idle_frames/frame_000033.png
+apps/dashboard/TalkinHead/idle_frames/frame_000034.png
+apps/dashboard/TalkinHead/idle_frames/frame_000035.png
+apps/dashboard/TalkinHead/idle_frames/frame_000036.png
+apps/dashboard/TalkinHead/idle_frames/frame_000037.png
+apps/dashboard/TalkinHead/idle_frames/frame_000038.png
+apps/dashboard/TalkinHead/idle_frames/frame_000039.png
+apps/dashboard/TalkinHead/idle_frames/frame_000040.png
+apps/dashboard/TalkinHead/idle_frames/frame_000041.png
+apps/dashboard/TalkinHead/idle_frames/frame_000042.png
+apps/dashboard/TalkinHead/idle_frames/frame_000043.png
+apps/dashboard/TalkinHead/idle_frames/frame_000044.png
+apps/dashboard/TalkinHead/idle_frames/frame_000045.png
+apps/dashboard/TalkinHead/idle_frames/frame_000046.png
+apps/dashboard/TalkinHead/idle_frames/frame_000047.png
+apps/dashboard/TalkinHead/idle_frames/frame_000048.png
+apps/dashboard/TalkinHead/idle_frames/frame_000049.png
+apps/dashboard/TalkinHead/idle_frames/frame_000050.png
+apps/dashboard/TalkinHead/idle_frames/frame_000051.png
+apps/dashboard/TalkinHead/idle_frames/frame_000052.png
+apps/dashboard/TalkinHead/idle_frames/frame_000053.png
+apps/dashboard/TalkinHead/idle_frames/frame_000054.png
+apps/dashboard/TalkinHead/idle_frames/frame_000055.png
+apps/dashboard/TalkinHead/idle_frames/frame_000056.png
+apps/dashboard/TalkinHead/idle_frames/frame_000057.png
+apps/dashboard/TalkinHead/idle_frames/frame_000058.png
+apps/dashboard/TalkinHead/idle_frames/frame_000059.png
+apps/dashboard/TalkinHead/idle_frames/frame_000060.png
+apps/dashboard/TalkinHead/idle_frames/frame_000061.png
+apps/dashboard/TalkinHead/idle_frames/frame_000062.png
+apps/dashboard/TalkinHead/idle_frames/frame_000063.png
+apps/dashboard/TalkinHead/idle_frames/frame_000064.png
+apps/dashboard/TalkinHead/idle_frames/frame_000065.png
+apps/dashboard/TalkinHead/idle_frames/frame_000066.png
+apps/dashboard/TalkinHead/idle_frames/frame_000067.png
+apps/dashboard/TalkinHead/idle_frames/frame_000068.png
+apps/dashboard/TalkinHead/idle_frames/frame_000069.png
+apps/dashboard/TalkinHead/idle_frames/frame_000070.png
+apps/dashboard/TalkinHead/idle_frames/frame_000071.png
+apps/dashboard/TalkinHead/idle_frames/frame_000072.png
+apps/dashboard/TalkinHead/idle_frames/frame_000073.png
+apps/dashboard/TalkinHead/idle_frames/frame_000074.png
+apps/dashboard/TalkinHead/idle_frames/frame_000075.png
+apps/dashboard/TalkinHead/idle_frames/frame_000076.png
+apps/dashboard/TalkinHead/idle_frames/frame_000077.png
+apps/dashboard/TalkinHead/idle_frames/frame_000078.png
+apps/dashboard/TalkinHead/idle_frames/frame_000079.png
+apps/dashboard/TalkinHead/idle_frames/frame_000080.png
+apps/dashboard/TalkinHead/idle_frames/frame_000081.png
+apps/dashboard/TalkinHead/idle_frames/frame_000082.png
+apps/dashboard/TalkinHead/idle_frames/frame_000083.png
+apps/dashboard/TalkinHead/idle_frames/frame_000084.png
+apps/dashboard/TalkinHead/idle_frames/frame_000085.png
+apps/dashboard/TalkinHead/idle_frames/frame_000086.png
+apps/dashboard/TalkinHead/idle_frames/frame_000087.png
+apps/dashboard/TalkinHead/idle_frames/frame_000088.png
+apps/dashboard/TalkinHead/idle_frames/frame_000089.png
+apps/dashboard/TalkinHead/idle_frames/frame_000090.png
+apps/dashboard/TalkinHead/idle_frames/frame_000091.png
+apps/dashboard/TalkinHead/idle_frames/frame_000092.png
+apps/dashboard/TalkinHead/idle_frames/frame_000093.png
+apps/dashboard/TalkinHead/idle_frames/frame_000094.png
+apps/dashboard/TalkinHead/idle_frames/frame_000095.png
+apps/dashboard/TalkinHead/idle_frames/frame_000096.png
+apps/dashboard/TalkinHead/idle_frames/frame_000097.png
+apps/dashboard/TalkinHead/idle_frames/frame_000098.png
+apps/dashboard/TalkinHead/idle_frames/frame_000099.png
+apps/dashboard/TalkinHead/idle_frames/frame_000100.png
+apps/dashboard/TalkinHead/idle_frames/frame_000101.png
+apps/dashboard/TalkinHead/idle_frames/frame_000102.png
+apps/dashboard/TalkinHead/idle_frames/frame_000103.png
+apps/dashboard/TalkinHead/idle_frames/frame_000104.png
+apps/dashboard/TalkinHead/idle_frames/frame_000105.png
+apps/dashboard/TalkinHead/idle_frames/frame_000106.png
+apps/dashboard/TalkinHead/idle_frames/frame_000107.png
+apps/dashboard/TalkinHead/idle_frames/frame_000108.png
+apps/dashboard/TalkinHead/idle_frames/frame_000109.png
+apps/dashboard/TalkinHead/idle_frames/frame_000110.png
+apps/dashboard/TalkinHead/idle_frames/frame_000111.png
+apps/dashboard/TalkinHead/idle_frames/frame_000112.png
+apps/dashboard/TalkinHead/idle_frames/frame_000113.png
+apps/dashboard/TalkinHead/idle_frames/frame_000114.png
+apps/dashboard/TalkinHead/idle_frames/frame_000115.png
+apps/dashboard/TalkinHead/idle_frames/frame_000116.png
+apps/dashboard/TalkinHead/idle_frames/frame_000117.png
+apps/dashboard/TalkinHead/idle_frames/frame_000118.png
+apps/dashboard/TalkinHead/idle_frames/frame_000119.png
+apps/dashboard/TalkinHead/idle_frames/frame_000120.png
+apps/dashboard/TalkinHead/idle_frames/frame_000121.png
+apps/dashboard/TalkinHead/idle_frames/frame_000122.png
+apps/dashboard/TalkinHead/idle_frames/frame_000123.png
+apps/dashboard/TalkinHead/idle_frames/frame_000124.png
+apps/dashboard/TalkinHead/idle_frames/frame_000125.png
+apps/dashboard/TalkinHead/idle_frames/frame_000126.png
+apps/dashboard/TalkinHead/idle_frames/frame_000127.png
+apps/dashboard/TalkinHead/idle_frames/frame_000128.png
+apps/dashboard/TalkinHead/idle_frames/frame_000129.png
+apps/dashboard/TalkinHead/idle_frames/frame_000130.png
+apps/dashboard/TalkinHead/idle_frames/frame_000131.png
+apps/dashboard/TalkinHead/idle_frames/frame_000132.png
+apps/dashboard/TalkinHead/idle_frames/frame_000133.png
+apps/dashboard/TalkinHead/idle_frames/frame_000134.png
+apps/dashboard/TalkinHead/idle_frames/frame_000135.png
+apps/dashboard/TalkinHead/idle_frames/frame_000136.png
+apps/dashboard/TalkinHead/idle_frames/frame_000137.png
+apps/dashboard/TalkinHead/idle_frames/frame_000138.png
+apps/dashboard/TalkinHead/idle_frames/frame_000139.png
+apps/dashboard/TalkinHead/idle_frames/frame_000140.png
+apps/dashboard/TalkinHead/idle_frames/frame_000141.png
+apps/dashboard/TalkinHead/idle_frames/frame_000142.png
+apps/dashboard/TalkinHead/idle_frames/frame_000143.png
+apps/dashboard/TalkinHead/idle_frames/frame_000144.png
+apps/dashboard/TalkinHead/idle_frames/frame_000145.png
+apps/dashboard/TalkinHead/idle_frames/frame_000146.png
+apps/dashboard/TalkinHead/idle_frames/frame_000147.png
+apps/dashboard/TalkinHead/idle_frames/frame_000148.png
+apps/dashboard/TalkinHead/idle_frames/frame_000149.png
+apps/dashboard/TalkinHead/idle_frames/frame_000150.png
+apps/dashboard/TalkinHead/idle_frames/frame_000151.png
+apps/dashboard/TalkinHead/idle_frames/frame_000152.png
+apps/dashboard/TalkinHead/idle_frames/frame_000153.png
+apps/dashboard/TalkinHead/idle_frames/frame_000154.png
+apps/dashboard/TalkinHead/idle_frames/frame_000155.png
+apps/dashboard/TalkinHead/idle_frames/frame_000156.png
+apps/dashboard/TalkinHead/idle_frames/frame_000157.png
+apps/dashboard/TalkinHead/idle_frames/frame_000158.png
+apps/dashboard/TalkinHead/idle_frames/frame_000159.png
+apps/dashboard/TalkinHead/idle_frames/frame_000160.png
+apps/dashboard/TalkinHead/idle_frames/frame_000161.png
+apps/dashboard/TalkinHead/idle_frames/frame_000162.png
+apps/dashboard/TalkinHead/idle_frames/frame_000163.png
+apps/dashboard/TalkinHead/idle_frames/frame_000164.png
+apps/dashboard/TalkinHead/idle_frames/frame_000165.png
+apps/dashboard/TalkinHead/idle_frames/frame_000166.png
+apps/dashboard/TalkinHead/idle_frames/frame_000167.png
+apps/dashboard/TalkinHead/idle_frames/frame_000168.png
+apps/dashboard/TalkinHead/idle_frames/frame_000169.png
+apps/dashboard/TalkinHead/idle_frames/frame_000170.png
+apps/dashboard/TalkinHead/idle_frames/frame_000171.png
+apps/dashboard/TalkinHead/idle_frames/frame_000172.png
+apps/dashboard/TalkinHead/idle_frames/frame_000173.png
+apps/dashboard/TalkinHead/idle_frames/frame_000174.png
+apps/dashboard/TalkinHead/idle_frames/frame_000175.png
+apps/dashboard/TalkinHead/idle_frames/frame_000176.png
+apps/dashboard/TalkinHead/idle_frames/frame_000177.png
+apps/dashboard/TalkinHead/idle_frames/frame_000178.png
+apps/dashboard/TalkinHead/idle_frames/frame_000179.png
+apps/dashboard/TalkinHead/idle_frames/frame_000180.png
+apps/dashboard/TalkinHead/idle_frames/frame_000181.png
+apps/dashboard/TalkinHead/idle_frames/frame_000182.png
+apps/dashboard/TalkinHead/idle_frames/frame_000183.png
+apps/dashboard/TalkinHead/idle_frames/frame_000184.png
+apps/dashboard/TalkinHead/idle_frames/frame_000185.png
+apps/dashboard/TalkinHead/idle_frames/frame_000186.png
+apps/dashboard/TalkinHead/idle_frames/frame_000187.png
+apps/dashboard/TalkinHead/idle_frames/frame_000188.png
+apps/dashboard/TalkinHead/idle_frames/frame_000189.png
+apps/dashboard/TalkinHead/idle_frames/frame_000190.png
+apps/dashboard/TalkinHead/idle_frames/frame_000191.png
+apps/dashboard/TalkinHead/idle_frames/frame_000192.png
+apps/dashboard/TalkinHead/idle_frames/frame_000193.png
+apps/dashboard/TalkinHead/idle_frames/frame_000194.png
+apps/dashboard/TalkinHead/idle_frames/frame_000195.png
+apps/dashboard/TalkinHead/idle_frames/frame_000196.png
+apps/dashboard/TalkinHead/idle_frames/frame_000197.png
+apps/dashboard/TalkinHead/idle_frames/frame_000198.png
+apps/dashboard/TalkinHead/idle_frames/frame_000199.png
+apps/dashboard/TalkinHead/idle_frames/frame_000200.png
+apps/dashboard/TalkinHead/idle_frames/frame_000201.png
+apps/dashboard/TalkinHead/idle_frames/frame_000202.png
+apps/dashboard/TalkinHead/idle_frames/frame_000203.png
+apps/dashboard/TalkinHead/idle_frames/frame_000204.png
+apps/dashboard/TalkinHead/idle_frames/frame_000205.png
+apps/dashboard/TalkinHead/idle_frames/frame_000206.png
+apps/dashboard/TalkinHead/idle_frames/frame_000207.png
+apps/dashboard/TalkinHead/idle_frames/frame_000208.png
+apps/dashboard/TalkinHead/idle_frames/frame_000209.png
+apps/dashboard/TalkinHead/idle_frames/frame_000210.png
+apps/dashboard/TalkinHead/idle_frames/frame_000211.png
+apps/dashboard/TalkinHead/idle_frames/frame_000212.png
+apps/dashboard/TalkinHead/idle_frames/frame_000213.png
+apps/dashboard/TalkinHead/idle_frames/frame_000214.png
+apps/dashboard/TalkinHead/idle_frames/frame_000215.png
+apps/dashboard/TalkinHead/idle_frames/frame_000216.png
+apps/dashboard/TalkinHead/idle_frames/frame_000217.png
+apps/dashboard/TalkinHead/idle_frames/frame_000218.png
+apps/dashboard/TalkinHead/idle_frames/frame_000219.png
+apps/dashboard/TalkinHead/idle_frames/frame_000220.png
+apps/dashboard/TalkinHead/idle_frames/frame_000221.png
+apps/dashboard/TalkinHead/idle_frames/frame_000222.png
+apps/dashboard/TalkinHead/idle_frames/frame_000223.png
+apps/dashboard/TalkinHead/idle_frames/frame_000224.png
+apps/dashboard/TalkinHead/idle_frames/frame_000225.png
+apps/dashboard/TalkinHead/idle_frames/frame_000226.png
+apps/dashboard/TalkinHead/idle_frames/frame_000227.png
+apps/dashboard/TalkinHead/idle_frames/frame_000228.png
+apps/dashboard/TalkinHead/idle_frames/frame_000229.png
+apps/dashboard/TalkinHead/idle_frames/frame_000230.png
+apps/dashboard/TalkinHead/idle_frames/frame_000231.png
+apps/dashboard/TalkinHead/idle_frames/frame_000232.png
+apps/dashboard/TalkinHead/idle_frames/frame_000233.png
+apps/dashboard/TalkinHead/idle_frames/frame_000234.png
+apps/dashboard/TalkinHead/idle_frames/frame_000235.png
+apps/dashboard/TalkinHead/idle_frames/frame_000236.png
+apps/dashboard/TalkinHead/idle_frames/frame_000237.png
+apps/dashboard/TalkinHead/idle_frames/frame_000238.png
+apps/dashboard/TalkinHead/idle_frames/frame_000239.png
+apps/dashboard/TalkinHead/idle_frames/frame_000240.png
+apps/dashboard/TalkinHead/idle_frames/frame_000241.png
+apps/dashboard/TalkinHead/idle_frames/frame_000242.png
+apps/dashboard/TalkinHead/idle_frames/frame_000243.png
+apps/dashboard/TalkinHead/idle_frames/frame_000244.png
+apps/dashboard/TalkinHead/idle_frames/frame_000245.png
+apps/dashboard/TalkinHead/idle_frames/frame_000246.png
+apps/dashboard/TalkinHead/idle_frames/frame_000247.png
+apps/dashboard/TalkinHead/idle_frames/frame_000248.png
+apps/dashboard/TalkinHead/idle_frames/frame_000249.png
+apps/dashboard/backend/.env.example
+apps/dashboard/backend/.gitignore
+apps/dashboard/backend/SECURITY_TESTS_QUICKSTART.md
+apps/dashboard/backend/SECURITY_TEST_IMPLEMENTATION_SUMMARY.md
+apps/dashboard/backend/main.py
+apps/dashboard/backend/models.py
+apps/dashboard/backend/pytest.ini
+apps/dashboard/backend/requirements-test.txt
+apps/dashboard/backend/requirements.txt
+apps/dashboard/backend/session_index.py
+apps/dashboard/backend/setup_security.py
+apps/dashboard/backend/routers/__init__.py
+apps/dashboard/backend/routers/admin.py
+apps/dashboard/backend/routers/analytics.py
+apps/dashboard/backend/routers/auth.py
+apps/dashboard/backend/routers/context.py
+apps/dashboard/backend/routers/fraud.py
+apps/dashboard/backend/routers/game.py
+apps/dashboard/backend/routers/heuristics.py
+apps/dashboard/backend/routers/knowledge.py
+apps/dashboard/backend/routers/live.py
+apps/dashboard/backend/routers/queries.py
+apps/dashboard/backend/routers/runs.py
+apps/dashboard/backend/routers/sessions.py
+apps/dashboard/backend/routers/setup.py
+apps/dashboard/backend/routers/workflows.py
+apps/dashboard/backend/tests/README.md
+apps/dashboard/backend/tests/SECURITY_TEST_STRATEGY.md
+apps/dashboard/backend/tests/__init__.py
+apps/dashboard/backend/tests/conftest.py
+apps/dashboard/backend/tests/test_auto_capture_rollback.py
+apps/dashboard/backend/tests/test_broadcast_race.py
+apps/dashboard/backend/tests/test_sql_injection_fix.py
+apps/dashboard/backend/tests/test_websocket_stress.py
+apps/dashboard/backend/tests/security/test_cors_attacks.py
+apps/dashboard/backend/tests/security/test_sql_injection.py
+apps/dashboard/backend/tests/unit/test_session_encryption.py
+apps/dashboard/backend/utils/README.md
+apps/dashboard/backend/utils/REPOSITORY_README.md
+apps/dashboard/backend/utils/__init__.py
+apps/dashboard/backend/utils/auto_capture.py
+apps/dashboard/backend/utils/broadcast.py
+apps/dashboard/backend/utils/database.py
+apps/dashboard/backend/utils/outcome_inference.py
+apps/dashboard/backend/utils/repository.py
+apps/dashboard/frontend/bun.lock
+apps/dashboard/frontend/index.html
+apps/dashboard/frontend/package-lock.json
+apps/dashboard/frontend/package.json
+apps/dashboard/frontend/postcss.config.js
+apps/dashboard/frontend/tailwind.config.js
+apps/dashboard/frontend/tsconfig.json
+apps/dashboard/frontend/tsconfig.node.json
+apps/dashboard/frontend/vite.config.ts
+apps/dashboard/frontend/vitest.config.ts
+apps/dashboard/frontend/.agent/rules/workspacerules.md
+apps/dashboard/frontend/public/favicon.svg
+apps/dashboard/frontend/public/intro.mp4
+apps/dashboard/frontend/public/intro_remote.mp4
+apps/dashboard/frontend/public/ufo-beam.backup.svg
+apps/dashboard/frontend/public/ufo-beam.svg
+apps/dashboard/frontend/public/ufo-cursor-beam.svg
+apps/dashboard/frontend/public/ufo-cursor.backup.svg
+apps/dashboard/frontend/public/ufo-cursor.svg
+apps/dashboard/frontend/public/assets/cockpit.png
+apps/dashboard/frontend/public/assets/ice_planet.png
+apps/dashboard/frontend/public/assets/planet.png
+apps/dashboard/frontend/public/assets/skybox.png
+apps/dashboard/frontend/src/App.tsx
+apps/dashboard/frontend/src/index.css
+apps/dashboard/frontend/src/main.tsx
+apps/dashboard/frontend/src/types.ts
+apps/dashboard/frontend/src/components/AlertsPanel.tsx
+apps/dashboard/frontend/src/components/AssumptionsPanel.tsx
+apps/dashboard/frontend/src/components/CommandPalette.tsx
+apps/dashboard/frontend/src/components/CosmicIntro.tsx
+apps/dashboard/frontend/src/components/DiffViewer.tsx
+apps/dashboard/frontend/src/components/FraudReviewPanel.tsx
+apps/dashboard/frontend/src/components/Header.tsx
+apps/dashboard/frontend/src/components/HeuristicPanel.tsx
+apps/dashboard/frontend/src/components/NavigationTabs.tsx
+apps/dashboard/frontend/src/components/NotificationPanel.README.md
+apps/dashboard/frontend/src/components/NotificationPanel.tsx
+apps/dashboard/frontend/src/components/ParticleBackground.tsx
+apps/dashboard/frontend/src/components/QueryInterface.css
+apps/dashboard/frontend/src/components/QueryInterface.tsx
+apps/dashboard/frontend/src/components/RunsPanel.tsx
+apps/dashboard/frontend/src/components/ScopeToggle.tsx
+apps/dashboard/frontend/src/components/SessionHistoryPanel.tsx
+apps/dashboard/frontend/src/components/SettingsPanel.tsx
+apps/dashboard/frontend/src/components/SpikeReportsPanel.tsx
+apps/dashboard/frontend/src/components/StatsBar.tsx
+apps/dashboard/frontend/src/components/TimelineView.tsx
+apps/dashboard/frontend/src/components/index.ts
+apps/dashboard/frontend/src/components/analytics/AnalyticsDrillDown.tsx
+apps/dashboard/frontend/src/components/analytics/index.ts
+apps/dashboard/frontend/src/components/assumptions/AssumptionCard.tsx
+apps/dashboard/frontend/src/components/assumptions/AssumptionFilters.tsx
+apps/dashboard/frontend/src/components/assumptions/index.ts
+apps/dashboard/frontend/src/components/assumptions/types.ts
+apps/dashboard/frontend/src/components/assumptions/utils.tsx
+apps/dashboard/frontend/src/components/cosmic-view/CameraController.tsx
+apps/dashboard/frontend/src/components/cosmic-view/CosmicAnalyticsView.tsx
+apps/dashboard/frontend/src/components/cosmic-view/CosmicBackground.tsx
+apps/dashboard/frontend/src/components/cosmic-view/CosmicCanvas.tsx
+apps/dashboard/frontend/src/components/cosmic-view/CosmicDetailPanel.tsx
+apps/dashboard/frontend/src/components/cosmic-view/CosmicFilters.tsx
+apps/dashboard/frontend/src/components/cosmic-view/CosmicGraphView.tsx
+apps/dashboard/frontend/src/components/cosmic-view/CosmicLegend.tsx
+apps/dashboard/frontend/src/components/cosmic-view/CosmicLighting.tsx
+apps/dashboard/frontend/src/components/cosmic-view/CosmicRunsView.tsx
+apps/dashboard/frontend/src/components/cosmic-view/CosmicTimelineView.tsx
+apps/dashboard/frontend/src/components/cosmic-view/CosmicView.tsx
+apps/dashboard/frontend/src/components/cosmic-view/HotspotVisualization.tsx
+apps/dashboard/frontend/src/components/cosmic-view/Moon.tsx
+apps/dashboard/frontend/src/components/cosmic-view/OrbitPath.tsx
+apps/dashboard/frontend/src/components/cosmic-view/Planet.tsx
+apps/dashboard/frontend/src/components/cosmic-view/PlanetRings.tsx
+apps/dashboard/frontend/src/components/cosmic-view/SolarSystemGroup.tsx
+apps/dashboard/frontend/src/components/cosmic-view/Sun.tsx
+apps/dashboard/frontend/src/components/cosmic-view/SystemNavigator.tsx
+apps/dashboard/frontend/src/components/cosmic-view/UfoTrails.tsx
+apps/dashboard/frontend/src/components/cosmic-view/ViewToggle.tsx
+apps/dashboard/frontend/src/components/cosmic-view/index.ts
+apps/dashboard/frontend/src/components/cosmic-view/types.ts
+apps/dashboard/frontend/src/components/cosmic-view/useCosmicData.ts
+apps/dashboard/frontend/src/components/diff-viewer/DiffHeader.tsx
+apps/dashboard/frontend/src/components/diff-viewer/FileHeader.tsx
+apps/dashboard/frontend/src/components/diff-viewer/SplitDiffView.tsx
+apps/dashboard/frontend/src/components/diff-viewer/UnifiedDiffView.tsx
+apps/dashboard/frontend/src/components/diff-viewer/index.ts
+apps/dashboard/frontend/src/components/diff-viewer/types.ts
+apps/dashboard/frontend/src/components/drilldowns/DrillDownModal.tsx
+apps/dashboard/frontend/src/components/drilldowns/GoldenRulesDrillDown.tsx
+apps/dashboard/frontend/src/components/drilldowns/HeuristicsDrillDown.tsx
+apps/dashboard/frontend/src/components/drilldowns/HotspotsDrillDown.tsx
+apps/dashboard/frontend/src/components/drilldowns/QueriesDrillDown.tsx
+apps/dashboard/frontend/src/components/drilldowns/RunsDrillDown.tsx
+apps/dashboard/frontend/src/components/drilldowns/index.ts
+apps/dashboard/frontend/src/components/drilldowns/types.ts
+apps/dashboard/frontend/src/components/fraud-review/ReportCard.tsx
+apps/dashboard/frontend/src/components/fraud-review/SignalList.tsx
+apps/dashboard/frontend/src/components/fraud-review/index.ts
+apps/dashboard/frontend/src/components/fraud-review/types.ts
+apps/dashboard/frontend/src/components/fraud-review/utils.tsx
+apps/dashboard/frontend/src/components/game/GameMenu.tsx
+apps/dashboard/frontend/src/components/game/Leaderboard.tsx
+apps/dashboard/frontend/src/components/game/SetupWizard.tsx
+apps/dashboard/frontend/src/components/game/cockpit/GameScene.tsx
+apps/dashboard/frontend/src/components/game/cockpit/HolographicHud.tsx
+apps/dashboard/frontend/src/components/game/cockpit/InstancedEnemyRenderer.tsx
+apps/dashboard/frontend/src/components/game/cockpit/PlayerShip.tsx
+apps/dashboard/frontend/src/components/game/cockpit/PowerupRenderer.tsx
+apps/dashboard/frontend/src/components/game/cockpit/ProjectileRenderer.tsx
+apps/dashboard/frontend/src/components/game/cockpit/Radar.tsx
+apps/dashboard/frontend/src/components/game/cockpit/SpaceShooterScene.tsx
+apps/dashboard/frontend/src/components/game/config/GameConstants.ts
+apps/dashboard/frontend/src/components/game/enemies/EnemyVisualBase.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage10Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage11Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage12Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage13Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage14Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage15Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage16Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage17Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage18Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage19Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage20Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage2Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage3Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage4Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage5Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage6Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage7Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage8Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/Stage9Enemies.tsx
+apps/dashboard/frontend/src/components/game/enemies/index.ts
+apps/dashboard/frontend/src/components/game/engine/core/GameEngine.ts
+apps/dashboard/frontend/src/components/game/engine/core/GameLoop.ts
+apps/dashboard/frontend/src/components/game/engine/core/GameState.ts
+apps/dashboard/frontend/src/components/game/engine/core/InputManager.ts
+apps/dashboard/frontend/src/components/game/engine/core/ObjectPool.ts
+apps/dashboard/frontend/src/components/game/engine/rendering/InstancedEnemyRenderer.tsx
+apps/dashboard/frontend/src/components/game/engine/rendering/InstancedProjectileRenderer.tsx
+apps/dashboard/frontend/src/components/game/engine/systems/EnemySystem.ts
+apps/dashboard/frontend/src/components/game/engine/systems/PhysicsSystem.ts
+apps/dashboard/frontend/src/components/game/engine/systems/ProjectileSystem.ts
+apps/dashboard/frontend/src/components/game/engine/systems/System.ts
+apps/dashboard/frontend/src/components/game/hooks/useShipControls.ts
+apps/dashboard/frontend/src/components/game/systems/CollisionManager.tsx
+apps/dashboard/frontend/src/components/game/systems/DeathEffectsManager.tsx
+apps/dashboard/frontend/src/components/game/systems/EnemySystem.ts
+apps/dashboard/frontend/src/components/game/systems/ExplosionManager.tsx
+apps/dashboard/frontend/src/components/game/systems/FloatingTextManager.tsx
+apps/dashboard/frontend/src/components/game/systems/GameSettings.ts
+apps/dashboard/frontend/src/components/game/systems/ItemDatabase.ts
+apps/dashboard/frontend/src/components/game/systems/PickupSystem.tsx
+apps/dashboard/frontend/src/components/game/systems/PlayerActionStore.ts
+apps/dashboard/frontend/src/components/game/systems/PlayerWeaponStore.ts
+apps/dashboard/frontend/src/components/game/systems/PowerupSystem.ts
+apps/dashboard/frontend/src/components/game/systems/ProgressionManager.ts
+apps/dashboard/frontend/src/components/game/systems/SoundManager.ts
+apps/dashboard/frontend/src/components/game/systems/WaveManager.tsx
+apps/dashboard/frontend/src/components/game/systems/WeaponSystem.ts
+apps/dashboard/frontend/src/components/game/systems/WeaponTypes.ts
+apps/dashboard/frontend/src/components/game/systems/WorldSystem.ts
+apps/dashboard/frontend/src/components/game/systems/useEnemyVisualController.ts
+apps/dashboard/frontend/src/components/game/ui/GameOverScreen.tsx
+apps/dashboard/frontend/src/components/game/ui/MainMenu.tsx
+apps/dashboard/frontend/src/components/game/ui/PauseMenu.tsx
+apps/dashboard/frontend/src/components/game/ui/PauseMenuXR.tsx
+apps/dashboard/frontend/src/components/game/ui/WeaponShop.tsx
+apps/dashboard/frontend/src/components/header-components/CeoInboxDropdown.tsx
+apps/dashboard/frontend/src/components/header-components/CeoItemModal.tsx
+apps/dashboard/frontend/src/components/header-components/ConnectionStatus.tsx
+apps/dashboard/frontend/src/components/header-components/NotificationCenter.tsx
+apps/dashboard/frontend/src/components/header-components/TabNav.tsx
+apps/dashboard/frontend/src/components/header-components/index.ts
+apps/dashboard/frontend/src/components/header-components/types.ts
+apps/dashboard/frontend/src/components/heuristics/HeuristicActions.tsx
+apps/dashboard/frontend/src/components/heuristics/HeuristicCard.tsx
+apps/dashboard/frontend/src/components/heuristics/HeuristicDetailModal.tsx
+apps/dashboard/frontend/src/components/heuristics/HeuristicEditForm.tsx
+apps/dashboard/frontend/src/components/heuristics/HeuristicFilters.tsx
+apps/dashboard/frontend/src/components/heuristics/LifecycleProgress.tsx
+apps/dashboard/frontend/src/components/heuristics/index.ts
+apps/dashboard/frontend/src/components/heuristics/types.ts
+apps/dashboard/frontend/src/components/hotspot-treemap/HotspotDetailPanel.tsx
+apps/dashboard/frontend/src/components/hotspot-treemap/HotspotTreemap.tsx
+apps/dashboard/frontend/src/components/hotspot-treemap/TreemapFilters.tsx
+apps/dashboard/frontend/src/components/hotspot-treemap/TreemapLegend.tsx
+apps/dashboard/frontend/src/components/hotspot-treemap/TreemapTooltip.tsx
+apps/dashboard/frontend/src/components/hotspot-treemap/index.ts
+apps/dashboard/frontend/src/components/hotspot-treemap/types.ts
+apps/dashboard/frontend/src/components/hotspot-treemap/useD3Treemap.ts
+apps/dashboard/frontend/src/components/hotspot-treemap/useTreemapData.ts
+apps/dashboard/frontend/src/components/invariants-panel/InvariantActions.tsx
+apps/dashboard/frontend/src/components/invariants-panel/InvariantCard.tsx
+apps/dashboard/frontend/src/components/invariants-panel/InvariantFilters.tsx
+apps/dashboard/frontend/src/components/invariants-panel/index.ts
+apps/dashboard/frontend/src/components/invariants-panel/index.tsx
+apps/dashboard/frontend/src/components/invariants-panel/types.ts
+apps/dashboard/frontend/src/components/invariants-panel/useInvariantsData.ts
+apps/dashboard/frontend/src/components/invariants-panel/utils.tsx
+apps/dashboard/frontend/src/components/knowledge-graph/GraphControls.tsx
+apps/dashboard/frontend/src/components/knowledge-graph/GraphInstructions.tsx
+apps/dashboard/frontend/src/components/knowledge-graph/GraphLegend.tsx
+apps/dashboard/frontend/src/components/knowledge-graph/NodeInfoPanel.tsx
+apps/dashboard/frontend/src/components/knowledge-graph/index.ts
+apps/dashboard/frontend/src/components/knowledge-graph/index.tsx
+apps/dashboard/frontend/src/components/knowledge-graph/types.ts
+apps/dashboard/frontend/src/components/knowledge-graph/useD3Graph.ts
+apps/dashboard/frontend/src/components/knowledge-graph/useGraphData.ts
+apps/dashboard/frontend/src/components/knowledge-graph/useZoomControls.ts
+apps/dashboard/frontend/src/components/knowledge-graph/utils.ts
+apps/dashboard/frontend/src/components/learning-velocity/LearningVelocity.tsx
+apps/dashboard/frontend/src/components/learning-velocity/MetricCards.tsx
+apps/dashboard/frontend/src/components/learning-velocity/TimeframeControls.tsx
+apps/dashboard/frontend/src/components/learning-velocity/VelocityCharts.tsx
+apps/dashboard/frontend/src/components/learning-velocity/index.ts
+apps/dashboard/frontend/src/components/learning-velocity/types.ts
+apps/dashboard/frontend/src/components/learning-velocity/useVelocityData.ts
+apps/dashboard/frontend/src/components/live/LivePanel.tsx
+apps/dashboard/frontend/src/components/live/SignalInput.tsx
+apps/dashboard/frontend/src/components/live/TaskKanban.tsx
+apps/dashboard/frontend/src/components/live/TrailFeed.tsx
+apps/dashboard/frontend/src/components/live/index.ts
+apps/dashboard/frontend/src/components/overview/GridView.tsx
+apps/dashboard/frontend/src/components/particle-background/Enemy.ts
+apps/dashboard/frontend/src/components/particle-background/Explosion.ts
+apps/dashboard/frontend/src/components/particle-background/Particle.ts
+apps/dashboard/frontend/src/components/particle-background/Projectile.ts
+apps/dashboard/frontend/src/components/particle-background/TrailSystem.ts
+apps/dashboard/frontend/src/components/particle-background/drawFunctions.ts
+apps/dashboard/frontend/src/components/particle-background/index.ts
+apps/dashboard/frontend/src/components/particle-background/particleConfig.ts
+apps/dashboard/frontend/src/components/particle-background/types.ts
+apps/dashboard/frontend/src/components/query-interface/ExampleQueries.tsx
+apps/dashboard/frontend/src/components/query-interface/QueryHistory.tsx
+apps/dashboard/frontend/src/components/query-interface/QueryInput.tsx
+apps/dashboard/frontend/src/components/query-interface/QueryResults.tsx
+apps/dashboard/frontend/src/components/query-interface/ResultItem.tsx
+apps/dashboard/frontend/src/components/query-interface/index.ts
+apps/dashboard/frontend/src/components/query-interface/types.ts
+apps/dashboard/frontend/src/components/runs/RunCard.tsx
+apps/dashboard/frontend/src/components/runs/RunDetail.tsx
+apps/dashboard/frontend/src/components/runs/RunsFilters.tsx
+apps/dashboard/frontend/src/components/runs/index.ts
+apps/dashboard/frontend/src/components/runs/types.ts
+apps/dashboard/frontend/src/components/session-history/MessageItem.tsx
+apps/dashboard/frontend/src/components/session-history/SessionCard.tsx
+apps/dashboard/frontend/src/components/session-history/SessionDetail.tsx
+apps/dashboard/frontend/src/components/session-history/SessionFilters.tsx
+apps/dashboard/frontend/src/components/session-history/index.ts
+apps/dashboard/frontend/src/components/session-history/types.ts
+apps/dashboard/frontend/src/components/solar-system/Floating3DParticles.tsx
+apps/dashboard/frontend/src/components/solar-system/SolarSystemView.tsx
+apps/dashboard/frontend/src/components/solar-system/index.ts
+apps/dashboard/frontend/src/components/solar-system/shaders.ts
+apps/dashboard/frontend/src/components/spike-reports/ReportCard.tsx
+apps/dashboard/frontend/src/components/spike-reports/SpikeReportFilters.tsx
+apps/dashboard/frontend/src/components/spike-reports/StarRating.tsx
+apps/dashboard/frontend/src/components/spike-reports/index.ts
+apps/dashboard/frontend/src/components/spike-reports/types.ts
+apps/dashboard/frontend/src/components/stats/StatsDrillDownView.tsx
+apps/dashboard/frontend/src/components/stats/index.ts
+apps/dashboard/frontend/src/components/ui/HolographicCard.tsx
+apps/dashboard/frontend/src/components/ui/UfoCursor.tsx
+apps/dashboard/frontend/src/components/xr/xrStore.ts
+apps/dashboard/frontend/src/context/CosmicAudioContext.tsx
+apps/dashboard/frontend/src/context/CosmicSettingsContext.tsx
+apps/dashboard/frontend/src/context/DataContext.tsx
+apps/dashboard/frontend/src/context/GameContext.tsx
+apps/dashboard/frontend/src/context/NotificationContext.tsx
+apps/dashboard/frontend/src/context/ThemeContext.tsx
+apps/dashboard/frontend/src/context/index.ts
+apps/dashboard/frontend/src/hooks/index.ts
+apps/dashboard/frontend/src/hooks/useAPI.ts
+apps/dashboard/frontend/src/hooks/useDashboardData.ts
+apps/dashboard/frontend/src/hooks/useHeuristics.ts
+apps/dashboard/frontend/src/hooks/useWebSocket.ts
+apps/dashboard/frontend/src/layouts/DashboardLayout.tsx
+apps/dashboard/frontend/src/store/commandPaletteStore.ts
+apps/dashboard/frontend/src/store/scopeStore.ts
+apps/dashboard/frontend/src/store/viewStore.ts
+apps/dashboard/frontend/src/stores/cosmicStore.ts
+apps/dashboard/frontend/src/stores/index.ts
+apps/dashboard/frontend/test-results/.last-run.json
+apps/dashboard/frontend/tests/game.spec.ts
+apps/dashboard/frontend/tests/game_local.spec.ts
+apps/dashboard/frontend/tests/game_spawn.spec.ts
+apps/dashboard/frontend/tests/test_game_fixes.py
+apps/dashboard/frontend/tests/test_game_visual.py
+apps/dashboard/tests/bun.lock
+apps/dashboard/tests/dashboard.spec.ts
+apps/dashboard/tests/package.json
+apps/dashboard/tests/playwright.config.ts
+apps/dashboard/tests/test-results.txt
+apps/dashboard/tests/verify_game.spec.ts
+coordinator/CLAIM_CHAINS_QUICK_REF.md
+coordinator/blackboard.py
+coordinator/blackboard_v2.py
+coordinator/dependency_graph.py
+coordinator/event_log.py
+coordinator/test_event_log.py
+custom/config.yaml.template
+custom/golden-rules.md.template
+custom/parties.yaml.template
+cycles/TEMPLATE/1-try.md
+cycles/TEMPLATE/2-break.md
+cycles/TEMPLATE/3-analyze.md
+cycles/TEMPLATE/4-learn.md
+cycles/TEMPLATE/5-next.md
+cycles/archive/20251130_research-summary.md
+data/reports/ACCOUNTABILITY_IMPLEMENTATION_SUMMARY.md
+data/reports/ACCOUNTABILITY_QUICK_REF.txt
+data/reports/ACCOUNTABILITY_SYSTEM.md
+data/reports/BACKUP_RECOVERY_10_OF_10_CERTIFICATION.md
+data/reports/BACKUP_SYSTEM_INDEX.md
+data/reports/CODE_CHANGES_SUMMARY.md
+data/reports/DATABASE_ROBUSTNESS_10_10_REPORT.md
+data/reports/DATABASE_ROBUSTNESS_INDEX.md
+data/reports/DATABASE_ROBUSTNESS_QUICK_REF.md
+data/reports/DISASTER_RECOVERY.md
+data/reports/DISASTER_RECOVERY_SUMMARY.txt
+data/reports/ERROR_HANDLING_EXAMPLES.md
+data/reports/ERROR_HANDLING_REPORT.md
+data/reports/ERROR_HANDLING_SUMMARY.md
+data/reports/EXECUTIVE_SUMMARY_10_OF_10.md
+data/reports/FINAL_REPORT.txt
+data/reports/FINAL_RESULTS.txt
+data/reports/FINAL_VERIFICATION.txt
+data/reports/GIT_LOCK_CONTENTION_DIAGRAM.txt
+data/reports/HARDENING_VERIFICATION_REPORT.md
+data/reports/HEURISTICS_AUDIT_2025-12-01.txt
+data/reports/IMPLEMENTATION_SUMMARY.md
+data/reports/INTEGRATION_GUIDE.md
+data/reports/LOCK_CONTENTION_FIX_VERIFICATION.md
+data/reports/LOCK_IMPLEMENTATION_DETAILS.md
+data/reports/META_LEARNING_REPORT.md
+data/reports/MISSION_COMPLETE_10_OF_10.txt
+data/reports/OBSERVABILITY.md
+data/reports/OBSERVABILITY_10_OF_10_REPORT.md
+data/reports/OBSERVABILITY_DELIVERABLES.txt
+data/reports/OBSERVABILITY_EVIDENCE.md
+data/reports/OBSERVABILITY_IMPLEMENTATION_REPORT.md
+data/reports/OBSERVABILITY_INDEX.md
+data/reports/OBSERVABILITY_QUICK_REF.md
+data/reports/OBSERVABILITY_QUICK_START.md
+data/reports/PERFORMANCE_ANALYSIS.md
+data/reports/PHASE2_IMPLEMENTATION_SUMMARY.md
+data/reports/POC_DEMONSTRATION.txt
+data/reports/QUICK_FIXES.md
+data/reports/QUICK_REFERENCE_CARD.txt
+data/reports/QUICK_START_META_LEARNING.md
+data/reports/TIME_FIXES_SUMMARY.txt
+data/reports/UNICODE_FIXES_REFERENCE.md
+data/reports/VERIFICATION_INDEX.md
+data/reports/VERIFICATION_SUMMARY.txt
+data/reports/phase2/adaptive-threshold-tuning-design.md
+data/reports/phase2/agent2-threshold-tuning-report.md
+data/reports/phase2/domain-elasticity-design.md
+data/reports/phase2/fraud-detection-design.md
+data/reports/phase2/meta-observer-trends-design.md
+data/reports/phase2/phase2d-implementation-summary.md
+data/reports/phase2/prior-art-research.md
+data/reports/phase2/temporal-smoothing-design.md
+data/reports/phase3/AGENT_3_BASELINE_REFRESH_REPORT.md
+data/reports/phase3/AGENT_3_COMPLETION_SUMMARY.md
+data/reports/phase3/agent4-fraud-review-integration.md
+data/reports/security/ENCODING_EDGE_CASE_TEST_REPORT_20251201_202512.md
+data/reports/security/ENCODING_TESTS_SUMMARY.txt
+data/reports/security/ENCODING_VULNERABILITY_REPORT.md
+data/reports/security/INPUT_VALIDATION_HARDENING.md
+data/reports/security/SECURITY.md
+data/reports/security/SECURITY_SCORE_10_VERIFICATION.md
+data/reports/swarm/AGENT_A_COMPLETE.txt
+data/reports/swarm/AGENT_C_EXECUTIVE_SUMMARY.txt
+data/reports/swarm/AGENT_C_FINAL_REPORT.md
+data/reports/swarm/AGENT_C_INDEX.md
+data/reports/swarm/AGENT_D2_COMPLETION_SUMMARY.md
+data/reports/swarm/AGENT_D_QUICK_REFERENCE.md
+data/reports/swarm/AGENT_D_REPORT.md
+data/reports/swarm/AGENT_E2_FINAL_10_10_REPORT.md
+data/reports/swarm/AGENT_E_CONCURRENCY_REPORT.md
+data/reports/swarm/AGENT_E_SUMMARY.txt
+data/reports/swarm/AGENT_E_TEST_EVIDENCE.txt
+data/reports/swarm/AGENT_H2_FINAL_REPORT.md
+data/reports/swarm/AGENT_H_REPORT.md
+data/reports/testing/BACKUP_SYSTEM_TEST_REPORT.md
+data/reports/testing/CONCURRENCY_10_10_ACHIEVEMENT.txt
+data/reports/testing/CONCURRENCY_ANALYSIS.md
+data/reports/testing/CONCURRENCY_QUICK_REF.md
+data/reports/testing/CONCURRENT_TEST_SUMMARY.txt
+data/reports/testing/DISASTER_RECOVERY_TEST_REPORT.md
+data/reports/testing/EDGE_CASE_EVIDENCE.md
+data/reports/testing/EDGE_CASE_EXECUTIVE_SUMMARY.md
+data/reports/testing/EDGE_CASE_INDEX.md
+data/reports/testing/EDGE_CASE_QUICK_REF.md
+data/reports/testing/EDGE_CASE_QUICK_SUMMARY.txt
+data/reports/testing/EDGE_CASE_TESTING_INDEX.md
+data/reports/testing/EDGE_CASE_TEST_REPORT.md
+data/reports/testing/EDGE_CASE_VISUAL_SUMMARY.txt
+data/reports/testing/FILESYSTEM_EDGE_CASES_REPORT.md
+data/reports/testing/FILESYSTEM_EDGE_CASES_SUMMARY.txt
+data/reports/testing/FILESYSTEM_TEST_RESULTS.txt
+data/reports/testing/FUZZING_TEST_RESULTS.md
+data/reports/testing/NOVEL_EDGE_CASE_TEST_REPORT.md
+data/reports/testing/RAPID_FUZZING_RESULTS.md
+data/reports/testing/RECOVERY_SCENARIOS_TEST_REPORT_20251201_182231.md
+data/reports/testing/STRESS_TEST_REPORT.md
+data/reports/testing/STRESS_TEST_SUMMARY.txt
+data/reports/testing/TESTING_ARTIFACTS_INDEX.md
+data/reports/testing/TESTING_COMPLETE.txt
+data/reports/testing/TESTING_PACKAGE_README.md
+data/reports/testing/TEST_EVIDENCE_SUMMARY.txt
+data/reports/testing/TEST_SUMMARY.txt
+data/reports/testing/TIME_CHAOS_TEST_REPORT.md
+data/reports/testing/UNICODE_ENCODING_TEST_REPORT.md
+data/sessions/__init__.py
+data/sessions/get_last_prompts.py
+data/sessions/logger.py
+data/sessions/search.py
+docs/ADR.md
+docs/BASELINE_REFRESH_QUICK_START.md
+docs/BLACKBOARD_MIGRATION.md
+docs/OPERATIONS.md
+docs/QUERY-DEPENDENCY-GRAPH.md
+docs/SCALE_LIMITS.md
+docs/SESSION_TOOLS.md
+docs/TESTING.md
+docs/TROUBLESHOOTING.md
+docs/USE_CASES.md
+docs/blog-post-draft.md
+docs/multi-agent-integration-plan.md
+docs/threshold-tuning-guide.md
+docs/tpfp-tracking-system.md
+docs/analysis/CRITICAL_BUGS_QUICKREF.md
+docs/analysis/DEBUG_ANALYSIS_REPORT.md
+docs/analysis/DOCUMENTATION_ARCHITECTURE_ANALYSIS.md
+docs/analysis/TEST_SUMMARY.md
+docs/api/Conductor.md
+docs/api/Hooks.md
+docs/api/Models.md
+docs/api/QuerySystem.md
+docs/api/index.md
+docs/architecture/ARCHITECTURAL-REVIEW-2026-01-05.md
+docs/architecture/ARCHITECTURE-QUICK-REFERENCE.md
+docs/architecture/RECOMMENDED-STRUCTURE.md
+docs/architecture/per-project-architecture.md
+docs/archive/ADVISORY_VERIFICATION_IMPLEMENTATION.md
+docs/archive/AGENT1_DELIVERABLE.md
+docs/archive/COMMENT_FALSE_POSITIVE_FIX_SUMMARY.md
+docs/archive/CONDUCTOR-INTEGRATION-COMPLETE.md
+docs/archive/DX_DELIVERABLES.txt
+docs/archive/DX_EVALUATION_REPORT.md
+docs/archive/DX_IMPLEMENTATION_GUIDE.md
+docs/archive/DX_README.md
+docs/archive/DX_SUMMARY.md
+docs/archive/ELF-REFACTOR-PLAN-v2.md
+docs/archive/ELF-REFACTOR-PLAN.md
+docs/archive/FINAL_TEST_REPORT.md
+docs/archive/FRAMEWORK.md
+docs/archive/GETTING_STARTED.md
+docs/archive/IMPORT_FIXES_SUMMARY.md
+docs/archive/IMPROVEMENT_ROADMAP.md
+docs/archive/INTEGRATION_TEST_SESSION_2026-01-05.md
+docs/archive/LSP-CONFIGURATION-SUMMARY.md
+docs/archive/SECURITY_AUDIT_2026-01-05.md
+docs/archive/SECURITY_AUDIT_ULTRATHINK_2026-01-05.md
+docs/archive/SECURITY_FIXES_QUICKSTART.md
+docs/archive/SECURITY_HARDENING_SESSION_2026-01-05.md
+docs/archive/SECURITY_IMPLEMENTATION_SUMMARY.md
+docs/archive/UNINSTALL.md
+docs/archive/issue-43-analysis.md
+docs/assets/Hotspots.png
+docs/assets/analytics.png
+docs/assets/dashboard-cards.png
+docs/assets/dashboard-galaxy.png
+docs/assets/eve-talkinhead.png
+docs/assets/graph.png
+docs/assets/header.gif
+docs/assets/headerold.jpg
+docs/database/MIGRATION_TEST_RESULTS.md
+docs/database/migrations.md
+docs/database/schema.md
+docs/guides/README.md
+docs/guides/extensions.md
+docs/guides/golden-rules-sync.md
+docs/guides/performance.md
+docs/guides/testing.md
+docs/images/blogpost1.png
+docs/images/cosmic-dashboard-analytics.png
+docs/images/cosmic-dashboard-graph.png
+docs/images/cosmic-dashboard-hotspots.png
+docs/wiki/Architecture.md
+docs/wiki/CLI-Reference.md
+docs/wiki/Configuration.md
+docs/wiki/Dashboard.md
+docs/wiki/Golden-Rules.md
+docs/wiki/Home.md
+docs/wiki/Installation.md
+docs/wiki/Migration.md
+docs/wiki/Swarm.md
+docs/wiki/Token-Costs.md
+examples/fraud_outcome_workflow.py
+infra/cloudflare-worker/DEPLOY.md
+infra/cloudflare-worker/schema.sql
+infra/cloudflare-worker/worker.js
+infra/cloudflare-worker/wrangler.toml
+library/commands/checkin.md
+library/commands/checkout.md
+library/commands/maintenance.md
+library/commands/search.md
+library/commands/session-search.py
+library/commands/swarm.md
+library/commands/test-dashboard.md
+library/guides/ralph-loop-guide.md
+library/plugins/agent-coordination/hooks/hooks.json
+library/plugins/agent-coordination/hooks/post_task.py
+library/plugins/agent-coordination/hooks/pre_task.py
+library/plugins/agent-coordination/hooks/session_end.py
+library/plugins/agent-coordination/utils/sqlite_bridge.py
+library/skills/agent-coordination/SKILL.md
+mcp/elf_server.py
+mcp/plan_postmortem_tools.py
+mcp/requirements.txt
+proposals/.schema.md
+proposals/TEMPLATE.md
+proposals/archive/2025-12-11_heuristic_investigation-before-re-attempting-faile.md
+proposals/archive/2025-12-11_heuristic_test-proposal-workflow.md
+proposals/archive/2025-12-11_pattern_auth-token-debugging-requires-multi-file.md
+references/windows-tool-guide.md
+scripts/backup-db.py
+scripts/backup-enhanced.sh
+scripts/backup.sh
+scripts/baseline-refresh-scheduler.py
+scripts/bootstrap-recovery.sh
+scripts/ceo-inbox-status.py
+scripts/check-backup-health.sh
+scripts/check-invariants.py
+scripts/check-invariants.sh
+scripts/checkin.sh
+scripts/cleanup_duplicate_indexes.py
+scripts/consolidate-databases.py
+scripts/create-wiki.py
+scripts/dashboard-simple.sh
+scripts/deduplicate-failures.sh
+scripts/demo-observability.sh
+scripts/dependency-check.sh
+scripts/extract-session-data.py
+scripts/fix-filename-length.sh
+scripts/get-party.py
+scripts/health-check.sh
+scripts/init-project.py
+scripts/init.sh
+scripts/install-hooks.py
+scripts/integrate-proposal.py
+scripts/learning-metrics.sh
+scripts/list-proposals.sh
+scripts/maintenance.py
+scripts/migrate_add_plans.py
+scripts/migrate_add_project_path.py
+scripts/migrate_db.py
+scripts/patch-observability.sh
+scripts/promote-golden-rule.py
+scripts/promote-heuristic.py
+scripts/query-metrics.sh
+scripts/record-decision.sh
+scripts/record-failure.sh
+scripts/record-heuristic.py
+scripts/record-heuristic.sh
+scripts/record-plan.py
+scripts/record-postmortem.py
+scripts/record-violation.sh
+scripts/restore-from-git.sh
+scripts/restore.sh
+scripts/review-fraud.sh
+scripts/review-proposal.sh
+scripts/rotate-logs.sh
+scripts/run-swarm.py
+scripts/run-workflow.py
+scripts/seed_golden_rules.py
+scripts/self-test.sh
+scripts/setup-automated-backups.sh
+scripts/spawn-model.py
+scripts/start-experiment.sh
+scripts/start-watcher.sh
+scripts/suggest-heuristics.sh
+scripts/summarize-session.py
+scripts/sync-db-markdown.sh
+scripts/sync-golden-rules.py
+scripts/sync-golden-rules.sh
+scripts/test-all-recovery-scenarios.sh
+scripts/test-recovery-simple.sh
+scripts/uninstall.sh
+scripts/validate-heuristic.py
+scripts/verify-backup.sh
+scripts/verify-enforcement.py
+scripts/verify-hooks.py
+scripts/verify-observability.sh
+src/elf_paths.py
+src/agents/parties.yaml
+src/agents/architect/personality.md
+src/agents/creative/personality.md
+src/agents/learning-extractor/PROMPT.md
+src/agents/learning-extractor/run_extractor.py
+src/agents/researcher/personality.md
+src/agents/skeptic/personality.md
+src/conductor/SECURITY.md
+src/conductor/SECURITY_AUDIT_2025-12-10.md
+src/conductor/conductor.py
+src/conductor/executor.py
+src/conductor/query_conductor.py
+src/conductor/replay.py
+src/conductor/schema.sql
+src/conductor/validation.py
+src/conductor/examples/validation_demo.py
+src/conductor/tests/test_integration.py
+src/conductor/tests/test_validation.py
+src/emergent_learning_framework.egg-info/PKG-INFO
+src/emergent_learning_framework.egg-info/SOURCES.txt
+src/emergent_learning_framework.egg-info/dependency_links.txt
+src/emergent_learning_framework.egg-info/requires.txt
+src/emergent_learning_framework.egg-info/top_level.txt
+src/hooks/dashboard/note_injection_hook.py
+src/hooks/learning-loop/ADVISORY_VERIFICATION.md
+src/hooks/learning-loop/BUG_FIX_REPORT_B4.md
+src/hooks/learning-loop/COMMENT_FILTER_FIX.md
+src/hooks/learning-loop/COMPLEXITY_SCORER_TEST_REPORT.md
+src/hooks/learning-loop/COMPLEXITY_SCORING.md
+src/hooks/learning-loop/EDGE_CASE_TEST_RESULTS.md
+src/hooks/learning-loop/FINAL_DEMO.txt
+src/hooks/learning-loop/PHASE4_AUDIT_REPORT.md
+src/hooks/learning-loop/PHASE4_EDGE_CASE_REPORT.md
+src/hooks/learning-loop/PHASE4_INTEGRATION_TEST_REPORT.md
+src/hooks/learning-loop/README.md
+src/hooks/learning-loop/RUN_TESTS.md
+src/hooks/learning-loop/SECRET_DETECTION_ENHANCEMENT.md
+src/hooks/learning-loop/TASK_COMPLETE.md
+src/hooks/learning-loop/TRAIL_DEBUG_GUIDE.md
+src/hooks/learning-loop/analyze_patterns.py
+src/hooks/learning-loop/post_tool_learning.py
+src/hooks/learning-loop/pre_tool_learning.py
+src/hooks/learning-loop/security_patterns.py
+src/hooks/learning-loop/test_advisory.py
+src/hooks/learning-loop/test_advisory_comments.py
+src/hooks/learning-loop/test_advisoryverifier_integration.py
+src/hooks/learning-loop/test_comment_filter.py
+src/hooks/learning-loop/test_comprehensive_security.py
+src/hooks/learning-loop/test_edge_cases_phase4.py
+src/hooks/learning-loop/test_enhanced_patterns.py
+src/hooks/learning-loop/test_integration_phase4.py
+src/hooks/learning-loop/test_new_categories.py
+src/hooks/learning-loop/test_trail_laying.py
+src/hooks/learning-loop/trail_helper.py
+src/hooks/learning-loop/user_prompt_inject_context.py
+src/hooks/talkinhead/ivy_event_hook.py
+src/hooks/talkinhead/stop_hook.py
+src/observe/__init__.py
+src/observe/__main__.py
+src/observe/elf_distill.py
+src/observe/elf_observe.py
+src/query/ARCHITECTURE.md
+src/query/BEFORE_AFTER_EXAMPLE.md
+src/query/ENHANCEMENTS_10_10.md
+src/query/ENHANCEMENT_SUMMARY.md
+src/query/FINAL_SUMMARY.txt
+src/query/IMPLEMENTATION_REPORT.md
+src/query/IMPROVEMENTS_APPLIED.md
+src/query/MIGRATION.md
+src/query/MISSION_REPORT_I2.md
+src/query/OPUS_AGENT_I_REPORT.md
+src/query/QUICK_REFERENCE.md
+src/query/QUICK_REFERENCE.txt
+src/query/README_OPUS_AGENT_I.md
+src/query/__init__.py
+src/query/__main__.py
+src/query/agent_config.py
+src/query/checkin.py
+src/query/checkout.py
+src/query/cli.py
+src/query/config_loader.py
+src/query/context.py
+src/query/core.py
+src/query/dashboard.py
+src/query/db_fixes.sql
+src/query/demo.sh
+src/query/exceptions.py
+src/query/formatters.py
+src/query/fraud_detector.py
+src/query/fraud_outcomes.py
+src/query/fraud_review.py
+src/query/frontmatter.py
+src/query/lifecycle_manager.py
+src/query/meta_observer.py
+src/query/migrations.py
+src/query/model_detection.py
+src/query/models.py
+src/query/plan_postmortem.py
+src/query/project.py
+src/query/project_context.py
+src/query/proposal_queries.py
+src/query/query.py
+src/query/rag_query.py
+src/query/ralph_orchestrator.py
+src/query/ralph_orchestrator.py.archive
+src/query/repair_database.py
+src/query/session_integration.py
+src/query/setup.py
+src/query/test_agent_config.py
+src/query/test_enhancements.py
+src/query/test_improvements.py
+src/query/test_query.py
+src/query/test_regression.py
+src/query/threshold_tuner.py
+src/query/utils.py
+src/query/validators.py
+src/query/verify_10_10.sh
+src/query/workflow_engine.py
+src/query/migrations/007_ensure_all_core_tables.sql
+src/query/migrations/008_fix_spike_reports_columns.sql
+src/query/migrations/009_conductor_workflow_tables.sql
+src/query/migrations/010_add_patterns_table.sql
+src/query/migrations/011_add_times_consulted_column.sql
+src/query/migrations/012_cleanup_test_domains.sql
+src/query/queries/__init__.py
+src/query/queries/assumptions.py
+src/query/queries/base.py
+src/query/queries/decisions.py
+src/query/queries/experiments.py
+src/query/queries/heuristics.py
+src/query/queries/invariants.py
+src/query/queries/learnings.py
+src/query/queries/spikes.py
+src/query/queries/statistics.py
+src/query/queries/violations.py
+src/skills/elf-checkin/SKILL.md
+src/skills/elf-checkout/SKILL.md
+src/skills/elf-search/SKILL.md
+src/skills/elf-swarm/SKILL.md
+src/skills/loop/SKILL.md
+src/skills/prd/SKILL.md
+src/skills/ralph-loop/SKILL.md
+src/skills/story/SKILL.md
+src/watcher/AGENT_2_DELIVERABLE.md
+src/watcher/HAIKU_WATCHER_IMPLEMENTATION.md
+src/watcher/OPUS_HANDLER_SPECIFICATION.md
+src/watcher/QUICK_START.md
+src/watcher/README.md
+src/watcher/TEST_HARNESS.md
+src/watcher/__init__.py
+src/watcher/test_watcher.py
+src/watcher/watcher_loop.py
+templates/CLAUDE.md.template
+templates/checkin.txt
+templates/golden-rules.md
+templates/init_db.sql
+tests/AGENT_B2_PERFECT_SECURITY_REPORT.md
+tests/AGENT_B_FINAL_REPORT.md
+tests/CLAIM_CHAIN_TEST_REPORT.md
+tests/DEPENDENCY_GRAPH_TEST_REPORT.md
+tests/DX_ANALYSIS.md
+tests/README_SECURITY_AUDIT.md
+tests/SECURITY_AUDIT_FINAL_REPORT.md
+tests/SECURITY_QUICK_REFERENCE.md
+tests/VERIFICATION_RESULTS.md
+tests/__init__.py
+tests/advanced_security_tests.sh
+tests/conftest.py
+tests/filesystem-edge-cases-quick.sh
+tests/filesystem-edge-cases-test.sh
+tests/fix_test.sh
+tests/run_async_edge_cases.sh
+tests/run_stress_test.sh
+tests/security_audit_report.md
+tests/security_test_results.md
+tests/security_test_suite.sh
+tests/test_baseline_refresh.py
+tests/test_blackboard_v2.py
+tests/test_claim_chains.py
+tests/test_claim_chains_comprehensive.py
+tests/test_conductor_workflow.py
+tests/test_crash_recovery.py
+tests/test_database_robustness_10.sh
+tests/test_dependency_graph.py
+tests/test_destructive_edge_cases.py
+tests/test_distill.py
+tests/test_domain_elasticity.py
+tests/test_edge_cases_v2.py
+tests/test_event_log.py
+tests/test_event_log_dispatch.py
+tests/test_fraud_detection.py
+tests/test_fraud_outcomes.py
+tests/test_integration_multiagent.py
+tests/test_lifecycle_adversarial.py
+tests/test_meta_observer.py
+tests/test_observe.py
+tests/test_results_claim_chains.txt
+tests/test_sqlite_edge_cases.py
+tests/test_stress.py
+tests/test_temporal_smoothing.py
+tests/attack-sandbox/sensitive/secrets.txt
+tests/patches/APPLY_ALL_SECURITY_FIXES.sh
+tests/patches/CRITICAL_domain_traversal_fix.patch
+tests/patches/HIGH_toctou_symlink_fix.patch
+tests/patches/MEDIUM_hardlink_attack_fix.patch
+tests/patches/filesystem-edge-case-fixes.sh
+tests/sensitive/secret.txt
+tools/benchmarks/async_real_benefit.py
+tools/benchmarks/async_vs_sync.py
+tools/experiments/active/TEMPLATE/hypothesis.md
+tools/hooks/pre-commit
+tools/scripts/POWERSHELL-LSP-SETUP.md
+tools/scripts/backup-enhanced.sh
+tools/scripts/backup.sh
+tools/scripts/baseline-refresh-scheduler.py
+tools/scripts/bootstrap-recovery.sh
+tools/scripts/ceo-inbox-status.py
+tools/scripts/check-backup-health.sh
+tools/scripts/check-invariants.py
+tools/scripts/check-invariants.sh
+tools/scripts/checkin.sh
+tools/scripts/create-wiki.py
+tools/scripts/dashboard-simple.sh
+tools/scripts/deduplicate-failures.sh
+tools/scripts/demo-observability.sh
+tools/scripts/dependency-check.sh
+tools/scripts/fix-filename-length.sh
+tools/scripts/get-party.py
+tools/scripts/health-check.sh
+tools/scripts/init-project.py
+tools/scripts/init-ralph.sh
+tools/scripts/init.ps1
+tools/scripts/init.sh
+tools/scripts/install-hooks.py
+tools/scripts/integrate-proposal.py
+tools/scripts/learning-metrics.sh
+tools/scripts/list-proposals.sh
+tools/scripts/migrate-threshold-tuning.sql
+tools/scripts/migrate_add_plans.py
+tools/scripts/migrate_add_project_path.py
+tools/scripts/migrate_db.py
+tools/scripts/patch-observability.sh
+tools/scripts/prd.sh
+tools/scripts/promote-golden-rule.py
+tools/scripts/promote-heuristic.py
+tools/scripts/query-metrics.sh
+tools/scripts/ralph.sh
+tools/scripts/record-decision.sh
+tools/scripts/record-failure.ps1
+tools/scripts/record-failure.sh
+tools/scripts/record-heuristic.ps1
+tools/scripts/record-heuristic.py
+tools/scripts/record-heuristic.sh
+tools/scripts/record-plan.py
+tools/scripts/record-postmortem.py
+tools/scripts/record-violation.sh
+tools/scripts/restore-from-git.sh
+tools/scripts/restore.sh
+tools/scripts/review-fraud.sh
+tools/scripts/review-proposal.sh
+tools/scripts/rotate-logs.sh
+tools/scripts/run-swarm.py
+tools/scripts/run-workflow.py
+tools/scripts/self-test.sh
+tools/scripts/setup-automated-backups.sh
+tools/scripts/spawn-model.py
+tools/scripts/start-experiment.ps1
+tools/scripts/start-experiment.sh
+tools/scripts/start-powershell-lsp.ps1
+tools/scripts/start-watcher.sh
+tools/scripts/story.sh
+tools/scripts/suggest-heuristics.sh
+tools/scripts/summarize-session.py
+tools/scripts/sync-db-markdown.sh
+tools/scripts/sync-golden-rules.sh
+tools/scripts/test-all-recovery-scenarios.sh
+tools/scripts/test-recovery-simple.sh
+tools/scripts/uninstall.sh
+tools/scripts/verify-backup.sh
+tools/scripts/verify-enforcement.py
+tools/scripts/verify-observability.sh
+tools/scripts/lib/alerts.sh
+tools/scripts/lib/concurrency.sh.backup_before_10_10
+tools/scripts/lib/logging.sh
+tools/scripts/lib/metrics.sh
+tools/scripts/migrations/add_session_summaries.sql
+tools/setup/README.md
+tools/setup/install-agents.sh
+tools/setup/install-ralph-hook.sh
+tools/setup/install.ps1
+tools/setup/install.sh
+tools/setup/update.ps1
+tools/setup/update.sh
+tools/setup/commands/checkin.md
+tools/setup/commands/checkpoint.md
+tools/setup/commands/search.md
+tools/setup/commands/session-search.py
+tools/setup/commands/swarm.md
+tools/setup/git-hooks/pre-commit
+workflows/deep-research/workflow.yaml
+workflows/deep-research/steps/step-01-scope.md
+workflows/deep-research/steps/step-02-gather.md
+workflows/deep-research/steps/step-03-analyze.md
+workflows/deep-research/steps/step-04-synthesize.md
+workflows/deep-research/steps/step-05-document.md

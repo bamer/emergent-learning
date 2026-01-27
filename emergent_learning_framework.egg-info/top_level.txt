@@ -1,0 +1,7 @@
+agents
+conductor
+hooks
+observe
+query
+skills
+watcher

@@ -1,0 +1,19 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Beam -->
+  <path d="M12 20L8 32H24L20 20" fill="#06B6D4" fill-opacity="0.4"/>
+  <path d="M14 20L12 32H20L18 20" fill="#22D3EE" fill-opacity="0.6"/>
+  
+  <!-- Metallic Ring -->
+  <ellipse cx="16" cy="20" rx="12" ry="4" fill="#1E293B" stroke="#38BDF8" stroke-width="1.5"/>
+  
+  <!-- Cockpit Dome -->
+  <path d="M16 8C19.3137 8 22 10.6863 22 14C22 17.3137 19.3137 18 16 18C12.6863 18 10 17.3137 10 14C10 10.6863 12.6863 8 16 8Z" fill="#7DD3FC" fill-opacity="0.8" stroke="#0EA5E9" stroke-width="1"/>
+  
+  <!-- Active Lights -->
+  <circle cx="8" cy="20" r="1.5" fill="#EC4899"/>
+  <circle cx="24" cy="20" r="1.5" fill="#EC4899"/>
+  <circle cx="16" cy="22" r="1.5" fill="#EC4899"/>
+  
+  <!-- Core Energy (Brighter) -->
+  <circle cx="16" cy="14" r="4" fill="#FFFFFF"/>
+</svg>
