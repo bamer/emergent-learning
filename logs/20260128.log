@@ -1,0 +1,9 @@
+[2026-01-28 01:12:28,900] [INFO] [record-heuristic] Pre-flight checks passed
+[2026-01-28 01:12:34,114] [INFO] [record-heuristic] Pre-flight checks passed
+[2026-01-28 01:12:34,118] [INFO] [record-heuristic] Script started
+[2026-01-28 01:12:34,118] [INFO] [record-heuristic] Running in non-interactive mode
+[2026-01-28 01:12:34,118] [INFO] [record-heuristic] Recording heuristic: Swarm mode requires flat context protocol - agents write files, return only paths (domain: swarm, confidence: 0.8)
+[2026-01-28 01:12:34,123] [INFO] [record-heuristic] Database record created (ID: 2)
+[2026-01-28 01:12:34,124] [INFO] [record-heuristic] Created new domain file: /home/bamer/.opencode/emergent-learning/memory/heuristics/swarm.md
+[2026-01-28 01:12:34,124] [INFO] [record-heuristic] Appended heuristic to: /home/bamer/.opencode/emergent-learning/memory/heuristics/swarm.md
+[2026-01-28 01:12:34,124] [INFO] [record-heuristic] Heuristic recorded successfully: Swarm mode requires flat context protocol - agents write files, return only paths

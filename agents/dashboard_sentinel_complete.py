@@ -56,6 +56,307 @@ class AISentinel:
         self.content_categories = {}
         self.communication_context = {}
 
+        # Initialize ELF Heuristic Manager
+        try:
+            sys.path.append("/home/bamer/.opencode/emergent-learning")
+            from agents.elf_heuristic_discovery import ELFHeuristicManager
+
+            self.elf_manager = ELFHeuristicManager(self.db_path)
+            self.elf_learning_enabled = True
+            self.interaction_history = []
+        except ImportError as e:
+            logger.warning(f"ELF Heuristic Manager not available: {e}")
+            self.elf_learning_enabled = False
+
+    def record_learning(
+        self,
+        title: str,
+        description: str,
+        learning_type: str,
+        domain: Optional[str] = None,
+        context: Optional[str] = None,
+        tags: Optional[str] = None,
+    ) -> bool:
+        """Record a learning entry via the API."""
+        try:
+            learning_data = {
+                "title": title,
+                "description": description,
+                "type": learning_type,
+                "domain": domain,
+                "context": context,
+                "tags": tags,
+            }
+
+            response = requests.post(
+                f"{self.backend_url}/api/learnings", json=learning_data, timeout=10
+            )
+
+            if response.status_code == 200:
+                logger.info(f"✅ Learning recorded: {title}")
+                return True
+            else:
+                logger.error(f"❌ Failed to record learning: {response.status_code}")
+                return False
+
+        except Exception as e:
+            logger.error(f"❌ Error recording learning: {e}")
+            return False
+
+    def create_heuristic(
+        self,
+        rule: str,
+        explanation: str,
+        domain: Optional[str] = None,
+        confidence: float = 0.5,
+        is_golden: bool = False,
+    ) -> bool:
+        """Create a heuristic entry via the API."""
+        try:
+            heuristic_data = {
+                "rule": rule,
+                "explanation": explanation,
+                "domain": domain,
+                "confidence": confidence,
+                "is_golden": is_golden,
+            }
+
+            response = requests.post(
+                f"{self.backend_url}/api/heuristics", json=heuristic_data, timeout=10
+            )
+
+            if response.status_code == 200:
+                logger.info(f"✅ Heuristic created: {rule[:50]}...")
+                return True
+            else:
+                logger.error(f"❌ Failed to create heuristic: {response.status_code}")
+                return False
+
+        except Exception as e:
+            logger.error(f"❌ Error creating heuristic: {e}")
+            return False
+
+    def generate_spike_report(
+        self,
+        title: str,
+        topic: str,
+        question: str,
+        findings: str,
+        time_invested: int = 60,
+        domain: Optional[str] = None,
+        tags: Optional[str] = None,
+        gotchas: Optional[str] = None,
+    ) -> bool:
+        """Generate a spike report via the API."""
+        try:
+            spike_data = {
+                "title": title,
+                "topic": topic,
+                "question": question,
+                "findings": findings,
+                "time_invested_minutes": time_invested,
+                "domain": domain,
+                "tags": tags,
+                "gotchas": gotchas,
+            }
+
+            response = requests.post(
+                f"{self.backend_url}/api/spike-reports", json=spike_data, timeout=10
+            )
+
+            if response.status_code == 200:
+                logger.info(f"✅ Spike report generated: {title}")
+                return True
+            else:
+                logger.error(
+                    f"❌ Failed to generate spike report: {response.status_code}"
+                )
+                return False
+
+        except Exception as e:
+            logger.error(f"❌ Error generating spike report: {e}")
+            return False
+
+    def record_interaction(
+        self, interaction_type: str, success: bool, action_sequence: str = ""
+    ):
+        """Record user interaction for ELF learning."""
+        if self.elf_learning_enabled:
+            self.interaction_history.append(
+                {
+                    "type": interaction_type,
+                    "success": success,
+                    "action_sequence": action_sequence,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
+
+            # Keep last 100 interactions
+            if len(self.interaction_history) > 100:
+                self.interaction_history = self.interaction_history[-100:]
+
+    def run_elf_learning_cycle(self, metrics: Dict[str, Any]) -> List[str]:
+        """Run ELF learning cycle if enabled."""
+        learning_actions = []
+
+        if not self.elf_learning_enabled:
+            return learning_actions
+
+        try:
+            # Discover patterns from interactions
+            patterns = self.elf_manager.discover_patterns_from_interactions(
+                self.interaction_history
+            )
+
+            # Validate with ELF
+            validation = self.elf_manager.validate_with_elf_query(patterns)
+
+            # Promote eligible heuristics
+            promoted = 0
+            for pattern in patterns:
+                if self.elf_manager._meets_promotion_criteria(pattern):
+                    if self.elf_manager.promote_to_golden_rule(pattern):
+                        promoted += 1
+                        learning_actions.append(
+                            f"Promoted heuristic to golden rule: {pattern.get('pattern', 'Unknown')}"
+                        )
+
+            # Get ELF recommendations
+            recommendations = self.elf_manager.get_elf_recommendations()
+            if recommendations:
+                learning_actions.extend(
+                    [f"ELF Recommendation: {rec}" for rec in recommendations]
+                )
+
+            if promoted > 0:
+                logger.info(
+                    f"🧠 ELF Learning: Promoted {promoted} heuristics to golden rules"
+                )
+
+        except Exception as e:
+            logger.error(f"ELF learning cycle failed: {e}")
+
+        return learning_actions
+
+    def discover_patterns(self, metrics: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Discover patterns in metrics and suggest automatic learning creation."""
+        patterns = []
+
+        # Activity patterns
+        activity_score = metrics.get("activity", {}).get("activity_score", 0)
+        if activity_score > 10:
+            patterns.append(
+                {
+                    "type": "learning",
+                    "title": "High Productivity Pattern Detected",
+                    "description": f"Detected high activity score of {activity_score}. User is highly productive in current conditions.",
+                    "learning_type": "success",
+                    "domain": "productivity",
+                    "confidence": 0.8,
+                }
+            )
+        elif activity_score == 0:
+            patterns.append(
+                {
+                    "type": "learning",
+                    "title": "No Activity Pattern",
+                    "description": "No recent activity detected. May indicate engagement issues or system problems.",
+                    "learning_type": "observation",
+                    "domain": "engagement",
+                    "confidence": 0.6,
+                }
+            )
+
+        # Service reliability patterns
+        services = metrics.get("services", {})
+        if not services.get("overall", False):
+            patterns.append(
+                {
+                    "type": "learning",
+                    "title": "Service Reliability Issue",
+                    "description": f"Service health compromised. Frontend: {services.get('frontend')}, Backend: {services.get('backend')}",
+                    "learning_type": "failure",
+                    "domain": "infrastructure",
+                    "confidence": 0.9,
+                }
+            )
+
+        # Data growth patterns
+        total_items = metrics.get("data", {}).get("total_items", 0)
+        if total_items > 100:
+            patterns.append(
+                {
+                    "type": "spike_report",
+                    "title": "Database Scale Analysis",
+                    "topic": "database",
+                    "question": f"What optimization strategies are needed for {total_items}+ knowledge items?",
+                    "findings": f"Database has grown to {total_items} items. Performance optimization and archiving strategies should be considered.",
+                    "time_invested": 30,
+                    "domain": "infrastructure",
+                    "confidence": 0.7,
+                }
+            )
+
+        # Content quality patterns
+        quality_score = metrics.get("quality", {}).get("quality_score", 0)
+        if quality_score < 0.5:
+            patterns.append(
+                {
+                    "type": "heuristic",
+                    "rule": "Low quality knowledge indicates need for validation processes",
+                    "explanation": f"Current quality score is {quality_score:.2%}. Implement validation mechanisms to improve knowledge quality.",
+                    "domain": "quality",
+                    "confidence": 0.8,
+                }
+            )
+
+        return patterns
+
+    def auto_generate_knowledge(self, metrics: Dict[str, Any]) -> int:
+        """Automatically generate knowledge entries based on patterns."""
+        patterns = self.discover_patterns(metrics)
+        generated = 0
+
+        for pattern in patterns:
+            if pattern["type"] == "learning":
+                success = self.record_learning(
+                    title=pattern["title"],
+                    description=pattern["description"],
+                    learning_type=pattern["learning_type"],
+                    domain=pattern.get("domain"),
+                    context=f"Auto-generated by Dashboard Sentinel - Confidence: {pattern.get('confidence', 0):.2f}",
+                )
+                if success:
+                    generated += 1
+
+            elif pattern["type"] == "heuristic":
+                success = self.create_heuristic(
+                    rule=pattern["rule"],
+                    explanation=pattern["explanation"],
+                    domain=pattern.get("domain"),
+                    confidence=pattern.get("confidence", 0.5),
+                )
+                if success:
+                    generated += 1
+
+            elif pattern["type"] == "spike_report":
+                success = self.generate_spike_report(
+                    title=pattern["title"],
+                    topic=pattern["topic"],
+                    question=pattern["question"],
+                    findings=pattern["findings"],
+                    time_invested=pattern.get("time_invested", 60),
+                    domain=pattern.get("domain"),
+                    tags="auto-generated,monitoring",
+                )
+                if success:
+                    generated += 1
+
+        if generated > 0:
+            logger.info(f"🤖 Auto-generated {generated} knowledge entries")
+
+        return generated
+
     def collect_metrics(self) -> Dict[str, Any]:
         """Collect comprehensive dashboard metrics."""
         try:
@@ -350,10 +651,10 @@ class AISentinel:
 
         return analysis
 
-    def generate_intelligent_communication(
+    def generate_user_communication(
         self, analysis: Dict[str, Any], metrics: Dict[str, Any]
     ) -> Dict[str, str]:
-        """Generate contextual and personalized communication."""
+        """Generate contextual and personalized communication for user."""
         current_hour = datetime.now().hour
         day_of_week = datetime.now().strftime("%A")
 
@@ -604,10 +905,20 @@ class AISentinel:
         content_analysis = self.analyze_content_intelligence(metrics)
 
         # Intelligent communication
-        communication = self.generate_intelligent_communication(analysis, metrics)
+        communication = self.generate_user_communication(analysis, metrics)
 
         # Execute autonomous actions
         actions = self.execute_autonomous_actions(analysis, metrics)
+
+        # Auto-generate knowledge from patterns
+        auto_generated = self.auto_generate_knowledge(metrics)
+        if auto_generated > 0:
+            actions.append(f"Auto-generated {auto_generated} knowledge entries")
+
+        # Run ELF learning cycle
+        elf_actions = self.run_elf_learning_cycle(metrics)
+        if elf_actions:
+            actions.extend(elf_actions)
 
         # Display comprehensive results
         self.display_comprehensive_status(
@@ -806,6 +1117,7 @@ class AISentinel:
             )
 
         # Investment recommendations
+        growth_rate = ceo_insights.get("growth_metrics", {}).get("daily_growth_rate", 0)
         if growth_rate > 2:  # High growth
             ceo_insights["investment_recommendations"].append(
                 "Scale infrastructure for high-growth knowledge ecosystem"
@@ -978,24 +1290,14 @@ class AISentinel:
                 actions = self.execute_autonomous_actions(analysis, metrics)
 
                 # Display comprehensive results
-                if mode == "ceo":
-                    self.display_ceo_briefing(
-                        metrics,
-                        analysis,
-                        learning,
-                        content_analysis,
-                        communication,
-                        actions,
-                    )
-                else:
-                    self.display_comprehensive_status(
-                        metrics,
-                        analysis,
-                        learning,
-                        content_analysis,
-                        communication,
-                        actions,
-                    )
+                self.display_comprehensive_status(
+                    metrics,
+                    analysis,
+                    learning,
+                    content_analysis,
+                    communication,
+                    actions,
+                )
 
                 time.sleep(interval)
 

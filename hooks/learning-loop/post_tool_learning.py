@@ -596,8 +596,24 @@ def extract_and_record_learnings(tool_output: dict, domains: List[str]):
                     INSERT INTO heuristics (domain, rule, explanation, confidence, source_type, created_at)
                     VALUES (?, ?, 'Auto-extracted from task output', 0.5, 'auto', ?)
                 """, (domain, learning.strip(), datetime.now().isoformat()))
-
+                
+                heuristic_id = cursor.lastrowid
                 sys.stderr.write(f"AUTO-EXTRACTED HEURISTIC: {learning[:50]}...\n")
+                
+                # Record to event_chronicle (ELF standard)
+                cursor.execute("""
+                    INSERT INTO event_chronicle (timestamp, event_type, source, source_id, status, summary, data, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    datetime.now().isoformat(),
+                    'heuristic_discovery',
+                    'learning_hook',
+                    f"heuristic-{heuristic_id}",
+                    'healthy',
+                    f"[{domain}] {learning[:60]}...",
+                    json.dumps({'domain': domain, 'rule': learning.strip()[:200], 'confidence': 0.5}),
+                    datetime.now().isoformat()
+                ))
             else:
                 # Record as observation
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -609,6 +625,21 @@ def extract_and_record_learnings(tool_output: dict, domains: List[str]):
                     learning[:100],
                     learning,
                     domain,
+                    datetime.now().isoformat()
+                ))
+                
+                # Record to event_chronicle (ELF standard)
+                cursor.execute("""
+                    INSERT INTO event_chronicle (timestamp, event_type, source, source_id, status, summary, data, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    datetime.now().isoformat(),
+                    'learning_discovery',
+                    'learning_hook',
+                    f"learning-{datetime.now().timestamp()}",
+                    'healthy',
+                    f"[{domain}] {learning[:60]}...",
+                    json.dumps({'domain': domain, 'observation': learning.strip()[:200]}),
                     datetime.now().isoformat()
                 ))
 
@@ -826,15 +857,46 @@ def main():
     state["heuristics_consulted"] = []
     save_session_state(state)
 
-    # Log outcome
+    # Log outcome to metrics table (standard ELF pattern)
     conn = get_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
+            
+            # Record to metrics table
             cursor.execute("""
                 INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context)
                 VALUES ('task_outcome', ?, 1, ?, ?)
             """, (outcome, f"reason:{reason[:50]}", datetime.now().isoformat()))
+            
+            # Record to event_chronicle table (standard ELF event tracking)
+            # Map outcome to status following ELF conventions
+            status_map = {'success': 'healthy', 'failure': 'critical', 'unknown': 'warning'}
+            event_status = status_map.get(outcome, 'unknown')
+            
+            description = tool_input.get('description', 'Unknown task')[:100]
+            summary = f"Learning loop: {description} - {outcome.upper()} ({reason})"
+            
+            cursor.execute("""
+                INSERT INTO event_chronicle (timestamp, event_type, source, source_id, status, summary, data, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                datetime.now().isoformat(),
+                'learning_loop_completion',
+                'learning_hook',
+                f"task-{datetime.now().timestamp()}",
+                event_status,
+                summary,
+                json.dumps({
+                    'outcome': outcome,
+                    'reason': reason,
+                    'description': description,
+                    'heuristics_consulted': heuristics_consulted[:5],  # Limit to 5
+                    'domains_queried': domains_queried[:5],
+                }) if (heuristics_consulted or domains_queried) else None,
+                datetime.now().isoformat()
+            ))
+            
             conn.commit()
         except Exception as e:
             sys.stderr.write(f"Warning: Failed to log task outcome: {e}\n")

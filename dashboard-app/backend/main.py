@@ -105,6 +105,8 @@ from routers import (
     setup_router,
     live_router,
 )
+from routers import chronicle as chronicle_module
+chronicle_router = chronicle_module.router
 from routers.auth import init_redis
 
 # Configure logging
@@ -292,6 +294,7 @@ app.include_router(auth_router)
 app.include_router(game_router)
 app.include_router(setup_router)
 app.include_router(live_router)
+app.include_router(chronicle_router)
 
 
 # ==============================================================================
