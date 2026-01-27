@@ -7,3 +7,11 @@
 [2026-01-28 01:12:34,124] [INFO] [record-heuristic] Created new domain file: /home/bamer/.opencode/emergent-learning/memory/heuristics/swarm.md
 [2026-01-28 01:12:34,124] [INFO] [record-heuristic] Appended heuristic to: /home/bamer/.opencode/emergent-learning/memory/heuristics/swarm.md
 [2026-01-28 01:12:34,124] [INFO] [record-heuristic] Heuristic recorded successfully: Swarm mode requires flat context protocol - agents write files, return only paths
+[2026-01-28 04:26:51,794] [INFO] [record-heuristic] Pre-flight checks passed
+[2026-01-28 04:26:51,798] [INFO] [record-heuristic] Script started
+[2026-01-28 04:26:51,799] [INFO] [record-heuristic] Running in non-interactive mode
+[2026-01-28 04:26:51,799] [INFO] [record-heuristic] Recording heuristic: Database query optimization requires index analysis for tables > 10K rows (domain: performance, confidence: 0.9)
+[2026-01-28 04:26:51,805] [INFO] [record-heuristic] Database record created (ID: 3)
+[2026-01-28 04:26:51,805] [INFO] [record-heuristic] Created new domain file: /home/bamer/.opencode/emergent-learning/memory/heuristics/performance.md
+[2026-01-28 04:26:51,805] [INFO] [record-heuristic] Appended heuristic to: /home/bamer/.opencode/emergent-learning/memory/heuristics/performance.md
+[2026-01-28 04:26:51,805] [INFO] [record-heuristic] Heuristic recorded successfully: Database query optimization requires index analysis for tables > 10K rows

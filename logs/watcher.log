@@ -1,28 +1,7 @@
 🔍 Starting watcher with big-pickle (interval: 30s)
    Press Ctrl+C to stop
 
-[2026-01-28T03:48:09.480778] Starting continuous watcher (interval: 30s)
+[2026-01-28T04:13:49.446074] Starting continuous watcher (interval: 30s)
 
-[2026-01-28T03:48:09.480899] === Pass #1 ===
-[2026-01-28T03:48:09.480909] === Starting big-pickle watcher (Tier 1) ===
-Error from big-pickle: Error: big-pickle timed out (>120s). System busy or model response too slow.
-Warning: Failed to record to chronicle: no such table: event_chronicle
-Warning: Pass 1 exited with code 2
-[2026-01-28T03:50:09.570171] Sleeping 30s...
-
-[2026-01-28T03:50:39.570392] === Pass #2 ===
-[2026-01-28T03:50:39.570488] === Starting big-pickle watcher (Tier 1) ===
-Error from big-pickle: Error: big-pickle timed out (>120s). System busy or model response too slow.
-Warning: Failed to record to chronicle: no such table: event_chronicle
-Warning: Pass 2 exited with code 2
-[2026-01-28T03:52:39.652352] Sleeping 30s...
-
-[2026-01-28T03:53:09.652529] === Pass #3 ===
-[2026-01-28T03:53:09.652643] === Starting big-pickle watcher (Tier 1) ===
-Error from big-pickle: Error: big-pickle timed out (>120s). System busy or model response too slow.
-Warning: Failed to record to chronicle: no such table: event_chronicle
-Warning: Pass 3 exited with code 2
-[2026-01-28T03:55:09.808686] Sleeping 30s...
-
-[2026-01-28T03:55:39.808823] === Pass #4 ===
-[2026-01-28T03:55:39.808895] === Starting big-pickle watcher (Tier 1) ===
+[2026-01-28T04:13:49.446208] === Pass #1 ===
+[2026-01-28T04:13:49.446218] === Starting big-pickle watcher (Tier 1) ===

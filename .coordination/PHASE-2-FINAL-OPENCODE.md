@@ -10,11 +10,13 @@
 ## What Changed
 
 ### Original Problem
+
 - Sentinel created = duplicate system (overcomplicated)
 - Watcher uses Claude (costs money, you don't have)
 - Learning loop events not tracked
 
 ### The Solution
+
 **Simplest possible approach:**
 
 1. ✅ **Keep watcher_loop.py unchanged** - generates standard prompts
@@ -52,16 +54,19 @@ DASHBOARD:
 ## Files
 
 ### New Files (Minimal)
+
 - `watcher/run_with_bigpickle.py` (50 lines) - Runner for big-pickle
 - `scripts/start-watcher-bigpickle.sh` - Startup script
 - `.coordination/PHASE-2-FINAL-OPENCODE.md` - This doc
 
 ### Modified Files (0 - None!)
+
 - **watcher_loop.py** - No changes ✓
 - **event_chronicle** - Already exists ✓
 - **Learning hook** - Already integrated ✓
 
 ### Removed Files
+
 - `agents/dashboard_sentinel.py` - Was duplicate
 - `agents/sentinel_startup.py` - Was duplicate
 - `agents/sentinel_config.yaml` - Was duplicate
@@ -71,6 +76,7 @@ DASHBOARD:
 ## How It Works
 
 ### Single Pass
+
 ```bash
 ./scripts/start-watcher-bigpickle.sh --once
 
@@ -83,6 +89,7 @@ DASHBOARD:
 ```
 
 ### Continuous Loop
+
 ```bash
 ./scripts/start-watcher-bigpickle.sh                # 30s intervals
 ./scripts/start-watcher-bigpickle.sh --interval 60  # Custom interval
@@ -95,6 +102,7 @@ Repeats single pass every N seconds (Ctrl+C to stop)
 ## Events Recorded
 
 ### Watcher Events → event_chronicle
+
 ```json
 {
   "event_type": "watcher_cycle",
@@ -110,6 +118,7 @@ Repeats single pass every N seconds (Ctrl+C to stop)
 ```
 
 ### Learning Events → event_chronicle (already implemented)
+
 ```json
 {
   "event_type": "learning_loop_completion",
@@ -136,11 +145,13 @@ This implementation follows standard ELF patterns:
 ## Cost Analysis
 
 ### Before (With Claude)
+
 - Watcher: Haiku ~$0.001/check × 2,880/day = $2.88/day
 - Watcher: Opus ~$0.10/call × 10/day = $1.00/day
 - **Total: $3.88/day**
 
 ### After (With big-pickle)
+
 - Watcher: big-pickle (local, free) × unlimited = $0.00/day
 - Learning loop: existing = $0.00/day
 - **Total: $0.00/day**
@@ -152,32 +163,38 @@ This implementation follows standard ELF patterns:
 ## Usage Examples
 
 ### Start continuous monitoring
+
 ```bash
 ./scripts/start-watcher-bigpickle.sh
 ```
 
 ### Single pass (manual check)
+
 ```bash
 ./scripts/start-watcher-bigpickle.sh --once
 ```
 
 ### Run every 60 seconds
+
 ```bash
 ./scripts/start-watcher-bigpickle.sh --interval 60
 ```
 
 ### Check logs
+
 ```bash
 tail -f .coordination/watcher-log.md
 tail -f logs/launcher.log
 ```
 
 ### View events
+
 ```bash
 sqlite3 memory/index.db "SELECT * FROM event_chronicle WHERE source='watcher' ORDER BY created_at DESC LIMIT 10;"
 ```
 
 ### Query via API
+
 ```bash
 curl http://localhost:8888/api/chronicle/events?source=watcher&hours=24
 ```
@@ -199,21 +216,25 @@ curl http://localhost:8888/api/chronicle/events?source=watcher&hours=24
 ## What Each Component Does
 
 ### watcher_loop.py (Unchanged)
+
 - Gathers coordination state from `blackboard.json`
 - Generates well-structured prompts for analysis
 - Same format as before (Claude just ignored it)
 
 ### run_with_bigpickle.py (New - Minimal)
+
 - Imports `output_watcher_prompt()` from watcher_loop
 - Sends prompt to big-pickle via CLI
 - Records results to event_chronicle
 - Can run once or in loop
 
 ### Scripts
+
 - `start-watcher-bigpickle.sh` - Easy launch
 - Handles arguments (--once, --interval, --help)
 
 ### event_chronicle
+
 - Unified event stream (watcher + learning events)
 - REST API access via `/api/chronicle`
 - Perfect for dashboard visualization
@@ -223,30 +244,35 @@ curl http://localhost:8888/api/chronicle/events?source=watcher&hours=24
 ## Testing the Setup
 
 ### 1. Verify big-pickle is available
+
 ```bash
 claude --help  # Should work
 claude --model opencode/big-pickle --help  # Should show big-pickle
 ```
 
 ### 2. Run single pass
+
 ```bash
 ./scripts/start-watcher-bigpickle.sh --once
 # Should analyze coordination state and output results
 ```
 
 ### 3. Check logs
+
 ```bash
 cat .coordination/watcher-log.md
 # Should show pass result
 ```
 
 ### 4. Verify event recorded
+
 ```bash
 sqlite3 memory/index.db "SELECT * FROM event_chronicle WHERE source='watcher';"
 # Should show watcher_cycle event
 ```
 
 ### 5. Run continuous (10 seconds)
+
 ```bash
 ./scripts/start-watcher-bigpickle.sh --interval 10
 # Press Ctrl+C after a few passes
@@ -257,27 +283,35 @@ sqlite3 memory/index.db "SELECT * FROM event_chronicle WHERE source='watcher';"
 ## Troubleshooting
 
 ### "Error calling big-pickle"
+
 Check:
+
 ```bash
 which claude  # Should exist
 claude --model opencode/big-pickle --version  # Should work
 ```
 
 ### "Database error"
+
 Check event_chronicle exists:
+
 ```bash
 sqlite3 memory/index.db ".tables" | grep event_chronicle
 ```
 
 ### Watcher won't start
+
 Check Python path:
+
 ```bash
 cd /home/bamer/.opencode/emergent-learning
 python3 watcher/run_with_bigpickle.py --once
 ```
 
 ### Events not recorded
+
 Check database permissions:
+
 ```bash
 ls -la memory/index.db
 # Should be readable/writable
@@ -305,16 +339,19 @@ event_type='watcher_cycle',  # Change if needed
 ## Next Steps
 
 ### Immediate
+
 1. ✅ Run `./scripts/start-watcher-bigpickle.sh --once` to verify
 2. ✅ Check `.coordination/watcher-log.md` for output
 3. ✅ Start continuous: `./scripts/start-watcher-bigpickle.sh`
 
 ### Dashboard Integration (Phase 3)
+
 - Display watcher_cycle events on dashboard
 - Show agent status timeline
 - Alert on issues detected
 
 ### Cron/Systemd (Optional)
+
 ```bash
 # Add to crontab for 24/7 monitoring
 */5 * * * * /home/bamer/.opencode/emergent-learning/watcher/run_with_bigpickle.py --loop 30
@@ -328,23 +365,27 @@ event_type='watcher_cycle',  # Change if needed
 ## Summary
 
 ✅ **Simplest Solution**
+
 - Kept watcher_loop.py exactly as-is
 - Just wrap it with big-pickle caller
 - Add event_chronicle recording
 - Everything else works unchanged
 
 ✅ **Fully Automatic**
+
 - Can run continuously (30s intervals)
 - Can run via cron for periodic checks
 - Records all events automatically
 - API access for queries
 
 ✅ **Zero Cost**
+
 - Uses local big-pickle (free)
 - No Claude API bills
 - Same capabilities as Opus tier
 
 ✅ **Standard ELF**
+
 - Follows existing patterns
 - File-based coordination
 - Event chronicle integration

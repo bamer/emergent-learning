@@ -26,40 +26,49 @@ All three issues have been resolved through systematic Phase implementation:
 ## Root Cause Analysis
 
 ### Problem 1: EVENT_CHRONICLE Missing
+
 **Symptom**: Dashboard shows "0 RECORDS" for EVENT_CHRONICLE
 
 **Root Cause**:
+
 - Table did not exist in SQLite database
 - No event tracking infrastructure for dashboard events
 - Sentinel cycles not being persisted
 
-**Impact**: 
+**Impact**:
+
 - Zero visibility into system health over time
 - No event stream for dashboard real-time updates
 - Learning loop outcomes not tracked
 
 ### Problem 2: Dashboard Sentinel Read-Only
+
 **Symptom**: Sentinel collects metrics but never writes to database
 
 **Root Cause**:
+
 - AISentinel class had only `collect_metrics()` (SELECT)
 - No write methods like `record_to_event_chronicle()`
 - Metrics calculated but lost at cycle end
 
 **Impact**:
+
 - Sentinel cycles invisible to system
 - Monitoring data not persisted
 - No learning from monitoring patterns
 
 ### Problem 3: Learning Loop Disconnected
+
 **Symptom**: Post-tool learning hook records to learnings/heuristics tables only
 
 **Root Cause**:
+
 - Hook wrote to `learnings` and `heuristics` tables only
 - No integration with event chronicle
 - Task outcomes not visible in event timeline
 
 **Impact**:
+
 - Learning events invisible to dashboard
 - No unified event stream for visualization
 - Heuristic discoveries not tracked chronologically
@@ -71,6 +80,7 @@ All three issues have been resolved through systematic Phase implementation:
 ### Phase 1: Diagnostic & Infrastructure ✅
 
 #### 1.1 Created event_chronicle Table
+
 ```sql
 CREATE TABLE event_chronicle (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,10 +96,12 @@ CREATE TABLE event_chronicle (
 ```
 
 #### 1.2 Indexed for Performance
+
 - `idx_event_chronicle_timestamp` - Fast time-range queries
 - `idx_event_chronicle_source` - Fast filtering by source
 
 #### 1.3 Verified Write Capability
+
 - Dashboard Sentinel can record events
 - Status: ✅ Working
 
@@ -98,15 +110,18 @@ CREATE TABLE event_chronicle (
 ### Phase 2: Core System Repair ✅
 
 #### 2.1 Dashboard Sentinel Integration
+
 **File**: `agents/dashboard_sentinel.py`
 
 Added method:
+
 ```python
 def record_to_event_chronicle(self, event_type: str, status: str, summary: str, data: Dict[str, Any]):
     """Record event to event_chronicle table for dashboard visibility."""
 ```
 
 Modified `run_monitoring_cycle()` to:
+
 1. Collect metrics
 2. Analyze with AI
 3. Detect patterns
@@ -114,34 +129,41 @@ Modified `run_monitoring_cycle()` to:
 
 **Event Type**: `sentinel_cycle`
 **Data Recorded**:
+
 - Metrics (services, data, activity, quality)
 - Analysis (status, patterns, recommendations)
 - Actions taken (if any)
 
 #### 2.2 Learning Hook Integration
+
 **File**: `hooks/learning-loop/post_tool_learning.py`
 
 Three new event types:
 
 **A. Task Outcome Events**
+
 - Event Type: `learning_loop_completion`
 - Records: outcome (success/failure/unknown), reason, domains, heuristics
 - Status Mapping: success→healthy, failure→critical, unknown→warning
 
 **B. Heuristic Discovery Events**
+
 - Event Type: `heuristic_discovery`
 - Records: discovered heuristic, domain, confidence (0.5 default)
 - Status: always `healthy`
 
 **C. Learning Discovery Events**
+
 - Event Type: `learning_discovery`
 - Records: observation/learning, domain
 - Status: always `healthy`
 
 #### 2.3 API Router
+
 **File**: `dashboard-app/backend/routers/chronicle.py`
 
 Endpoints:
+
 ```
 POST   /api/chronicle/events              Create event
 GET    /api/chronicle/events              Query events with filters
@@ -150,6 +172,7 @@ GET    /api/chronicle/events/latest       Latest event by type
 ```
 
 Query Parameters:
+
 - `event_type`: Filter by type (optional)
 - `source`: Filter by source (optional)
 - `status`: Filter by status (optional)
@@ -157,9 +180,11 @@ Query Parameters:
 - `limit`: Max results (default: 100)
 
 #### 2.4 Standard Configuration
+
 **File**: `.coordination/sentinel-config.yaml`
 
 Defines:
+
 - Sentinel identity and model
 - Monitoring interval (30 seconds default)
 - Event types to track
@@ -168,11 +193,14 @@ Defines:
 - Integration points
 
 #### 2.5 Startup Scripts
+
 **Files**:
+
 - `agents/sentinel_startup.py` - Python startup module with argument parsing
 - `scripts/start-sentinel.sh` - Shell wrapper for easy launching
 
 Usage:
+
 ```bash
 # Interactive foreground
 ./scripts/start-sentinel.sh
@@ -189,6 +217,7 @@ Usage:
 ## Standard ELF Event Model
 
 ### Event Structure
+
 ```json
 {
   "id": 42,
@@ -219,6 +248,7 @@ Usage:
 | `system_alert` | (various) | Critical event | critical | System alerts |
 
 ### Status Convention (ELF Standard)
+
 - **healthy**: Normal operation, success, no issues
 - **warning**: Degraded performance, minor issues, unknown state
 - **critical**: Failure, service down, severe anomalies
@@ -272,6 +302,7 @@ TEST 9: Startup Scripts ✓
 ## Database Statistics
 
 ### Current State (Post Phase 2)
+
 ```
 Total events: 2+
 By source:
@@ -287,6 +318,7 @@ By type:
 ```
 
 ### Queries
+
 ```sql
 -- Count all events
 SELECT COUNT(*) FROM event_chronicle;
@@ -308,6 +340,7 @@ GROUP BY event_type, status;
 ## File Changes Summary
 
 ### New Files Created (6)
+
 1. `dashboard-app/backend/routers/chronicle.py` - API router (258 lines)
 2. `agents/sentinel_startup.py` - Startup module (67 lines)
 3. `.coordination/sentinel-config.yaml` - Configuration (133 lines)
@@ -316,11 +349,13 @@ GROUP BY event_type, status;
 6. `.coordination/ELF-LEARNING-LOOP-REPAIR.md` - This file
 
 ### Modified Files (2)
+
 1. `agents/dashboard_sentinel.py` - Added event recording (+40 lines)
 2. `hooks/learning-loop/post_tool_learning.py` - Added event integration (+45 lines)
 3. `dashboard-app/backend/main.py` - Registered router (+3 lines)
 
 ### Database Changes (1)
+
 1. Created `event_chronicle` table with indexes
 
 ---
@@ -383,6 +418,7 @@ GROUP BY event_type, status;
 ## Next Phase: Phase 3 - Dashboard UI Integration
 
 ### Objectives
+
 1. **Frontend Integration**
    - Display event_chronicle on dashboard
    - Real-time event stream (SSE or WebSocket)
@@ -408,6 +444,7 @@ GROUP BY event_type, status;
    - Concurrent event handling
 
 ### Success Criteria
+
 - [ ] Event_chronicle visible on dashboard
 - [ ] Real-time event updates in UI
 - [ ] Event search/filter working
@@ -422,6 +459,7 @@ GROUP BY event_type, status;
 ## Starting the System
 
 ### Manual Start (Development)
+
 ```bash
 # Terminal 1: Start Dashboard Sentinel
 ./scripts/start-sentinel.sh
@@ -434,6 +472,7 @@ curl http://localhost:8888/api/chronicle/events?hours=1&limit=10
 ```
 
 ### Automated Start (Production)
+
 ```bash
 # Add to system startup or cron:
 @reboot /home/bamer/.opencode/emergent-learning/scripts/start-sentinel.sh --background --interval 30
@@ -443,6 +482,7 @@ curl http://localhost:8888/api/chronicle/events?hours=1&limit=10
 ```
 
 ### Monitor Dashboard Events
+
 ```bash
 # Via API
 curl 'http://localhost:8888/api/chronicle/events?source=dashboard_sentinel&status=critical'
@@ -457,6 +497,7 @@ sqlite3 ~/.claude/emergent-learning/memory/index.db \
 ## Known Issues & Limitations
 
 ### Phase 2 Limitations (By Design)
+
 1. **No Real-Time Streaming** - Events available via polling API (Phase 3)
 2. **No Dashboard UI** - Events visible via API only (Phase 3)
 3. **No Event Archival** - All events retained indefinitely (Phase 3)
@@ -464,6 +505,7 @@ sqlite3 ~/.claude/emergent-learning/memory/index.db \
 5. **No Performance Alerts** - Events recorded only, not alerted (Phase 3)
 
 ### Technical Notes
+
 - Event data field limited by SQLite text blob size (~1GB)
 - No automatic database vacuum (manual maintenance recommended)
 - Single-threaded monitoring (sufficient for current load)
@@ -474,24 +516,28 @@ sqlite3 ~/.claude/emergent-learning/memory/index.db \
 ## Recommendations
 
 ### Immediate (Post Phase 2)
+
 1. ✅ Start Dashboard Sentinel: `./scripts/start-sentinel.sh --background`
 2. Monitor initial event_chronicle growth
 3. Verify learning loop integration with first task
 4. Check API endpoints responding correctly
 
 ### Short-term (Pre Phase 3)
+
 1. Plan dashboard UI design for event visualization
 2. Define event archival policy (retention window)
 3. Test API with high-volume event generation
 4. Plan monitoring/alerting strategy
 
 ### Medium-term (Phase 3)
+
 1. Implement dashboard frontend
 2. Add real-time event streaming
 3. Implement event cleanup/archival
 4. Performance optimization and tuning
 
 ### Long-term (Future)
+
 1. Consider PostgreSQL migration (optional, for scale)
 2. Add event replication/backup
 3. Implement advanced analytics
@@ -517,6 +563,7 @@ sqlite3 ~/.claude/emergent-learning/memory/index.db \
 ## Conclusion
 
 The ELF Learning Loop has been successfully repaired through systematic implementation of:
+
 1. ✅ Event Chronicle infrastructure
 2. ✅ Dashboard Sentinel write integration
 3. ✅ Learning Hook event tracking

@@ -30,3 +30,10 @@
 2026-01-28T03:48:09.480814 | Watcher started in continuous mode (interval: 30s)
 2026-01-28T03:50:21.760 | STATUS: complete | NOTES: No active coordination state - swarm appears complete or never started
 2026-01-28T03:53:09.000000 | STATUS: complete | NOTES: No active coordination state - swarm appears complete or never started
+2026-01-28T04:04:37.051880 | Watcher started in continuous mode (interval: 30s)
+2026-01-28T04:04:44Z | STATUS: stale | NOTES: Restarted 2 stale agents (agent-1, agent-2) - heartbeats 14+ minutes old
+2026-01-27T21:08:15Z | STATUS: stale | NOTES: Agents marked 'restarting' but no heartbeat updates for 14+ minutes - need intervention
+2026-01-28T04:11:37.334832 | Stop signal detected - exiting
+2026-01-28T04:13:49.446107 | Watcher started in continuous mode (interval: 30s)
+2026-01-27T21:13:56Z | STATUS: error | NOTES: Both agents were stale and failed - marked for restart
+2026-01-28T21:22:30Z | STATUS: cleared | NOTES: Removed stale agents from blackboard - swarm now idle

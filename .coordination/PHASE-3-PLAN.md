@@ -11,6 +11,7 @@
 Phase 3 will display watcher & learning loop events on the dashboard in real-time.
 
 Current State:
+
 - ✅ event_chronicle table exists with events
 - ✅ /api/chronicle endpoints ready
 - ✅ Watcher writes events automatically
@@ -23,6 +24,7 @@ Goal: Show unified event stream (watcher + learning events) on dashboard
 ## What to Display
 
 ### 1. Event Timeline (New Tab)
+
 Display events in chronological order:
 
 ```
@@ -40,6 +42,7 @@ Display events in chronological order:
 ```
 
 ### 2. Event Statistics
+
 ```
 Last 24h:
 - Watcher cycles: 2,880 (every 30s)
@@ -50,13 +53,16 @@ Last 24h:
 ```
 
 ### 3. Event Filters
+
 - By event_type (watcher_cycle, learning_loop_completion, etc.)
 - By status (healthy, warning, critical)
 - By source (watcher, learning_hook)
 - By time range (last hour, last 24h, last 7d)
 
 ### 4. Event Details
+
 Click event to see:
+
 - Full timestamp
 - Complete status
 - Data/metadata (JSON)
@@ -67,6 +73,7 @@ Click event to see:
 ## Architecture
 
 ### Backend (Already Done ✅)
+
 - `dashboard-app/backend/routers/chronicle.py` exists
 - Endpoints:
   - `GET /api/chronicle/events` - Query events
@@ -74,7 +81,9 @@ Click event to see:
   - `GET /api/chronicle/events/latest` - Latest
 
 ### Frontend (To Build)
+
 New components:
+
 - `EventTimelinePanel.tsx` - Main timeline view
 - `EventFilters.tsx` - Filter controls
 - `EventDetailsModal.tsx` - Event details popup
@@ -86,6 +95,7 @@ New components:
 ## Implementation Steps
 
 ### Step 1: Create Event Hook (useEvents)
+
 ```typescript
 // frontend/src/hooks/useEvents.ts
 export function useEvents() {
@@ -108,6 +118,7 @@ export function useEvents() {
 ```
 
 ### Step 2: Create Timeline Component
+
 ```typescript
 // frontend/src/components/EventTimelinePanel.tsx
 export function EventTimelinePanel() {
@@ -123,7 +134,9 @@ export function EventTimelinePanel() {
 ```
 
 ### Step 3: Add Tab to Dashboard
+
 In `App.tsx`:
+
 ```typescript
 // Add to activeTab options
 const [activeTab, setActiveTab] = useState<'...' | 'events' | '...'>()
@@ -136,6 +149,7 @@ const [activeTab, setActiveTab] = useState<'...' | 'events' | '...'>()
 ```
 
 ### Step 4: Test Integration
+
 - Verify events display
 - Test filters
 - Check real-time updates
@@ -148,18 +162,21 @@ const [activeTab, setActiveTab] = useState<'...' | 'events' | '...'>()
 For Phase 3, focus on:
 
 ✅ **Must Have**
+
 - Event timeline display (simple table/list)
 - Basic filters (type, status)
 - Event count statistics
 - Last updated timestamp
 
 ⚠️ **Nice to Have**
+
 - Event details modal
 - Time range picker
 - Search/grep
 - Export to CSV
 
 ❌ **Skip (Phase 4+)**
+
 - Real-time updates via WebSocket
 - Advanced visualizations
 - Performance optimizations
@@ -170,11 +187,13 @@ For Phase 3, focus on:
 ## API Usage
 
 ### Fetch Recent Events
+
 ```bash
 GET /api/chronicle/events?hours=24&limit=100
 ```
 
 Response:
+
 ```json
 [
   {
@@ -192,16 +211,19 @@ Response:
 ```
 
 ### Filter by Type
+
 ```bash
 GET /api/chronicle/events?event_type=learning_loop_completion&hours=24
 ```
 
 ### Get Statistics
+
 ```bash
 GET /api/chronicle/events/stats?hours=24
 ```
 
 Response:
+
 ```json
 {
   "query_hours": 24,
@@ -235,6 +257,7 @@ dashboard-app/frontend/src/
 ## Code Samples
 
 ### useEvents Hook
+
 ```typescript
 import { useState, useEffect } from 'react'
 import { useAPI } from './useAPI'
@@ -306,6 +329,7 @@ export function useEvents() {
 ```
 
 ### EventTimelinePanel Component
+
 ```typescript
 import React from 'react'
 import { useEvents } from '../hooks/useEvents'
@@ -394,12 +418,14 @@ function EventRow({ event }: { event: Event }) {
 ## Testing
 
 ### Manual Testing
+
 1. Start watcher: `./scripts/start-watcher-bigpickle.sh --interval 10`
 2. Run a learning task (to generate learning_loop_completion events)
 3. Check dashboard "Events" tab
 4. Verify events appear in real-time
 
 ### Expected Events
+
 ```
 Watcher cycles: every 30 seconds
 Learning events: when tasks complete
@@ -407,6 +433,7 @@ Stats: aggregated counts
 ```
 
 ### Debugging
+
 ```bash
 # Check events via API
 curl http://localhost:8888/api/chronicle/events?hours=1
@@ -420,17 +447,20 @@ sqlite3 memory/index.db "SELECT * FROM event_chronicle ORDER BY id DESC LIMIT 10
 ## Priorities for MVP
 
 **Must Implement:**
+
 1. ✅ Event timeline display (table/list)
 2. ✅ Basic statistics
 3. ✅ Status indicator (color coded)
 4. ✅ Time range filter
 
 **Nice to Have:**
+
 1. ⚠️ Event type filter
 2. ⚠️ Source filter
 3. ⚠️ Click for details
 
 **Skip for now:**
+
 1. ❌ Real-time WebSocket updates
 2. ❌ Advanced visualizations
 3. ❌ Export/download
@@ -441,6 +471,7 @@ sqlite3 memory/index.db "SELECT * FROM event_chronicle ORDER BY id DESC LIMIT 10
 ## Success Criteria
 
 Phase 3 is complete when:
+
 - ✅ Dashboard displays event_chronicle events
 - ✅ Events update as watcher/learning hooks run
 - ✅ Basic filters work (time range, type)
@@ -452,6 +483,7 @@ Phase 3 is complete when:
 ## Ready to Start?
 
 Let me know and I'll:
+
 1. Create the useEvents hook
 2. Create EventTimelinePanel component
 3. Integrate into App.tsx
