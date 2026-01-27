@@ -145,7 +145,8 @@ fi
 # START WATCHER (NEW: Automated watcher startup)
 echo ""
 echo "[Starting] ELF Watcher (big-pickle 2-tier monitoring)..."
-cd "$ELF_DIR" && ./scripts/start-watcher-bigpickle.sh --background &
+# Run watcher in background with nohup to detach from terminal
+cd "$ELF_DIR" && nohup ./scripts/start-watcher-bigpickle.sh --interval 30 > logs/watcher.log 2>&1 &
 WATCHER_PID=$!
 
 if [ $? -eq 0 ]; then
@@ -155,6 +156,7 @@ if [ $? -eq 0 ]; then
     echo "   • Make decisions (Tier 2 with big-pickle)"
     echo "   • Record events to event_chronicle"
     echo "   • Log to .coordination/watcher-log.md"
+    echo "[Log] Watcher output: logs/watcher.log"
 else
     echo "[Warning] Failed to start watcher - dashboard will continue"
 fi

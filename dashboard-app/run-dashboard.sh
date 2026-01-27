@@ -179,10 +179,12 @@ if [ "$TALKINHEAD_RUNNING" = false ]; then
         # START WATCHER (NEW: Automated watcher startup after backend is ready)
             echo ""
             echo "[Starting] ELF Watcher (big-pickle 2-tier monitoring)..."
-            cd "$ELF_DIR" && ./scripts/start-watcher-bigpickle.sh --background &
+            # Run watcher in background with nohup to detach from terminal
+            cd "$ELF_DIR" && nohup ./scripts/start-watcher-bigpickle.sh --interval 30 > logs/watcher.log 2>&1 &
             WATCHER_PID=$!
             if [ $? -eq 0 ]; then
                 echo "[OK] Watcher started (PID $WATCHER_PID) - monitoring active"
+                echo "[Log] Watcher output: logs/watcher.log"
             else
                 echo "[Warning] Failed to start watcher - dashboard will continue"
             fi
