@@ -1,0 +1,133 @@
+################################################################################
+# Dashboard Sentinel Configuration - Phase 2 Standard
+# 
+# This configuration file defines the standard ELF behavior for the Dashboard
+# Sentinel autonomous monitoring agent.
+################################################################################
+
+# Sentinel Identity
+sentinel:
+  name: "Dashboard Sentinel - ELF Standard"
+  model: "haiku"  # Using Claude Haiku for efficient monitoring
+  agent_id: "sentinel-main"
+
+# Monitoring Configuration
+monitoring:
+  enabled: true
+  interval_seconds: 30  # Run monitoring cycle every 30 seconds
+  continuous_mode: true
+  
+# Event Chronicle Integration (ELF Standard)
+event_chronicle:
+  enabled: true
+  record_sentinel_cycles: true
+  record_learning_events: true
+  record_heuristic_discoveries: true
+  record_trail_operations: true
+  
+  # Event Types Tracked
+  event_types:
+    - sentinel_cycle: "Regular monitoring cycles"
+    - learning_loop_completion: "Learning hook completion events"
+    - heuristic_discovery: "Auto-discovered heuristics"
+    - learning_discovery: "Auto-discovered learnings/observations"
+    - trail_operation: "File operation hotspot trails"
+    - system_alert: "Critical system alerts"
+
+# Database Configuration
+database:
+  path: "~/.claude/emergent-learning/memory/index.db"
+  tables:
+    - event_chronicle: "System event tracking"
+    - metrics: "Performance metrics"
+    - learnings: "Knowledge base entries"
+    - heuristics: "Active heuristics and rules"
+    - trails: "Hotspot trails for code navigation"
+
+# Metrics Collection (ELF Standard)
+metrics:
+  collect_services: true
+  collect_data_inventory: true
+  collect_recent_activity: true
+  collect_quality_metrics: true
+  collect_patterns: true
+
+# Analysis Configuration
+analysis:
+  use_ai: true  # Use Claude Haiku for analysis
+  complexity_scoring: true
+  pattern_detection: true
+  adaptive_learning: true
+  
+  # Thresholds for alerts
+  thresholds:
+    critical_inactivity_hours: 2
+    warning_inactivity_hours: 1
+    high_data_growth_per_hour: 100
+    low_confidence_heuristics: 0.5
+
+# Autonomous Actions
+autonomous_actions:
+  enabled: true
+  
+  # Action triggers and responses
+  triggers:
+    - name: "service_failure"
+      severity: "critical"
+      action: "alert_and_log"
+      
+    - name: "zero_activity"
+      severity: "warning"
+      action: "log_and_monitor"
+      
+    - name: "learning_spike"
+      severity: "info"
+      action: "record_and_celebrate"
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  file: "~/.opencode/emergent-learning/logs/sentinel.log"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+  # Keep last N days of logs
+  retention_days: 30
+
+# Startup Behavior
+startup:
+  startup_checks: true
+  verify_database: true
+  verify_api_endpoint: true
+  log_initialization: true
+
+# Integration Points
+integrations:
+  learning_loop: true
+  event_chronicle: true
+  metrics_tracking: true
+  heuristic_validation: true
+  trail_system: true
+
+################################################################################
+# Standard ELF Behavior Notes
+################################################################################
+# 
+# The Dashboard Sentinel operates under these ELF principles:
+#
+# 1. **Autonomous Monitoring**: Continuous 24/7 monitoring with adaptive cycles
+# 2. **Event Chronicle**: All events logged to event_chronicle for dashboard visibility
+# 3. **Learning Integration**: Sentinel cycles feed into the learning loop
+# 4. **Pattern Detection**: Automatic detection of activity patterns and anomalies
+# 5. **Non-blocking Alerts**: All alerts are advisory; never blocks operations
+# 6. **Metrics-Driven**: All decisions based on collected metrics and analysis
+# 7. **Adaptive Behavior**: System learns from monitoring history
+#
+# Event Types Standard:
+# - sentinel_cycle: Main monitoring cycle with status assessment
+# - learning_loop_completion: Task outcomes from learning hook
+# - heuristic_discovery: New heuristics auto-discovered
+# - learning_discovery: New learnings/observations recorded
+# - trail_operation: Hotspot tracking from file operations
+# - system_alert: Critical alerts requiring attention
+#
+################################################################################
