@@ -1,5 +1,6 @@
 #!/bin/bash
-# Emergent Learning Dashboard Launcher
+# Emergent Learning Dashboard Launcher with Watcher
+# Launches backend, frontend, and watcher in one command
 # Run from dashboard-app/ directory or double-click
 
 # Find the ELF directory (handles both running from dashboard-app/ or elsewhere)
@@ -17,7 +18,6 @@ else
 fi
 
 # Function to setup Python virtual environment for backend
-# Required on Linux (PEP 668) and recommended on macOS with Homebrew
 setup_backend_venv() {
     local VENV_PATH="$BACKEND_PATH/venv"
     local REQUIREMENTS="$BACKEND_PATH/requirements.txt"
@@ -48,55 +48,46 @@ setup_backend_venv() {
     return 0
 }
 
-# Issue #11: Detect Git Bash + npm platform mismatch on Windows
-if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "mingw"* ]] || [[ -n "$MSYSTEM" ]]; then
-    FRONTEND_DIR="$SCRIPT_DIR/frontend"
-    if [ -d "$FRONTEND_DIR/node_modules/@rollup" ]; then
-        if ls "$FRONTEND_DIR/node_modules/@rollup/"*linux* >/dev/null 2>&1 && \
-           ! ls "$FRONTEND_DIR/node_modules/@rollup/"*win32* >/dev/null 2>&1; then
-            echo ""
-            echo "WARNING: Git Bash npm platform mismatch detected!"
-            echo "=========================================="
-            echo "npm installed Linux binaries instead of Windows binaries."
-            echo ""
-            echo "To fix, run these commands in PowerShell or CMD (not Git Bash):"
-            echo ""
-            echo "  cd \"$FRONTEND_DIR\""
-            echo "  rm -rf node_modules package-lock.json"
-            echo "  npm install"
-            echo ""
-            echo "Or use Bun instead (works correctly everywhere):"
-            echo "  bun install"
-            echo ""
-            echo "=========================================="
-            echo ""
-            read -p "Try to continue anyway? (may fail) [y/N]: " choice
-            if [[ ! "$choice" =~ ^[Yy]$ ]]; then
-                exit 1
-            fi
-        fi
-    fi
-fi
-
 BACKEND_PORT=8888
 FRONTEND_PORT=3001
 BACKEND_PATH="$SCRIPT_DIR/backend"
 FRONTEND_PATH="$SCRIPT_DIR/frontend"
 
 echo "========================================================"
-echo "        EMERGENT LEARNING DASHBOARD                     "
-echo "        Agent Intelligence System                       "
+echo "        EMERGENT LEARNING DASHBOARD WITH WATCHER        "
+echo "        Agent Intelligence System + Monitoring          "
 echo "========================================================"
 echo ""
 
 # Track if we started any servers
 STARTED_SERVERS=false
+WATCHER_PID=""
+
+# Function to cleanup on exit
+cleanup() {
+    echo ""
+    echo "========================================================"
+    echo "Shutting down..."
+    
+    # Kill all background jobs
+    if [ -n "$WATCHER_PID" ]; then
+        echo "[Stopping] Watcher (PID $WATCHER_PID)..."
+        kill $WATCHER_PID 2>/dev/null || true
+    fi
+    
+    # Kill all remaining background jobs from this script
+    kill 0 2>/dev/null || true
+    
+    echo "========================================================"
+}
+
+trap cleanup EXIT
 
 # Check if backend already running
 if curl -s "http://localhost:$BACKEND_PORT/api/stats" >/dev/null 2>&1; then
     echo "[OK] Backend already running on port $BACKEND_PORT"
 else
-    # Setup venv and get python path (handles PEP 668 on Linux/macOS)
+    # Setup venv and get python path
     VENV_PYTHON=$(setup_backend_venv)
     if [ $? -ne 0 ]; then
         echo "Error: Backend setup failed"
@@ -136,7 +127,7 @@ fi
 if curl -s "http://localhost:$FRONTEND_PORT" >/dev/null 2>&1; then
     echo "[OK] Frontend already running on port $FRONTEND_PORT"
 else
-    # Auto-install dependencies if node_modules missing (Issue #36)
+    # Auto-install dependencies if node_modules missing
     if [ ! -d "$FRONTEND_PATH/node_modules" ]; then
         echo "[Installing] Frontend dependencies (node_modules not found)..."
         cd "$FRONTEND_PATH" && $PKG_MGR install
@@ -149,6 +140,23 @@ else
     cd "$FRONTEND_PATH" && $PKG_MGR run dev &
     STARTED_SERVERS=true
     sleep 2
+fi
+
+# START WATCHER (NEW: Automated watcher startup)
+echo ""
+echo "[Starting] ELF Watcher (big-pickle 2-tier monitoring)..."
+cd "$ELF_DIR" && ./scripts/start-watcher-bigpickle.sh --background &
+WATCHER_PID=$!
+
+if [ $? -eq 0 ]; then
+    echo "[OK] Watcher started (PID $WATCHER_PID)"
+    echo "[Monitoring] Watcher will automatically:"
+    echo "   • Detect issues (Tier 1 with big-pickle)"
+    echo "   • Make decisions (Tier 2 with big-pickle)"
+    echo "   • Record events to event_chronicle"
+    echo "   • Log to .coordination/watcher-log.md"
+else
+    echo "[Warning] Failed to start watcher - dashboard will continue"
 fi
 
 # Start TalkinHead overlay (cross-platform)
@@ -176,21 +184,9 @@ fi
 
 if [ "$TALKINHEAD_RUNNING" = false ]; then
     if [ -f "$TALKINHEAD_PATH/main.py" ]; then
-        # START WATCHER (NEW: Automated watcher startup after backend is ready)
-            echo ""
-            echo "[Starting] ELF Watcher (big-pickle 2-tier monitoring)..."
-            cd "$ELF_DIR" && ./scripts/start-watcher-bigpickle.sh --background &
-            WATCHER_PID=$!
-            if [ $? -eq 0 ]; then
-                echo "[OK] Watcher started (PID $WATCHER_PID) - monitoring active"
-            else
-                echo "[Warning] Failed to start watcher - dashboard will continue"
-            fi
-            echo ""
-
-            echo "[Starting] TalkinHead overlay..."
-            # Write dashboard PID file for orphan detection
-            echo $$ > ~/.elf-dashboard.pid
+        echo "[Starting] TalkinHead overlay..."
+        # Write dashboard PID file for orphan detection
+        echo $$ > ~/.elf-dashboard.pid
         if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "mingw"* ]] || [[ -n "$MSYSTEM" ]]; then
             # Windows: use pythonw for no console (check for PyQt5 first)
             if $PYTHON_CMD -c "import PyQt5" 2>/dev/null; then
@@ -225,13 +221,24 @@ fi
 
 echo ""
 echo "========================================================"
-echo "  Dashboard is running!"
+echo "  Dashboard is running with Watcher!"
 echo ""
-echo "  Frontend:  http://localhost:$FRONTEND_PORT"
-echo "  Backend:   http://localhost:$BACKEND_PORT"
-echo "  API Docs:  http://localhost:$BACKEND_PORT/docs"
+echo "  Frontend:      http://localhost:$FRONTEND_PORT"
+echo "  Backend:       http://localhost:$BACKEND_PORT"
+echo "  API Docs:      http://localhost:$BACKEND_PORT/docs"
+echo "  Events API:    http://localhost:$BACKEND_PORT/api/chronicle/events"
 echo ""
-echo "  Press Ctrl+C to stop servers"
+echo "  Watcher Status:"
+echo "    PID:         $WATCHER_PID"
+echo "    Mode:        Background (2-tier monitoring)"
+echo "    Log file:    .coordination/watcher-log.md"
+echo "    DB table:    memory/index.db (event_chronicle)"
+echo ""
+echo "  Monitor watcher:"
+echo "    $ tail -f .coordination/watcher-log.md"
+echo "    $ curl http://localhost:8888/api/chronicle/events"
+echo ""
+echo "  Press Ctrl+C to stop all services"
 echo "========================================================"
 echo ""
 
@@ -241,5 +248,4 @@ if [ "$STARTED_SERVERS" = false ]; then
 fi
 
 # Keep script running to allow Ctrl+C to kill background jobs
-trap "echo 'Shutting down...'; kill 0" EXIT
 wait
