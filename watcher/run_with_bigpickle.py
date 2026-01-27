@@ -40,15 +40,23 @@ STOP_FILE = COORD_DIR / "watcher-stop"
 
 
 def call_bigpickle(prompt: str) -> Tuple[str, bool]:
-    """Send prompt to big-pickle and get response."""
+    """Send prompt to big-pickle and get response via opencode CLI."""
     try:
+        # Use opencode run with big-pickle model
+        # Note: Input via stdin, output to stdout
         result = subprocess.run(
-            ["claude", "--print", "--model", "opencode/big-pickle"],
+            ["opencode", "run", "-m", "opencode/big-pickle"],
             input=prompt.encode(),
             capture_output=True,
-            timeout=120,
+            timeout=30,  # Reduced from 120
+            text=False,
         )
-        return result.stdout.decode(), result.returncode == 0
+        # Decode output and filter out logs (INFO lines)
+        output = result.stdout.decode()
+        # Filter out INFO log lines
+        lines = output.split('\n')
+        filtered_lines = [line for line in lines if not line.startswith('INFO ')]
+        return '\n'.join(filtered_lines), result.returncode == 0
     except Exception as e:
         return f"Error calling big-pickle: {e}", False
 
