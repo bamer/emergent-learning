@@ -163,7 +163,18 @@ class SessionIndex:
             conn.close()
 
             if not row:
-                return None
+                # Return empty summary for consistency (treat as "ready" even if not yet summarized)
+                return {
+                    "tool_summary": None,
+                    "content_summary": None,
+                    "conversation_summary": None,
+                    "files_touched": [],
+                    "tool_counts": {},
+                    "message_count": 0,
+                    "summarized_at": None,
+                    "summarizer_model": None,
+                    "is_stale": False
+                }
 
             return {
                 "tool_summary": row["tool_summary"],
@@ -179,7 +190,18 @@ class SessionIndex:
 
         except Exception as e:
             logger.error(f"Error fetching session summary: {e}")
-            return None
+            # Return empty summary instead of None to avoid triggering "initiated" status
+            return {
+                "tool_summary": None,
+                "content_summary": None,
+                "conversation_summary": None,
+                "files_touched": [],
+                "tool_counts": {},
+                "message_count": 0,
+                "summarized_at": None,
+                "summarizer_model": None,
+                "is_stale": False
+            }
 
     def scan(self) -> int:
         """
