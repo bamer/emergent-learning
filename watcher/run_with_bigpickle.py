@@ -20,6 +20,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Tuple
 
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 # Import watcher prompt generation
 from watcher_loop import gather_state, output_watcher_prompt, output_handler_prompt
 
