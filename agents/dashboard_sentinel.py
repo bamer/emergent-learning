@@ -229,7 +229,7 @@ Respond with JSON format:
             "priority_actions": [],
         }
 
-def learn_user_patterns(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
+    def learn_user_patterns(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
         """Learn and adapt to user patterns and preferences."""
         learning_data = {
             'timestamp': datetime.now().isoformat(),
@@ -437,6 +437,31 @@ def learn_user_patterns(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
 
         return actions_taken
 
+    def record_to_event_chronicle(self, event_type: str, status: str, summary: str, data: Dict[str, Any] = None):
+        """Record event to event_chronicle table for dashboard visibility."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            import json
+            cursor.execute("""
+                INSERT INTO event_chronicle (timestamp, event_type, source, source_id, status, summary, data, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                datetime.now().isoformat(),
+                event_type,
+                'dashboard_sentinel',
+                'sentinel-main',
+                status,
+                summary,
+                json.dumps(data) if data else None,
+                datetime.now().isoformat()
+            ))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Failed to record event to chronicle: {e}")
+
     def run_monitoring_cycle(self):
         """Execute one complete monitoring cycle."""
         logger.info(f"🤖 {self.name} - Starting monitoring cycle...")
@@ -464,6 +489,20 @@ def learn_user_patterns(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
             "analysis": analysis,
             "actions_taken": actions,
         }
+
+        # Record to event chronicle for dashboard
+        status = analysis.get("status", "unknown")
+        summary = f"Sentinel cycle - {analysis.get('analysis', 'No analysis')} (Activity: {metrics.get('activity', {}).get('activity_score', 0)})"
+        self.record_to_event_chronicle(
+            event_type='sentinel_cycle',
+            status=status,
+            summary=summary,
+            data={
+                'metrics': metrics,
+                'analysis': analysis,
+                'actions': actions
+            }
+        )
 
         return self.last_analysis
 
