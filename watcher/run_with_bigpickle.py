@@ -46,7 +46,7 @@ def call_bigpickle(prompt: str) -> Tuple[str, bool]:
         result = subprocess.run(
             ["opencode", "--model", "opencode/big-pickle", "--prompt", prompt],
             capture_output=True,
-            timeout=120,
+            timeout=180,
             text=True,
         )
         
@@ -56,7 +56,7 @@ def call_bigpickle(prompt: str) -> Tuple[str, bool]:
             return f"Error: big-pickle returned error code {result.returncode}\n{result.stderr}", False
             
     except subprocess.TimeoutExpired:
-        return "Error: big-pickle timed out (>120s). System busy or model response too slow.", False
+        return "Error: big-pickle timed out (>180s). System busy or model response too slow.", False
     except Exception as e:
         return f"Error calling big-pickle: {e}", False
 
