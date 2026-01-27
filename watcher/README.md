@@ -1,62 +1,66 @@
-# Tiered Watcher Pattern
+# Tiered Watcher Pattern with big-pickle
 
-A two-tier AI-powered monitoring system that provides cost-effective continuous monitoring with intelligent escalation.
+A two-tier AI-powered monitoring system that provides continuous monitoring with intelligent escalation.
+Uses OpenCode's big-pickle model for both tiers (local, zero-cost).
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      LAUNCHER.PY                            │
-│  Orchestrates the system, manages process lifecycle        │
+│                  RUN_WITH_BIGPICKLE.PY                      │
+│  Orchestrates the system, manages process lifecycle         │
 └──────────────┬────────────────────────────┬─────────────────┘
                │                            │
                ▼                            ▼
-    ┌──────────────────┐        ┌──────────────────────┐
-    │  TIER 1: HAIKU   │        │   TIER 2: OPUS       │
-    │  Fast, Frequent  │        │  Deep Analysis       │
-    │  Basic Checks    │        │  Decision Making     │
-    └──────────────────┘        └──────────────────────┘
+    ┌──────────────────────┐    ┌──────────────────────┐
+    │ TIER 1: big-pickle   │    │ TIER 2: big-pickle   │
+    │ Watcher Analysis     │    │ Handler/CEO Decision │
+    │ Issue Detection      │    │ Action & Update      │
+    └──────────────────────┘    └──────────────────────┘
                │                            ▲
-               │ Exit Code 1                │
-               │ (Need Help)                │
+               │ Exit Code 1 (needs help)   │
+               │ (Issues Detected)          │
                └────────────────────────────┘
 
            ┌────────────────────────┐
            │   .coordination/       │
            │   - blackboard.json    │
-           │   - status.md          │
-           │   - events.jsonl       │
+           │   - watcher-log.md     │
+           │   - decision.md        │
            │   - *.log              │
            └────────────────────────┘
 ```
 
 ## Concept
 
-The Tiered Watcher Pattern solves the problem of continuous AI monitoring at scale:
+The Tiered Watcher Pattern with OpenCode's big-pickle:
 
-- **Problem**: Running Opus constantly is expensive
-- **Solution**: Use Haiku for frequent basic checks, escalate to Opus only when needed
-- **Benefit**: 95% cost reduction while maintaining high-quality oversight
+- **Tier 1**: Local big-pickle analyzes coordination state (frequent, free)
+- **Tier 2**: Local big-pickle makes decisions (only when needed, free)
+- **Cost**: $0/day (local model, zero API costs)
+- **Workflow**: Unchanged from standard ELF pattern
 
-### Tier 1: Haiku Watcher
+### Tier 1: big-pickle Watcher
 - Runs every 30 seconds
 - Checks coordination files for issues
-- Fast pattern recognition
-- Low cost (~$0.001 per check)
-- Exits with code 1 when it needs help
+- Analyzes with local big-pickle
+- Zero cost (local model)
+- Exits with code 1 when intervention needed
 
-### Tier 2: Opus Handler
-- Invoked only when Haiku requests intervention
-- Deep analysis and decision-making
-- Updates coordination state
-- Higher cost but infrequent (~5-10x per day)
+### Tier 2: big-pickle Handler (CEO)
+- Invoked only when Tier 1 detects issues
+- Deep analysis and decision-making with big-pickle
+- Updates coordination state (blackboard.json)
+- Can RESTART agents, ABANDON tasks, or ESCALATE to humans
+- Zero cost (local model)
 
-### Launcher
-- Runs Haiku in a loop
+### Orchestrator
+- Runs via run_with_bigpickle.py
 - Monitors exit codes
-- Invokes Opus when needed
+- Invokes Tier 2 when needed
 - Handles graceful shutdown
 - Logs all activity
+- Records events to event_chronicle
 
 ## Quick Start
 
@@ -64,11 +68,11 @@ The Tiered Watcher Pattern solves the problem of continuous AI monitoring at sca
 
 ```bash
 # Using the convenience script
-~/.claude/emergent-learning/scripts/start-watcher.sh
+./scripts/start-watcher-bigpickle.sh
 
 # Or directly
-cd ~/.claude/emergent-learning
-python watcher/launcher.py
+cd /home/bamer/.opencode/emergent-learning
+python watcher/run_with_bigpickle.py
 ```
 
 ### 2. Stop the Watcher
