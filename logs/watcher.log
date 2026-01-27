@@ -1,12 +1,14 @@
 🔍 Starting watcher with big-pickle (interval: 30s)
    Press Ctrl+C to stop
 
-[2026-01-28T03:19:45.492252] Starting continuous watcher (interval: 30s)
+[2026-01-28T03:20:53.746996] Starting continuous watcher (interval: 30s)
 
-[2026-01-28T03:19:45.492371] === Pass #1 ===
-[2026-01-28T03:19:45.492381] === Starting big-pickle watcher (Tier 1) ===
+[2026-01-28T03:20:53.747127] === Pass #1 ===
+[2026-01-28T03:20:53.747139] === Starting big-pickle watcher (Tier 1) ===
+Error from big-pickle: Error calling big-pickle: Command '['opencode', 'run', '-m', 'opencode/big-pickle']' timed out after 30 seconds
 Warning: Failed to record to chronicle: no such table: event_chronicle
+Warning: Pass 1 exited with code 2
+[2026-01-28T03:21:23.788667] Sleeping 30s...
 
-[2026-01-28T03:20:00.083332] === Escalating to big-pickle Handler (Tier 2 - CEO) ===
-[2026-01-28T03:20:00.083345] Escalating to handler (big-pickle CEO)...
-Terminated
+[2026-01-28T03:21:53.788798] === Pass #2 ===
+[2026-01-28T03:21:53.788855] === Starting big-pickle watcher (Tier 1) ===
