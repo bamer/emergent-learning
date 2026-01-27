@@ -145,6 +145,21 @@ def create_project_db(db_path: Path) -> None:
     ''')
     cursor.execute('INSERT OR IGNORE INTO schema_version (version) VALUES (1)')
 
+    # Event chronicle for watcher monitoring
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS event_chronicle (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            event_type TEXT NOT NULL,
+            source TEXT DEFAULT 'watcher',
+            source_id TEXT,
+            status TEXT,
+            summary TEXT,
+            data TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
     conn.commit()
     conn.close()
 
