@@ -2,13 +2,9 @@
 """
 Run Watcher with big-pickle (OpenCode local model)
 
-Simple runner that:
-1. Generates watcher prompt from watcher_loop.py
-2. Sends to big-pickle via CLI
-3. Records result to event_chronicle
-4. Logs to .coordination/watcher-log.md
-
-No modifications to existing watcher code - just swap the model.
+Two-tier system using big-pickle for both:
+1. Tier 1 (Watcher): Detects issues
+2. Tier 2 (Handler/CEO): Makes decisions if issues detected
 
 Usage:
     python run_with_bigpickle.py                # Single pass
@@ -25,7 +21,7 @@ from pathlib import Path
 from typing import Tuple
 
 # Import watcher prompt generation
-from watcher_loop import gather_state, output_watcher_prompt
+from watcher_loop import gather_state, output_watcher_prompt, output_handler_prompt
 
 try:
     from elf_paths import get_base_path
@@ -89,11 +85,48 @@ def record_to_chronicle(event_type: str, status: str, summary: str, data=None):
         print(f"Warning: Failed to record to chronicle: {e}", file=sys.stderr)
 
 
-def run_single_pass() -> int:
-    """Run one watcher monitoring pass"""
-    print(f"[{datetime.now().isoformat()}] Starting watcher pass with big-pickle...", file=sys.stderr)
+def extract_status_from_response(response: str) -> str:
+    """Extract status from watcher response."""
+    if 'STATUS: error' in response or 'STATUS: stale' in response:
+        return 'warning'
+    elif 'error' in response.lower():
+        return 'critical'
+    return 'nominal'
+
+
+def needs_escalation(response: str) -> bool:
+    """Check if watcher detected issues that need handler escalation."""
+    # Look for status that requires intervention
+    return any(x in response for x in ['STATUS: error', 'STATUS: stale', 'STATUS: complete', 'intervention_needed'])
+
+
+def run_handler_pass(escalation_reason: str) -> Tuple[str, bool]:
+    """Run handler/CEO tier to make decisions."""
+    print(f"[{datetime.now().isoformat()}] Escalating to handler (big-pickle CEO)...", file=sys.stderr)
     
-    # Generate prompt using existing watcher code
+    try:
+        import io
+        from contextlib import redirect_stdout
+        
+        # Generate handler prompt
+        f = io.StringIO()
+        with redirect_stdout(f):
+            output_handler_prompt(escalation_reason)
+        prompt = f.getvalue()
+    except Exception as e:
+        print(f"Error generating handler prompt: {e}", file=sys.stderr)
+        return f"Error: {e}", False
+    
+    # Send to big-pickle for decision making
+    response, success = call_bigpickle(prompt)
+    return response, success
+
+
+def run_single_pass() -> int:
+    """Run one watcher monitoring pass with escalation tier"""
+    print(f"[{datetime.now().isoformat()}] === Starting big-pickle watcher (Tier 1) ===", file=sys.stderr)
+    
+    # TIER 1: Watcher - Generate and analyze
     try:
         import io
         from contextlib import redirect_stdout
@@ -105,45 +138,84 @@ def run_single_pass() -> int:
         prompt = f.getvalue()
     except Exception as e:
         print(f"Error generating prompt: {e}", file=sys.stderr)
-        return 2
-    
-    # Send to big-pickle
-    response, success = call_bigpickle(prompt)
-    
-    if not success:
-        print(f"Error from big-pickle: {response}", file=sys.stderr)
         record_to_chronicle(
             event_type='watcher_error',
             status='critical',
-            summary=f'Big-pickle failed: {response[:100]}'
+            summary=f'Prompt generation failed: {e}'
         )
         return 2
     
-    # Print response
-    print(response)
+    # Send to big-pickle (Tier 1 analysis)
+    watcher_response, success = call_bigpickle(prompt)
     
-    # Parse status from response
-    status = 'nominal'
-    if 'STATUS: error' in response or 'STATUS: stale' in response:
-        status = 'warning'
-    elif 'error' in response.lower():
-        status = 'critical'
+    if not success:
+        print(f"Error from big-pickle: {watcher_response}", file=sys.stderr)
+        record_to_chronicle(
+            event_type='watcher_error',
+            status='critical',
+            summary=f'Big-pickle Tier 1 failed: {watcher_response[:100]}'
+        )
+        return 2
     
-    # Log results
-    summary = response.split('\n')[0][:100] if response else 'Pass completed'
-    log_to_file(f"Pass completed: {summary}")
+    # Parse Tier 1 response
+    watcher_status = extract_status_from_response(watcher_response)
+    print(watcher_response)
     
-    # Record to chronicle
+    # Log Tier 1 results
+    summary = watcher_response.split('\n')[0][:100] if watcher_response else 'Analysis completed'
+    log_to_file(f"[TIER 1] Watcher analysis: {watcher_status}")
+    
     record_to_chronicle(
         event_type='watcher_cycle',
-        status=status,
-        summary=f'Watcher pass: {summary}',
-        data={'response_lines': len(response.split('\n'))}
+        status=watcher_status,
+        summary=f'Watcher (Tier 1): {summary}',
+        data={'tier': 1, 'response_lines': len(watcher_response.split('\n'))}
     )
     
-    print(f"[{datetime.now().isoformat()}] Pass complete (status: {status})", file=sys.stderr)
+    # TIER 2: Check if escalation needed (handler/CEO decision)
+    exit_code = 0
+    if needs_escalation(watcher_response):
+        print(f"\n[{datetime.now().isoformat()}] === Escalating to big-pickle Handler (Tier 2 - CEO) ===", file=sys.stderr)
+        
+        # Call handler with escalation details
+        handler_response, success = run_handler_pass(watcher_response)
+        
+        if not success:
+            print(f"Error from handler: {handler_response}", file=sys.stderr)
+            record_to_chronicle(
+                event_type='handler_error',
+                status='critical',
+                summary=f'Big-pickle Tier 2 failed: {handler_response[:100]}'
+            )
+            return 2
+        
+        # Print handler response
+        print(f"\n{handler_response}")
+        
+        # Parse handler response
+        handler_status = extract_status_from_response(handler_response)
+        handler_summary = handler_response.split('\n')[0][:100] if handler_response else 'Decision made'
+        
+        # Log Tier 2 results
+        log_to_file(f"[TIER 2] Handler decision: {handler_status}")
+        
+        record_to_chronicle(
+            event_type='handler_decision',
+            status=handler_status,
+            summary=f'Handler (Tier 2): {handler_summary}',
+            data={'tier': 2, 'escalation_reason': watcher_status, 'response_lines': len(handler_response.split('\n'))}
+        )
+        
+        # Set exit code based on what handler did
+        if 'ESCALATE' in handler_response:
+            exit_code = 1  # Signal that human decision needed
+        else:
+            exit_code = 0  # Handler resolved it
+    else:
+        print(f"[{datetime.now().isoformat()}] No escalation needed (system nominal)", file=sys.stderr)
     
-    return 0
+    print(f"[{datetime.now().isoformat()}] === Pass complete (exit code: {exit_code}) ===", file=sys.stderr)
+    return exit_code
 
 
 def run_continuous(interval: int = 30):
