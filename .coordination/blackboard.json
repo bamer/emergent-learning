@@ -1,13 +1,23 @@
 {
-  "timestamp": "2026-01-28T21:45:00Z",
-  "mission": null,
-  "agents": {},
-  "swarm_status": "idle",
-  "coordination": {
-    "protocol": "blackboard",
-    "heartbeat_interval": 30,
-    "max_stale_time": 120,
-    "failure_recovery": "automatic"
-  },
-  "issues": []
+  "task_id": "swarm_20260128_162854",
+  "status": "completed",
+  "updated_at": "2026-01-28T16:28:57.888525",
+  "agents": {
+    "researcher": {
+      "status": "completed",
+      "learnings_count": 3
+    },
+    "skeptic": {
+      "status": "completed",
+      "learnings_count": 3
+    },
+    "architect": {
+      "status": "completed",
+      "learnings_count": 3
+    },
+    "creative": {
+      "status": "completed",
+      "learnings_count": 3
+    }
+  }
 }

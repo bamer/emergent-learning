@@ -236,11 +236,65 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
       }
     },
 
-    /**
-     * Single activation command
-     * Enables ELF hooks for this session
-     */
     tool: {
+      /**
+       * Swarm task handler - triggers swarm agent execution
+       * Called when task is created/executed
+       */
+      swarm_task: tool({
+        description: "Execute task using swarm of agents (Architect, Researcher, Skeptic, Creative)",
+        args: {
+          task: { type: "string", description: "Main task description" },
+          subtasks: { type: "string", description: "Optional comma-separated subtasks" }
+        },
+        execute: async (args, ctx) => {
+          if (!elfActive) {
+            return "❌ ELF not activated. Run /elf_activate first.";
+          }
+
+          const swarmScript = path.join(ELF_DIR, "coordinator", "swarm_controller.py");
+          if (!existsSync(swarmScript)) {
+            return "❌ Swarm controller not found";
+          }
+
+          try {
+            // Prepare subtasks argument
+            const subtaskArgs = args.subtasks 
+              ? ['--subtasks', ...args.subtasks.split(',')] 
+              : [];
+
+            const result = await runPythonScript(
+              swarmScript,
+              ['--task', args.task, ...subtaskArgs]
+            );
+
+            if (result.exitCode === 0) {
+              await client.app.log({
+                service: "elf-hooks",
+                level: "info",
+                message: `Swarm execution completed: ${args.task}`
+              });
+
+              return `✅ SWARM EXECUTION COMPLETE\n\n${result.stdout}`;
+            } else {
+              return `❌ Swarm execution failed:\n${result.stderr}`;
+            }
+          } catch (error) {
+            await client.app.log({
+              service: "elf-hooks",
+              level: "error",
+              message: `Swarm execution error: ${error.message}`
+            });
+
+            return `❌ Error: ${error.message}`;
+          }
+        }
+      }),
+
+      /**
+       * Single activation command
+       * Enables ELF hooks for this session
+       */
       elf_activate: tool({
         description: "Enable ELF learning hooks for this session",
         args: {},
@@ -253,7 +307,7 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
             message: "ELF hooks activated"
           });
 
-          return `✅ ELF activated\n\nHooks are now active for this session.\n- Pre/post-tool learning enabled\n- Session auto check-in/check-out enabled`;
+          return `✅ ELF activated\n\nHooks are now active for this session.\n- Pre/post-tool learning enabled\n- Session auto check-in/check-out enabled\n- Swarm agents available via /swarm_task`;
         }
       })
     }
