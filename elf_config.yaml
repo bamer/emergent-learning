@@ -1,0 +1,162 @@
+# ELF Standard Configuration File
+# Version: 1.0
+# Replaces all scattered configuration files
+
+elf_config:
+  version: "1.0"
+  created: "2026-01-28T12:45:00Z"
+  updated: "2026-01-28T12:45:00Z"
+  
+  # Database Configuration
+  database:
+    path: "memory/index.db"
+    backend: "sqlite"
+    connection_pool:
+      max_connections: 10
+      timeout: 30
+    backup:
+      enabled: true
+      interval: "daily"
+      retention_days: 30
+  
+  # Coordination System
+  coordination:
+    protocol: "blackboard"
+    blackboard_file: ".coordination/blackboard.json"
+    heartbeat_interval: 30
+    stale_timeout: 120
+    failure_recovery: "automatic"
+    max_agents: 50
+  
+  # Event Chronicle System
+  event_chronicle:
+    enabled: true
+    directory: "event_chronicle"
+    rotation: "daily"
+    compression: true
+    retention_days: 90
+    format: "jsonl"
+  
+  # Watcher System
+  watcher:
+    enabled: true
+    interval: 30
+    monitoring_cycles: 2
+    log_file: "logs/watcher.log"
+    health_checks:
+      - database
+      - dashboard
+      - coordination
+      - agents
+  
+  # Query System
+  query:
+    default_context: "task"
+    max_context_items: 20
+    cache_enabled: true
+    cache_ttl: 300
+    search_paths:
+      - "memory/"
+      - "agents/"
+      - "scripts/"
+      - "dashboard-app/"
+  
+  # Dashboard System
+  dashboard:
+    enabled: true
+    frontend:
+      port: 3001
+      host: "localhost"
+      auto_open: true
+    backend:
+      port: 8888
+      host: "0.0.0.0"
+      api_docs: true
+    talkinhead:
+      enabled: true
+      overlay: true
+    
+  # Agent System
+  agents:
+    parties_file: "agents/parties.yaml"
+    coordination_dir: ".coordination"
+    models:
+      claude: ["sonnet", "opus", "haiku"]
+      external: ["gemini", "codex"]
+    max_concurrent: 5
+    timeout: 300
+    
+  # Workflow System
+  workflows:
+    conductor:
+      enabled: true
+      workflow_db: "memory/index.db"
+      node_timeout: 300
+      max_retries: 3
+    missions_file: "missions.yaml"
+    
+  # Logging System
+  logging:
+    level: "INFO"
+    format: "json"
+    directory: "logs"
+    rotation: "daily"
+    retention_days: 30
+    components:
+      - watcher
+      - sentinel
+      - conductor
+      - dashboard
+  
+  # Security Configuration
+  security:
+    input_validation: true
+    sql_injection_protection: true
+    path_traversal_protection: true
+    symlink_protection: true
+    max_input_lengths:
+      rule: 500
+      domain: 100
+      explanation: 5000
+  
+  # Development Configuration
+  development:
+    debug_mode: false
+    auto_reload: false
+    test_mode: false
+    mock_external_apis: true
+    
+  # Integration Points
+  integrations:
+    git:
+      enabled: true
+      auto_commit: false
+      pre_commit_hooks: true
+    backup:
+      enabled: true
+      remote: false
+      encryption: false
+
+# Component Status Mapping
+components:
+  query: "compliant"
+  database: "compliant"
+  coordination: "compliant"
+  recording: "compliant"
+  dashboard: "partial"  # Needs migration to ELF standards
+  watcher: "partial"     # Needs migration to ELF standards
+  conductor: "partial"   # Needs migration to ELF standards
+  event_chronicle: "new"  # Newly implemented
+  
+# Migration Status
+migration:
+  phase_1:
+    event_chronicle: "complete"
+    configuration: "complete"
+  phase_2:
+    dashboard: "pending"
+  phase_3:
+    watcher: "pending"
+    conductor: "pending"
+  phase_4:
+    validation: "pending"

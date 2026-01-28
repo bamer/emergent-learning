@@ -1,0 +1,1 @@
+{"event_id": "15c83f64-7d9b-4bbf-bfbf-6ce0b78f7ae7", "timestamp": "2026-01-28T06:00:41.681422+00:00", "event_type": "heuristic_created", "source": "record-heuristic.sh", "data": {"heuristic_id": 123, "domain": "test", "rule": "Test heuristic for event chronicle"}, "metadata": {"user_id": "test-user", "session_id": "test-session"}}

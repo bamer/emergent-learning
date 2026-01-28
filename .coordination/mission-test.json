@@ -1,0 +1,49 @@
+{
+  "mission_name": "System Test Mission",
+  "mission_type": "test_swarm",
+  "objective": "Test ELF agent coordination and reliability",
+  "created_at": "2026-01-28T21:30:00Z",
+  "status": "ready",
+  "agents": [
+    {
+      "id": "test-agent-1",
+      "type": "researcher",
+      "role": "System Health Analyst",
+      "task": "Monitor and analyze ELF system health during test mission",
+      "priority": "high"
+    },
+    {
+      "id": "test-agent-2", 
+      "type": "implementer",
+      "role": "Reliability Tester",
+      "task": "Test agent communication and coordination mechanisms",
+      "priority": "high"
+    },
+    {
+      "id": "test-agent-3",
+      "type": "creative", 
+      "role": "Problem Finder",
+      "task": "Identify potential failure modes in agent coordination",
+      "priority": "medium"
+    }
+  ],
+  "coordination": {
+    "heartbeat_interval": 30,
+    "max_stale_time": 120,
+    "communication_protocol": "blackboard",
+    "failure_recovery": "automatic"
+  },
+  "success_criteria": [
+    "All agents spawn successfully",
+    "Heartbeat mechanism working",
+    "Blackboard updates functional", 
+    "Agent communication established",
+    "Mission completes within 10 minutes"
+  ],
+  "test_scenarios": [
+    "Normal agent lifecycle",
+    "Heartbeat failure detection", 
+    "Agent recovery mechanisms",
+    "Communication latency handling"
+  ]
+}
