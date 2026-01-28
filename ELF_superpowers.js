@@ -63,24 +63,6 @@ export default async (plugin) => {
   const client = plugin?.client;
   const $ = plugin?.$;
 
-  // Startup notification to verify plugin loaded
-  const startupTime = new Date().toISOString();
-  if (client?.app?.log) {
-    await client.app.log({
-      service: "elf-hooks",
-      level: "info",
-      message: "🎯 ELF Plugin Loaded Successfully",
-      extra: {
-        timestamp: startupTime,
-        hooksDir: HOOKS_DIR,
-        queryDir: QUERY_DIR,
-        watcherDir: path.join(ELF_DIR, "watcher")
-      }
-    });
-  } else {
-    console.log(`[ELF] Plugin loaded at ${startupTime}`);
-  }
-
   // Log helper with fallback and debug info
   const log = async (level, message, extra = {}) => {
     if (client?.app?.log) {
