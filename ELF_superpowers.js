@@ -1,35 +1,40 @@
 /**
- * ELF Superpowers Hook Plugin for OpenCode.ai
+ * ELF Superpowers Plugin for OpenCode.ai
  *
  * Minimal, non-invasive hooks for ELF learning system.
  * Activates only on /elf_activate command.
  *
- * Location: ~/.opencode/emergent-learning/ELF_superpowers.js
- * Symlink: ~/.opencode/plugins/ELF_superpowers.js → ELF root
- *
  * Features:
- * - Pre/post-tool learning hooks (auto-extract [LEARNED:] markers)
- * - Auto check-in/check-out on session lifecycle
- * - Lazy activation (no contamination until /elf_activate)
- * - Uses Python subprocess for ELF scripts (no bun dependency)
+ * - Session auto check-in/check-out on session lifecycle
+ * - Swarm task execution (Architect, Researcher, Skeptic, Creative)
+ * - ELF activation command
+ * - Python subprocess integration (no bun dependency)
  */
 
 import { tool } from "@opencode-ai/plugin";
 import os from "os";
 import path from "path";
 import { existsSync, promises as fs } from "fs";
-import { execFile, spawn } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
 
 const HOME_DIR = os.homedir();
-const OPENCODE_DIR = process.env.OPENCODE_DIR || path.join(HOME_DIR, ".opencode");
 const ELF_DIR = path.join(HOME_DIR, ".opencode", "emergent-learning");
-
-// Paths
 const HOOKS_DIR = path.join(ELF_DIR, "hooks", "learning-loop");
-const QUERY_DIR = path.join(ELF_DIR, "src", "query");
+const QUERY_DIR = path.join(ELF_DIR, "query");
+const SCRIPTS_DIR = path.join(ELF_DIR, "scripts");
 
-const pickPython = () => {
+const execFileAsync = promisify(execFile);
+
+// Global state
+let elfActive = false;
+let sessionCheckinDone = false;
+let sessionId = null;
+
+/**
+ * Execute Python script directly
+ */
+async function runPythonScript(scriptPath, args = []) {
   const candidates = [
     process.env.ELF_PYTHON,
     path.join(ELF_DIR, ".venv", "bin", "python"),
@@ -37,21 +42,11 @@ const pickPython = () => {
     "python3",
     "python"
   ].filter(Boolean);
-  return candidates.find((candidate) => existsSync(candidate)) || "python";
-};
+  
+  const pythonCmd = candidates.find((candidate) => existsSync(candidate)) || "python";
 
-const PYTHON_CMD = pickPython();
-const execFileAsync = promisify(execFile);
-
-/**
- * Execute Python script directly (no shell/bun dependency)
- * 
- * Uses Node's execFile to spawn Python process directly with proper
- * environment. Captures stdout/stderr for logging and error handling.
- */
-async function runPythonScript(scriptPath, args = []) {
   try {
-    const { stdout, stderr } = await execFileAsync(PYTHON_CMD, [scriptPath, ...args], {
+    const { stdout, stderr } = await execFileAsync(pythonCmd, [scriptPath, ...args], {
       encoding: 'utf-8',
       maxBuffer: 10 * 1024 * 1024,
       env: { ...process.env, ELF_BASE_PATH: ELF_DIR }
@@ -66,207 +61,33 @@ async function runPythonScript(scriptPath, args = []) {
   }
 }
 
-// Global state
-let elfActive = false;
-let sessionCheckinDone = false;
-let sessionId = null;
+export default async (plugin) => {
+  const client = plugin?.client;
+  const $ = plugin?.$;
 
-/**
- * Record pheromone trails from tool execution
- * Tracks which files were accessed/modified
- */
-async function recordPheromoneTrail(toolInput, HOOKS_DIR) {
-  const pheromoneScript = path.join(HOOKS_DIR, "record_pheromone.py");
-  
-  // Only record for tools that access files
-  const fileTouchingTools = ['Read', 'Grep', 'Bash', 'create_file', 'edit_file'];
-  const toolName = toolInput.tool_name || toolInput.tool || '';
-  
-  if (fileTouchingTools.some(t => toolName.includes(t))) {
-    const context = {
-      tool_name: toolName,
-      tool_input: toolInput.tool_input || toolInput.input || '',
-      timestamp: new Date().toISOString()
-    };
-    
-    if (existsSync(pheromoneScript)) {
-      try {
-        await runPythonScript(pheromoneScript, [JSON.stringify(context)]);
-      } catch (error) {
-        // Silently fail - pheromone is nice-to-have, not critical
-      }
+  // Log helper with fallback
+  const log = async (level, message) => {
+    if (client?.app?.log) {
+      await client.app.log({
+        service: "elf-hooks",
+        level,
+        message
+      });
+    } else {
+      console[level === 'error' ? 'error' : 'log'](`[ELF] ${message}`);
     }
-  }
-}
+  };
 
-export const ELFHooksPlugin = async (context) => {
-  const client = context?.client;
-  const $ = context?.$;
-  
-  if (!client) {
-    console.warn("ELFHooksPlugin: 'client' is undefined in context");
-  }
-  
-  return {
-    /**
-     * Pre-tool hook - runs before each tool
-     * Only active if ELF is enabled
-     */
-    "tool.execute.before": async (input, output) => {
-      if (!elfActive) return;
+  // Lazy tool creation
+  const createTools = () => {
+    if (!tool) {
+      console.warn("tool() is not available, tools will not be created");
+      return {};
+    }
 
-      try {
-        const preToolScript = path.join(HOOKS_DIR, "pre_tool_learning.py");
-        if (existsSync(preToolScript)) {
-          await runPythonScript(preToolScript);
-        }
-      } catch (error) {
-        if (client?.app?.log) {
-          await client.app.log({
-            service: "elf-hooks",
-            level: "warn",
-            message: `Pre-tool hook error: ${error.message}`
-          });
-        } else {
-          console.warn(`Pre-tool hook error: ${error.message}`);
-        }
-      }
-    },
-
-    /**
-     * Post-tool hook - runs after each tool
-     * Captures learnings from tool output + records pheromone trails
-     */
-    "tool.execute.after": async (input) => {
-      if (!elfActive) return;
-
-      try {
-        const postToolScript = path.join(HOOKS_DIR, "post_tool_learning.py");
-        if (existsSync(postToolScript)) {
-          // Pass the tool execution context to the Python script
-          const hookInput = {
-            tool_name: input.tool_name || input.tool,
-            tool_input: input.tool_input || input.input,
-            tool_output: input.tool_output || input.output,
-            timestamp: new Date().toISOString()
-          };
-          
-          await runPythonScript(postToolScript, [JSON.stringify(hookInput)]);
-        }
-        
-        // Record pheromone trails (file access tracking)
-        await recordPheromoneTrail(input, HOOKS_DIR);
-        
-      } catch (error) {
-        if (client?.app?.log) {
-          await client.app.log({
-            service: "elf-hooks",
-            level: "warn",
-            message: `Post-tool hook error: ${error.message}`
-          });
-        } else {
-          console.warn(`Post-tool hook error: ${error.message}`);
-        }
-      }
-    },
-
-    /**
-     * Session lifecycle hooks
-     * Auto check-in on session.created, auto check-out on session.deleted
-     * Also syncs golden rules and spawns async watcher
-     */
-    event: async ({ event }) => {
-      if (!elfActive) return;
-
-      const getSessionId = () => {
-        return event.properties?.info?.id ||
-               event.properties?.sessionID ||
-               event.session?.id ||
-               event.sessionID ||
-               event.properties?.session?.id;
-      };
-
-      const currentSessionId = getSessionId();
-
-      // Auto check-in on session create
-      if (event.type === "session.created") {
-        sessionId = currentSessionId;
-        sessionCheckinDone = false;
-
-        try {
-          const checkinScript = path.join(QUERY_DIR, "query.py");
-          const result = await runPythonScript(checkinScript, ["--context"]);
-          
-          if (result.exitCode === 0) {
-            sessionCheckinDone = true;
-            if (client?.app?.log) {
-              await client.app.log({
-                service: "elf-hooks",
-                level: "info",
-                message: "ELF session activated - context loaded"
-              });
-            }
-          }
-          
-          // Sync golden rules on session start (non-blocking)
-          const syncScript = path.join(QUERY_DIR, "sync_golden_rules.py");
-          if (existsSync(syncScript)) {
-            runPythonScript(syncScript).catch(() => {});  // Fire and forget
-          }
-          
-          // Spawn async watcher (non-blocking)
-          const autoSpawnScript = path.join(ELF_DIR, "watcher", "auto_spawn.py");
-          if (existsSync(autoSpawnScript)) {
-            runPythonScript(autoSpawnScript, ["--once"]).catch(() => {});  // Fire and forget
-          }
-          
-        } catch (error) {
-         if (client?.app?.log) {
-           await client.app.log({
-             service: "elf-hooks",
-             level: "warn",
-             message: `Session check-in failed: ${error.message}`
-           });
-         } else {
-           console.warn(`Session check-in failed: ${error.message}`);
-         }
-        }
-      }
-
-      // Auto check-out on session delete
-      if (event.type === "session.deleted" && sessionCheckinDone) {
-        try {
-          const checkoutScript = path.join(QUERY_DIR, "checkout.py");
-          await runPythonScript(checkoutScript, ["--auto", "--final"]);
-          
-          if (client?.app?.log) {
-            await client.app.log({
-              service: "elf-hooks",
-              level: "info",
-              message: "ELF session closed - learnings recorded"
-            });
-          }
-        } catch (error) {
-          if (client?.app?.log) {
-            await client.app.log({
-              service: "elf-hooks",
-              level: "warn",
-              message: `Session check-out failed: ${error.message}`
-            });
-          } else {
-            console.warn(`Session check-out failed: ${error.message}`);
-          }
-        }
-
-        sessionId = null;
-        sessionCheckinDone = false;
-      }
-    },
-
-    tool: {
+    return {
       /**
-       * Swarm task handler - triggers swarm agent execution
-       * Called when task is created/executed
+       * Swarm task handler - executes task using swarm of agents
        */
       swarm_task: tool({
         description: "Execute task using swarm of agents (Architect, Researcher, Skeptic, Creative)",
@@ -274,7 +95,7 @@ export const ELFHooksPlugin = async (context) => {
           task: { type: "string", description: "Main task description" },
           subtasks: { type: "string", description: "Optional comma-separated subtasks" }
         },
-        execute: async (args, ctx) => {
+        execute: async (args) => {
           if (!elfActive) {
             return "❌ ELF not activated. Run /elf_activate first.";
           }
@@ -285,9 +106,8 @@ export const ELFHooksPlugin = async (context) => {
           }
 
           try {
-            // Prepare subtasks argument
             const subtaskArgs = args.subtasks 
-              ? ['--subtasks', ...args.subtasks.split(',')] 
+              ? args.subtasks.split(',').map(s => s.trim()) 
               : [];
 
             const result = await runPythonScript(
@@ -296,55 +116,159 @@ export const ELFHooksPlugin = async (context) => {
             );
 
             if (result.exitCode === 0) {
-              if (client?.app?.log) {
-                await client.app.log({
-                  service: "elf-hooks",
-                  level: "info",
-                  message: `Swarm execution completed: ${args.task}`
-                });
-              }
-
+              await log('info', `Swarm execution completed: ${args.task}`);
               return `✅ SWARM EXECUTION COMPLETE\n\n${result.stdout}`;
             } else {
               return `❌ Swarm execution failed:\n${result.stderr}`;
             }
           } catch (error) {
-            if (client?.app?.log) {
-              await client.app.log({
-                service: "elf-hooks",
-                level: "error",
-                message: `Swarm execution error: ${error.message}`
-              });
-            } else {
-              console.error(`Swarm execution error: ${error.message}`);
-            }
-
+            await log('error', `Swarm execution error: ${error.message}`);
             return `❌ Error: ${error.message}`;
           }
         }
       }),
 
       /**
-       * Single activation command
-       * Enables ELF hooks for this session
+       * ELF activation command
        */
       elf_activate: tool({
         description: "Enable ELF learning hooks for this session",
         args: {},
-        execute: async (args, ctx) => {
+        execute: async () => {
           elfActive = true;
-          
-          if (client?.app?.log) {
-            await client.app.log({
-              service: "elf-hooks",
-              level: "info",
-              message: "ELF hooks activated"
-            });
+          await log('info', "ELF hooks activated");
+          return `✅ ELF activated\n\nHooks are now active for this session.\n- Session auto check-in/check-out enabled\n- Swarm agents available via /swarm_task`;
+        }
+      }),
+
+      /**
+       * Manual session check-in
+       */
+      checkin: tool({
+        description: "Manually run ELF check-in script",
+        args: {},
+        execute: async () => {
+          if (!elfActive) {
+            return "❌ ELF not activated. Run /elf_activate first.";
           }
 
-          return `✅ ELF activated\n\nHooks are now active for this session.\n- Pre/post-tool learning enabled\n- Session auto check-in/check-out enabled\n- Swarm agents available via /swarm_task`;
+          const checkinShell = path.join(SCRIPTS_DIR, "checkin.sh");
+          if (!existsSync(checkinShell)) {
+            return "❌ Check-in script not found";
+          }
+
+          try {
+            const { stdout, stderr } = await execFileAsync("bash", [checkinShell], {
+              encoding: 'utf-8',
+              env: { ...process.env, ELF_BASE_PATH: ELF_DIR }
+            });
+
+            await log('info', `Check-in completed`);
+            return `✅ CHECK-IN COMPLETE\n\n${stdout}`;
+          } catch (error) {
+            await log('error', `Check-in error: ${error.message}`);
+            return `❌ Check-in failed:\n${error.stderr || error.message}`;
+          }
         }
       })
-    }
+    };
+  };
+
+  return {
+    /**
+     * Pre-tool learning hook - runs before each tool execution
+     */
+    'tool:before': async (data) => {
+      if (!elfActive) return;
+
+      try {
+        const preToolScript = path.join(HOOKS_DIR, "pre_tool_learning.py");
+        if (existsSync(preToolScript)) {
+          await runPythonScript(preToolScript, [JSON.stringify(data || {})]);
+        }
+      } catch (error) {
+        await log('warn', `Pre-tool hook error: ${error.message}`);
+      }
+    },
+
+    /**
+     * Post-tool learning hook - runs after each tool execution
+     * Captures learnings and records pheromone trails
+     */
+    'tool:after': async (data) => {
+      if (!elfActive) return;
+
+      try {
+        // Post-tool learning
+        const postToolScript = path.join(HOOKS_DIR, "post_tool_learning.py");
+        if (existsSync(postToolScript)) {
+          await runPythonScript(postToolScript, [JSON.stringify(data || {})]);
+        }
+
+        // Record pheromone trails (file access tracking)
+        const pheromoneScript = path.join(HOOKS_DIR, "record_pheromone.py");
+        if (existsSync(pheromoneScript)) {
+          await runPythonScript(pheromoneScript, [JSON.stringify(data || {})]);
+        }
+      } catch (error) {
+        await log('warn', `Post-tool hook error: ${error.message}`);
+      }
+    },
+
+    /**
+     * Session lifecycle management
+     */
+    'session:created': async (data) => {
+      if (!elfActive) return;
+
+      try {
+        sessionId = data?.session?.id || data?.id;
+        sessionCheckinDone = false;
+
+        const checkinScript = path.join(QUERY_DIR, "checkin.py");
+        if (existsSync(checkinScript)) {
+          const result = await runPythonScript(checkinScript, [JSON.stringify(data || {})]);
+          
+          if (result.exitCode === 0) {
+            sessionCheckinDone = true;
+            await log('info', "ELF session activated - context loaded");
+          }
+
+          // Spawn async watcher (non-blocking)
+          const autoSpawnScript = path.join(ELF_DIR, "watcher", "auto_spawn.py");
+          if (existsSync(autoSpawnScript)) {
+            runPythonScript(autoSpawnScript, ["--once"]).catch(() => {});
+          }
+
+          // Sync golden rules (non-blocking)
+          const syncScript = path.join(QUERY_DIR, "sync_golden_rules.py");
+          if (existsSync(syncScript)) {
+            runPythonScript(syncScript).catch(() => {});
+          }
+        }
+      } catch (error) {
+        await log('warn', `Session check-in failed: ${error.message}`);
+      }
+    },
+
+    'session:deleted': async (data) => {
+      if (!elfActive || !sessionCheckinDone) return;
+
+      try {
+        const checkoutScript = path.join(QUERY_DIR, "checkout.py");
+        if (existsSync(checkoutScript)) {
+          await runPythonScript(checkoutScript, [JSON.stringify(data || {})]);
+          await log('info', "ELF session closed - learnings recorded");
+        }
+      } catch (error) {
+        await log('warn', `Session check-out failed: ${error.message}`);
+      } finally {
+        sessionId = null;
+        sessionCheckinDone = false;
+      }
+    },
+
+    // Tools
+    tool: createTools()
   };
 };
