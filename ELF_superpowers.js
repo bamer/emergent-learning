@@ -99,7 +99,14 @@ async function recordPheromoneTrail(toolInput, HOOKS_DIR) {
   }
 }
 
-export const ELFHooksPlugin = async ({ client, $ }) => {
+export const ELFHooksPlugin = async (context) => {
+  const client = context?.client;
+  const $ = context?.$;
+  
+  if (!client) {
+    console.warn("ELFHooksPlugin: 'client' is undefined in context");
+  }
+  
   return {
     /**
      * Pre-tool hook - runs before each tool
@@ -114,11 +121,15 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
           await runPythonScript(preToolScript);
         }
       } catch (error) {
-        await client.app.log({
-          service: "elf-hooks",
-          level: "warn",
-          message: `Pre-tool hook error: ${error.message}`
-        });
+        if (client?.app?.log) {
+          await client.app.log({
+            service: "elf-hooks",
+            level: "warn",
+            message: `Pre-tool hook error: ${error.message}`
+          });
+        } else {
+          console.warn(`Pre-tool hook error: ${error.message}`);
+        }
       }
     },
 
@@ -147,11 +158,15 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
         await recordPheromoneTrail(input, HOOKS_DIR);
         
       } catch (error) {
-        await client.app.log({
-          service: "elf-hooks",
-          level: "warn",
-          message: `Post-tool hook error: ${error.message}`
-        });
+        if (client?.app?.log) {
+          await client.app.log({
+            service: "elf-hooks",
+            level: "warn",
+            message: `Post-tool hook error: ${error.message}`
+          });
+        } else {
+          console.warn(`Post-tool hook error: ${error.message}`);
+        }
       }
     },
 
@@ -184,11 +199,13 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
           
           if (result.exitCode === 0) {
             sessionCheckinDone = true;
-            await client.app.log({
-              service: "elf-hooks",
-              level: "info",
-              message: "ELF session activated - context loaded"
-            });
+            if (client?.app?.log) {
+              await client.app.log({
+                service: "elf-hooks",
+                level: "info",
+                message: "ELF session activated - context loaded"
+              });
+            }
           }
           
           // Sync golden rules on session start (non-blocking)
@@ -204,11 +221,15 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
           }
           
         } catch (error) {
-          await client.app.log({
-            service: "elf-hooks",
-            level: "warn",
-            message: `Session check-in failed: ${error.message}`
-          });
+         if (client?.app?.log) {
+           await client.app.log({
+             service: "elf-hooks",
+             level: "warn",
+             message: `Session check-in failed: ${error.message}`
+           });
+         } else {
+           console.warn(`Session check-in failed: ${error.message}`);
+         }
         }
       }
 
@@ -218,17 +239,23 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
           const checkoutScript = path.join(QUERY_DIR, "checkout.py");
           await runPythonScript(checkoutScript, ["--auto", "--final"]);
           
-          await client.app.log({
-            service: "elf-hooks",
-            level: "info",
-            message: "ELF session closed - learnings recorded"
-          });
+          if (client?.app?.log) {
+            await client.app.log({
+              service: "elf-hooks",
+              level: "info",
+              message: "ELF session closed - learnings recorded"
+            });
+          }
         } catch (error) {
-          await client.app.log({
-            service: "elf-hooks",
-            level: "warn",
-            message: `Session check-out failed: ${error.message}`
-          });
+          if (client?.app?.log) {
+            await client.app.log({
+              service: "elf-hooks",
+              level: "warn",
+              message: `Session check-out failed: ${error.message}`
+            });
+          } else {
+            console.warn(`Session check-out failed: ${error.message}`);
+          }
         }
 
         sessionId = null;
@@ -269,22 +296,28 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
             );
 
             if (result.exitCode === 0) {
-              await client.app.log({
-                service: "elf-hooks",
-                level: "info",
-                message: `Swarm execution completed: ${args.task}`
-              });
+              if (client?.app?.log) {
+                await client.app.log({
+                  service: "elf-hooks",
+                  level: "info",
+                  message: `Swarm execution completed: ${args.task}`
+                });
+              }
 
               return `✅ SWARM EXECUTION COMPLETE\n\n${result.stdout}`;
             } else {
               return `❌ Swarm execution failed:\n${result.stderr}`;
             }
           } catch (error) {
-            await client.app.log({
-              service: "elf-hooks",
-              level: "error",
-              message: `Swarm execution error: ${error.message}`
-            });
+            if (client?.app?.log) {
+              await client.app.log({
+                service: "elf-hooks",
+                level: "error",
+                message: `Swarm execution error: ${error.message}`
+              });
+            } else {
+              console.error(`Swarm execution error: ${error.message}`);
+            }
 
             return `❌ Error: ${error.message}`;
           }
@@ -301,11 +334,13 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
         execute: async (args, ctx) => {
           elfActive = true;
           
-          await client.app.log({
-            service: "elf-hooks",
-            level: "info",
-            message: "ELF hooks activated"
-          });
+          if (client?.app?.log) {
+            await client.app.log({
+              service: "elf-hooks",
+              level: "info",
+              message: "ELF hooks activated"
+            });
+          }
 
           return `✅ ELF activated\n\nHooks are now active for this session.\n- Pre/post-tool learning enabled\n- Session auto check-in/check-out enabled\n- Swarm agents available via /swarm_task`;
         }
