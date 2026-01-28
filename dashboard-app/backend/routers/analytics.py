@@ -24,7 +24,7 @@ async def get_stats():
                     (SELECT COUNT(*) FROM node_executions) as total_executions,
                     (SELECT COUNT(*) FROM trails) as total_trails,
                     (SELECT COUNT(*) FROM heuristics) as total_heuristics,
-                    (SELECT COUNT(*) FROM heuristics WHERE is_golden = 1) as golden_rules,
+                    (SELECT COUNT(*) FROM golden_rules) as golden_rules,
                     (SELECT COUNT(*) FROM learnings) as total_learnings,
                     (SELECT COUNT(*) FROM learnings WHERE type = 'failure') as failures,
                     (SELECT COUNT(*) FROM learnings WHERE type = 'success') as successes,
@@ -325,45 +325,46 @@ async def get_learning_velocity(days: int = 30):
 
 @router.get("/events")
 async def get_events(limit: int = 50):
-    """Get recent events feed."""
+    """Get recent events feed from event_chronicle."""
     with get_db() as conn:
         cursor = conn.cursor()
 
         events = []
 
-        # Recent metrics (last hour)
+        # Get recent events from event_chronicle
         cursor.execute("""
-            SELECT metric_type, metric_name, metric_value, tags, context, timestamp
-            FROM metrics
-            WHERE timestamp > datetime('now', '-1 hour')
-            ORDER BY timestamp DESC
+            SELECT id, event_type, source, source_id, summary, status, data, timestamp, created_at
+            FROM event_chronicle
+            ORDER BY created_at DESC
             LIMIT ?
         """, (limit,))
 
         for row in cursor.fetchall():
             r = dict_from_row(row)
-            event_type = r["metric_type"]
+            event_type = r["event_type"]
 
             # Format event message
-            if event_type == "heuristic_validated":
-                message = "Heuristic validated"
-            elif event_type == "heuristic_violated":
-                message = "Heuristic violated"
-            elif event_type == "auto_failure_capture":
-                message = "Failure auto-captured"
-            elif event_type == "golden_rule_promotion":
-                message = "New golden rule promoted!"
-            elif event_type == "task_outcome":
-                message = f"Task {r['metric_name']}"
+            if event_type == "session_created":
+                message = "Session created"
+            elif event_type == "session_closed":
+                message = "Session closed"
+            elif event_type == "tool_executed":
+                message = r["summary"] or f"Tool executed"
+            elif event_type == "tool_error":
+                message = r["summary"] or "Tool error"
+            elif event_type == "session_error":
+                message = r["summary"] or "Session error"
             else:
-                message = f"{event_type}: {r['metric_name']}"
+                message = r["summary"] or f"{event_type}"
 
             events.append({
+                "id": r["id"],
                 "type": event_type,
                 "message": message,
-                "timestamp": r["timestamp"],
-                "tags": r["tags"],
-                "context": r["context"]
+                "source": r["source"],
+                "status": r["status"],
+                "timestamp": r["timestamp"] or r["created_at"],
+                "data": r["data"]
             })
 
         return events

@@ -63,17 +63,78 @@ export default async (plugin) => {
   const client = plugin?.client;
   const $ = plugin?.$;
 
-  // Log helper with fallback
-  const log = async (level, message) => {
+  // Startup notification to verify plugin loaded
+  const startupTime = new Date().toISOString();
+  if (client?.app?.log) {
+    await client.app.log({
+      service: "elf-hooks",
+      level: "info",
+      message: "🎯 ELF Plugin Loaded Successfully",
+      extra: {
+        timestamp: startupTime,
+        hooksDir: HOOKS_DIR,
+        queryDir: QUERY_DIR,
+        watcherDir: path.join(ELF_DIR, "watcher")
+      }
+    });
+  } else {
+    console.log(`[ELF] Plugin loaded at ${startupTime}`);
+  }
+
+  // Log helper with fallback and debug info
+  const log = async (level, message, extra = {}) => {
     if (client?.app?.log) {
       await client.app.log({
         service: "elf-hooks",
         level,
-        message
+        message,
+        extra: Object.keys(extra).length > 0 ? extra : undefined
       });
     } else {
-      console[level === 'error' ? 'error' : 'log'](`[ELF] ${message}`);
+      console[level === 'error' ? 'error' : 'log'](`[ELF] ${message}`, extra);
     }
+  };
+
+  // Record event to timeline (event_chronicle)
+  const recordEvent = async (eventType, source, sourceId, summary, status = 'success', data = null) => {
+    try {
+      const eventScript = path.join(ELF_DIR, "query", "record_event.py");
+      if (existsSync(eventScript)) {
+        const eventData = {
+          event_type: eventType,
+          source,
+          source_id: sourceId,
+          summary,
+          status,
+          data: data ? JSON.stringify(data) : null,
+          timestamp: new Date().toISOString()
+        };
+        
+        await runPythonScript(eventScript, [JSON.stringify(eventData)]);
+      }
+    } catch (error) {
+      // Silent fail for event recording
+    }
+  };
+
+  // Debug notification for event tracking
+  const debugNotify = async (eventType, scriptPath, scriptName, result = null) => {
+    const timestamp = new Date().toISOString();
+    const scriptExists = existsSync(scriptPath);
+    const exitCode = result?.exitCode;
+    const hasOutput = result?.stdout?.length > 0;
+    
+    const debugInfo = {
+      event: eventType,
+      script: scriptName,
+      timestamp,
+      scriptExists,
+      exitCode,
+      hasOutput,
+      outputSize: result?.stdout?.length || 0
+    };
+
+    await log('info', `[${eventType}] Executing ${scriptName}`, debugInfo);
   };
 
 
@@ -81,92 +142,189 @@ export default async (plugin) => {
   return {
     /**
      * Pre-tool learning hook - runs before each tool execution
+     * Official hook: tool.execute.before
      */
-    'tool:before': async (data) => {
+    'tool.execute.before': async (input, output) => {
+      const toolName = input?.tool || 'unknown';
+      
       try {
         const preToolScript = path.join(HOOKS_DIR, "pre_tool_learning.py");
         if (existsSync(preToolScript)) {
-          await runPythonScript(preToolScript, [JSON.stringify(data || {})]);
+          await log('info', `[BEFORE] Tool: ${toolName}`, { tool: toolName, inputKeys: Object.keys(input || {}) });
+          
+          const data = { input, output };
+          const result = await runPythonScript(preToolScript, [JSON.stringify(data || {})]);
+          
+          await debugNotify('tool.execute.before', preToolScript, 'pre_tool_learning.py', result);
+        } else {
+          await log('warn', `[BEFORE] Script not found: pre_tool_learning.py`, { searchPath: preToolScript });
         }
       } catch (error) {
-        await log('warn', `Pre-tool hook error: ${error.message}`);
+        await log('error', `[BEFORE] Pre-tool hook error: ${error.message}`, { tool: toolName, error: error.toString() });
       }
     },
 
     /**
      * Post-tool learning hook - runs after each tool execution
      * Captures learnings and records pheromone trails
+     * Official hook: tool.execute.after
      */
-    'tool:after': async (data) => {
+    'tool.execute.after': async (input, output) => {
+      const toolName = input?.tool || 'unknown';
+      const resultStatus = output?.result?.exitCode === 0 ? 'success' : 'failed';
+      
       try {
         // Post-tool learning
         const postToolScript = path.join(HOOKS_DIR, "post_tool_learning.py");
         if (existsSync(postToolScript)) {
-          await runPythonScript(postToolScript, [JSON.stringify(data || {})]);
+          await log('info', `[AFTER] Tool: ${toolName} | Status: ${resultStatus}`, { 
+            tool: toolName, 
+            status: resultStatus,
+            outputSize: output?.result?.stdout?.length || 0
+          });
+          
+          const data = { input, output };
+          const result = await runPythonScript(postToolScript, [JSON.stringify(data || {})]);
+          
+          await debugNotify('tool.execute.after (learning)', postToolScript, 'post_tool_learning.py', result);
+          
+          // Record tool execution event to timeline
+          await recordEvent(
+            'tool_executed',
+            'opencode-plugin',
+            sessionId || 'unknown',
+            `Tool executed: ${toolName} (${resultStatus})`,
+            resultStatus,
+            { tool: toolName, exitCode: result.exitCode }
+          );
+        } else {
+          await log('warn', `[AFTER] Script not found: post_tool_learning.py`, { searchPath: postToolScript });
         }
 
         // Record pheromone trails (file access tracking)
         const pheromoneScript = path.join(HOOKS_DIR, "record_pheromone.py");
         if (existsSync(pheromoneScript)) {
-          await runPythonScript(pheromoneScript, [JSON.stringify(data || {})]);
+          const data = { input, output };
+          const result = await runPythonScript(pheromoneScript, [JSON.stringify(data || {})]);
+          
+          await debugNotify('tool.execute.after (pheromone)', pheromoneScript, 'record_pheromone.py', result);
+        } else {
+          await log('warn', `[AFTER] Script not found: record_pheromone.py`, { searchPath: pheromoneScript });
         }
       } catch (error) {
-        await log('warn', `Post-tool hook error: ${error.message}`);
+        await log('error', `[AFTER] Post-tool hook error: ${error.message}`, { tool: toolName, error: error.toString() });
+        await recordEvent('tool_error', 'opencode-plugin', sessionId || 'unknown', `Tool error: ${toolName}`, 'failed', { error: error.message });
       }
     },
 
     /**
-     * Session lifecycle management
+     * Session created - Initialize ELF context when session starts
+     * Official hook: session.created
      */
-    'session:created': async (data) => {
-
+    'session.created': async (data) => {
+      const sid = data?.session?.id || data?.id;
+      
       try {
-        sessionId = data?.session?.id || data?.id;
+        sessionId = sid;
         sessionCheckinDone = false;
+
+        await log('info', `[SESSION.CREATED] Starting ELF session`, { sessionId: sid });
+        await recordEvent('session_created', 'opencode-plugin', sid, 'ELF session started', 'success');
 
         const checkinScript = path.join(QUERY_DIR, "checkin.py");
         if (existsSync(checkinScript)) {
           const result = await runPythonScript(checkinScript, [JSON.stringify(data || {})]);
           
+          await debugNotify('session.created (checkin)', checkinScript, 'checkin.py', result);
+          
           if (result.exitCode === 0) {
             sessionCheckinDone = true;
-            await log('info', "ELF session activated - context loaded");
+            await log('info', "ELF session activated - context loaded", { sessionId: sid, exitCode: 0 });
+          } else {
+            await log('warn', "ELF session check-in failed", { sessionId: sid, exitCode: result.exitCode });
           }
 
           // Spawn async watcher (non-blocking)
           const autoSpawnScript = path.join(ELF_DIR, "watcher", "auto_spawn.py");
           if (existsSync(autoSpawnScript)) {
-            runPythonScript(autoSpawnScript, ["--once"]).catch(() => {});
+            await log('info', "[SESSION.CREATED] Spawning watcher", { script: 'auto_spawn.py' });
+            runPythonScript(autoSpawnScript, ["--once"]).catch(err => {
+              log('warn', `[SESSION.CREATED] Watcher spawn failed: ${err.message}`);
+            });
           }
 
           // Sync golden rules (non-blocking)
           const syncScript = path.join(QUERY_DIR, "sync_golden_rules.py");
           if (existsSync(syncScript)) {
-            runPythonScript(syncScript).catch(() => {});
+            await log('info', "[SESSION.CREATED] Syncing golden rules", { script: 'sync_golden_rules.py' });
+            runPythonScript(syncScript).catch(err => {
+              log('warn', `[SESSION.CREATED] Golden rules sync failed: ${err.message}`);
+            });
           }
+        } else {
+          await log('warn', `[SESSION.CREATED] Checkin script not found`, { searchPath: checkinScript });
         }
       } catch (error) {
-        await log('warn', `Session check-in failed: ${error.message}`);
+        await log('error', `[SESSION.CREATED] Session check-in failed: ${error.message}`, { sessionId: sid, error: error.toString() });
+        await recordEvent('session_error', 'opencode-plugin', sid, `Session check-in failed: ${error.message}`, 'failed');
       }
     },
 
-    'session:deleted': async (data) => {
-      if (!sessionCheckinDone) return;
+    /**
+     * Session deleted - Persist learnings when session ends
+     * Official hook: session.deleted
+     */
+    'session.deleted': async (data) => {
+      const sid = sessionId;
+      
+      if (!sessionCheckinDone) {
+        await log('debug', `[SESSION.DELETED] Session not checked in, skipping checkout`, { sessionId: sid });
+        return;
+      }
 
       try {
+        await log('info', `[SESSION.DELETED] Closing ELF session`, { sessionId: sid });
+        await recordEvent('session_closed', 'opencode-plugin', sid, 'ELF session closed', 'success');
+        
         const checkoutScript = path.join(QUERY_DIR, "checkout.py");
         if (existsSync(checkoutScript)) {
-          await runPythonScript(checkoutScript, [JSON.stringify(data || {})]);
-          await log('info', "ELF session closed - learnings recorded");
+          const result = await runPythonScript(checkoutScript, [JSON.stringify(data || {})]);
+          
+          await debugNotify('session.deleted (checkout)', checkoutScript, 'checkout.py', result);
+          await log('info', "ELF session closed - learnings recorded", { sessionId: sid, exitCode: result.exitCode });
+        } else {
+          await log('warn', `[SESSION.DELETED] Checkout script not found`, { searchPath: checkoutScript });
         }
       } catch (error) {
-        await log('warn', `Session check-out failed: ${error.message}`);
+        await log('error', `[SESSION.DELETED] Session check-out failed: ${error.message}`, { sessionId: sid, error: error.toString() });
+        await recordEvent('session_error', 'opencode-plugin', sid, `Session checkout failed: ${error.message}`, 'failed');
       } finally {
         sessionId = null;
         sessionCheckinDone = false;
       }
-    }
+    },
 
-    // No tools defined - ELF uses events (tool:before, tool:after) to intercept all tool executions
+    /**
+     * Session compacted - Inject ELF context during session continuation
+     * Official hook: experimental.session.compacting
+     */
+    'experimental.session.compacting': async (input, output) => {
+      try {
+        await log('info', `[SESSION.COMPACTING] Session continuation triggered`, { sessionId });
+        
+        // Inject ELF learnings and heuristics into the compaction context
+        const compactScript = path.join(HOOKS_DIR, "pre_tool_learning.py");
+        if (existsSync(compactScript)) {
+          const data = { input, output, event: "session_compacting" };
+          const result = await runPythonScript(compactScript, [JSON.stringify(data || {})]);
+          
+          await debugNotify('session.compacting (context inject)', compactScript, 'pre_tool_learning.py', result);
+        } else {
+          await log('warn', `[SESSION.COMPACTING] Compaction script not found`, { searchPath: compactScript });
+        }
+      } catch (error) {
+        await log('error', `[SESSION.COMPACTING] Session compaction error: ${error.message}`, { sessionId, error: error.toString() });
+      }
+    }
   };
 };
