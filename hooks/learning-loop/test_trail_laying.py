@@ -89,7 +89,7 @@ class TestLayTrails:
             description="Verification test"
         )
 
-        db_path = Path.home() / ".claude" / "emergent-learning" / "memory" / "index.db"
+        db_path = Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
         if db_path.exists():
             conn = sqlite3.connect(str(db_path))
             cursor = conn.cursor()

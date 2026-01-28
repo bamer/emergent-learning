@@ -6,7 +6,7 @@ This migration adds location awareness to heuristics:
 - NULL = global heuristic (available everywhere)
 - path = location-specific heuristic (only shown when in that directory)
 
-Run: python ~/.claude/emergent-learning/scripts/migrate_add_project_path.py
+Run: python ~/.opencode/emergent-learning/scripts/migrate_add_project_path.py
 """
 
 import sqlite3

@@ -89,16 +89,16 @@ kill <launcher_pid>
 
 ```bash
 # Watch the logs
-tail -f ~/.claude/emergent-learning/.coordination/launcher.log
+tail -f ~/.opencode/emergent-learning/.coordination/launcher.log
 
 # Check Haiku logs
-tail -f ~/.claude/emergent-learning/.coordination/haiku_watcher.log
+tail -f ~/.opencode/emergent-learning/.coordination/haiku_watcher.log
 
 # Check Opus logs
-tail -f ~/.claude/emergent-learning/.coordination/opus_handler.log
+tail -f ~/.opencode/emergent-learning/.coordination/opus_handler.log
 
 # View current status
-cat ~/.claude/emergent-learning/.coordination/status.md
+cat ~/.opencode/emergent-learning/.coordination/status.md
 ```
 
 ## Configuration
@@ -152,7 +152,7 @@ watcher/
 
 **Solution**:
 ```bash
-cd ~/.claude/emergent-learning
+cd ~/.opencode/emergent-learning
 pip install anthropic  # or bun install if using JS version
 ```
 
@@ -168,7 +168,7 @@ export ANTHROPIC_API_KEY="your-key-here"
 
 **Check the logs**:
 ```bash
-tail -50 ~/.claude/emergent-learning/.coordination/launcher.log
+tail -50 ~/.opencode/emergent-learning/.coordination/launcher.log
 ```
 
 **Common causes**:
@@ -180,7 +180,7 @@ tail -50 ~/.claude/emergent-learning/.coordination/launcher.log
 
 **Verify Haiku is detecting issues**:
 ```bash
-cat ~/.claude/emergent-learning/.coordination/haiku_watcher.log
+cat ~/.opencode/emergent-learning/.coordination/haiku_watcher.log
 ```
 
 **Haiku should exit with code 1 when intervention is needed**. If it's not detecting issues, check the detection logic in `haiku_watcher.py`.
@@ -201,7 +201,7 @@ cat ~/.claude/emergent-learning/.coordination/haiku_watcher.log
 **Solution**: Implement log rotation
 ```bash
 # Add to crontab
-0 0 * * * find ~/.claude/emergent-learning/.coordination -name "*.log" -mtime +7 -delete
+0 0 * * * find ~/.opencode/emergent-learning/.coordination -name "*.log" -mtime +7 -delete
 ```
 
 Or use the built-in `LOG_RETENTION` setting (keeps last N entries in memory).
@@ -212,10 +212,10 @@ Or use the built-in `LOG_RETENTION` setting (keeps last N entries in memory).
 Track API usage to ensure the tier system is providing expected savings:
 ```bash
 # Check number of Haiku calls
-grep "Starting check" ~/.claude/emergent-learning/.coordination/haiku_watcher.log | wc -l
+grep "Starting check" ~/.opencode/emergent-learning/.coordination/haiku_watcher.log | wc -l
 
 # Check number of Opus calls
-grep "Invoking Opus" ~/.claude/emergent-learning/.coordination/launcher.log | wc -l
+grep "Invoking Opus" ~/.opencode/emergent-learning/.coordination/launcher.log | wc -l
 
 # Expected ratio: 50:1 or higher (Haiku:Opus)
 ```
@@ -234,10 +234,10 @@ If Opus is rarely invoked:
 Set up a weekly review:
 ```bash
 # What issues did Haiku detect?
-grep "ISSUE DETECTED" ~/.claude/emergent-learning/.coordination/haiku_watcher.log
+grep "ISSUE DETECTED" ~/.opencode/emergent-learning/.coordination/haiku_watcher.log
 
 # What decisions did Opus make?
-grep "DECISION" ~/.claude/emergent-learning/.coordination/opus_handler.log
+grep "DECISION" ~/.opencode/emergent-learning/.coordination/opus_handler.log
 ```
 
 ### 4. Backup Coordination State
@@ -260,7 +260,7 @@ After=network.target
 [Service]
 Type=simple
 User=youruser
-WorkingDirectory=/home/youruser/.claude/emergent-learning
+WorkingDirectory=/home/youruser/.opencode/emergent-learning
 ExecStart=/usr/bin/python3 watcher/launcher.py
 Restart=on-failure
 RestartSec=10

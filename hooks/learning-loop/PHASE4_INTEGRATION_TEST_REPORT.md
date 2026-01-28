@@ -257,7 +257,7 @@ The AdvisoryVerifier hook is ready for production use based on:
 
 **Test Execution:**
 ```bash
-cd ~/.claude/emergent-learning/hooks/learning-loop
+cd ~/.opencode/emergent-learning/hooks/learning-loop
 python test_integration_phase4.py
 ```
 

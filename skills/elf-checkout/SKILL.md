@@ -25,7 +25,7 @@ The `/checkout` command:
 ## Execution
 
 ```bash
-python ~/.claude/emergent-learning/src/query/checkout.py
+python ~/.opencode/emergent-learning/src/query/checkout.py
 ```
 
 ## Output Example

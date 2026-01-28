@@ -50,6 +50,24 @@ function parseFrontmatter(content) {
 }
 
 /**
+ * Converts path references from ~/.claude to ~/.opencode in markdown body
+ */
+function convertPathsInBody(body) {
+  return body
+    // Convert ~/.opencode/emergent-learning to ~/.opencode/emergent-learning
+    .replace(/~\/\.claude\/emergent-learning/g, '~/.opencode/emergent-learning')
+    // Convert /home/user/.opencode/emergent-learning to /home/user/.opencode/emergent-learning
+    .replace(/\/\.claude\/emergent-learning/g, '/.opencode/emergent-learning')
+    // Convert claude CLI references (keep opencode/big-pickle model)
+    .replace(/claude --print --model (haiku|opus|sonnet)/g, 'claude --print --model opencode/big-pickle')
+    .replace(/claude --print --model gpt-4/g, 'claude --print --model opencode/big-pickle')
+    // Update python command references
+    .replace(/python .*\/.claude\/emergent-learning\//g, (match) => {
+      return match.replace(/\.claude/, '.opencode');
+    });
+}
+
+/**
  * Converts Claude frontmatter to OpenCode format
  */
 function convertFrontmatter(claudeFrontmatter) {
@@ -168,7 +186,11 @@ function processAgent(filePath) {
   }
   
   const opencodeFrontmatter = convertFrontmatter(frontmatter);
-  const opencodeMarkdown = generateOpenCodeMarkdown(opencodeFrontmatter, body);
+  
+  // Convert paths in body content
+  const convertedBody = convertPathsInBody(body);
+  
+  const opencodeMarkdown = generateOpenCodeMarkdown(opencodeFrontmatter, convertedBody);
   
   // Determine output path
   const relativePath = path.relative(process.cwd(), filePath);

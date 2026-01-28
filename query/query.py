@@ -45,7 +45,7 @@ def _ensure_venv_python():
     for possible_venv in [
         venv_dir,  # ../../.venv (repo root .venv)
         script_dir / '.venv',  # ./.venv
-        Path.home() / '.claude' / 'emergent-learning' / '.venv',  # ~/.claude/emergent-learning/.venv
+        Path.home() / '.opencode' / 'emergent-learning' / '.venv',  # ~/.opencode/emergent-learning/.venv
     ]:
         if possible_venv.exists():
             # Try different python executable names

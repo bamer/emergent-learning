@@ -392,11 +392,11 @@ class TestPathGetters(unittest.TestCase):
     @patch('agent_config.get_base_path')
     def test_get_global_agent_config_path(self, mock_base_path):
         """Test global config path construction."""
-        mock_base_path.return_value = Path('/home/user/.claude/emergent-learning')
+        mock_base_path.return_value = Path('/home/user/.opencode/emergent-learning')
 
         result = get_global_agent_config_path()
 
-        assert result == Path('/home/user/.claude/emergent-learning/agent_selector/config.yaml')
+        assert result == Path('/home/user/.opencode/emergent-learning/agent_selector/config.yaml')
 
     @patch('os.getcwd')
     def test_get_project_agent_config_path_exists(self, mock_getcwd):

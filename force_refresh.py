@@ -13,7 +13,7 @@ def force_refresh():
     print("🔄 Forcing dashboard data refresh...")
 
     # 1. Add more test data to ensure visibility
-    conn = sqlite3.connect("/home/bamer/.claude/emergent-learning/memory/index.db")
+    conn = sqlite3.connect("/home/bamer/.opencode/emergent-learning/memory/index.db")
     cursor = conn.cursor()
 
     # Add a second learning with different type

@@ -79,8 +79,8 @@ class CheckinOrchestrator:
         if os.environ.get('ELF_BASE_PATH'):
             return Path(os.environ['ELF_BASE_PATH']).expanduser().resolve()
 
-        # Try 2: ~/.claude/emergent-learning (global install)
-        global_elf = Path.home() / '.claude' / 'emergent-learning'
+        # Try 2: ~/.opencode/emergent-learning (global install)
+        global_elf = Path.home() / '.opencode' / 'emergent-learning'
         if global_elf.exists():
             return global_elf
 
@@ -98,7 +98,7 @@ class CheckinOrchestrator:
         """Step 1b: Verify and install required hooks (auto-sync, observability, etc)."""
         try:
             # Use the actual ELF installation directory, not the project base
-            elf_install = Path.home() / '.claude' / 'emergent-learning'
+            elf_install = Path.home() / '.opencode' / 'emergent-learning'
             verifier = elf_install / 'scripts' / 'verify-hooks.py'
 
             if verifier.exists():

@@ -290,8 +290,8 @@ This session implemented:
 
 ### Configuration Files:
 - Dashboard backend and frontend running
-- Database at: `~/.claude/emergent-learning/memory/index.db`
-- Logs at: `~/.claude/emergent-learning/logs/`
+- Database at: `~/.opencode/emergent-learning/memory/index.db`
+- Logs at: `~/.opencode/emergent-learning/logs/`
 
 ## 🎯 Next Steps
 

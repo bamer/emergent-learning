@@ -74,7 +74,7 @@ def get_base_path() -> Path:
     for parent in current.parents:
         if (parent / ".coordination").exists() or (parent / ".git").exists():
             return parent
-    return Path.home() / ".claude" / "emergent-learning"
+    return Path.home() / ".opencode" / "emergent-learning"
 
 
 # Ensure src is in python path for models and utils

@@ -32,7 +32,7 @@ def _resolve_base_path() -> Path:
             except ImportError:
                 break
 
-    return Path.home() / ".claude" / "emergent-learning"
+    return Path.home() / ".opencode" / "emergent-learning"
 
 
 DEFAULT_DB = _resolve_base_path() / "memory" / "index.db"

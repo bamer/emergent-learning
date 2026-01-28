@@ -7,7 +7,7 @@ import sqlite3
 
 
 def insert_heuristics():
-    conn = sqlite3.connect("/home/bamer/.claude/emergent-learning/memory/index.db")
+    conn = sqlite3.connect("/home/bamer/.opencode/emergent-learning/memory/index.db")
     cursor = conn.cursor()
 
     # Insert the discovered heuristics with proper columns

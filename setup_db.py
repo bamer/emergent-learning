@@ -18,7 +18,7 @@ async def create_missing_tables():
         print("✓ Database tables: SUCCESS")
 
         # Check database file size
-        db_path = Path.home() / ".claude" / "emergent-learning" / "memory" / "index.db"
+        db_path = Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
         if db_path.exists():
             size_mb = db_path.stat().st_size / (1024 * 1024)
             print(f"✓ Database file: {size_mb:.2f}MB")

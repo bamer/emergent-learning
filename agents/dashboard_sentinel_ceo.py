@@ -40,7 +40,7 @@ class AISentinel:
     def __init__(self, name="Dashboard Sentinel AI", model="big-pickle"):
         self.name = name
         self.model = model
-        self.db_path = "/home/bamer/.claude/emergent-learning/memory/index.db"
+        self.db_path = "/home/bamer/.opencode/emergent-learning/memory/index.db"
         self.frontend_url = "http://localhost:3001"
         self.backend_url = "http://localhost:8888"
         self.conversation_history = []

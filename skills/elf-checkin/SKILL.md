@@ -32,7 +32,7 @@ The checkin command is simple - just type `/checkin` to load framework context a
 This skill runs the Python-based orchestrator in non-interactive mode:
 
 ```bash
-python ~/.claude/emergent-learning/src/query/checkin.py --non-interactive
+python ~/.opencode/emergent-learning/src/query/checkin.py --non-interactive
 ```
 
 ### Handling Non-Interactive Mode
@@ -43,7 +43,7 @@ instead of blocking on `input()`. When you see these in the output:
 1. **Dashboard prompt**: `[PROMPT_NEEDED] {"type": "dashboard", ...}`
    - Use `AskUserQuestion` tool to ask: "Start ELF Dashboard?"
    - Options: "Yes (Recommended)" / "No"
-   - If yes, run: `bash ~/.claude/emergent-learning/dashboard-app/run-dashboard.sh`
+   - If yes, run: `bash ~/.opencode/emergent-learning/dashboard-app/run-dashboard.sh`
 
 2. **Model selection**: `[PROMPT_NEEDED] {"type": "model", ...}`
    - Use `AskUserQuestion` tool to ask: "Which AI model for this session?"

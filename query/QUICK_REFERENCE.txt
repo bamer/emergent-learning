@@ -108,7 +108,7 @@
 ┌─ QUICK COMMANDS ────────────────────────────────────────────────────────────┐
 │                                                                             │
 │   # Run full test suite                                                    │
-│   $ cd ~/.claude/emergent-learning/query                                   │
+│   $ cd ~/.opencode/emergent-learning/query                                   │
 │   $ python test_edge_cases.py                                              │
 │                                                                             │
 │   # Read executive summary                                                 │

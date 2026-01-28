@@ -12,8 +12,8 @@
 set -e
 
 # Find the Python script
-ELF_HOME="${HOME}/.claude/emergent-learning"
-CHECKIN_PY="${ELF_HOME}/src/query/checkin.py"
+ELF_HOME="${HOME}/.opencode/emergent-learning"
+CHECKIN_PY="${ELF_HOME}/query/checkin.py"
 
 # Fallback location if standard location doesn't exist
 if [ ! -f "$CHECKIN_PY" ]; then

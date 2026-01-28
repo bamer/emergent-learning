@@ -57,7 +57,7 @@ async def initialize_database(db_path: Optional[str] = None) -> Manager:
         if _get_base_path is not None:
             db_path = _get_base_path() / "memory" / "index.db"
         else:
-            db_path = Path.home() / ".claude" / "emergent-learning" / "memory" / "index.db"
+            db_path = Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
     else:
         db_path = Path(db_path).expanduser()
 
@@ -164,7 +164,7 @@ def initialize_database_sync(db_path: Optional[str] = None) -> Manager:
         if _get_base_path is not None:
             db_path = _get_base_path() / "memory" / "index.db"
         else:
-            db_path = Path.home() / ".claude" / "emergent-learning" / "memory" / "index.db"
+            db_path = Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
     else:
         db_path = Path(db_path).expanduser()
 

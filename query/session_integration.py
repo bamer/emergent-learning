@@ -45,7 +45,7 @@ except ImportError:
             from elf_paths import get_base_path
             EMERGENT_LEARNING_PATH = get_base_path()
         except ImportError:
-            EMERGENT_LEARNING_PATH = Path.home() / ".claude" / "emergent-learning"
+            EMERGENT_LEARNING_PATH = Path.home() / ".opencode" / "emergent-learning"
 SESSIONS_PATH = EMERGENT_LEARNING_PATH / "sessions"
 LOGS_PATH = SESSIONS_PATH / "logs"
 PROCESSED_MARKER = SESSIONS_PATH / ".processed"

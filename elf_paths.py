@@ -5,7 +5,7 @@ Resolves the ELF base path with guardrails:
 1) ELF_BASE_PATH environment variable (explicit override)
 2) Repo-root discovery from a start path
 
-If a legacy ~/.claude/emergent-learning installation is detected and the
+If a legacy ~/.opencode/emergent-learning installation is detected and the
 current base has no user data yet, a one-time migration copies the legacy
 database (and golden rules) into the new base.
 """
@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Optional
 
 _MIGRATION_ATTEMPTED = False
-_LEGACY_BASE = Path.home() / ".claude" / "emergent-learning"
+_LEGACY_BASE = Path.home() / ".opencode" / "emergent-learning"
 
 
 def _normalize_start(start: Optional[Path]) -> Path:
@@ -145,7 +145,7 @@ def get_base_path(start: Optional[Path] = None) -> Path:
     Fallback chain (in order):
         1. ELF_BASE_PATH environment variable
         2. Git repo root (detected from start path or current directory)
-        3. Default: ~/.claude/emergent-learning
+        3. Default: ~/.opencode/emergent-learning
     """
     env_path = os.environ.get("ELF_BASE_PATH")
     if env_path:
@@ -159,7 +159,7 @@ def get_base_path(start: Optional[Path] = None) -> Path:
         return repo_root
 
     # Fallback to default ELF installation directory
-    default_path = Path.home() / ".claude" / "emergent-learning"
+    default_path = Path.home() / ".opencode" / "emergent-learning"
     _maybe_migrate_legacy(default_path)
     return default_path
 

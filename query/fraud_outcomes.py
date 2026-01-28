@@ -32,7 +32,7 @@ except ImportError:
 if _get_base_path is not None:
     DB_PATH = _get_base_path() / "memory" / "index.db"
 else:
-    DB_PATH = Path.home() / ".claude" / "emergent-learning" / "memory" / "index.db"
+    DB_PATH = Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
 
 OutcomeType = Literal['true_positive', 'false_positive', 'dismissed', 'pending']
 TimePeriod = Literal['all_time', 'last_30d', 'last_7d', 'last_24h']

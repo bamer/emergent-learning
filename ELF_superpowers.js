@@ -71,6 +71,34 @@ let elfActive = false;
 let sessionCheckinDone = false;
 let sessionId = null;
 
+/**
+ * Record pheromone trails from tool execution
+ * Tracks which files were accessed/modified
+ */
+async function recordPheromoneTrail(toolInput, HOOKS_DIR) {
+  const pheromoneScript = path.join(HOOKS_DIR, "record_pheromone.py");
+  
+  // Only record for tools that access files
+  const fileTouchingTools = ['Read', 'Grep', 'Bash', 'create_file', 'edit_file'];
+  const toolName = toolInput.tool_name || toolInput.tool || '';
+  
+  if (fileTouchingTools.some(t => toolName.includes(t))) {
+    const context = {
+      tool_name: toolName,
+      tool_input: toolInput.tool_input || toolInput.input || '',
+      timestamp: new Date().toISOString()
+    };
+    
+    if (existsSync(pheromoneScript)) {
+      try {
+        await runPythonScript(pheromoneScript, [JSON.stringify(context)]);
+      } catch (error) {
+        // Silently fail - pheromone is nice-to-have, not critical
+      }
+    }
+  }
+}
+
 export const ELFHooksPlugin = async ({ client, $ }) => {
   return {
     /**
@@ -96,7 +124,7 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
 
     /**
      * Post-tool hook - runs after each tool
-     * Captures learnings from tool output
+     * Captures learnings from tool output + records pheromone trails
      */
     "tool.execute.after": async (input) => {
       if (!elfActive) return;
@@ -108,11 +136,16 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
           const hookInput = {
             tool_name: input.tool_name || input.tool,
             tool_input: input.tool_input || input.input,
-            tool_output: input.tool_output || input.output
+            tool_output: input.tool_output || input.output,
+            timestamp: new Date().toISOString()
           };
           
           await runPythonScript(postToolScript, [JSON.stringify(hookInput)]);
         }
+        
+        // Record pheromone trails (file access tracking)
+        await recordPheromoneTrail(input, HOOKS_DIR);
+        
       } catch (error) {
         await client.app.log({
           service: "elf-hooks",
@@ -125,6 +158,7 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
     /**
      * Session lifecycle hooks
      * Auto check-in on session.created, auto check-out on session.deleted
+     * Also syncs golden rules and spawns async watcher
      */
     event: async ({ event }) => {
       if (!elfActive) return;
@@ -156,6 +190,19 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
               message: "ELF session activated - context loaded"
             });
           }
+          
+          // Sync golden rules on session start (non-blocking)
+          const syncScript = path.join(QUERY_DIR, "sync_golden_rules.py");
+          if (existsSync(syncScript)) {
+            runPythonScript(syncScript).catch(() => {});  // Fire and forget
+          }
+          
+          // Spawn async watcher (non-blocking)
+          const autoSpawnScript = path.join(ELF_DIR, "watcher", "auto_spawn.py");
+          if (existsSync(autoSpawnScript)) {
+            runPythonScript(autoSpawnScript, ["--once"]).catch(() => {});  // Fire and forget
+          }
+          
         } catch (error) {
           await client.app.log({
             service: "elf-hooks",

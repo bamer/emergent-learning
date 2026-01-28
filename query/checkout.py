@@ -50,7 +50,7 @@ class CheckoutOrchestrator:
             from elf_paths import get_base_path
             return get_base_path()
         except ImportError:
-            return Path.home() / '.claude' / 'emergent-learning'
+            return Path.home() / '.opencode' / 'emergent-learning'
 
     def display_banner(self):
         print(self.BANNER)
@@ -126,11 +126,22 @@ class CheckoutOrchestrator:
 
         print("")
 
+    def sync_golden_rules(self):
+        """Sync golden rules from markdown to database."""
+        try:
+            from sync_golden_rules import ensure_rules_in_context
+            results = ensure_rules_in_context()
+            if results['synced'] > 0 or results['updated'] > 0:
+                print(f"[*] Golden rules synced (new: {results['synced']}, updated: {results['updated']})")
+        except Exception as e:
+            print(f"[!] Could not sync golden rules: {e}")
+    
     def run(self):
         """Execute automated checkout."""
         self.display_banner()
         self.analyze_session()
         self.display_summary()
+        self.sync_golden_rules()
         print("[OK] Checkout complete.")
 
 

@@ -22,7 +22,7 @@ from datetime import datetime
 
 def get_default_db_path() -> Path:
     """Get the default database path."""
-    return Path.home() / ".claude" / "emergent-learning" / "memory" / "index.db"
+    return Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
 
 
 def get_existing_columns(conn: sqlite3.Connection, table: str) -> set:

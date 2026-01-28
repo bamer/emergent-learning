@@ -30,7 +30,7 @@ try:
     from elf_paths import get_base_path
 except ImportError:
     def get_base_path():
-        return Path.home() / ".claude" / "emergent-learning"
+        return Path.home() / ".opencode" / "emergent-learning"
 
 
 COORD_DIR = get_base_path() / ".coordination"

@@ -6,7 +6,7 @@ for inclusion in the context. This makes agent weights, tier preferences,
 and routing rules available to Claude throughout the session.
 
 Config loading hierarchy:
-1. Global: ~/.claude/emergent-learning/agent_selector/config.yaml
+1. Global: ~/.opencode/emergent-learning/agent_selector/config.yaml
 2. Project override: .elf/agents.yaml (if exists in current directory)
 3. Final: Deep merge with project values taking precedence
 """

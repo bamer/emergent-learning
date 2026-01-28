@@ -27,7 +27,7 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 # ELF Observation settings
-ELF_BASE="${HOME}/.claude/emergent-learning"
+ELF_BASE="${HOME}/.opencode/emergent-learning"
 ELF_SESSION_DIR="${REPO_ROOT}/.elf/sessions"
 SESSION_ID=$(date +%Y%m%d_%H%M%S)
 CHECKPOINT_INTERVAL=5  # Run observation checkpoint every N iterations

@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 def get_base_path() -> Path:
     """
     Get the base path for ELF data.
-    Always use ~/.claude/emergent-learning as the single source of truth.
+    Always use ~/.opencode/emergent-learning as the single source of truth.
     """
-    return Path.home() / ".claude" / "emergent-learning"
+    return Path.home() / ".opencode" / "emergent-learning"
 
 
 

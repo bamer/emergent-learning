@@ -35,7 +35,7 @@
 
 ### Test the Improvements
 ```bash
-cd ~/.claude/emergent-learning/query
+cd ~/.opencode/emergent-learning/query
 python test_improvements.py  # Runs 7 core tests
 ```
 

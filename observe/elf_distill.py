@@ -54,7 +54,7 @@ CHARS_PER_TOKEN = 4  # Rough approximation
 # Golden rules file path
 def get_golden_rules_path() -> Path:
     """Get the path to golden-rules.md."""
-    return Path.home() / ".claude" / "emergent-learning" / "memory" / "golden-rules.md"
+    return Path.home() / ".opencode" / "emergent-learning" / "memory" / "golden-rules.md"
 
 
 # -----------------------------------------------------------------------------

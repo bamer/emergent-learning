@@ -69,7 +69,7 @@ class SessionIndex:
                 self.base_path = get_base_path()
             except ImportError:
                 # Fallback if utils.database is not available
-                self.base_path = Path.home() / ".claude" / "emergent-learning"
+                self.base_path = Path.home() / ".opencode" / "emergent-learning"
 
             # If base path is inside .claude/emergent-learning, projects is likely ../../projects
             candidate = self.base_path.parent / "projects"
@@ -86,7 +86,7 @@ class SessionIndex:
             from utils.database import get_base_path
             self._db_path = get_base_path() / "memory" / "index.db"
         except ImportError:
-            self._db_path = Path.home() / ".claude" / "emergent-learning" / "memory" / "index.db"
+            self._db_path = Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
 
     # Tools that commonly have large inputs (file contents)
     LARGE_INPUT_TOOLS = {"Read", "Write", "Edit", "NotebookEdit"}

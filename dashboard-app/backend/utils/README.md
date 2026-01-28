@@ -242,6 +242,6 @@ C:\Users\Evede\.claude\emergent-learning\dashboard-app\backend\utils\
 
 ## References
 
-- **Database Path:** `~/.claude/emergent-learning/memory/index.db`
+- **Database Path:** `~/.opencode/emergent-learning/memory/index.db`
 - **Main App:** `dashboard-app/backend/main.py`
 - **Test File:** `dashboard-app/backend/test_repository.py`

@@ -7,7 +7,7 @@ import sqlite3
 
 
 def insert_swarm_data():
-    conn = sqlite3.connect("/home/bamer/.claude/emergent-learning/memory/index.db")
+    conn = sqlite3.connect("/home/bamer/.opencode/emergent-learning/memory/index.db")
     cursor = conn.cursor()
 
     # Insert the swarm analysis as a learning

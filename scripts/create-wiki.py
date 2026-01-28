@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-wiki_dir = Path.home() / ".claude" / "emergent-learning" / "wiki"
+wiki_dir = Path.home() / ".opencode" / "emergent-learning" / "wiki"
 wiki_dir.mkdir(exist_ok=True)
 
 # Home.md - Wiki landing page

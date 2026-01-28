@@ -13,7 +13,7 @@ Commands:
 
 Examples:
     # Extract patterns from today's session
-    python -m src.observe observe --session ~/.claude/emergent-learning/sessions/logs/2024-01-15_session.jsonl
+    python -m src.observe observe --session ~/.opencode/emergent-learning/sessions/logs/2024-01-15_session.jsonl
 
     # Run distillation with auto-append to golden rules
     python -m src.observe distill --run --auto-append
@@ -41,7 +41,7 @@ async def cmd_observe(args):
 
     if args.session == 'today':
         # Find today's session log
-        logs_dir = Path.home() / ".claude" / "emergent-learning" / "sessions" / "logs"
+        logs_dir = Path.home() / ".opencode" / "emergent-learning" / "sessions" / "logs"
         today = datetime.now().strftime("%Y-%m-%d")
         session_file = logs_dir / f"{today}_session.jsonl"
         if not session_file.exists():

@@ -53,7 +53,7 @@ User: See final improved code + iteration summary
 ## Execution
 
 ```bash
-python ~/.claude/emergent-learning/src/query/ralph_orchestrator.py \
+python ~/.opencode/emergent-learning/src/query/ralph_orchestrator.py \
   --target <FILE> \
   --max-iterations <N> \
   --completion-promise "<PROMISE>"
@@ -279,7 +279,7 @@ done
 ```bash
 # After Ralph loop converges, record insights
 /ralph-loop "Review api/client.ts" --completion-promise "CLEAN"
-python ~/.claude/emergent-learning/scripts/record-heuristic.py \
+python ~/.opencode/emergent-learning/scripts/record-heuristic.py \
   --domain "api" \
   --rule "Extract HTTP client patterns" \
   --source "ralph-loop" \
