@@ -162,6 +162,7 @@ RECOMMENDATION: <what main Claude should do next, if anything>
 - You do NOT have Task tool (cannot spawn agents) - that's fine, main Claude handles that
 - Be concise - this runs frequently
 - If swarm is complete, create the stop file so monitoring ends
+- **MODEL**: Use opencode/big-pickle for this monitoring task
 
 ## Example Workflow
 

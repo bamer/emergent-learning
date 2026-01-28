@@ -104,7 +104,14 @@ export const ELFHooksPlugin = async ({ client, $ }) => {
       try {
         const postToolScript = path.join(HOOKS_DIR, "post_tool_learning.py");
         if (existsSync(postToolScript)) {
-          await runPythonScript(postToolScript);
+          // Pass the tool execution context to the Python script
+          const hookInput = {
+            tool_name: input.tool_name || input.tool,
+            tool_input: input.tool_input || input.input,
+            tool_output: input.tool_output || input.output
+          };
+          
+          await runPythonScript(postToolScript, [JSON.stringify(hookInput)]);
         }
       } catch (error) {
         await client.app.log({

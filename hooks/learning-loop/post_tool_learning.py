@@ -133,7 +133,15 @@ class AdvisoryVerifier:
 
 
 def get_hook_input() -> dict:
-    """Read hook input from stdin."""
+    """Read hook input from stdin or command line arguments."""
+    # Try command line arguments first (from OpenCode plugin)
+    if len(sys.argv) > 1:
+        try:
+            return json.loads(sys.argv[1])
+        except (json.JSONDecodeError, IndexError):
+            pass
+    
+    # Fall back to stdin
     try:
         return json.load(sys.stdin)
     except (json.JSONDecodeError, IOError, ValueError):
@@ -753,7 +761,7 @@ def main():
     # Determine outcome
     outcome, reason = determine_outcome(tool_output)
 
-    # Record to conductor for dashboard visibility
+    # Record to conductor for dashboard visibility and swarm coordination
     try:
         sys.path.insert(0, str(EMERGENT_LEARNING_PATH / 'conductor'))
         from conductor import Conductor, Node
@@ -769,7 +777,10 @@ def main():
             workflow_name=f"task-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
             input_data={
                 'description': description,
-                'prompt': tool_input.get('prompt', '')[:500]  # Truncate
+                'prompt': tool_input.get('prompt', '')[:500],  # Truncate
+                'tool_name': tool_name,
+                'outcome': outcome,
+                'reason': reason
             }
         )
 
@@ -781,7 +792,7 @@ def main():
                 name=description[:100],
                 node_type='single',
                 prompt_template=tool_input.get('prompt', '')[:500],
-                config={'model': 'claude'}
+                config={'model': 'opencode/big-pickle', 'tool_name': tool_name}
             )
             exec_id = conductor.record_node_start(run_id, node, tool_input.get('prompt', ''))
 
@@ -797,6 +808,22 @@ def main():
                     error_type='task_failure'
                 )
                 conductor.update_run_status(run_id, 'failed', error_message=reason)
+                
+                # Update blackboard to mark agent as failed for swarm coordination
+                try:
+                    bb_path = EMERGENT_LEARNING_PATH / ".coordination" / "blackboard.json"
+                    if bb_path.exists():
+                        import json
+                        bb = json.loads(bb_path.read_text())
+                        # Mark current agent as failed
+                        current_agent = tool_input.get('subagent_type', 'unknown')
+                        if current_agent in bb.get('agents', {}):
+                            bb['agents'][current_agent]['status'] = 'failed'
+                            bb['agents'][current_agent]['last_seen'] = datetime.now().isoformat()
+                            bb_path.write_text(json.dumps(bb, indent=2))
+                            sys.stderr.write(f"[SWARM] Marked agent {current_agent} as failed\n")
+                except Exception as e:
+                    sys.stderr.write(f"[SWARM] Failed to update blackboard: {e}\n")
             else:  # 'success' OR 'unknown'
                 conductor.record_node_completion(
                     exec_id=exec_id,
@@ -804,6 +831,22 @@ def main():
                     result_dict={'outcome': outcome, 'reason': reason}
                 )
                 conductor.update_run_status(run_id, 'completed', output={'outcome': outcome, 'reason': reason})
+                
+                # Update blackboard to mark agent as completed for swarm coordination
+                try:
+                    bb_path = EMERGENT_LEARNING_PATH / ".coordination" / "blackboard.json"
+                    if bb_path.exists():
+                        import json
+                        bb = json.loads(bb_path.read_text())
+                        # Mark current agent as completed
+                        current_agent = tool_input.get('subagent_type', 'unknown')
+                        if current_agent in bb.get('agents', {}):
+                            bb['agents'][current_agent]['status'] = 'completed'
+                            bb['agents'][current_agent]['last_seen'] = datetime.now().isoformat()
+                            bb_path.write_text(json.dumps(bb, indent=2))
+                            sys.stderr.write(f"[SWARM] Marked agent {current_agent} as completed\n")
+                except Exception as e:
+                    sys.stderr.write(f"[SWARM] Failed to update blackboard: {e}\n")
     except Exception as e:
         # Don't fail the hook if conductor fails
         sys.stderr.write(f"Conductor integration error (non-fatal): {e}\n")
