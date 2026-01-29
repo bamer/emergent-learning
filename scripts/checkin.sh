@@ -20,7 +20,7 @@ if [ ! -f "$CHECKIN_PY" ]; then
     # Try project-relative location
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-    CHECKIN_PY="${PROJECT_ROOT}/src/query/checkin.py"
+    CHECKIN_PY="${PROJECT_ROOT}/query/checkin.py"
 fi
 
 # Ensure we can find Python

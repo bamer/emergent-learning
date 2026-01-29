@@ -130,7 +130,7 @@ class CheckinOrchestrator:
         try:
             # Call query.py --context to get the data
             result = subprocess.run(
-                [sys.executable, str(self.elf_home / 'src' / 'query' / 'query.py'), '--context'],
+                [sys.executable, str(self.elf_home  / 'query' / 'query.py'), '--context'],
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -220,8 +220,8 @@ class CheckinOrchestrator:
     def start_dashboard(self):
         """Start the dashboard in a visible terminal window that user can close."""
         try:
-            dashboard_ps1 = self.elf_home / 'apps' / 'dashboard' / 'run-dashboard.ps1'
-            dashboard_sh = self.elf_home / 'apps' / 'dashboard' / 'run-dashboard.sh'
+            dashboard_ps1 = self.elf_home / 'dashboard-app' / 'run-dashboard.ps1'
+            dashboard_sh = self.elf_home / 'dashboard-app' / 'run-dashboard.sh'
 
             if sys.platform == 'win32':
                 # Launch PowerShell with -Command to avoid file association issues

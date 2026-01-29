@@ -77,14 +77,10 @@ def load_session_state() -> dict:
                             "session_start": current_time.isoformat(),
                             "heuristics_consulted": [],
                             "domains_queried": [],
-                            "task_context": None,
-                            "session_id": None,
-                            "last_activity": current_time.isoformat()
+                            "task_context": None
                         }
                 except (ValueError, KeyError):
                     pass
-            # Update last activity timestamp
-            state["last_activity"] = current_time.isoformat()
             return state
         except (json.JSONDecodeError, IOError, ValueError):
             pass
@@ -92,9 +88,7 @@ def load_session_state() -> dict:
         "session_start": current_time.isoformat(),
         "heuristics_consulted": [],
         "domains_queried": [],
-        "task_context": None,
-        "session_id": None,
-        "last_activity": current_time.isoformat()
+        "task_context": None
     }
 
 

@@ -133,15 +133,7 @@ class AdvisoryVerifier:
 
 
 def get_hook_input() -> dict:
-    """Read hook input from stdin or command line arguments."""
-    # Try command line arguments first (from OpenCode plugin)
-    if len(sys.argv) > 1:
-        try:
-            return json.loads(sys.argv[1])
-        except (json.JSONDecodeError, IndexError):
-            pass
-    
-    # Fall back to stdin
+    """Read hook input from stdin."""
     try:
         return json.load(sys.stdin)
     except (json.JSONDecodeError, IOError, ValueError):
@@ -604,24 +596,8 @@ def extract_and_record_learnings(tool_output: dict, domains: List[str]):
                     INSERT INTO heuristics (domain, rule, explanation, confidence, source_type, created_at)
                     VALUES (?, ?, 'Auto-extracted from task output', 0.5, 'auto', ?)
                 """, (domain, learning.strip(), datetime.now().isoformat()))
-                
-                heuristic_id = cursor.lastrowid
+
                 sys.stderr.write(f"AUTO-EXTRACTED HEURISTIC: {learning[:50]}...\n")
-                
-                # Record to event_chronicle (ELF standard)
-                cursor.execute("""
-                    INSERT INTO event_chronicle (timestamp, event_type, source, source_id, status, summary, data, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    datetime.now().isoformat(),
-                    'heuristic_discovery',
-                    'learning_hook',
-                    f"heuristic-{heuristic_id}",
-                    'healthy',
-                    f"[{domain}] {learning[:60]}...",
-                    json.dumps({'domain': domain, 'rule': learning.strip()[:200], 'confidence': 0.5}),
-                    datetime.now().isoformat()
-                ))
             else:
                 # Record as observation
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -633,21 +609,6 @@ def extract_and_record_learnings(tool_output: dict, domains: List[str]):
                     learning[:100],
                     learning,
                     domain,
-                    datetime.now().isoformat()
-                ))
-                
-                # Record to event_chronicle (ELF standard)
-                cursor.execute("""
-                    INSERT INTO event_chronicle (timestamp, event_type, source, source_id, status, summary, data, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    datetime.now().isoformat(),
-                    'learning_discovery',
-                    'learning_hook',
-                    f"learning-{datetime.now().timestamp()}",
-                    'healthy',
-                    f"[{domain}] {learning[:60]}...",
-                    json.dumps({'domain': domain, 'observation': learning.strip()[:200]}),
                     datetime.now().isoformat()
                 ))
 
@@ -761,7 +722,7 @@ def main():
     # Determine outcome
     outcome, reason = determine_outcome(tool_output)
 
-    # Record to conductor for dashboard visibility and swarm coordination
+    # Record to conductor for dashboard visibility
     try:
         sys.path.insert(0, str(EMERGENT_LEARNING_PATH / 'conductor'))
         from conductor import Conductor, Node
@@ -777,10 +738,7 @@ def main():
             workflow_name=f"task-{datetime.now().strftime('%Y%m%d-%H%M%S')}",
             input_data={
                 'description': description,
-                'prompt': tool_input.get('prompt', '')[:500],  # Truncate
-                'tool_name': tool_name,
-                'outcome': outcome,
-                'reason': reason
+                'prompt': tool_input.get('prompt', '')[:500]  # Truncate
             }
         )
 
@@ -792,7 +750,7 @@ def main():
                 name=description[:100],
                 node_type='single',
                 prompt_template=tool_input.get('prompt', '')[:500],
-                config={'model': 'opencode/big-pickle', 'tool_name': tool_name}
+                config={'model': 'claude'}
             )
             exec_id = conductor.record_node_start(run_id, node, tool_input.get('prompt', ''))
 
@@ -808,22 +766,6 @@ def main():
                     error_type='task_failure'
                 )
                 conductor.update_run_status(run_id, 'failed', error_message=reason)
-                
-                # Update blackboard to mark agent as failed for swarm coordination
-                try:
-                    bb_path = EMERGENT_LEARNING_PATH / ".coordination" / "blackboard.json"
-                    if bb_path.exists():
-                        import json
-                        bb = json.loads(bb_path.read_text())
-                        # Mark current agent as failed
-                        current_agent = tool_input.get('subagent_type', 'unknown')
-                        if current_agent in bb.get('agents', {}):
-                            bb['agents'][current_agent]['status'] = 'failed'
-                            bb['agents'][current_agent]['last_seen'] = datetime.now().isoformat()
-                            bb_path.write_text(json.dumps(bb, indent=2))
-                            sys.stderr.write(f"[SWARM] Marked agent {current_agent} as failed\n")
-                except Exception as e:
-                    sys.stderr.write(f"[SWARM] Failed to update blackboard: {e}\n")
             else:  # 'success' OR 'unknown'
                 conductor.record_node_completion(
                     exec_id=exec_id,
@@ -831,22 +773,6 @@ def main():
                     result_dict={'outcome': outcome, 'reason': reason}
                 )
                 conductor.update_run_status(run_id, 'completed', output={'outcome': outcome, 'reason': reason})
-                
-                # Update blackboard to mark agent as completed for swarm coordination
-                try:
-                    bb_path = EMERGENT_LEARNING_PATH / ".coordination" / "blackboard.json"
-                    if bb_path.exists():
-                        import json
-                        bb = json.loads(bb_path.read_text())
-                        # Mark current agent as completed
-                        current_agent = tool_input.get('subagent_type', 'unknown')
-                        if current_agent in bb.get('agents', {}):
-                            bb['agents'][current_agent]['status'] = 'completed'
-                            bb['agents'][current_agent]['last_seen'] = datetime.now().isoformat()
-                            bb_path.write_text(json.dumps(bb, indent=2))
-                            sys.stderr.write(f"[SWARM] Marked agent {current_agent} as completed\n")
-                except Exception as e:
-                    sys.stderr.write(f"[SWARM] Failed to update blackboard: {e}\n")
     except Exception as e:
         # Don't fail the hook if conductor fails
         sys.stderr.write(f"Conductor integration error (non-fatal): {e}\n")
@@ -900,46 +826,15 @@ def main():
     state["heuristics_consulted"] = []
     save_session_state(state)
 
-    # Log outcome to metrics table (standard ELF pattern)
+    # Log outcome
     conn = get_db_connection()
     if conn:
         try:
             cursor = conn.cursor()
-            
-            # Record to metrics table
             cursor.execute("""
                 INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context)
                 VALUES ('task_outcome', ?, 1, ?, ?)
             """, (outcome, f"reason:{reason[:50]}", datetime.now().isoformat()))
-            
-            # Record to event_chronicle table (standard ELF event tracking)
-            # Map outcome to status following ELF conventions
-            status_map = {'success': 'healthy', 'failure': 'critical', 'unknown': 'warning'}
-            event_status = status_map.get(outcome, 'unknown')
-            
-            description = tool_input.get('description', 'Unknown task')[:100]
-            summary = f"Learning loop: {description} - {outcome.upper()} ({reason})"
-            
-            cursor.execute("""
-                INSERT INTO event_chronicle (timestamp, event_type, source, source_id, status, summary, data, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                datetime.now().isoformat(),
-                'learning_loop_completion',
-                'learning_hook',
-                f"task-{datetime.now().timestamp()}",
-                event_status,
-                summary,
-                json.dumps({
-                    'outcome': outcome,
-                    'reason': reason,
-                    'description': description,
-                    'heuristics_consulted': heuristics_consulted[:5],  # Limit to 5
-                    'domains_queried': domains_queried[:5],
-                }) if (heuristics_consulted or domains_queried) else None,
-                datetime.now().isoformat()
-            ))
-            
             conn.commit()
         except Exception as e:
             sys.stderr.write(f"Warning: Failed to log task outcome: {e}\n")

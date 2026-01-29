@@ -1,95 +1,83 @@
-# Tiered Watcher with big-pickle - Quick Start Guide
+# Tiered Watcher - Quick Start Guide
 
 ## Prerequisites
 
-big-pickle must be available via OpenCode CLI:
 ```bash
-claude --model opencode/big-pickle --help  # Should work
+# Set your API key
+export ANTHROPIC_API_KEY="your-key-here"
 ```
 
 ## Start the Watcher
 
 ```bash
-# Single pass (manual check)
-./scripts/start-watcher-bigpickle.sh --once
+# Interactive (Ctrl+C to stop)
+~/.opencode/emergent-learning/scripts/start-watcher.sh
 
-# Continuous (30s intervals, Ctrl+C to stop)
-./scripts/start-watcher-bigpickle.sh
-
-# Custom interval (60 seconds)
-./scripts/start-watcher-bigpickle.sh --interval 60
+# Daemon mode (background)
+~/.opencode/emergent-learning/scripts/start-watcher.sh --daemon
 ```
 
 ## Monitor Activity
 
 ```bash
-# Watch watcher logs
-tail -f .coordination/watcher-log.md
+# Watch all logs
+tail -f ~/.opencode/emergent-learning/.coordination/*.log
 
-# Check event chronicle
-sqlite3 memory/index.db "SELECT * FROM event_chronicle WHERE source='watcher' ORDER BY id DESC LIMIT 10;"
-
-# View via API
-curl http://localhost:8888/api/chronicle/events?source=watcher&hours=1
+# Just the orchestrator
+tail -f ~/.opencode/emergent-learning/.coordination/launcher.log
 ```
 
 ## What to Expect
 
-1. **Tier 1**: big-pickle analyzes coordination state
-2. **Tier 1**: Polls `.coordination/blackboard.json` for issues
-3. **Tier 1**: Exits with code 0 (nominal) or 1 (issues detected)
-4. **If issues** → **Tier 2**: big-pickle handler (CEO) invoked
-5. **Tier 2**: Reads full context, makes decision (RESTART/ABANDON/ESCALATE)
-6. **Tier 2**: Updates blackboard.json, exits
-7. **Logs**: Events recorded to event_chronicle table
+1. **Launcher** starts and spawns Haiku watcher
+2. **Haiku** polls `.coordination/` every 30 seconds
+3. **Haiku** exits with code 1 when it detects issues
+4. **Launcher** catches exit code 1 and invokes Opus
+5. **Opus** analyzes, decides, updates state, exits
+6. **Launcher** restarts Haiku to continue monitoring
 
 ## Exit Codes
 
-- **0**: Normal completion (no issues or Tier 2 resolved)
-- **1**: Tier 2 escalated to human (ESCALATE decision)
-- **2**: Error occurred (will need manual inspection)
+- **0**: Normal shutdown (clean exit)
+- **1**: Intervention needed (triggers Opus)
+- **2**: Error occurred (will auto-retry)
 
 ## Files to Watch
 
-- `.coordination/watcher-log.md` - Watcher/Handler logs
-- `.coordination/blackboard.json` - Agent coordination state
-- `.coordination/decision.md` - Handler decisions
-- `memory/index.db` - event_chronicle table
-- `logs/watcher.log` - Full logs
+- `launcher.log` - Orchestration events
+- `haiku_watcher.log` - Tier 1 checks
+- `opus_handler.log` - Tier 2 interventions
+- `status.md` - Current system state
+- `blackboard.json` - Agent coordination state
 
 ## Configuration
 
-Edit `watcher/run_with_bigpickle.py` to change:
+Edit `~/.opencode/emergent-learning/watcher/config.py`:
 
 ```python
-# Model name (line ~35)
-["claude", "--print", "--model", "opencode/big-pickle"]
-
-# Timeout (line ~40)
-timeout=120,  # seconds
-
-# Interval in script (line ~200)
-interval=30  # seconds
+POLL_INTERVAL = 30              # Seconds between checks
+HEARTBEAT_TIMEOUT = 120         # Stale agent threshold
+MAX_RESTART_ATTEMPTS = 3        # Crash protection
 ```
 
 ## Troubleshooting
 
-**Problem**: "Error calling big-pickle"
+**Problem**: "ANTHROPIC_API_KEY environment variable is required"
 ```bash
-which claude  # Should exist
-claude --model opencode/big-pickle --version  # Should work
+export ANTHROPIC_API_KEY="your-key-here"
+# Add to ~/.bashrc or ~/.zshrc to persist
 ```
 
-**Problem**: Watcher not writing to logs
+**Problem**: Watcher keeps restarting
 ```bash
-ls -la .coordination/watcher-log.md  # Should exist
-# Check permissions on .coordination/
+# Check the logs for errors
+cat ~/.opencode/emergent-learning/.coordination/launcher.log
 ```
 
-**Problem**: No events recorded
+**Problem**: Opus never invoked
 ```bash
-sqlite3 memory/index.db ".tables" | grep event_chronicle
-# If missing, event_chronicle table needs creation
+# Verify Haiku is detecting issues
+grep "intervention_needed" ~/.opencode/emergent-learning/.coordination/haiku_watcher.log
 ```
 
 ## Full Documentation

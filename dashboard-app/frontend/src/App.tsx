@@ -186,7 +186,7 @@ function AppContent() {
     }
 
     performCheckIn()
-  }, [])
+  }, [api, notifications])
 
   // Command Palette keyboard shortcut
   useEffect(() => {

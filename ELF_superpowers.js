@@ -26,9 +26,12 @@ export default async (plugin) => {
       console.log(`[ELF] pre-learning → ${toolName}`);
 
       const script = `${LEARNING_LOOP_DIR}/pre_tool_learning.py`;
+      const script_semantic_memory = `/home/bamer/OPC_ELF/Emergent-Learning-Framework_ELF/.hooks-templates/PreToolUse/semantic-memory.py`;
       const data = { input, output, tool_name: toolName };
 
-        $`python3 ${script} ${JSON.stringify(data)}`
+        $`python3 ${script} ${JSON.stringify(data)}`;
+        $`python3 ${script_semantic_memory} ${JSON.stringify(data)}`;
+
     },
 
     /**
@@ -40,10 +43,11 @@ export default async (plugin) => {
 
       const data = { input, output, tool_name: toolName };
 
-        $`python3 ${LEARNING_LOOP_DIR}/post_tool_learning.py ${JSON.stringify(data)}`
+        $`python3 ${LEARNING_LOOP_DIR}/post_tool_learning.py ${JSON.stringify(data)}`;
 
-        $`python3 ${LEARNING_LOOP_DIR}/record_pheromone.py ${JSON.stringify(data)}`
+        $`python3 ${LEARNING_LOOP_DIR}/record_pheromone.py ${JSON.stringify(data)}`;
 
+        $`python3 /home/bamer/OPC_ELF/Emergent-Learning-Framework_ELF/.hooks-templates/PostToolUse/sync-golden-rules.py ${JSON.stringify(data)}`;
     },
 
     /**

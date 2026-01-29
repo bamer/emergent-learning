@@ -28,9 +28,9 @@ Requires-Dist: mypy>=1.0.0; extra == "dev"
 
 # Emergent Learning Framework
 
-> Persistent memory and pattern tracking for Open Code sessions.
+> Persistent memory and pattern tracking for Claude Code sessions.
 
-Open Code learns from your failures and successes, building institutional knowledge that persists across sessions. Patterns strengthen automatically. Install once, watch knowledge compound over weeks.
+Claude Code learns from your failures and successes, building institutional knowledge that persists across sessions. Patterns strengthen automatically. Install once, watch knowledge compound over weeks.
 
 ## Install
 
@@ -52,12 +52,12 @@ Open Code learns from your failures and successes, building institutional knowle
 ```
 You: check in
 
-Open: [Queries building, starts dashboard, returns golden rules + heuristics]
+Claude: [Queries building, starts dashboard, returns golden rules + heuristics]
 ```
 
 **Auto-Setup on First Check-In:**
 - **New user:** Everything installs automatically - config, commands, hooks
-- **Existing AGENTS.md:** Selection boxes to choose merge/replace/skip
+- **Existing CLAUDE.md:** Selection boxes to choose merge/replace/skip
 - **Already configured:** Proceeds normally
 
 **What "check in" does:**
@@ -96,7 +96,7 @@ Animated avatar overlay that appears on your desktop. Celebrates task completion
 | **Pheromone Trails** | Files touched by tasks tracked for hotspot analysis |
 | **Coordinated Swarms** | Multi-agent workflows with specialized personas |
 | **Local Dashboard** | Visual monitoring at http://localhost:3001 (no API tokens used) |
-| **Session History** | Browse all Open Code sessions in dashboard - search, filter by project/date, expand to see full conversations |
+| **Session History** | Browse all Claude Code sessions in dashboard - search, filter by project/date, expand to see full conversations |
 | **Cross-Session Continuity** | Pick up where you left off - search what you asked in previous sessions. Lightweight retrieval (~500 tokens), or ~20k for heavy users reviewing full day |
 | **Async Watcher** | Background Haiku monitors your work, escalates to Opus only when needed. 95% cheaper than constant Opus monitoring |
 
@@ -129,13 +129,13 @@ Just type `/search` followed by your question in plain English. Pick up where yo
 
 ### Session History (Dashboard)
 
-Browse your Open Code session history visually in the dashboard's **Sessions** tab:
+Browse your Claude Code session history visually in the dashboard's **Sessions** tab:
 
 - **Search** - Filter sessions by prompt text
 - **Project Filter** - Focus on specific projects
 - **Date Range** - Today, 7 days, 30 days, or all time
 - **Expandable Cards** - Click to see full conversation with user/assistant messages
-- **Tool Usage** - See what tools Open used in each response
+- **Tool Usage** - See what tools Claude used in each response
 
 No tokens consumed - reads directly from `~/.opencode/projects/` JSONL files.
 
@@ -299,7 +299,7 @@ See [Swarm Wiki](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF
 Full documentation in the [Wiki](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki):
 
 - [Installation](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Installation) - Prerequisites, options, troubleshooting
-- [Configuration](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Configuration) - AGENTS.md, settings.json, hooks
+- [Configuration](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Configuration) - CLAUDE.md, settings.json, hooks
 - [Dashboard](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Dashboard) - Tabs, stats, themes
 - [Swarm](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Swarm) - Multi-agent coordination, blackboard pattern
 - [CLI Reference](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/CLI-Reference) - All query commands
@@ -340,7 +340,7 @@ The run-dashboard.sh script will now detect this issue and warn you before faili
 
 ## Links
 
-- [Open Code Docs](https://docs.anthropic.com/en/docs/claude-code)
+- [Claude Code Docs](https://docs.anthropic.com/en/docs/claude-code)
 - [Hooks System](https://docs.anthropic.com/en/docs/claude-code/hooks)
 - [Community & Support](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/discussions)
 

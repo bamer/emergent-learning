@@ -19,7 +19,7 @@ async def get_runs(days: int = 7, limit: int = 50, status: Optional[str] = None)
         cursor = conn.cursor()
 
         query = """
-            SELECT id, workflow, workflow_name, status, phase,
+            SELECT id, workflow_id, workflow_name, status, phase,
                    total_nodes, completed_nodes, failed_nodes,
                    started_at, completed_at, created_at
             FROM workflow_runs
@@ -76,11 +76,11 @@ async def get_run(run_id: int):
         run["decisions"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Get workflow edges if available
-        if run.get("workflow"):
+        if run.get("workflow_id"):
             cursor.execute("""
                 SELECT * FROM workflow_edges
                 WHERE workflow_id = ?
-            """, (run["workflow"],))
+            """, (run["workflow_id"],))
             run["edges"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         return run

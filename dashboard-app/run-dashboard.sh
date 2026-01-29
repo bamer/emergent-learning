@@ -151,22 +151,6 @@ else
     sleep 2
 fi
 
-# START WATCHER (Automated watcher startup - always run)
-echo ""
-echo "[Starting] ELF Watcher (big-pickle 2-tier monitoring)..."
-# Clean up stop signal if present
-rm -f "$ELF_DIR/.coordination/watcher-stop"
-# Run watcher in background with nohup to detach from terminal
-cd "$ELF_DIR" && nohup ./scripts/start-watcher-bigpickle.sh --interval 30 > logs/watcher.log 2>&1 &
-WATCHER_PID=$!
-if [ $? -eq 0 ]; then
-    echo "[OK] Watcher started (PID $WATCHER_PID) - monitoring active"
-    echo "[Log] Watcher output: logs/watcher.log"
-else
-    echo "[Warning] Failed to start watcher - dashboard will continue"
-fi
-echo ""
-
 # Start TalkinHead overlay (cross-platform)
 TALKINHEAD_PATH="$SCRIPT_DIR/TalkinHead"
 TALKINHEAD_LOCK="$HOME/.elf-talkinhead.lock"
@@ -192,9 +176,9 @@ fi
 
 if [ "$TALKINHEAD_RUNNING" = false ]; then
     if [ -f "$TALKINHEAD_PATH/main.py" ]; then
-            echo "[Starting] TalkinHead overlay..."
-            # Write dashboard PID file for orphan detection
-            echo $$ > ~/.elf-dashboard.pid
+        echo "[Starting] TalkinHead overlay..."
+        # Write dashboard PID file for orphan detection
+        echo $$ > ~/.elf-dashboard.pid
         if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "mingw"* ]] || [[ -n "$MSYSTEM" ]]; then
             # Windows: use pythonw for no console (check for PyQt5 first)
             if $PYTHON_CMD -c "import PyQt5" 2>/dev/null; then

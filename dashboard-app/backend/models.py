@@ -7,14 +7,13 @@ class ActionResult(BaseModel):
     success: bool
     message: str
 
-
 class HeuristicUpdate(BaseModel):
     rule: Optional[str] = Field(None, max_length=1000)
     explanation: Optional[str] = Field(None, max_length=5000)
     domain: Optional[str] = Field(None, max_length=100)
     is_golden: Optional[bool] = None
 
-    @validator("rule", "explanation", "domain")
+    @validator('rule', 'explanation', 'domain')
     def strip_and_validate(cls, v):
         if v is not None:
             v = v.strip()
@@ -32,9 +31,7 @@ class DecisionCreate(BaseModel):
     domain: Optional[str] = Field(None, max_length=100)
     files_touched: Optional[str] = Field(None, max_length=5000)
     tests_added: Optional[str] = Field(None, max_length=5000)
-    status: Optional[str] = Field(
-        "accepted", pattern="^(accepted|rejected|superseded|deprecated)$"
-    )
+    status: Optional[str] = Field("accepted", pattern="^(accepted|rejected|superseded|deprecated)$")
 
 
 class QueryRequest(BaseModel):
@@ -83,9 +80,7 @@ class DecisionUpdate(BaseModel):
     domain: Optional[str] = Field(None, max_length=100)
     files_touched: Optional[str] = Field(None, max_length=5000)
     tests_added: Optional[str] = Field(None, max_length=5000)
-    status: Optional[str] = Field(
-        None, pattern="^(accepted|rejected|superseded|deprecated)$"
-    )
+    status: Optional[str] = Field(None, pattern="^(accepted|rejected|superseded|deprecated)$")
 
 
 class AssumptionUpdate(BaseModel):
@@ -140,12 +135,3 @@ class WorkflowCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=5000)
     workflow_data: Optional[str] = Field(None)
-
-
-class LearningCreate(BaseModel):
-    title: str = Field(..., min_length=1, max_length=200)
-    description: str = Field(..., min_length=1, max_length=5000)
-    type: str = Field(..., pattern="^(success|failure|observation)$")
-    domain: Optional[str] = Field(None, max_length=100)
-    context: Optional[str] = Field(None, max_length=5000)
-    tags: Optional[str] = Field(None, max_length=500)
