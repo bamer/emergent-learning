@@ -19,5 +19,10 @@
       "status": "completed",
       "learnings_count": 3
     }
-  }
+  },
+  "watcher_cycles": {
+    "total": 5,
+    "last_cycle": "2026-01-30T01:05:26.173798"
+  },
+  "last_update": "2026-01-30T01:05:26.173963"
 }
