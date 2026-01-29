@@ -18,8 +18,6 @@ import sqlite3
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from query.models import PheromoneTrailModel
-
 
 def extract_file_paths(tool_name: str, tool_input: str) -> list:
     """
