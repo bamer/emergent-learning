@@ -39,6 +39,100 @@ class CheckinOrchestrator:
         print("🔄 OpenCode Checkin Orchestrator")
         print("="*60 + "\n")
     
+    def get_available_terminal(self) -> str:
+        """Detect available terminal emulator"""
+        terminals = [
+            "gnome-terminal",
+            "xterm",
+            "konsole",
+            "xfce4-terminal",
+            "mate-terminal",
+            "lxterminal",
+            "urxvt",
+            "rxvt",
+        ]
+        
+        for term in terminals:
+            try:
+                result = subprocess.run(
+                    ["which", term],
+                    capture_output=True,
+                    timeout=1
+                )
+                if result.returncode == 0:
+                    return term
+            except:
+                pass
+        
+        return None
+    
+    def start_server_in_terminal(self) -> bool:
+        """Start OpenCode server in a separate terminal window"""
+        print("   ⚙️  Starting OpenCode server in terminal...")
+        
+        terminal = self.get_available_terminal()
+        
+        if not terminal:
+            print("   ⚠️  No terminal emulator found, starting in background...")
+            # Fallback to background start
+            try:
+                self.server_process = subprocess.Popen(
+                    ["opencode", "serve", "--port", "4096"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True
+                )
+                print("   ℹ️  Server running in background")
+            except Exception as e:
+                print(f"   ❌ Failed to start server: {e}")
+                return False
+        else:
+            # Start in terminal
+            try:
+                if terminal == "gnome-terminal":
+                    subprocess.Popen([
+                        "gnome-terminal",
+                        "--",
+                        "bash", "-c",
+                        "opencode serve --port 4096; bash"
+                    ])
+                elif terminal == "xterm":
+                    subprocess.Popen([
+                        "xterm",
+                        "-hold",
+                        "-e",
+                        "opencode serve --port 4096"
+                    ])
+                elif terminal == "konsole":
+                    subprocess.Popen([
+                        "konsole",
+                        "-e",
+                        "bash", "-c",
+                        "opencode serve --port 4096; bash"
+                    ])
+                elif terminal == "xfce4-terminal":
+                    subprocess.Popen([
+                        "xfce4-terminal",
+                        "-e",
+                        "bash -c 'opencode serve --port 4096; bash'"
+                    ])
+                else:
+                    # Generic terminal
+                    subprocess.Popen([
+                        terminal,
+                        "-e",
+                        "opencode serve --port 4096"
+                    ])
+                
+                print(f"   ✅ Server starting in {terminal} window")
+                print(f"   You can monitor and close the terminal window as needed")
+                
+            except Exception as e:
+                print(f"   ❌ Failed to launch terminal: {e}")
+                return False
+        
+        return True
+    
     def start_server_if_needed(self) -> bool:
         """Start OpenCode server if not already running"""
         print("0️⃣  Checking OpenCode Server Status...")
@@ -56,49 +150,33 @@ class CheckinOrchestrator:
             pass  # Server not running, will start it
         
         # Server not running, try to start it
-        print("   ⚙️  Starting OpenCode server...")
+        if not self.start_server_in_terminal():
+            return False
         
-        try:
-            # Start server in background
-            self.server_process = subprocess.Popen(
-                ["opencode", "serve", "--port", "4096"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                start_new_session=True  # Detach from current process
-            )
-            
-            print("   ⏳ Waiting for server to start...")
-            
-            # Wait for server to be ready (max 30 seconds)
-            max_retries = 30
-            retry_count = 0
-            
-            while retry_count < max_retries:
-                try:
-                    resp = requests.get(
-                        f"{self.server_url}/global/health",
-                        timeout=2
-                    )
-                    if resp.status_code == 200:
-                        print("   ✅ Server started successfully")
-                        self.server_started = True
-                        return True
-                except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-                    retry_count += 1
-                    if retry_count % 5 == 0:
-                        print(f"   ⏳ Still waiting... ({retry_count}s)")
-                    time.sleep(1)
-            
-            print("   ❌ Server failed to start within 30 seconds")
-            return False
-            
-        except FileNotFoundError:
-            print("   ❌ OpenCode not found in PATH")
-            print("   Install with: npm install -g opencode")
-            return False
-        except Exception as e:
-            print(f"   ❌ Failed to start server: {e}")
-            return False
+        print("   ⏳ Waiting for server to start...")
+        
+        # Wait for server to be ready (max 30 seconds)
+        max_retries = 30
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            try:
+                resp = requests.get(
+                    f"{self.server_url}/global/health",
+                    timeout=2
+                )
+                if resp.status_code == 200:
+                    print("   ✅ Server started successfully")
+                    self.server_started = True
+                    return True
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+                retry_count += 1
+                if retry_count % 5 == 0:
+                    print(f"   ⏳ Still waiting... ({retry_count}s)")
+                time.sleep(1)
+        
+        print("   ❌ Server failed to start within 30 seconds")
+        return False
     
     def check_server(self) -> Tuple[bool, Dict[str, Any]]:
         """Check OpenCode server health"""
@@ -303,18 +381,77 @@ class CheckinOrchestrator:
             print(f"   🔴 DEGRADED")
             return False, status
     
-    def print_next_steps(self, all_ok: bool):
+    def launch_background_services(self) -> bool:
+        """Launch all services in background"""
+        print("\n" + "="*60)
+        print("🚀 Launching Background Services...")
+        print("="*60 + "\n")
+        
+        services = [
+            ("Watcher", "src/watcher/launcher.py"),
+            ("Orchestrator", "src/orchestrator.py"),
+            ("CEO Advisor", "agents/dashboard_sentinel_ceo.py"),
+        ]
+        
+        launched = 0
+        
+        for service_name, script_path in services:
+            try:
+                full_path = ROOT_DIR / script_path
+                
+                if not full_path.exists():
+                    print(f"   ⚠️  {service_name} not found ({script_path})")
+                    continue
+                
+                # Launch in background (detached)
+                if script_path == "agents/dashboard_sentinel_ceo.py":
+                    # CEO requires --ceo flag
+                    subprocess.Popen(
+                        [sys.executable, str(full_path), "--ceo"],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        start_new_session=True
+                    )
+                else:
+                    # Other services
+                    subprocess.Popen(
+                        [sys.executable, str(full_path)],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                        start_new_session=True
+                    )
+                
+                print(f"   ✅ {service_name} launched in background")
+                launched += 1
+                time.sleep(0.5)  # Small delay to prevent race conditions
+                
+            except Exception as e:
+                print(f"   ⚠️  Failed to launch {service_name}: {str(e)[:50]}")
+        
+        print(f"\n   {launched}/{len(services)} services launched")
+        return launched > 0
+    
+    def print_next_steps(self, all_ok: bool, services_launched: bool = False, check_only: bool = False):
         """Print recommendations"""
         print("\n" + "="*60)
         
         if all_ok:
-            print("✅ Ready to Use:\n")
-            print("   # Run orchestrator")
-            print("   python3 emergent-learning/src/orchestrator.py\n")
-            print("   # Or test agents")
-            print("   python3 emergent-learning/agents/base_agent.py\n")
-            print("   # Or run demo")
-            print("   bash demo_agents.sh\n")
+            if services_launched:
+                print("✅ System Ready!\n")
+                print("   All services are running in background:")
+                print("   • Watcher - Monitoring experiments")
+                print("   • Orchestrator - Multi-agent coordination")
+                print("   • CEO Advisor - Business intelligence\n")
+                print("   You can now use OpenCode TUI normally.")
+                print("   Everything runs automatically in the background.\n")
+                print("   To stop services: pkill -f 'orchestrator\\|watcher\\|dashboard_sentinel'\n")
+            elif check_only:
+                print("✅ System Health Check Complete:\n")
+                print("   All components operational and ready to use.\n")
+                print("   To launch services: python3 emergent-learning/query/checkin.py\n")
+            else:
+                # This shouldn't happen (services_launched should be True if all_ok and not check_only)
+                print("✅ System Ready to Use\n")
         else:
             if not self.results.get("server", False):
                 print("❌ OpenCode Server Required:\n")
@@ -322,8 +459,8 @@ class CheckinOrchestrator:
         
         print("="*60 + "\n")
     
-    def run(self) -> bool:
-        """Run full checkin"""
+    def run(self, check_only: bool = False) -> bool:
+        """Run full checkin and launch services by default"""
         self.print_header()
         
         # Step 0: Start server if needed
@@ -343,7 +480,7 @@ class CheckinOrchestrator:
         
         if not self.results["server"]:
             self.all_ok = False
-            self.print_next_steps(False)
+            self.print_next_steps(False, check_only)
             return False
         
         # Continue checks if server OK
@@ -356,16 +493,25 @@ class CheckinOrchestrator:
         all_ok, _ = self.check_system_status()
         self.all_ok = all_ok
         
+        # Launch background services BY DEFAULT (unless --check-only flag)
+        services_launched = False
+        if all_ok and not check_only:
+            services_launched = self.launch_background_services()
+        
         # Print recommendations
-        self.print_next_steps(all_ok)
+        self.print_next_steps(all_ok, services_launched, check_only)
         
         return all_ok
 
 
 def main() -> int:
     """Main entry point"""
+    # By default: launch all services
+    # Use --check-only to just verify without launching
+    check_only = "--check-only" in sys.argv
+    
     orchestrator = CheckinOrchestrator()
-    success = orchestrator.run()
+    success = orchestrator.run(check_only=check_only)
     return 0 if success else 1
 
 

@@ -45,7 +45,7 @@ def get_base_path() -> Path:
         return Path(env_path)
 
     # Check if we are in the project root (relative to this file)
-    # This file is in src/query/config_loader.py -> root is ../../
+    # This file is in /query/config_loader.py -> root is ../../
     current_file = Path(__file__)
     project_root = current_file.parent.parent.parent
     if (project_root / '.coordination').exists() or (project_root / '.git').exists() or (project_root / 'pyproject.toml').exists():

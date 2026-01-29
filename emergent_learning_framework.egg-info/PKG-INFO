@@ -209,7 +209,7 @@ Examples:
 /checkout
 
 # Check what has been learned
-python src/query/query.py --stats
+python /query/query.py --stats
 
 # Search session history
 /search what was I working on yesterday?

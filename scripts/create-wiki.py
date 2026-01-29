@@ -135,7 +135,7 @@ cat ~/.opencode/settings.json | grep learning-loop
 **Database errors:**
 ```bash
 # Validate database
-python src/query/query.py --validate
+python /query/query.py --validate
 ```
 
 **Dashboard won't start:**
@@ -355,25 +355,25 @@ cli_ref = """# CLI Reference
 
 ```bash
 # Build full context (what agents see)
-python src/query/query.py --context
+python /query/query.py --context
 
 # Query by domain
-python src/query/query.py --domain testing
+python /query/query.py --domain testing
 
 # Query by tags
-python src/query/query.py --tags api,error
+python /query/query.py --tags api,error
 
 # Get recent learnings
-python src/query/query.py --recent 10
+python /query/query.py --recent 10
 
 # View statistics
-python src/query/query.py --stats
+python /query/query.py --stats
 
 # Validate database
-python src/query/query.py --validate
+python /query/query.py --validate
 
 # Export learnings
-python src/query/query.py --export > backup.json
+python /query/query.py --export > backup.json
 ```
 
 ## Recording Scripts
@@ -530,7 +530,7 @@ Add your custom CLAUDE.md content AFTER the ELF section.
 ```bash
 claude
 # Say "check in" - should query building
-python src/query/query.py --stats
+python /query/query.py --stats
 ```
 
 ## Upgrading Versions
@@ -546,7 +546,7 @@ cd /path/to/ELF-repo && git pull
 ./install.sh
 
 # 4. Validate
-python src/query/query.py --validate
+python /query/query.py --validate
 ```
 
 ## Team Setup
@@ -625,7 +625,7 @@ architecture = """# Architecture
 | `~/.opencode/CLAUDE.md` | Agent instructions |
 | `~/.opencode/settings.json` | Hook configurations |
 | `src/memory/index.db` | SQLite database |
-| `src/query/query.py` | Query system |
+| `/query/query.py` | Query system |
 | `src/hooks/learning-loop/` | Hook scripts |
 | `apps/dashboard/` | React dashboard |
 | `src/conductor/` | Swarm orchestration |

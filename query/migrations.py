@@ -9,7 +9,7 @@ Usage:
     migrator = SchemaMigrator(db_path)
     await migrator.migrate()
 
-Migration files are stored in src/query/migrations/ and named as:
+Migration files are stored in /query/migrations/ and named as:
     001_initial_schema.sql
     002_add_topic_to_spike_reports.sql
     etc.

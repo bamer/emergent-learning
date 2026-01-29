@@ -44,8 +44,8 @@ python ~/.opencode/emergent-learning/query/checkout.py
    Domains: infrastructure, backend
    Commits: 3
    Files modified: 7
-     - src/query/checkin.py
-     - src/query/checkout.py
+     - /query/checkin.py
+     - /query/checkout.py
      ... and 5 more
    Heuristics recorded: 2
 
