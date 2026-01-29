@@ -56,7 +56,7 @@ class CheckinOrchestrator:
             self.interactive = interactive
 
         self.elf_home = self._resolve_elf_home()
-        self.selected_model = os.environ.get('ELF_MODEL', 'claude')
+        self.selected_model = os.environ.get('ELF_MODEL', 'opencode/big-pickle')
 
     def _resolve_elf_home(self) -> Path:
         """Resolve ELF home using centralized elf_paths or fallback."""
@@ -179,37 +179,33 @@ class CheckinOrchestrator:
             return False
 
     def prompt_model_selection(self) -> str:
-        """Step 6: Ask about model selection. Claude tracks session state."""
+        """Step 6: Ask about model selection. OpenCode tracks session state."""
         if not self.interactive:
-            # Non-interactive: Output JSON hint for Claude to use AskUserQuestion
-            print('[PROMPT_NEEDED] {"type": "model", "question": "Select AI model", "options": ["claude", "gemini", "codex", "skip"]}')
-            return self.selected_model  # Claude will handle this
+            # Non-interactive: Output JSON hint for OpenCode to use AskUserQuestion
+            print('[PROMPT_NEEDED] {"type": "model", "question": "Select AI model", "options": ["opencode/big-pickle", "skip"]}')
+            return self.selected_model  # OpenCode will handle this
 
         print("")
         print("[=] Select Your Active Model")
         print("   Available models:")
-        print("     (c)laude    - Orchestrator, backend, architecture (active)")
-        print("     (g)emini    - Frontend, React, large codebases (1M context)")
-        print("     (o)dex      - Graphics, debugging, precision (128K context)")
+        print("     (o)pencode  - big-pickle (Recommended, local)")
         print("     (s)kip      - Use current model")
 
         try:
-            response = input("   Select [c/g/o/s]: ").strip().lower()
+            response = input("   Select [o/s]: ").strip().lower()
 
             model_map = {
-                'c': 'claude',
-                'g': 'gemini',
-                'o': 'codex',
+                'o': 'opencode/big-pickle',
                 's': self.selected_model  # Keep current
             }
 
-            selected = model_map.get(response[0] if response else 's', self.selected_model)
+            selected = model_map.get(response[0] if response else 'o', self.selected_model)
 
             # Store selection in environment
             os.environ['ELF_MODEL'] = selected
             self.selected_model = selected
 
-            if selected != 'claude':
+            if selected != 'opencode/big-pickle':
                 print(f"   [OK] Using {selected}")
 
             return selected
