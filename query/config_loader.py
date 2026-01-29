@@ -28,6 +28,7 @@ except ImportError:
 # Try to import yaml
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
@@ -37,10 +38,10 @@ except ImportError:
 def get_base_path() -> Path:
     """Get the base path for emergent-learning directory."""
     if _get_base_path is not None:
-        return _get_base_path(Path(__file__))
+        return _get_base_path()
 
     # Check environment variable first
-    env_path = os.environ.get('ELF_BASE_PATH')
+    env_path = os.environ.get("ELF_BASE_PATH")
     if env_path:
         return Path(env_path)
 
@@ -48,7 +49,11 @@ def get_base_path() -> Path:
     # This file is in /query/config_loader.py -> root is ../../
     current_file = Path(__file__)
     project_root = current_file.parent.parent.parent
-    if (project_root / '.coordination').exists() or (project_root / '.git').exists() or (project_root / 'pyproject.toml').exists():
+    if (
+        (project_root / ".coordination").exists()
+        or (project_root / ".git").exists()
+        or (project_root / "pyproject.toml").exists()
+    ):
         return project_root
 
     raise RuntimeError(
@@ -58,9 +63,9 @@ def get_base_path() -> Path:
 
 
 BASE_PATH = get_base_path()
-CUSTOM_PATH = BASE_PATH / 'custom'
-AGENTS_PATH = BASE_PATH / 'agents'
-MEMORY_PATH = BASE_PATH / 'memory'
+CUSTOM_PATH = BASE_PATH / "custom"
+AGENTS_PATH = BASE_PATH / "agents"
+MEMORY_PATH = BASE_PATH / "memory"
 
 
 def deep_merge(base: Dict, override: Dict) -> Dict:
@@ -91,7 +96,7 @@ def load_yaml_file(path: Path) -> Optional[Dict]:
         return None
 
     try:
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
     except Exception:
         return None
@@ -100,30 +105,30 @@ def load_yaml_file(path: Path) -> Optional[Dict]:
 def get_default_config() -> Dict[str, Any]:
     """Return default configuration values."""
     return {
-        'preferences': {
-            'default_depth': 'standard',
-            'default_format': 'text',
-            'default_timeout': 30,
+        "preferences": {
+            "default_depth": "standard",
+            "default_format": "text",
+            "default_timeout": 30,
         },
-        'query': {
-            'max_results': 10,
-            'include_challenged': True,
-            'show_similar_failures': True,
+        "query": {
+            "max_results": 10,
+            "include_challenged": True,
+            "show_similar_failures": True,
         },
-        'always_load_categories': ['core'],
-        'my_domains': [],
-        'dashboard': {
-            'auto_start': False,
-            'backend_port': 8888,
-            'frontend_port': 3001,
+        "always_load_categories": ["core"],
+        "my_domains": [],
+        "dashboard": {
+            "auto_start": False,
+            "backend_port": 8888,
+            "frontend_port": 3001,
         },
-        'agents': {
-            'default_review_party': 'code-review',
-            'default_feature_party': 'new-feature',
+        "agents": {
+            "default_review_party": "code-review",
+            "default_feature_party": "new-feature",
         },
-        'notifications': {
-            'show_bootstrap_progress': True,
-            'alert_on_violations': True,
+        "notifications": {
+            "show_bootstrap_progress": True,
+            "alert_on_violations": True,
         },
     }
 
@@ -139,7 +144,7 @@ def load_config() -> Dict[str, Any]:
     config = get_default_config()
 
     # Try to load custom config
-    custom_config_path = CUSTOM_PATH / 'config.yaml'
+    custom_config_path = CUSTOM_PATH / "config.yaml"
     custom_config = load_yaml_file(custom_config_path)
 
     if custom_config:
@@ -156,7 +161,7 @@ def load_custom_golden_rules() -> Optional[str]:
     """
     global _custom_golden_rules_cache, _custom_golden_rules_cache_time
 
-    custom_rules_path = CUSTOM_PATH / 'golden-rules.md'
+    custom_rules_path = CUSTOM_PATH / "golden-rules.md"
 
     if not custom_rules_path.exists():
         return None
@@ -167,7 +172,7 @@ def load_custom_golden_rules() -> Optional[str]:
             return _custom_golden_rules_cache
 
     try:
-        content = custom_rules_path.read_text(encoding='utf-8')
+        content = custom_rules_path.read_text(encoding="utf-8")
         _custom_golden_rules_cache = content
         _custom_golden_rules_cache_time = now
         return content
@@ -181,11 +186,11 @@ def load_custom_parties() -> Dict[str, Any]:
 
     Returns dict of custom parties, or empty dict if none.
     """
-    custom_parties_path = CUSTOM_PATH / 'parties.yaml'
+    custom_parties_path = CUSTOM_PATH / "parties.yaml"
     data = load_yaml_file(custom_parties_path)
 
-    if data and 'parties' in data:
-        return data['parties']
+    if data and "parties" in data:
+        return data["parties"]
 
     return {}
 
@@ -197,9 +202,9 @@ def load_all_parties() -> Dict[str, Any]:
     Custom parties override defaults with same name.
     """
     # Load default parties
-    default_parties_path = AGENTS_PATH / 'parties.yaml'
+    default_parties_path = AGENTS_PATH / "parties.yaml"
     default_data = load_yaml_file(default_parties_path)
-    default_parties = default_data.get('parties', {}) if default_data else {}
+    default_parties = default_data.get("parties", {}) if default_data else {}
 
     # Load custom parties
     custom_parties = load_custom_parties()
@@ -211,13 +216,13 @@ def load_all_parties() -> Dict[str, Any]:
 def get_always_load_categories() -> list:
     """Get categories that should always be loaded (even in minimal depth)."""
     config = load_config()
-    return config.get('always_load_categories', ['core'])
+    return config.get("always_load_categories", ["core"])
 
 
 def get_user_domains() -> list:
     """Get user's primary domains for better suggestions."""
     config = load_config()
-    return config.get('my_domains', [])
+    return config.get("my_domains", [])
 
 
 # Convenience function for quick access
@@ -243,7 +248,7 @@ def get_config(reload: bool = False) -> Dict[str, Any]:
 
 
 # CLI for testing
-if __name__ == '__main__':
+if __name__ == "__main__":
     import json
 
     print("=== ELF Configuration ===\n")

@@ -220,8 +220,8 @@ class CheckinOrchestrator:
     def start_dashboard(self):
         """Start the dashboard in a visible terminal window that user can close."""
         try:
-            dashboard_ps1 = self.elf_home / 'dashboard-app' / 'run-dashboard.ps1'
-            dashboard_sh = self.elf_home / 'dashboard-app' / 'run-dashboard.sh'
+            dashboard_ps1 = self.elf_home / 'apps' / 'dashboard' / 'run-dashboard.ps1'
+            dashboard_sh = self.elf_home / 'apps' / 'dashboard' / 'run-dashboard.sh'
 
             if sys.platform == 'win32':
                 # Launch PowerShell with -Command to avoid file association issues
@@ -241,7 +241,7 @@ class CheckinOrchestrator:
                 subprocess.Popen(['bash', str(dashboard_sh)])
                 print("   [OK] Dashboard launching")
             else:
-                print(f"   [!] Dashboard script not found at {dashboard_sh}")
+                print(f"   [!] Dashboard script not found")
         except Exception as e:
             print(f"   [!] Could not start dashboard: {e}")
 
@@ -261,26 +261,6 @@ class CheckinOrchestrator:
 
         return False
 
-    def prompt_launch_opencode(self) -> bool:
-        """Ask if user wants to launch OpenCode services."""
-        if not self.interactive:
-            print("[Prompt] Would you like to launch OpenCode services? (y/n)")
-            return False
-        
-        response = input("\n🚀 Launch OpenCode services now? (y/n) [default: n]: ").lower().strip()
-        return response in ['y', 'yes']
-    
-    def launch_opencode_services(self):
-        """Launch OpenCode server and agents."""
-        try:
-            from opencode_launcher import OpenCodeLauncher
-            launcher = OpenCodeLauncher()
-            launcher.launch_all()
-        except ImportError:
-            print("[OpenCode] ❌ OpenCode launcher module not found")
-        except Exception as e:
-            print(f"[OpenCode] ❌ Error launching services: {e}")
-    
     def run(self):
         """Execute the complete checkin workflow."""
         # Step 1: Display Banner
@@ -307,14 +287,7 @@ class CheckinOrchestrator:
         self.check_ceo_decisions()
 
         # Step 8: Complete
-        print("\n[OK] Checkin complete.")
-        
-        # Step 9 (Optional): Launch OpenCode services
-        launch_services = self.prompt_launch_opencode()
-        if launch_services:
-            self.launch_opencode_services()
-        
-        print("\nReady to work!")
+        print("\n[OK] Checkin complete. Ready to work!")
 
 
 def main():

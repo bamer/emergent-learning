@@ -438,3 +438,293 @@
 2026-01-29 20:12:24,769 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
 2026-01-29 20:12:25,768 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd05eb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
 2026-01-29 20:12:25,768 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:12:34,242 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f87c410>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:12:34,242 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:12:36,235 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57febe26c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:12:36,236 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:12:49,406 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b3c33b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:12:49,406 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:12:50,675 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e25a900>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:12:50,675 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:12:54,770 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef27fd70>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:12:54,770 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:12:55,769 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd05880>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:12:55,770 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:13:04,244 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f617b60>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:13:04,244 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:13:06,238 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec17b90>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:13:06,238 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:13:19,407 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15fce0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:13:19,407 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:13:20,677 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28bcb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:13:20,677 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:13:24,771 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fba10>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:13:24,771 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:13:25,772 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd07350>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:13:25,772 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:13:34,246 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615eb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:13:34,246 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:13:36,240 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16ff0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:13:36,240 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:13:49,409 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f800>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:13:49,409 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:13:50,678 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e289e20>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:13:50,678 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:13:54,772 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f9610>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:13:54,772 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:13:55,774 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd07da0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:13:55,774 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:14:04,248 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6167e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:14:04,248 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:14:06,242 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec154c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:14:06,242 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:14:19,411 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15deb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:14:19,411 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:14:20,679 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a6c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:14:20,679 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:14:24,773 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fa2a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:14:24,774 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:14:25,775 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbeaebaa0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:14:25,776 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:14:34,250 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616cf0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:14:34,251 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:14:36,244 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec15d90>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:14:36,244 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:14:49,413 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f110>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:14:49,413 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:14:50,682 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a7b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:14:50,682 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:14:54,775 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fad50>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:14:54,775 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:14:55,778 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcc84ec0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:14:55,778 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:15:04,253 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6170b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:15:04,253 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:15:06,246 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16a20>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:15:06,247 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:15:19,414 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b12a870>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:15:19,414 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:15:20,684 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e20c9e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:15:20,684 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:15:24,776 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef6d7d10>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:15:24,776 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:15:25,780 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd07da0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:15:25,780 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:15:34,255 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f444a40>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:15:34,255 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:15:36,248 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fea4c980>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:15:36,249 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:15:49,418 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4af8cbf0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:15:49,418 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:15:50,685 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e0bcef0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:15:50,685 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:15:54,777 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef12ca10>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:15:54,778 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:15:55,782 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd07350>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:15:55,782 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:16:04,257 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616a20>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:16:04,258 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:16:06,251 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec160f0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:16:06,252 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:16:19,420 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f3e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:16:19,420 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:16:20,687 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28b230>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:16:20,687 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:16:24,779 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fb0e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:16:24,780 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:16:25,784 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd05880>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:16:25,784 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:16:34,259 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616720>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:16:34,259 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:16:36,252 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec160c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:16:36,253 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:16:49,422 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15e690>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:16:49,422 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:16:50,689 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28af00>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:16:50,689 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:16:54,780 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fa810>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:16:54,781 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:16:55,786 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd06330>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:16:55,787 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:17:04,261 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615f70>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:17:04,262 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:17:06,253 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec153d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:17:06,254 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:17:19,424 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15dfa0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:17:19,425 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:17:20,690 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e289850>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:17:20,690 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:17:24,782 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f98b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:17:24,782 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:17:25,788 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd06b70>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:17:25,788 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:17:34,264 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615880>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:17:34,264 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:17:36,254 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec173b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:17:36,255 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:17:49,426 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15d7c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:17:49,426 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:17:50,692 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e289d30>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:17:50,692 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:17:54,783 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f99d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:17:54,783 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:17:55,791 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcb3cb60>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:17:55,791 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:18:04,266 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f617cb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:18:04,267 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:18:06,256 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec17da0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:18:06,256 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:18:19,428 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15fe90>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:18:19,428 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:18:20,693 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e25acf0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:18:20,693 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:18:24,784 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fbe60>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:18:24,784 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:18:25,792 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd06660>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:18:25,792 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:18:34,269 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f444890>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:18:34,269 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:18:36,257 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fea4c800>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:18:36,257 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:18:49,430 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4af8c8c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:18:49,431 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:18:50,696 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e0bcd70>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:18:50,696 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:18:54,785 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef12c890>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:18:54,785 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:18:55,795 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd055b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:18:55,795 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:19:04,271 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f617fb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:19:04,271 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:19:06,258 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16ea0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:19:06,258 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:19:19,433 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f7a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:19:19,434 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:19:20,698 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28ba40>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:19:20,698 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:19:24,786 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fbc80>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:19:24,786 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:19:25,796 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd074a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:19:25,796 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:19:34,272 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6158e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:19:34,272 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:19:36,259 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16f30>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:19:36,259 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:19:49,436 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15e240>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:19:49,436 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:19:50,700 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a0c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:19:50,700 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:19:54,787 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fb8c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:19:54,787 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:19:55,798 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd079e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:19:55,798 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:20:04,274 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6152b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:20:04,274 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:20:06,260 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec157c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:20:06,260 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:20:19,438 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15e930>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:20:19,438 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:20:20,701 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a120>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:20:20,702 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:20:24,789 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f9970>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:20:24,789 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:20:25,801 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbde22660>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:20:25,801 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:20:34,276 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616b70>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:20:34,276 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:20:36,262 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec161e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:20:36,262 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:20:49,440 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15edb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:20:49,440 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:20:50,703 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28b290>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:20:50,703 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:20:54,790 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fa5d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:20:54,790 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:20:55,803 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcb3c9e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:20:55,803 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:04,278 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6170b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:04,278 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:06,264 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16600>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:06,264 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:19,442 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15e9f0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:19,442 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:20,704 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28b5c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:20,704 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:24,791 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fae70>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:24,791 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:25,805 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd07dd0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:25,806 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:32,497 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
+2026-01-29 20:21:32,498 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x744c0c14d670>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:32,499 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:34,281 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f444410>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:34,282 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:36,267 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fea4c950>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:36,267 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:49,444 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4af8cb90>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:49,445 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:50,706 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e0bc5c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:50,707 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:54,793 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef12c9e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:54,793 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:21:55,807 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd071d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:21:55,808 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:02,500 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x744c0bae9dc0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:02,500 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:04,283 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616d50>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:04,284 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:06,268 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec15e20>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:06,268 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:10,218 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
+2026-01-29 20:22:10,219 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7a813b216540>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:10,219 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:19,446 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f350>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:19,447 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:20,709 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28b410>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:20,709 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:24,795 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fa150>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:24,795 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:25,809 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd057c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:25,810 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:32,501 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x744c0baea540>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:32,501 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:34,285 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6173b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:34,286 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:36,269 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec170b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:36,269 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:40,221 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7a813b245730>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:40,221 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:49,448 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15de50>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:49,448 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:50,710 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a690>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:50,710 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:54,797 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f9c70>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:54,797 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:22:55,811 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd05d60>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:22:55,812 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:23:02,503 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x744c0baeac60>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:23:02,503 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:23:04,287 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615970>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:23:04,288 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:23:06,270 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec178c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:23:06,270 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:23:10,222 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7a813b245ee0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:23:10,222 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:23:11,904 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
+2026-01-29 20:23:11,905 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7d5283cb6f90>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:23:11,905 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:23:19,449 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15d820>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:23:19,450 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:23:20,714 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e289ac0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:23:20,714 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:23:24,798 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fb740>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:23:24,798 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:23:25,814 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd069f0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:23:25,814 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:23:30,328 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
+2026-01-29 20:23:30,329 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x752e3f07bb60>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-29 20:23:30,329 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-29 20:25:37,503 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
+2026-01-29 20:27:27,485 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
+2026-01-29 20:27:53,141 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
+2026-01-29 20:28:33,973 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
