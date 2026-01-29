@@ -16,7 +16,7 @@ ELF_HOME="${HOME}/.opencode/emergent-learning"
 CHECKIN_PY="${ELF_HOME}/query/checkin.py"
 
 # Fallback location if standard location doesn't exist
-if [ ! -f "$CHECKIN_PY" ]; then
+if [ ! -f "CHECKIN_PY" ]; then
     # Try project-relative location
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"

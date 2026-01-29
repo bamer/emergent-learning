@@ -15,12 +15,20 @@ import subprocess
 from pathlib import Path
 from typing import Any, Dict, Tuple, Optional
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
+ROOT_DIR = Path(__file__).resolve().parents[2]  # emergent-learning dir
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+# Add src to path for local imports
+SRC_DIR = ROOT_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
 # Import the HTTP-based OpenCode client
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "agents"))
+AGENTS_DIR = ROOT_DIR / "agents"
+if str(AGENTS_DIR) not in sys.path:
+    sys.path.insert(0, str(AGENTS_DIR))
+
 try:
     from opencode_client import OpenCodeClient
 except ImportError:

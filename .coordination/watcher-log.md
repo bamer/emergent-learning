@@ -41,3 +41,9 @@
 2026-01-28T13:31:41.170874 | Watcher started in continuous mode (interval: 30s)
 2026-01-28T13:31:41Z | STATUS: complete | NOTES: Swarm completed - test-agent-1 finished mission 9hrs ago, other agents stuck, marked swarm complete
 2026-01-28T21:45:00Z | STATUS: cleaned | NOTES: Completed test agents removed from blackboard - system idle and ready
+[TIER 1 ERROR] Error: opencode returned error code 1
+
+[TIER 1 ERROR] Error: opencode returned error code 1
+
+[TIER 1 ERROR] Error: opencode returned error code 1
+
