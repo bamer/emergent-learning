@@ -15,7 +15,7 @@ if [[ -z "${ELF_BASE_PATH:-}" ]]; then
     fi
 fi
 FRAMEWORK_DIR="$ELF_BASE_PATH"
-BACKUP_ROOT="${BACKUP_ROOT:-$HOME/.claude/backups/emergent-learning}"
+BACKUP_ROOT="${BACKUP_ROOT:-$HOME/.opencode/backups/emergent-learning}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="$BACKUP_ROOT/$TIMESTAMP"
 RETENTION_DAILY=7

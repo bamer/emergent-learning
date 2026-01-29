@@ -29,7 +29,7 @@ class TestExtractFilePaths:
 
     def test_windows_path_extracts_filename(self):
         """Windows paths should extract at least the filename."""
-        content = "Updated C:\\Users\\Test\\.claude\\emergent-learning\\hooks\\learning-loop\\test.py"
+        content = "Updated C:\\Users\\Test\\.opencode\\emergent-learning\\hooks\\learning-loop\\test.py"
         extracted = extract_file_paths(content)
         assert "test.py" in extracted
 

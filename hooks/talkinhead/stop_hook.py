@@ -7,7 +7,7 @@ import json
 import time
 from pathlib import Path
 
-EVENT_FILE = Path.home() / ".claude" / "ivy_events.json"
+EVENT_FILE = Path.home() / ".opencode" / "ivy_events.json"
 
 
 def main():

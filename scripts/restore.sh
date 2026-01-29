@@ -15,7 +15,7 @@ if [[ -z "${ELF_BASE_PATH:-}" ]]; then
     fi
 fi
 FRAMEWORK_DIR="$ELF_BASE_PATH"
-BACKUP_ROOT="${BACKUP_ROOT:-$HOME/.claude/backups/emergent-learning}"
+BACKUP_ROOT="${BACKUP_ROOT:-$HOME/.opencode/backups/emergent-learning}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -244,7 +244,7 @@ if [[ "$NO_BACKUP" != true ]] && [[ -d "$FRAMEWORK_DIR" ]]; then
     SAFETY_BACKUP="$BACKUP_ROOT/pre-restore-$(date +%Y%m%d_%H%M%S).tar.gz"
     log_info "Creating safety backup of current state: $SAFETY_BACKUP"
 
-    cd "$HOME/.claude"
+    cd "$HOME/.opencode"
     tar -czf "$SAFETY_BACKUP" emergent-learning/
     log_success "Safety backup created"
 fi

@@ -18,7 +18,7 @@ from pathlib import Path
 
 # Paths
 HOME = Path.home()
-CLAUDE_DIR = HOME / ".claude"
+CLAUDE_DIR = HOME / ".opencode"
 SETTINGS_FILE = CLAUDE_DIR / "settings.json"
 
 

@@ -32,7 +32,7 @@ The `/search` command helps you find:
 When you invoke `/search`:
 
 1. **Extract your query** from the command
-2. **Search session logs** - Parse JSONL files from `~/.claude/projects/`
+2. **Search session logs** - Parse JSONL files from `~/.opencode/projects/`
 3. **Find matches** - Natural language matching against user messages
 4. **Show results** - Display relevant prompts and context
 5. **Answer your question** - Use results to provide context
@@ -40,7 +40,7 @@ When you invoke `/search`:
 ## Session Log Format
 
 Session data is stored in:
-- Location: `~/.claude/projects/[project-name]/*.jsonl`
+- Location: `~/.opencode/projects/[project-name]/*.jsonl`
 - Format: Line-delimited JSON with message objects
 - Content: User prompts and Claude responses
 - Indexed: Most recent files first (by mtime)
@@ -52,7 +52,7 @@ Each JSONL file contains:
 
 ## Implementation Steps
 
-1. Scan session directory: `ls -t ~/.claude/projects/*/*.jsonl`
+1. Scan session directory: `ls -t ~/.opencode/projects/*/*.jsonl`
 2. Skip agent logs: Filter out `agent-*.jsonl`
 3. Read JSONL: Parse JSON line-by-line
 4. Extract messages: Filter for "user" and "assistant" types

@@ -111,7 +111,7 @@ Print completion message
 
 ✅ **Banner First** - Displayed before any prompts, not after
 ✅ **One-Time Prompts** - Dashboard and model selection appear only on first checkin
-✅ **State Tracking** - Uses `~/.claude/.elf_checkin_state` to track conversation state
+✅ **State Tracking** - Uses `~/.opencode/.elf_checkin_state` to track conversation state
 ✅ **Model Persistence** - Selection stored in `ELF_MODEL` environment variable
 ✅ **Structured Workflow** - All 8 steps executed in proper sequence
 ✅ **Context Parsing** - Query output properly formatted for display

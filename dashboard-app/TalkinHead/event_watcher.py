@@ -15,7 +15,7 @@ class EventWatcher(QObject):
     """
     Watches for events written by Claude Code hooks.
 
-    Polls ~/.claude/ivy_events.json every 200ms and emits signals
+    Polls ~/.opencode/ivy_events.json every 200ms and emits signals
     when new events are detected based on timestamp comparison.
     """
 
@@ -34,7 +34,7 @@ class EventWatcher(QObject):
         super().__init__(parent)
 
         # Path to the events file
-        self._events_file = Path.home() / ".claude" / "ivy_events.json"
+        self._events_file = Path.home() / ".opencode" / "ivy_events.json"
 
         # Track the last processed event timestamp for deduplication
         self._last_timestamp: float = 0.0

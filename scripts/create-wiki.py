@@ -96,7 +96,7 @@ The installer has three components:
 ## What Gets Installed
 
 ```
-~/.claude/
+~/.opencode/
 ├── CLAUDE.md                    # Agent instructions
 ├── settings.json                # Hook configurations
 ├── emergent-learning/
@@ -117,7 +117,7 @@ The installer has three components:
 
 ## Auto-Install Hooks
 
-Hooks are automatically installed on first use. When you run `query.py --context` for the first time (or say "check in"), it copies hook files to `~/.claude/hooks/learning-loop/`.
+Hooks are automatically installed on first use. When you run `query.py --context` for the first time (or say "check in"), it copies hook files to `~/.opencode/hooks/learning-loop/`.
 
 Existing hook files are never overwritten - your customizations are safe.
 
@@ -126,10 +126,10 @@ Existing hook files are never overwritten - your customizations are safe.
 **Hooks not working:**
 ```bash
 # Check hooks exist
-ls ~/.claude/hooks/learning-loop/
+ls ~/.opencode/hooks/learning-loop/
 
 # Check settings.json has hook config
-cat ~/.claude/settings.json | grep learning-loop
+cat ~/.opencode/settings.json | grep learning-loop
 ```
 
 **Database errors:**
@@ -155,7 +155,7 @@ configuration = """# Configuration
 
 ## CLAUDE.md
 
-The `~/.claude/CLAUDE.md` file contains instructions Claude follows. The framework installs a template that:
+The `~/.opencode/CLAUDE.md` file contains instructions Claude follows. The framework installs a template that:
 
 - Requires querying the building before tasks
 - Lists the golden rules
@@ -165,7 +165,7 @@ You can add your own instructions below the ELF section.
 
 ## settings.json
 
-Hook configuration in `~/.claude/settings.json`:
+Hook configuration in `~/.opencode/settings.json`:
 
 ```json
 {
@@ -174,14 +174,14 @@ Hook configuration in `~/.claude/settings.json`:
       "matcher": "Task",
       "hooks": [{
         "type": "command",
-        "command": "python ~/.claude/hooks/learning-loop/pre_tool_learning.py"
+        "command": "python ~/.opencode/hooks/learning-loop/pre_tool_learning.py"
       }]
     }],
     "PostToolUse": [{
       "matcher": "Task",
       "hooks": [{
         "type": "command",
-        "command": "python ~/.claude/hooks/learning-loop/post_tool_learning.py"
+        "command": "python ~/.opencode/hooks/learning-loop/post_tool_learning.py"
       }]
     }]
   }
@@ -514,8 +514,8 @@ migration = """# Migration Guide
 
 **Step 1: Backup**
 ```bash
-cp ~/.claude/CLAUDE.md ~/.claude/CLAUDE.md.backup
-cp ~/.claude/settings.json ~/.claude/settings.json.backup
+cp ~/.opencode/CLAUDE.md ~/.opencode/CLAUDE.md.backup
+cp ~/.opencode/settings.json ~/.opencode/settings.json.backup
 ```
 
 **Step 2: Install**
@@ -561,7 +561,7 @@ python query.py --import-heuristics team-heuristics.json
 ```
 
 **Option 2: Project golden rules**
-- Create `.claude/CLAUDE.md` in project repo
+- Create `.opencode/CLAUDE.md` in project repo
 - Team members include project rules
 
 ## Rollback
@@ -622,8 +622,8 @@ architecture = """# Architecture
 
 | Path | Purpose |
 |------|---------|
-| `~/.claude/CLAUDE.md` | Agent instructions |
-| `~/.claude/settings.json` | Hook configurations |
+| `~/.opencode/CLAUDE.md` | Agent instructions |
+| `~/.opencode/settings.json` | Hook configurations |
 | `src/memory/index.db` | SQLite database |
 | `src/query/query.py` | Query system |
 | `src/hooks/learning-loop/` | Hook scripts |

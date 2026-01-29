@@ -36,7 +36,7 @@ event_chronicle:
 
 # Database Configuration
 database:
-  path: "~/.claude/emergent-learning/memory/index.db"
+  path: "~/.opencode/emergent-learning/memory/index.db"
   tables:
     - event_chronicle: "System event tracking"
     - metrics: "Performance metrics"

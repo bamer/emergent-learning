@@ -231,7 +231,7 @@ When adding a new utility:
 ## File Paths
 
 ```
-C:\Users\Evede\.claude\emergent-learning\dashboard-app\backend\utils\
+C:\Users\Evede\.opencode\emergent-learning\dashboard-app\backend\utils\
 ├── __init__.py           (21 lines) - Barrel export
 ├── database.py           (44 lines) - DB utilities
 ├── broadcast.py          (48 lines) - WebSocket manager

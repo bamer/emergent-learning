@@ -9,7 +9,7 @@ Usage:
     python main.py
 
 The overlay will appear in the bottom-right corner and respond to events
-written to ~/.claude/ivy_events.json by Claude Code hooks.
+written to ~/.opencode/ivy_events.json by Claude Code hooks.
 """
 
 import os

@@ -151,7 +151,7 @@ def ensure_hooks_installed():
     """
     repo_root = Path(__file__).resolve().parents[2]
     marker = repo_root / ".hooks-installed"
-    settings_file = Path.home() / ".claude" / "settings.json"
+    settings_file = Path.home() / ".opencode" / "settings.json"
     # Pass repo_root so repair check can detect hooks pointing to wrong location
     needs_repair = _hooks_need_repair(settings_file, repo_root)
     if marker.exists() and not needs_repair:
@@ -202,7 +202,7 @@ def verify_hooks() -> dict:
             'warnings': [str, ...]
         }
     """
-    settings_file = Path.home() / ".claude" / "settings.json"
+    settings_file = Path.home() / ".opencode" / "settings.json"
     repo_root = Path(__file__).resolve().parents[2]
 
     result = {
@@ -324,7 +324,7 @@ def ensure_full_setup():
         "needs_user_choice" - Has existing config, Claude should ask user
         "install_failed" - Something went wrong
     """
-    global_claude_md = Path.home() / ".claude" / "CLAUDE.md"
+    global_claude_md = Path.home() / ".opencode" / "CLAUDE.md"
     
     # Detect OS and find appropriate installer
     is_windows = platform.system() == "Windows"
@@ -384,7 +384,7 @@ def ensure_full_setup():
     print("[ELF] Existing configuration detected")
     print("=" * 60)
     print("")
-    print("You have ~/.claude/CLAUDE.md but it doesn't include ELF.")
+    print("You have ~/.opencode/CLAUDE.md but it doesn't include ELF.")
     print("Claude will ask how you'd like to proceed.")
     print("")
     print("[ELF_NEEDS_USER_CHOICE]")

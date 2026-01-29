@@ -36,7 +36,7 @@ def _resolve_base_path() -> Path:
 
 EMERGENT_LEARNING_PATH = _resolve_base_path()
 DB_PATH = EMERGENT_LEARNING_PATH / "memory" / "index.db"
-STATE_FILE = Path.home() / ".claude" / "hooks" / "learning-loop" / "session-state.json"
+STATE_FILE = Path.home() / ".opencode" / "hooks" / "learning-loop" / "session-state.json"
 
 
 def get_hook_input() -> dict:

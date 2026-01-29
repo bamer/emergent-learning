@@ -22,8 +22,8 @@ router = APIRouter(prefix="/api/live", tags=["live"])
 logger = logging.getLogger(__name__)
 
 # Path to Claude Code tasks directory
-TASKS_DIR = Path.home() / ".claude" / "tasks"
-PROJECTS_DIR = Path.home() / ".claude" / "projects"
+TASKS_DIR = Path.home() / ".opencode" / "tasks"
+PROJECTS_DIR = Path.home() / ".opencode" / "projects"
 
 
 def _load_session_names() -> Dict[str, str]:
@@ -232,7 +232,7 @@ async def stream_tasks(request: Request):
     """
     SSE endpoint for real-time task updates.
 
-    Watches ~/.claude/tasks/ directory for changes and streams updates.
+    Watches ~/.opencode/tasks/ directory for changes and streams updates.
 
     Events:
     - initial: Full task state on connection

@@ -179,7 +179,7 @@ Claude Code responds with:
 
 ## Blackboard State Files
 
-Located at `~/.claude/.coordination/ralph-loop/`:
+Located at `~/.opencode/.coordination/ralph-loop/`:
 
 ```
 review-input.json          ← Orchestrator → Reviewer
@@ -191,7 +191,7 @@ status.json                ← Orchestrator state tracking
 
 **View current progress:**
 ```bash
-cat ~/.claude/.coordination/ralph-loop/status.json | jq .
+cat ~/.opencode/.coordination/ralph-loop/status.json | jq .
 ```
 
 ---
@@ -298,7 +298,7 @@ Ralph tracks:
 
 **View metrics:**
 ```bash
-cat ~/.claude/.coordination/ralph-loop/status.json | jq '.iterations'
+cat ~/.opencode/.coordination/ralph-loop/status.json | jq '.iterations'
 ```
 
 ---

@@ -42,7 +42,7 @@ def _resolve_base_path() -> Path:
 
 
 ELF_DIR = _resolve_base_path()
-PROJECTS_DIR = Path.home() / ".claude" / "projects"
+PROJECTS_DIR = Path.home() / ".opencode" / "projects"
 DB_PATH = ELF_DIR / "memory" / "index.db"
 
 

@@ -20,8 +20,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 # Paths
-TASKS_DIR = Path.home() / ".claude" / "tasks"
-STATE_FILE = Path.home() / ".claude" / "hooks" / "dashboard" / "seen-notes.json"
+TASKS_DIR = Path.home() / ".opencode" / "tasks"
+STATE_FILE = Path.home() / ".opencode" / "hooks" / "dashboard" / "seen-notes.json"
 
 
 def get_hook_input() -> dict:

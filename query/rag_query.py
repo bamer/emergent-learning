@@ -24,7 +24,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 
 # Add services path for VRAM manager
-sys.path.insert(0, str(Path.home() / ".claude" / "services"))
+sys.path.insert(0, str(Path.home() / ".opencode" / "services"))
 
 try:
     from query.config_loader import get_base_path

@@ -37,7 +37,7 @@ class RalphOrchestrator:
         self.target = Path(target)
         self.max_iterations = max_iterations
         self.completion_promise = completion_promise
-        self.coordination_dir = Path.home() / '.claude' / '.coordination' / 'ralph-loop'
+        self.coordination_dir = Path.home() / '.opencode' / '.coordination' / 'ralph-loop'
         self.iteration = 0
         self.state = self._init_state()
 

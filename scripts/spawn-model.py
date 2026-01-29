@@ -170,7 +170,7 @@ def run_codex(prompt: str, timeout: int = 120, mode: str = 'exec') -> Dict[str, 
 
 def update_token_usage(model: str, approx_tokens: int):
     """Update token usage tracking in routing config."""
-    config_path = Path.home() / '.claude' / 'model-routing.yaml'
+    config_path = Path.home() / '.opencode' / 'model-routing.yaml'
     if not config_path.exists():
         return
 

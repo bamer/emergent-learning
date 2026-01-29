@@ -2,7 +2,7 @@
 """
 Session Index - Fast indexing and retrieval of Claude session history.
 
-Scans ~/.claude/projects/*/jsonl files and extracts metadata WITHOUT
+Scans ~/.opencode/projects/*/jsonl files and extracts metadata WITHOUT
 loading full content for performance. Provides lazy loading for full sessions.
 """
 
@@ -53,14 +53,14 @@ class SessionIndex:
     Fast session indexer that scans JSONL files and extracts metadata.
 
     Features:
-    - Scans ~/.claude/projects/*/jsonl
+    - Scans ~/.opencode/projects/*/jsonl
     - Parses metadata without loading full content
     - Handles edge cases (agent files, sidechains, encrypted thinking)
     - Provides lazy loading for full sessions
     """
 
     def __init__(self, projects_dir: Optional[Path] = None):
-        # Default projects dir: check ELF_BASE_PATH/../../projects or ~/.claude/projects
+        # Default projects dir: check ELF_BASE_PATH/../../projects or ~/.opencode/projects
         if projects_dir:
             self.projects_dir = projects_dir
         else:
@@ -71,12 +71,12 @@ class SessionIndex:
                 # Fallback if utils.database is not available
                 self.base_path = Path.home() / ".opencode" / "emergent-learning"
 
-            # If base path is inside .claude/emergent-learning, projects is likely ../../projects
+            # If base path is inside .opencode/emergent-learning, projects is likely ../../projects
             candidate = self.base_path.parent / "projects"
             if candidate.exists():
                 self.projects_dir = candidate
             else:
-                self.projects_dir = Path.home() / ".claude" / "projects"
+                self.projects_dir = Path.home() / ".opencode" / "projects"
         
         self._index: Dict[str, SessionMetadata] = {}
         self._last_scan: Optional[datetime] = None

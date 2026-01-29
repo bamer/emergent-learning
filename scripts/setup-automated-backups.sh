@@ -26,7 +26,7 @@ if [[ -z "${ELF_BASE_PATH:-}" ]]; then
     fi
 fi
 FRAMEWORK_DIR="$ELF_BASE_PATH"
-LOG_DIR="$HOME/.claude/backups/logs"
+LOG_DIR="$HOME/.opencode/backups/logs"
 
 # Create log directory
 mkdir -p "$LOG_DIR"
@@ -48,8 +48,8 @@ if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]]; then
 REM Emergent Learning Framework - Windows Backup Wrapper
 REM Run this script with Windows Task Scheduler
 
-set LOGFILE=%USERPROFILE%\\.claude\\backups\\logs\\backup-%date:~-4,4%%date:~-10,2%%date:~-7,2%.log
-if "%ELF_BASE_PATH%"=="" set ELF_BASE_PATH=%USERPROFILE%\\.claude\\emergent-learning
+set LOGFILE=%USERPROFILE%\\.opencode\\backups\\logs\\backup-%date:~-4,4%%date:~-10,2%%date:~-7,2%.log
+if "%ELF_BASE_PATH%"=="" set ELF_BASE_PATH=%USERPROFILE%\\.opencode\\emergent-learning
 bash "%ELF_BASE_PATH%\\scripts\\backup.sh" >> "%LOGFILE%" 2>&1
 EOF
 
@@ -152,8 +152,8 @@ cat > "$MONITOR_SCRIPT" << 'EOFMONITOR'
 #!/bin/bash
 # Check if backups are running successfully
 
-BACKUP_ROOT="${BACKUP_ROOT:-$HOME/.claude/backups/emergent-learning}"
-LOG_DIR="$HOME/.claude/backups/logs"
+BACKUP_ROOT="${BACKUP_ROOT:-$HOME/.opencode/backups/emergent-learning}"
+LOG_DIR="$HOME/.opencode/backups/logs"
 
 echo "Backup Health Check"
 echo "==================="

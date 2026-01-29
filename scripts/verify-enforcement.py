@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 import sys
 
-SETTINGS_FILE = Path.home() / ".claude" / "settings.json"
+SETTINGS_FILE = Path.home() / ".opencode" / "settings.json"
 
 REQUIRED_HOOKS = {
     "SessionStart": ["load-building.py"],
@@ -60,8 +60,8 @@ def verify():
     # Check hook files exist
     print(f"\nHook files:")
     hook_files = [
-        Path.home() / ".claude" / "hooks" / "SessionStart" / "load-building.py",
-        Path.home() / ".claude" / "hooks" / "golden-rule-enforcer.py"
+        Path.home() / ".opencode" / "hooks" / "SessionStart" / "load-building.py",
+        Path.home() / ".opencode" / "hooks" / "golden-rule-enforcer.py"
     ]
     
     for hf in hook_files:

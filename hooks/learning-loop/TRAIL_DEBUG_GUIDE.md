@@ -182,7 +182,7 @@ sqlite3 ~/.opencode/emergent-learning/memory/index.db "SELECT created_at, locati
 
 ### Check for errors in logs (if logging to file)
 ```bash
-grep '\[TRAIL_ERROR\]' ~/.claude/hooks/logs/*.log | tail -20
+grep '\[TRAIL_ERROR\]' ~/.opencode/hooks/logs/*.log | tail -20
 ```
 
 ---

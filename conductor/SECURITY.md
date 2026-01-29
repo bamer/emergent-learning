@@ -156,7 +156,7 @@ The test suite includes:
 
 Run tests with:
 ```bash
-cd ~/.claude\emergent-learning\conductor
+cd ~/.opencode\emergent-learning\conductor
 python -m pytest tests/test_validation.py -v
 ```
 

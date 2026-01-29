@@ -488,7 +488,7 @@ curl http://localhost:8888/api/chronicle/events?hours=1&limit=10
 curl 'http://localhost:8888/api/chronicle/events?source=dashboard_sentinel&status=critical'
 
 # Via Database
-sqlite3 ~/.claude/emergent-learning/memory/index.db \
+sqlite3 ~/.opencode/emergent-learning/memory/index.db \
   "SELECT * FROM event_chronicle WHERE source='dashboard_sentinel' ORDER BY created_at DESC LIMIT 5;"
 ```
 

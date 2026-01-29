@@ -1,7 +1,7 @@
 #!/bin/bash
 # Verify Backup Integrity
 
-BACKUP_ROOT="${BACKUP_ROOT:-$HOME/.claude/backups/emergent-learning}"
+BACKUP_ROOT="${BACKUP_ROOT:-$HOME/.opencode/backups/emergent-learning}"
 echo "Verifying backups in $BACKUP_ROOT..."
 
 if [ ! -d "$BACKUP_ROOT" ]; then

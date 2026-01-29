@@ -186,7 +186,7 @@ def detect_installed_models() -> Dict[str, Dict[str, Any]]:
 def load_routing_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
     """Load routing configuration from YAML file or use defaults."""
     if config_path is None:
-        config_path = Path.home() / '.claude' / 'model-routing.yaml'
+        config_path = Path.home() / '.opencode' / 'model-routing.yaml'
 
     if config_path.exists():
         try:

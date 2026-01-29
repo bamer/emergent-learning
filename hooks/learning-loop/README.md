@@ -113,7 +113,7 @@ python -c "from post_tool_learning import AdvisoryVerifier; print('OK')"
 
 ## Hook Integration
 
-The hooks are configured in `.claude/settings.json`:
+The hooks are configured in `.opencode/settings.json`:
 
 ```json
 {

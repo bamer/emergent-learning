@@ -2,7 +2,7 @@
 """
 Ivy Event Hook - Triggers TalkinHead avatar speech.
 
-This hook writes events to ~/.claude/ivy_events.json which TalkinHead monitors.
+This hook writes events to ~/.opencode/ivy_events.json which TalkinHead monitors.
 Supports different event types based on tool usage patterns.
 
 Usage in settings.json hooks:
@@ -14,7 +14,7 @@ import sys
 import time
 from pathlib import Path
 
-EVENT_FILE = Path.home() / ".claude" / "ivy_events.json"
+EVENT_FILE = Path.home() / ".opencode" / "ivy_events.json"
 
 
 def write_event(event_type: str, message: str = ""):
