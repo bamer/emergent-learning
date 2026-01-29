@@ -37,9 +37,10 @@ logger = logging.getLogger(__name__)
 class AISentinel:
     """Complete AI-powered dashboard monitoring agent with CEO advisory capabilities."""
 
-    def __init__(self, name="Dashboard Sentinel AI", model="big-pickle"):
+    def __init__(self, name="Dashboard Sentinel AI", model="big-pickle", server_url="http://localhost:4096"):
         self.name = name
         self.model = model
+        self.server_url = server_url
         self.db_path = "/home/bamer/.opencode/emergent-learning/memory/index.db"
         self.frontend_url = "http://localhost:3001"
         self.backend_url = "http://localhost:8888"
@@ -52,6 +53,19 @@ class AISentinel:
         self.adaptation_count = 0
         self.content_categories = {}
         self.communication_context = {}
+        
+        # Add HTTP API client
+        import sys
+        from pathlib import Path
+        agents_path = str(Path(__file__).parent)
+        if agents_path not in sys.path:
+            sys.path.insert(0, agents_path)
+        try:
+            from opencode_client import OpenCodeClient
+            self.api_client = OpenCodeClient(model=model, server_url=server_url)
+        except ImportError:
+            logger.warning("OpenCodeClient not available, will use basic calls")
+            self.api_client = None
 
     def collect_metrics(self) -> Dict[str, Any]:
         """Collect comprehensive dashboard metrics."""

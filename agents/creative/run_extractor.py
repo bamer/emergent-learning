@@ -26,16 +26,15 @@ Extract 2-3 key learnings in this format:
 
 Be imaginative but grounded."""
 
-def run_with_claude():
-    """Execute analysis using Claude big-pickle model."""
+def run_with_opencode():
+    """Execute analysis using OpenCode big-pickle model."""
     
     task = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "Creative task"
     prompt = get_creative_prompt(task)
     
     try:
         result = subprocess.run(
-            ["claude", "--print", "--model", "opencode/big-pickle"],
-            input=prompt,
+            ["opencode", "--model", "opencode/big-pickle", "--prompt", prompt],
             capture_output=True,
             text=True,
             timeout=30
@@ -67,4 +66,4 @@ Novel approaches considered:
 """)
 
 if __name__ == '__main__':
-    sys.exit(run_with_claude())
+    sys.exit(run_with_opencode())

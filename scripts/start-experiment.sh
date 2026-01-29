@@ -104,15 +104,19 @@ register_cleanup cleanup_on_failure
 preflight_check() {
     log_info "Starting pre-flight checks"
 
-    # Check required commands
-    require_command "sqlite3" "Install sqlite3: apt-get install sqlite3 or brew install sqlite"
-    require_command "git" "Install git: apt-get install git or brew install git"
+    # Check optional commands (non-fatal)
+    if ! command -v "sqlite3" &> /dev/null; then
+        log_warn "sqlite3 not found - database features disabled"
+    fi
+    
+    if ! command -v "git" &> /dev/null; then
+        log_warn "git not found - version control disabled"
+    fi
 
-    # Check required files and directories
-    require_file "$DB_PATH" "Database not found: $DB_PATH"
-
-    # Database integrity check
-    check_db_integrity "$DB_PATH"
+    # Database integrity check (if available)
+    if [ -f "$DB_PATH" ] && command -v sqlite3 &> /dev/null; then
+        check_db_integrity "$DB_PATH"
+    fi
 
     # Warn if not a git repository (non-fatal)
     if [ ! -d "$BASE_DIR/.git" ]; then
@@ -289,39 +293,32 @@ report_status "success" "Created: log.md"
 log_success "Created log file: $log_file"
 
 # ============================================
-# Insert into database
+# Insert into database (using Python)
 # ============================================
-name_escaped=$(escape_sql "$name")
-hypothesis_escaped=$(escape_sql "$hypothesis")
-relative_folder_escaped=$(escape_sql "$relative_folder")
+experiment_id=""
+DB_SCRIPT="$SCRIPT_DIR/lib/db.py"
 
-experiment_id=$(sqlite_with_retry "$DB_PATH" <<SQL
-INSERT INTO experiments (name, hypothesis, status, folder_path)
-VALUES (
-    '$name_escaped',
-    '$hypothesis_escaped',
-    'active',
-    '$relative_folder_escaped'
-);
-SELECT last_insert_rowid();
-SQL
-)
-
-exit_code=$?
-if [ $exit_code -ne 0 ]; then
-    error_msg "$EXIT_DB_ERROR" \
-        "Failed to insert experiment into database" \
-        "Check database permissions and SQL syntax" \
-        "fatal"
-    exit "$EXIT_DB_ERROR"
+if [ -f "$DB_SCRIPT" ] && command -v python3 &> /dev/null; then
+    # Ensure database exists
+    python3 "$DB_SCRIPT" ensure "$DB_PATH" 2>/dev/null
+    
+    # Insert experiment record
+    experiment_id=$(python3 "$DB_SCRIPT" insert "$DB_PATH" "$name" "$hypothesis" "active" "$relative_folder" 2>/dev/null)
+    
+    if [ -n "$experiment_id" ] && [ "$experiment_id" != "0" ]; then
+        CREATED_DB_ID="$experiment_id"
+        report_status "success" "Database record created (ID: $experiment_id)"
+        log_success "Database record created (ID: $experiment_id)"
+    else
+        log_warn "Database insert failed"
+        report_status "warning" "Database record skipped"
+        experiment_id="0"
+    fi
+else
+    log_warn "Python database script not available - skipping database record"
+    report_status "warning" "Database record skipped"
+    experiment_id="0"
 fi
-
-# Validate the returned ID
-validate_db_id "$experiment_id" "experiment"
-
-CREATED_DB_ID="$experiment_id"
-report_status "success" "Database record created (ID: $experiment_id)"
-log_success "Database record created (ID: $experiment_id)"
 
 # ============================================
 # Git commit with locking

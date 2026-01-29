@@ -20,8 +20,9 @@ CREATE_NO_WINDOW = 0x08000000 if sys.platform == 'win32' else 0
 # Default routing config embedded for when no config file exists
 DEFAULT_ROUTING_CONFIG = {
     'models': {
-        'claude': {
-            'cli': 'claude',
+        'opencode': {
+            'cli': 'opencode',
+            'model': 'opencode/big-pickle',
             'default': True,
             'strengths': [
                 'backend',
@@ -30,11 +31,13 @@ DEFAULT_ROUTING_CONFIG = {
                 'nuanced-reasoning',
                 'elf-integration',
                 'complex-refactoring',
-                'api-design'
+                'api-design',
+                'watcher-monitoring',
+                'coordination'
             ],
             'weaknesses': [],
             'max_context': 200000,
-            'notes': 'Primary orchestrator, handles ELF integration'
+            'notes': 'Primary orchestrator using OpenCode big-pickle model'
         },
         'gemini': {
             'cli': 'gemini',
@@ -89,7 +92,7 @@ DEFAULT_ROUTING_CONFIG = {
         },
         {
             'pattern': r'(api|server|backend|database|sql)',
-            'prefer': 'claude',
+            'prefer': 'opencode',
             'reason': 'Backend/API work'
         }
     ],
@@ -171,13 +174,13 @@ def detect_installed_models() -> Dict[str, Dict[str, Any]]:
     else:
         models['codex'] = {'installed': False}
 
-    # Claude is always available (we're running in it)
-    models['claude'] = {
+    # OpenCode is always available (default orchestrator)
+    models['opencode'] = {
         'installed': True,
-        'version': 'current',
-        'path': None,  # Current session
+        'version': 'big-pickle',
+        'path': shutil.which('opencode'),
         'max_context': 200000,
-        'strengths': ['backend', 'architecture', 'orchestration', 'elf-integration']
+        'strengths': ['backend', 'architecture', 'orchestration', 'elf-integration', 'watcher-monitoring']
     }
 
     return models
@@ -214,8 +217,8 @@ def format_models_for_context(models: Dict[str, Dict[str, Any]]) -> str:
             strengths = info.get('strengths', [])
             strengths_str = ', '.join(strengths[:3]) if strengths else ''
 
-            if name == 'claude':
-                lines.append(f"- **claude** (current session) [active] orchestrator")
+            if name == 'opencode':
+                lines.append(f"- **opencode/big-pickle** (primary) [active] orchestrator")
             else:
                 lines.append(f"- **{name}** v{version} [ready] {ctx_str} context | {strengths_str}")
 
@@ -280,12 +283,15 @@ def suggest_model_for_task(
         'styling': ('gemini', 0.2),
         'component': ('gemini', 0.2),
         'ui': ('gemini', 0.2),
-        'backend': ('claude', 0.3),
-        'api': ('claude', 0.3),
-        'server': ('claude', 0.3),
-        'database': ('claude', 0.3),
-        'architecture': ('claude', 0.3),
-        'refactor': ('claude', 0.2),
+        'backend': ('opencode', 0.3),
+        'api': ('opencode', 0.3),
+        'server': ('opencode', 0.3),
+        'database': ('opencode', 0.3),
+        'architecture': ('opencode', 0.3),
+        'refactor': ('opencode', 0.2),
+        'watcher': ('opencode', 0.3),
+        'monitoring': ('opencode', 0.3),
+        'coordination': ('opencode', 0.3),
         'graphics': ('codex', 0.3),
         'svg': ('codex', 0.3),
         'canvas': ('codex', 0.3),
@@ -311,9 +317,9 @@ def suggest_model_for_task(
             scores['gemini'] += 0.2
             reasons['gemini'].append(f"{frontend_files} frontend files")
 
-        if backend_files > frontend_files and 'claude' in scores:
-            scores['claude'] += 0.2
-            reasons['claude'].append(f"{backend_files} backend files")
+        if backend_files > frontend_files and 'opencode' in scores:
+            scores['opencode'] += 0.2
+            reasons['opencode'].append(f"{backend_files} backend files")
 
         # Large codebase → prefer gemini for context window
         threshold = config.get('thresholds', {}).get('large_codebase_files', 50)
@@ -321,16 +327,16 @@ def suggest_model_for_task(
             scores['gemini'] += 0.3
             reasons['gemini'].append(f"{file_count} files (large codebase)")
 
-    # Claude gets a small boost as default orchestrator
-    if 'claude' in scores:
-        scores['claude'] += 0.1
-        reasons['claude'].append('default orchestrator')
+    # OpenCode gets a small boost as default orchestrator
+    if 'opencode' in scores:
+        scores['opencode'] += 0.1
+        reasons['opencode'].append('default orchestrator')
 
     # Find best model
     if not scores:
         return {
-            'suggested': 'claude',
-            'reason': 'Default fallback',
+            'suggested': 'opencode',
+            'reason': 'Default fallback (opencode/big-pickle)',
             'alternatives': [],
             'confidence': 0.5
         }

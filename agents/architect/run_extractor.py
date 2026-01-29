@@ -27,8 +27,8 @@ After your analysis, extract 2-3 key learnings in this format:
 
 Be concrete and specific to the task provided."""
 
-def run_with_claude():
-    """Execute analysis using Claude big-pickle model."""
+def run_with_opencode():
+    """Execute analysis using OpenCode big-pickle model."""
     
     # Get task from command line
     task = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "System design review"
@@ -36,10 +36,9 @@ def run_with_claude():
     prompt = get_architect_prompt(task)
     
     try:
-        # Call Claude with big-pickle model
+        # Call OpenCode with big-pickle model
         result = subprocess.run(
-            ["claude", "--print", "--model", "opencode/big-pickle"],
-            input=prompt,
+            ["opencode", "--model", "opencode/big-pickle", "--prompt", prompt],
             capture_output=True,
             text=True,
             timeout=30
@@ -54,7 +53,7 @@ def run_with_claude():
             return 0
             
     except FileNotFoundError:
-        # Claude CLI not found, use fallback
+        # OpenCode CLI not found, use fallback
         print_fallback_analysis(task)
         return 0
     except subprocess.TimeoutExpired:
@@ -76,4 +75,4 @@ Key observations:
 """)
 
 if __name__ == '__main__':
-    sys.exit(run_with_claude())
+    sys.exit(run_with_opencode())
