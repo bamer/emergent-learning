@@ -53,7 +53,7 @@ User: See final improved code + iteration summary
 ## Execution
 
 ```bash
-python ~/.opencode/emergent-learning/src/query/ralph_orchestrator.py \
+python ~/.opencode/emergent-learning/query/ralph_orchestrator.py \
   --target <FILE> \
   --max-iterations <N> \
   --completion-promise "<PROMISE>"

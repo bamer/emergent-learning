@@ -32,7 +32,7 @@ The checkin command is simple - just type `/checkin` to load framework context a
 This skill runs the Python-based orchestrator in non-interactive mode:
 
 ```bash
-python ~/.opencode/emergent-learning/src/query/checkin.py --non-interactive
+python ~/.opencode/emergent-learning/query/checkin.py --non-interactive
 ```
 
 ### Handling Non-Interactive Mode
