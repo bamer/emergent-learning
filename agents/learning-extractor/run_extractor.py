@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Opus Learning Extractor Runner
+OpenCode Learning Extractor Runner
 
-Spawns an Opus agent to analyze session logs and extract learnings.
+Spawns an OpenCode learning-extractor agent to analyze session logs and extract learnings.
 Designed to run in background (non-blocking) from session_integration.py.
 
 Usage:
@@ -14,9 +14,16 @@ import re
 import sqlite3
 import subprocess
 import sys
+import hashlib
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
+
+# Add requests for HTTP calls
+try:
+    import requests
+except ImportError:
+    requests = None
 
 # Paths
 try:
@@ -25,7 +32,7 @@ except ImportError:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     from elf_paths import get_base_path
 
-EMERGENT_LEARNING_PATH = get_base_path(Path(__file__))
+EMERGENT_LEARNING_PATH = get_base_path()
 PROMPT_PATH = EMERGENT_LEARNING_PATH / "agents" / "learning-extractor" / "PROMPT.md"
 MEMORY_DB = EMERGENT_LEARNING_PATH / "memory" / "index.db"
 PROPOSALS_PENDING = EMERGENT_LEARNING_PATH / "proposals" / "pending"
@@ -35,7 +42,7 @@ PROCESSED_MARKER = EMERGENT_LEARNING_PATH / "sessions" / ".processed"
 def load_prompt() -> str:
     """Load the agent prompt from PROMPT.md."""
     if PROMPT_PATH.exists():
-        return PROMPT_PATH.read_text(encoding='utf-8')
+        return PROMPT_PATH.read_text(encoding="utf-8")
     return ""
 
 
@@ -97,13 +104,13 @@ def load_session_logs(log_files: List[Path]) -> str:
             continue
 
         try:
-            with open(log_file, 'r', encoding='utf-8') as f:
+            with open(log_file, "r", encoding="utf-8") as f:
                 for line in f:
                     line = line.strip()
                     if line:
                         try:
                             entry = json.loads(line)
-                            entry['_source_file'] = log_file.name
+                            entry["_source_file"] = log_file.name
                             all_entries.append(entry)
                         except json.JSONDecodeError:
                             continue
@@ -111,19 +118,21 @@ def load_session_logs(log_files: List[Path]) -> str:
             continue
 
     # Sort by timestamp
-    all_entries.sort(key=lambda x: x.get('ts', ''))
+    all_entries.sort(key=lambda x: x.get("ts", ""))
 
     # Format for the agent
     lines = [f"# Session Logs ({len(log_files)} files, {len(all_entries)} entries)\n"]
 
     for entry in all_entries:
-        ts = entry.get('ts', '')[:19]  # Trim to seconds
-        tool = entry.get('tool', entry.get('type', 'unknown'))
-        outcome = entry.get('outcome', '')
-        input_summary = entry.get('input_summary', '')[:200]
-        output_summary = entry.get('output_summary', '')[:200]
+        ts = entry.get("ts", "")[:19]  # Trim to seconds
+        tool = entry.get("tool", entry.get("type", "unknown"))
+        outcome = entry.get("outcome", "")
+        input_summary = entry.get("input_summary", "")[:200]
+        output_summary = entry.get("output_summary", "")[:200]
 
-        outcome_marker = {'success': '+', 'failure': '!', 'unknown': '?'}.get(outcome, ' ')
+        outcome_marker = {"success": "+", "failure": "!", "unknown": "?"}.get(
+            outcome, " "
+        )
 
         lines.append(f"[{ts}] [{outcome_marker}] {tool}")
         if input_summary:
@@ -135,7 +144,9 @@ def load_session_logs(log_files: List[Path]) -> str:
     return "\n".join(lines)
 
 
-def build_agent_prompt(session_content: str, heuristics: List[Dict], failures: List[Dict]) -> str:
+def build_agent_prompt(
+    session_content: str, heuristics: List[Dict], failures: List[Dict]
+) -> str:
     """Build the full prompt for the Opus agent."""
     prompt_parts = []
 
@@ -151,14 +162,18 @@ def build_agent_prompt(session_content: str, heuristics: List[Dict], failures: L
     if heuristics:
         prompt_parts.append("\n## Existing Heuristics (for cross-reference)\n")
         for h in heuristics[:30]:
-            golden = " [GOLDEN]" if h.get('is_golden') else ""
-            prompt_parts.append(f"- [{h['domain']}]{golden} ({h['confidence']:.0%}): {h['rule']}")
+            golden = " [GOLDEN]" if h.get("is_golden") else ""
+            prompt_parts.append(
+                f"- [{h['domain']}]{golden} ({h['confidence']:.0%}): {h['rule']}"
+            )
 
     # Add recent failures
     if failures:
         prompt_parts.append("\n\n## Recent Failures (avoid duplicates)\n")
         for f in failures[:15]:
-            prompt_parts.append(f"- [{f.get('domain', 'unknown')}] {f['title']}: {f.get('summary', '')[:100]}")
+            prompt_parts.append(
+                f"- [{f.get('domain', 'unknown')}] {f['title']}: {f.get('summary', '')[:100]}"
+            )
 
     # Add session content
     prompt_parts.append("\n\n---\n")
@@ -198,7 +213,7 @@ def parse_proposals(agent_output: str) -> List[str]:
         parts = agent_output.split("---PROPOSAL_SEPARATOR---")
     else:
         # Try finding markdown headers
-        parts = re.split(r'(?=^# Proposal:)', agent_output, flags=re.MULTILINE)
+        parts = re.split(r"(?=^# Proposal:)", agent_output, flags=re.MULTILINE)
 
     for part in parts:
         part = part.strip()
@@ -217,15 +232,15 @@ def save_proposal(content: str, index: int) -> Optional[Path]:
     PROPOSALS_PENDING.mkdir(parents=True, exist_ok=True)
 
     # Extract type and generate filename
-    type_match = re.search(r'\*\*Type:\*\*\s*(\w+)', content)
+    type_match = re.search(r"\*\*Type:\*\*\s*(\w+)", content)
     proposal_type = type_match.group(1) if type_match else "unknown"
 
     # Extract title for filename
-    title_match = re.search(r'# Proposal:\s*(.+)$', content, re.MULTILINE)
+    title_match = re.search(r"# Proposal:\s*(.+)$", content, re.MULTILINE)
     title = title_match.group(1) if title_match else f"proposal-{index}"
 
     # Sanitize title for filename
-    safe_title = re.sub(r'[^\w\s-]', '', title).strip().replace(' ', '-').lower()[:40]
+    safe_title = re.sub(r"[^\w\s-]", "", title).strip().replace(" ", "-").lower()[:40]
 
     timestamp = datetime.now().strftime("%Y-%m-%d")
     filename = f"{timestamp}_{proposal_type}_{safe_title}.md"
@@ -239,7 +254,7 @@ def save_proposal(content: str, index: int) -> Optional[Path]:
         counter += 1
 
     try:
-        filepath.write_text(content, encoding='utf-8')
+        filepath.write_text(content, encoding="utf-8")
         return filepath
     except IOError:
         return None
@@ -251,8 +266,8 @@ def mark_as_processed(log_files: List[Path]):
 
     if PROCESSED_MARKER.exists():
         try:
-            data = json.loads(PROCESSED_MARKER.read_text(encoding='utf-8'))
-            processed = data.get('processed_files', [])
+            data = json.loads(PROCESSED_MARKER.read_text(encoding="utf-8"))
+            processed = data.get("processed_files", [])
         except (json.JSONDecodeError, IOError):
             pass
 
@@ -260,53 +275,87 @@ def mark_as_processed(log_files: List[Path]):
         if f.name not in processed:
             processed.append(f.name)
 
-    data = {
-        'processed_files': processed,
-        'last_processed': datetime.now().isoformat()
-    }
+    data = {"processed_files": processed, "last_processed": datetime.now().isoformat()}
 
     PROCESSED_MARKER.parent.mkdir(parents=True, exist_ok=True)
-    PROCESSED_MARKER.write_text(json.dumps(data, indent=2), encoding='utf-8')
+    PROCESSED_MARKER.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
-def run_opus_agent(prompt: str) -> Optional[str]:
+def run_learning_extractor_agent(prompt: str) -> Optional[str]:
     """
-    Run the Opus agent using Claude CLI with --print flag.
+    Run the learning-extractor agent using OpenCode client.
 
     Returns the agent's output or None on failure.
     """
     try:
-        # Use claude CLI with --print for non-interactive execution
+        # Import OpenCode client
+        from agents.opencode_client import OpenCodeClient
+
+        # Create client and run learning-extractor agent
+        client = OpenCodeClient(model="opencode/big-pickle")
+
+        # Call the learning-extractor agent with the prompt
+        result = client.call(prompt, timeout=300, agent="learning-extractor")
+
+        if result:
+            return result
+        else:
+            print("[EXTRACTOR] OpenCode client returned no result", file=sys.stderr)
+            return None
+
+    except ImportError as e:
+        print(f"[EXTRACTOR] OpenCode client not available: {e}", file=sys.stderr)
+        # Try CLI fallback
+        try:
+            return run_learning_extractor_agent_cli(prompt)
+        except Exception as cli_error:
+            print(f"[EXTRACTOR] CLI fallback also failed: {cli_error}", file=sys.stderr)
+            return None
+
+def run_learning_extractor_agent_cli(prompt: str) -> Optional[str]:
+    """
+    Fallback method to run learning-extractor agent via OpenCode CLI.
+
+    Returns the agent's output or None on failure.
+    """
+    try:
+        # Try to run via OpenCode CLI
         result = subprocess.run(
-            ["claude", "--print", "--model", "opus"],
+            ["opencode", "agent", "learning-extractor"],
             input=prompt,
             capture_output=True,
             text=True,
             timeout=300,  # 5 minute timeout
-            encoding='utf-8'
+            encoding="utf-8",
         )
 
         if result.returncode == 0:
             return result.stdout
         else:
-            print(f"[EXTRACTOR] Claude CLI error: {result.stderr}", file=sys.stderr)
+            print(f"[EXTRACTOR] OpenCode CLI error: {result.stderr}", file=sys.stderr)
             return None
 
     except subprocess.TimeoutExpired:
         print("[EXTRACTOR] Agent timed out after 5 minutes", file=sys.stderr)
         return None
     except FileNotFoundError:
-        print("[EXTRACTOR] Claude CLI not found", file=sys.stderr)
+        print("[EXTRACTOR] OpenCode CLI not found", file=sys.stderr)
         return None
     except Exception as e:
-        print(f"[EXTRACTOR] Error running agent: {e}", file=sys.stderr)
+        print(
+            f"[EXTRACTOR] Error running learning-extractor agent via CLI: {e}",
+            file=sys.stderr,
+        )
         return None
 
 
 def main():
     """Main entry point."""
     if len(sys.argv) < 2:
-        print("Usage: python run_extractor.py <log_file1.jsonl> [log_file2.jsonl ...]", file=sys.stderr)
+        print(
+            "Usage: python run_extractor.py <log_file1.jsonl> [log_file2.jsonl ...]",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     log_files = [Path(f) for f in sys.argv[1:]]
@@ -317,21 +366,26 @@ def main():
         print("[EXTRACTOR] No valid log files found", file=sys.stderr)
         sys.exit(1)
 
-    print(f"[EXTRACTOR] Processing {len(existing_logs)} log file(s)...", file=sys.stderr)
+    print(
+        f"[EXTRACTOR] Processing {len(existing_logs)} log file(s)...", file=sys.stderr
+    )
 
     # Load context
     heuristics = load_existing_heuristics()
     failures = load_recent_failures()
     session_content = load_session_logs(existing_logs)
 
-    print(f"[EXTRACTOR] Loaded {len(heuristics)} heuristics, {len(failures)} failures", file=sys.stderr)
+    print(
+        f"[EXTRACTOR] Loaded {len(heuristics)} heuristics, {len(failures)} failures",
+        file=sys.stderr,
+    )
 
     # Build prompt
     full_prompt = build_agent_prompt(session_content, heuristics, failures)
 
-    # Run Opus agent
-    print("[EXTRACTOR] Spawning Opus agent...", file=sys.stderr)
-    agent_output = run_opus_agent(full_prompt)
+    # Run learning extractor agent
+    print("[EXTRACTOR] Spawning OpenCode learning-extractor agent...", file=sys.stderr)
+    agent_output = run_learning_extractor_agent(full_prompt)
 
     if not agent_output:
         print("[EXTRACTOR] Agent returned no output", file=sys.stderr)

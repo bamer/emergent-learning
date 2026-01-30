@@ -8,12 +8,16 @@ import sys
 import io
 
 # Ensure UTF-8 output on Windows (only if not already configured)
-if sys.platform == 'win32':
+if sys.platform == "win32":
     try:
-        if hasattr(sys.stdout, 'buffer') and sys.stdout.encoding != 'utf-8':
-            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-        if hasattr(sys.stderr, 'buffer') and sys.stderr.encoding != 'utf-8':
-            sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+        if hasattr(sys.stdout, "buffer") and sys.stdout.encoding != "utf-8":
+            sys.stdout = io.TextIOWrapper(
+                sys.stdout.buffer, encoding="utf-8", errors="replace"
+            )
+        if hasattr(sys.stderr, "buffer") and sys.stderr.encoding != "utf-8":
+            sys.stderr = io.TextIOWrapper(
+                sys.stderr.buffer, encoding="utf-8", errors="replace"
+            )
     except (AttributeError, ValueError):
         pass  # Already reconfigured or not a TTY
 
@@ -21,14 +25,20 @@ if sys.platform == 'win32':
 try:
     from query.core import QuerySystem
     from query.exceptions import (
-        QuerySystemError, ValidationError, DatabaseError, TimeoutError
+        QuerySystemError,
+        ValidationError,
+        DatabaseError,
+        TimeoutError,
     )
     from query.formatters import format_output, generate_accountability_banner
     from query.setup import ensure_hooks_installed, ensure_full_setup, verify_hooks
 except ImportError:
     from core import QuerySystem
     from exceptions import (
-        QuerySystemError, ValidationError, DatabaseError, TimeoutError
+        QuerySystemError,
+        ValidationError,
+        DatabaseError,
+        TimeoutError,
     )
     from formatters import format_output, generate_accountability_banner
     from setup import ensure_hooks_installed, ensure_full_setup, verify_hooks
@@ -37,6 +47,7 @@ except ImportError:
 META_OBSERVER_AVAILABLE = False
 try:
     from meta_observer import MetaObserver
+
     META_OBSERVER_AVAILABLE = True
 except ImportError:
     pass
@@ -58,17 +69,18 @@ async def _async_main(args: argparse.Namespace) -> int:
 
     try:
         # Pass location for project detection and location-aware queries
-        location = getattr(args, 'location', None)
+        location = getattr(args, "location", None)
         query_system = await QuerySystem.create(
-            base_path=args.base_path,
-            debug=args.debug,
-            current_location=location
+            base_path=args.base_path, debug=args.debug, current_location=location
         )
     except QuerySystemError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
     except Exception as e:
-        print(f"ERROR: Unexpected error during initialization: {e} [QS000]", file=sys.stderr)
+        print(
+            f"ERROR: Unexpected error during initialization: {e} [QS000]",
+            file=sys.stderr,
+        )
         return 1
 
     # Execute query based on arguments
@@ -78,7 +90,7 @@ async def _async_main(args: argparse.Namespace) -> int:
         if args.validate:
             # Validate database
             result = await query_system.validate_database()
-            if result['valid']:
+            if result["valid"]:
                 print("Database validation: PASSED")
             else:
                 print("Database validation: FAILED")
@@ -92,29 +104,33 @@ async def _async_main(args: argparse.Namespace) -> int:
             print("━" * 40)
             hook_status = verify_hooks()
 
-            if hook_status['healthy']:
+            if hook_status["healthy"]:
                 print("✓ Hooks are properly configured")
             else:
                 print("✗ Hook configuration issues found:")
                 exit_code = 1
 
             print()
-            print(f"PreToolUse: {'✓ Registered' if hook_status['pre_tool_present'] else '✗ Not registered'}")
-            if hook_status['pre_tool_path']:
+            print(
+                f"PreToolUse: {'✓ Registered' if hook_status['pre_tool_present'] else '✗ Not registered'}"
+            )
+            if hook_status["pre_tool_path"]:
                 print(f"  Path: {hook_status['pre_tool_path']}")
 
-            print(f"PostToolUse: {'✓ Registered' if hook_status['post_tool_present'] else '✗ Not registered'}")
-            if hook_status['post_tool_path']:
+            print(
+                f"PostToolUse: {'✓ Registered' if hook_status['post_tool_present'] else '✗ Not registered'}"
+            )
+            if hook_status["post_tool_path"]:
                 print(f"  Path: {hook_status['post_tool_path']}")
 
-            if hook_status['errors']:
+            if hook_status["errors"]:
                 print("\n⚠️  Errors:")
-                for error in hook_status['errors']:
+                for error in hook_status["errors"]:
                     print(f"  • {error}")
 
-            if hook_status['warnings']:
+            if hook_status["warnings"]:
                 print("\n⚠️  Warnings:")
-                for warning in hook_status['warnings']:
+                for warning in hook_status["warnings"]:
                     print(f"  • {warning}")
 
             return exit_code
@@ -122,7 +138,10 @@ async def _async_main(args: argparse.Namespace) -> int:
         elif args.health_check:
             # Run system health check via meta-observer
             if not META_OBSERVER_AVAILABLE:
-                print("ERROR: Meta-observer not available. Cannot run health check.", file=sys.stderr)
+                print(
+                    "ERROR: Meta-observer not available. Cannot run health check.",
+                    file=sys.stderr,
+                )
                 return 1
 
             print("🏥 System Health Check")
@@ -136,17 +155,27 @@ async def _async_main(args: argparse.Namespace) -> int:
             else:
                 for alert in alerts:
                     if isinstance(alert, dict):
-                        if alert.get('mode') == 'bootstrap':
-                            print(f"⏳ Bootstrap mode: {alert.get('message', 'Collecting baseline data')}")
-                            samples = alert.get('samples', 0)
-                            needed = alert.get('samples_needed', 30)
-                            print(f"   Progress: {samples}/{needed} samples (~{(needed - samples) // 4} more queries needed)")
+                        if alert.get("mode") == "bootstrap":
+                            print(
+                                f"⏳ Bootstrap mode: {alert.get('message', 'Collecting baseline data')}"
+                            )
+                            samples = alert.get("samples", 0)
+                            needed = alert.get("samples_needed", 30)
+                            print(
+                                f"   Progress: {samples}/{needed} samples (~{(needed - samples) // 4} more queries needed)"
+                            )
                         else:
-                            alert_type = alert.get('type', alert.get('alert_type', 'unknown'))
-                            severity = alert.get('severity', 'info')
-                            icon = {'critical': '🔴', 'warning': '🟡', 'info': '🔵'}.get(severity, '⚪')
+                            alert_type = alert.get(
+                                "type", alert.get("alert_type", "unknown")
+                            )
+                            severity = alert.get("severity", "info")
+                            icon = {
+                                "critical": "🔴",
+                                "warning": "🟡",
+                                "info": "🔵",
+                            }.get(severity, "⚪")
                             print(f"{icon} [{severity.upper()}] {alert_type}")
-                            if alert.get('message'):
+                            if alert.get("message"):
                                 print(f"   {alert['message']}")
 
             # Show recent metrics
@@ -155,19 +184,33 @@ async def _async_main(args: argparse.Namespace) -> int:
             try:
                 observer = MetaObserver(db_path=query_system.db_path)
 
-                for metric in ['avg_confidence', 'validation_velocity', 'contradiction_rate']:
+                for metric in [
+                    "avg_confidence",
+                    "validation_velocity",
+                    "contradiction_rate",
+                ]:
                     trend = observer.calculate_trend(metric, hours=168)  # 7 days
-                    if trend.get('confidence') != 'low':
-                        direction = trend.get('direction', 'stable')
-                        arrow = {'increasing': '↑', 'decreasing': '↓', 'stable': '→'}.get(direction, '?')
-                        spread = trend.get('time_spread_hours', 0)
-                        print(f"  {metric}: {arrow} {direction} (confidence: {trend.get('confidence')}, {spread:.1f}h spread)")
-                    elif trend.get('reason') == 'insufficient_time_spread':
-                        spread = trend.get('time_spread_hours', 0)
-                        required = trend.get('required_spread_hours', 0)
-                        print(f"  {metric}: (need more time spread - {spread:.1f}h/{required:.1f}h)")
+                    if trend.get("confidence") != "low":
+                        direction = trend.get("direction", "stable")
+                        arrow = {
+                            "increasing": "↑",
+                            "decreasing": "↓",
+                            "stable": "→",
+                        }.get(direction, "?")
+                        spread = trend.get("time_spread_hours", 0)
+                        print(
+                            f"  {metric}: {arrow} {direction} (confidence: {trend.get('confidence')}, {spread:.1f}h spread)"
+                        )
+                    elif trend.get("reason") == "insufficient_time_spread":
+                        spread = trend.get("time_spread_hours", 0)
+                        required = trend.get("required_spread_hours", 0)
+                        print(
+                            f"  {metric}: (need more time spread - {spread:.1f}h/{required:.1f}h)"
+                        )
                     else:
-                        print(f"  {metric}: (insufficient data - {trend.get('sample_count', 0)}/{trend.get('required', 10)} samples)")
+                        print(
+                            f"  {metric}: (insufficient data - {trend.get('sample_count', 0)}/{trend.get('required', 10)} samples)"
+                        )
 
                 # Show active alerts from DB
                 active_alerts = observer.get_active_alerts()
@@ -183,13 +226,16 @@ async def _async_main(args: argparse.Namespace) -> int:
             try:
                 from project import detect_project_context, format_project_status
                 from pathlib import Path
+
                 # Use --location if provided
-                start_path = Path(args.location) if getattr(args, 'location', None) else None
+                start_path = (
+                    Path(args.location) if getattr(args, "location", None) else None
+                )
                 ctx = detect_project_context(start_path)
                 print(format_project_status(ctx))
                 return 0
             except ImportError:
-                print('ERROR: Project context module not available', file=sys.stderr)
+                print("ERROR: Project context module not available", file=sys.stderr)
                 return 1
 
         elif args.project_only:
@@ -200,20 +246,22 @@ async def _async_main(args: argparse.Namespace) -> int:
                 import sqlite3
 
                 # Use --location if provided
-                start_path = Path(args.location) if getattr(args, 'location', None) else None
+                start_path = (
+                    Path(args.location) if getattr(args, "location", None) else None
+                )
                 ctx = detect_project_context(start_path)
                 if not ctx.has_project_context():
-                    print('ERROR: No .elf/ found. Run elf init first.', file=sys.stderr)
+                    print("ERROR: No .elf/ found. Run elf init first.", file=sys.stderr)
                     return 1
 
                 output = []
-                output.append('# Project Context: ' + str(ctx.project_name) + chr(10))
-                output.append('Root: ' + str(ctx.elf_root) + chr(10) + chr(10))
+                output.append("# Project Context: " + str(ctx.project_name) + chr(10))
+                output.append("Root: " + str(ctx.elf_root) + chr(10) + chr(10))
 
                 # Load context.md
                 context_content = ctx.get_context_md_content()
                 if context_content:
-                    output.append('## Project Description' + chr(10))
+                    output.append("## Project Description" + chr(10))
                     output.append(context_content)
                     output.append(chr(10) + chr(10))
 
@@ -222,39 +270,76 @@ async def _async_main(args: argparse.Namespace) -> int:
                     conn = sqlite3.connect(str(ctx.project_db_path))
                     cursor = conn.cursor()
 
-                    cursor.execute('SELECT rule, explanation, confidence FROM heuristics ORDER BY confidence DESC LIMIT 20')
+                    cursor.execute(
+                        "SELECT rule, explanation, confidence FROM heuristics ORDER BY confidence DESC LIMIT 20"
+                    )
                     heuristics = cursor.fetchall()
                     if heuristics:
-                        output.append('## Project Heuristics' + chr(10) + chr(10))
+                        output.append("## Project Heuristics" + chr(10) + chr(10))
                         for rule, expl, conf in heuristics:
-                            output.append('- **' + str(rule) + '** (confidence: ' + format(conf, '.2f') + ')' + chr(10))
+                            output.append(
+                                "- **"
+                                + str(rule)
+                                + "** (confidence: "
+                                + format(conf, ".2f")
+                                + ")"
+                                + chr(10)
+                            )
                             if expl:
-                                output.append('  ' + str(expl)[:100] + chr(10))
+                                output.append("  " + str(expl)[:100] + chr(10))
                             output.append(chr(10))
 
-                    cursor.execute('SELECT type, summary FROM learnings ORDER BY created_at DESC LIMIT 10')
+                    cursor.execute(
+                        "SELECT type, summary FROM learnings ORDER BY created_at DESC LIMIT 10"
+                    )
                     learnings = cursor.fetchall()
                     if learnings:
-                        output.append('## Project Learnings' + chr(10) + chr(10))
+                        output.append("## Project Learnings" + chr(10) + chr(10))
                         for ltype, summary in learnings:
-                            output.append('- **' + str(summary) + '** (' + str(ltype) + ')' + chr(10))
+                            output.append(
+                                "- **"
+                                + str(summary)
+                                + "** ("
+                                + str(ltype)
+                                + ")"
+                                + chr(10)
+                            )
 
                     conn.close()
 
-                print(''.join(output))
+                print("".join(output))
                 return 0
             except ImportError as e:
-                print('ERROR: Project context module not available: ' + str(e), file=sys.stderr)
+                print(
+                    "ERROR: Project context module not available: " + str(e),
+                    file=sys.stderr,
+                )
                 return 1
 
         elif args.context:
             # Build full context
             task = "Agent task context generation"
             domain = args.domain
-            tags = args.tags.split(',') if args.tags else None
+            tags = args.tags.split(",") if args.tags else None
             result = await query_system.build_context(
                 task, domain, tags, args.max_tokens, args.timeout, depth=args.depth
             )
+
+            # Integrate session context and trigger learning extractor if needed
+            try:
+                from session_integration import SessionIntegration
+
+                integration = SessionIntegration(debug=False)
+                session_context, extractor_triggered = (
+                    integration.build_session_checkin_context()
+                )
+                if extractor_triggered:
+                    sys.stderr.write(
+                        "[SESSION] Learning extractor triggered for unprocessed logs\n"
+                    )
+            except ImportError:
+                pass  # Session integration not available
+
             print(result)
             return exit_code
 
@@ -265,15 +350,16 @@ async def _async_main(args: argparse.Namespace) -> int:
 
         elif args.decisions:
             # Handle decisions query (must come before --domain check)
-            result = await query_system.get_decisions(args.domain, args.decision_status, args.limit, args.timeout)
-
+            result = await query_system.get_decisions(
+                args.domain, args.decision_status, args.limit, args.timeout
+            )
 
         elif args.spikes:
             result = await query_system.get_spike_reports(
                 domain=args.domain,
-                tags=args.tags.split(',') if args.tags else None,
+                tags=args.tags.split(",") if args.tags else None,
                 limit=args.limit,
-                timeout=args.timeout
+                timeout=args.timeout,
             )
 
         elif args.assumptions:
@@ -283,18 +369,19 @@ async def _async_main(args: argparse.Namespace) -> int:
                 status=args.assumption_status,
                 min_confidence=args.min_confidence,
                 limit=args.limit,
-                timeout=args.timeout
+                timeout=args.timeout,
             )
             # Also show challenged/invalidated if viewing all or specifically requested
-            if args.assumption_status in ['challenged', 'invalidated']:
+            if args.assumption_status in ["challenged", "invalidated"]:
                 pass  # Already filtering by that status
             elif not result:
                 # If no active assumptions, show a summary
-                challenged = await query_system.get_challenged_assumptions(args.domain, args.limit, args.timeout)
+                challenged = await query_system.get_challenged_assumptions(
+                    args.domain, args.limit, args.timeout
+                )
                 if challenged:
                     print("\n--- Challenged/Invalidated Assumptions ---\n")
                     result = challenged
-
 
         elif args.invariants:
             # Handle invariants query
@@ -304,7 +391,7 @@ async def _async_main(args: argparse.Namespace) -> int:
                 scope=args.invariant_scope,
                 severity=args.invariant_severity,
                 limit=args.limit,
-                timeout=args.timeout
+                timeout=args.timeout,
             )
 
         elif args.semantic:
@@ -314,18 +401,22 @@ async def _async_main(args: argparse.Namespace) -> int:
                 threshold=args.threshold,
                 limit=args.limit,
                 domain=args.domain,  # Optional domain filter
-                timeout=args.timeout
+                timeout=args.timeout,
             )
 
         elif args.domain:
-            result = await query_system.query_by_domain(args.domain, args.limit, args.timeout)
+            result = await query_system.query_by_domain(
+                args.domain, args.limit, args.timeout
+            )
 
         elif args.tags:
-            tags = [t.strip() for t in args.tags.split(',')]
+            tags = [t.strip() for t in args.tags.split(",")]
             result = await query_system.query_by_tags(tags, args.limit, args.timeout)
 
         elif args.recent is not None:
-            result = await query_system.query_recent(args.type, args.recent, args.timeout)
+            result = await query_system.query_recent(
+                args.type, args.recent, args.timeout
+            )
 
         elif args.experiments:
             result = await query_system.get_active_experiments(args.timeout)
@@ -343,7 +434,9 @@ async def _async_main(args: argparse.Namespace) -> int:
             result = await query_system.get_statistics(args.timeout)
 
         elif args.violations:
-            result = await query_system.get_violation_summary(args.violation_days, args.timeout)
+            result = await query_system.get_violation_summary(
+                args.violation_days, args.timeout
+            )
 
         elif args.accountability_banner:
             # Generate accountability banner
@@ -375,6 +468,7 @@ async def _async_main(args: argparse.Namespace) -> int:
         print(f"UNEXPECTED ERROR: {e} [QS000]", file=sys.stderr)
         if args.debug:
             import traceback
+
             traceback.print_exc()
         exit_code = 1
     finally:
@@ -423,66 +517,172 @@ Error Codes:
   QS002 - Database error (connection/query failed)
   QS003 - Timeout error (query took too long)
   QS004 - Configuration error (setup failed)
-        """
+        """,
     )
 
     # Basic arguments
-    parser.add_argument('--base-path', type=str, help='Base path to emergent-learning directory')
-    parser.add_argument('--context', action='store_true', help='Build full context for agents')
-    parser.add_argument('--depth', choices=['minimal', 'standard', 'deep'], default='standard',
-                       help='Context depth: minimal (golden rules only ~500 tokens), '
-                            'standard (+ domain heuristics, default), '
-                            'deep (+ experiments, ADRs, all learnings ~5k tokens)')
-    parser.add_argument('--domain', type=str, help='Query by domain')
-    parser.add_argument('--tags', type=str, help='Query by tags (comma-separated)')
-    parser.add_argument('--recent', type=int, metavar='N', help='Get N recent learnings')
-    parser.add_argument('--type', type=str, help='Filter recent learnings by type')
-    parser.add_argument('--experiments', action='store_true', help='List active experiments')
-    parser.add_argument('--ceo-reviews', action='store_true', help='List pending CEO reviews')
-    parser.add_argument('--golden-rules', action='store_true', help='Display golden rules')
-    parser.add_argument('--stats', action='store_true', help='Display knowledge base statistics')
-    parser.add_argument('--violations', action='store_true', help='Show violation summary')
-    parser.add_argument('--violation-days', type=int, default=7, help='Days to look back for violations (default: 7)')
-    parser.add_argument('--accountability-banner', action='store_true', help='Show accountability banner')
-    parser.add_argument('--decisions', action='store_true', help='List architecture decision records (ADRs)')
-    parser.add_argument('--spikes', action='store_true', help='List spike reports (research knowledge)')
-    parser.add_argument('--decision-status', type=str, default='accepted', help='Filter decisions by status (default: accepted)')
-    parser.add_argument('--assumptions', action='store_true', help='List assumptions')
-    parser.add_argument('--assumption-status', type=str, default='active', help='Filter assumptions by status: active, verified, challenged, invalidated (default: active)')
-    parser.add_argument('--min-confidence', type=float, default=0.0, help='Minimum confidence for assumptions (default: 0.0)')
-    parser.add_argument('--invariants', action='store_true', help='List invariants (what must always be true)')
-    parser.add_argument('--invariant-status', type=str, default='active', help='Filter invariants by status: active, deprecated, violated (default: active)')
-    parser.add_argument('--invariant-scope', type=str, help='Filter invariants by scope: codebase, module, function, runtime')
-    parser.add_argument('--invariant-severity', type=str, help='Filter invariants by severity: error, warning, info')
-    parser.add_argument('--limit', type=int, default=10, help='Limit number of results (default: 10, max: 1000)')
+    parser.add_argument(
+        "--base-path", type=str, help="Base path to emergent-learning directory"
+    )
+    parser.add_argument(
+        "--context", action="store_true", help="Build full context for agents"
+    )
+    parser.add_argument(
+        "--depth",
+        choices=["minimal", "standard", "deep"],
+        default="standard",
+        help="Context depth: minimal (golden rules only ~500 tokens), "
+        "standard (+ domain heuristics, default), "
+        "deep (+ experiments, ADRs, all learnings ~5k tokens)",
+    )
+    parser.add_argument("--domain", type=str, help="Query by domain")
+    parser.add_argument("--tags", type=str, help="Query by tags (comma-separated)")
+    parser.add_argument(
+        "--recent", type=int, metavar="N", help="Get N recent learnings"
+    )
+    parser.add_argument("--type", type=str, help="Filter recent learnings by type")
+    parser.add_argument(
+        "--experiments", action="store_true", help="List active experiments"
+    )
+    parser.add_argument(
+        "--ceo-reviews", action="store_true", help="List pending CEO reviews"
+    )
+    parser.add_argument(
+        "--golden-rules", action="store_true", help="Display golden rules"
+    )
+    parser.add_argument(
+        "--stats", action="store_true", help="Display knowledge base statistics"
+    )
+    parser.add_argument(
+        "--violations", action="store_true", help="Show violation summary"
+    )
+    parser.add_argument(
+        "--violation-days",
+        type=int,
+        default=7,
+        help="Days to look back for violations (default: 7)",
+    )
+    parser.add_argument(
+        "--accountability-banner",
+        action="store_true",
+        help="Show accountability banner",
+    )
+    parser.add_argument(
+        "--decisions",
+        action="store_true",
+        help="List architecture decision records (ADRs)",
+    )
+    parser.add_argument(
+        "--spikes", action="store_true", help="List spike reports (research knowledge)"
+    )
+    parser.add_argument(
+        "--decision-status",
+        type=str,
+        default="accepted",
+        help="Filter decisions by status (default: accepted)",
+    )
+    parser.add_argument("--assumptions", action="store_true", help="List assumptions")
+    parser.add_argument(
+        "--assumption-status",
+        type=str,
+        default="active",
+        help="Filter assumptions by status: active, verified, challenged, invalidated (default: active)",
+    )
+    parser.add_argument(
+        "--min-confidence",
+        type=float,
+        default=0.0,
+        help="Minimum confidence for assumptions (default: 0.0)",
+    )
+    parser.add_argument(
+        "--invariants",
+        action="store_true",
+        help="List invariants (what must always be true)",
+    )
+    parser.add_argument(
+        "--invariant-status",
+        type=str,
+        default="active",
+        help="Filter invariants by status: active, deprecated, violated (default: active)",
+    )
+    parser.add_argument(
+        "--invariant-scope",
+        type=str,
+        help="Filter invariants by scope: codebase, module, function, runtime",
+    )
+    parser.add_argument(
+        "--invariant-severity",
+        type=str,
+        help="Filter invariants by severity: error, warning, info",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=10,
+        help="Limit number of results (default: 10, max: 1000)",
+    )
 
     # Enhanced arguments
-    parser.add_argument('--format', choices=['text', 'json', 'csv'], default='text',
-                       help='Output format (default: text)')
-    parser.add_argument('--max-tokens', type=int, default=5000,
-                       help='Max tokens for context building (default: 5000, max: 50000)')
-    parser.add_argument('--debug', action='store_true', help='Enable debug output')
-    parser.add_argument('--timeout', type=int, default=30,
-                       help='Query timeout in seconds (default: 30)')
-    parser.add_argument('--validate', action='store_true', help='Validate database integrity')
-    parser.add_argument('--health-check', action='store_true',
-                       help='Run system health check and display alerts (meta-observer)')
-    parser.add_argument('--verify-hooks', action='store_true',
-                       help='Verify hook configuration and accessibility')
+    parser.add_argument(
+        "--format",
+        choices=["text", "json", "csv"],
+        default="text",
+        help="Output format (default: text)",
+    )
+    parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=5000,
+        help="Max tokens for context building (default: 5000, max: 50000)",
+    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug output")
+    parser.add_argument(
+        "--timeout", type=int, default=30, help="Query timeout in seconds (default: 30)"
+    )
+    parser.add_argument(
+        "--validate", action="store_true", help="Validate database integrity"
+    )
+    parser.add_argument(
+        "--health-check",
+        action="store_true",
+        help="Run system health check and display alerts (meta-observer)",
+    )
+    parser.add_argument(
+        "--verify-hooks",
+        action="store_true",
+        help="Verify hook configuration and accessibility",
+    )
 
     # Semantic search arguments (Option B)
-    parser.add_argument('--semantic', type=str, metavar='TASK',
-                       help='Semantic search: find heuristics relevant to task description')
-    parser.add_argument('--threshold', type=float, default=0.75,
-                       help='Minimum similarity threshold for semantic search (0.0-1.0, default: 0.75)')
+    parser.add_argument(
+        "--semantic",
+        type=str,
+        metavar="TASK",
+        help="Semantic search: find heuristics relevant to task description",
+    )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.75,
+        help="Minimum similarity threshold for semantic search (0.0-1.0, default: 0.75)",
+    )
 
     # Project-related arguments
-    parser.add_argument('--project-status', action='store_true',
-                       help='Show current project context and status')
-    parser.add_argument('--project-only', action='store_true',
-                       help='Only show project-specific context (no global)')
-    parser.add_argument('--location', type=str,
-                       help='Override working directory for project detection and location-aware queries')
+    parser.add_argument(
+        "--project-status",
+        action="store_true",
+        help="Show current project context and status",
+    )
+    parser.add_argument(
+        "--project-only",
+        action="store_true",
+        help="Only show project-specific context (no global)",
+    )
+    parser.add_argument(
+        "--location",
+        type=str,
+        help="Override working directory for project detection and location-aware queries",
+    )
 
     args = parser.parse_args()
 
@@ -496,5 +696,5 @@ Error Codes:
     return exit_code
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     exit(main())

@@ -1,51 +1,53 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { Activity, RefreshCw, Wifi, WifiOff, Play, Square, Crown, Search, Lightbulb, HelpCircle, Building } from 'lucide-react'
+// File: AgentsPanel.tsx
+import React, { useState, useEffect, useCallback } from 'react';
+import { Activity, RefreshCw, Wifi, WifiOff, Play, Square, Crown, Search, Lightbulb, HelpCircle, Building } from 'lucide-react';
 // import { useAPI } from '../../hooks'
 
 interface AgentInfo {
-  type: string
-  name: string
-  display_name: string
-  description: string
-  icon: string
-  role: string
-  is_primary: boolean
-  status: string
-  priority: number
-  session_id: string | null
-  last_activity: string | null
-  start_time: string | null
-  error_count: number
-  auto_start: boolean
+  type: string;
+  name: string; // Ajouté en supposant qu'il est présent dans les données
+  display_name: string;
+  description: string;
+  icon: string; // Ajouté en supposant qu'il est présent dans les données
+  role: string;
+  is_primary: boolean;
+  status: string;
+  priority: number;
+  session_id: string | null;
+  last_activity: string | null;
+  start_time: string | null;
+  error_count: number;
+  auto_start: boolean;
   status_display: {
-    text: string
-    color: string
-    emoji: string
-  }
+    text: string;
+    color: string; // Ajouté en supposant qu'il est utilisé
+    emoji: string; // Ajouté en supposant qu'il est utilisé
+  };
+  system?: string; // Ajouté car utilisé dans le rendu
 }
 
 interface AgentStatusResponse {
-  timestamp: string
+  timestamp: string;
   orchestrator: {
-    running: boolean
-    uptime_seconds: number
+    running: boolean;
+    uptime_seconds: number;
     stats: {
-      total_sessions_created: number
-      total_messages_sent: number
-      agents_started: number
-      agents_stopped: number
-      errors_handled: number
-      uptime_seconds: number
-    }
-  }
-  agents: AgentInfo[]
+      total_sessions_created: number;
+      total_messages_sent: number;
+      agents_started: number;
+      agents_stopped: number;
+      errors_handled: number;
+      uptime_seconds: number; // Redondant ici, peut-être à clarifier
+    };
+  };
+  agents: AgentInfo[];
 }
 
 interface AgentsPanelProps {
-  apiBaseUrl?: string
+  apiBaseUrl?: string;
 }
 
-const AGENT_ICONS = {
+const AGENT_ICONS: Record<string, React.ComponentType<any>> = {
   orchestrator: Building,
   sentinel: Search,
   researcher: Activity,
@@ -53,88 +55,88 @@ const AGENT_ICONS = {
   skeptic: HelpCircle,
   creative: Lightbulb,
   ceo: Crown,
-}
+};
 
-const STATUS_COLORS = {
+const STATUS_COLORS: Record<string, string> = {
   running: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
   starting: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
   stopped: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
   busy: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   error: 'bg-red-500/10 text-red-400 border-red-500/20',
   stopping: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-}
+};
 
 export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPanelProps) {
-  const [agentStatus, setAgentStatus] = useState<AgentStatusResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [callingAgent, setCallingAgent] = useState<string | null>(null)
-  const [testResponse, setTestResponse] = useState<string | null>(null)
-  // const api = useAPI()
+  const [agentStatus, setAgentStatus] = useState<AgentStatusResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [callingAgent, setCallingAgent] = useState<string | null>(null);
+  const [testResponse, setTestResponse] = useState<string | null>(null);
+
+  // const api = useAPI();
 
   const fetchAgentStatus = useCallback(async () => {
     try {
-      const response = await fetch(`${apiBaseUrl}/agents/status`)
+      const response = await fetch(`${apiBaseUrl}/agents/status`);
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      const data = await response.json()
-      setAgentStatus(data)
-      setError(null)
+      const data = await response.json();
+      setAgentStatus(data);
+      setError(null);
     } catch (err) {
-      console.error('Failed to fetch agent status:', err)
-      setError(err instanceof Error ? err.message : 'Failed to connect to agent API')
-      setAgentStatus(null)
+      console.error('Failed to fetch agent status:', err);
+      setError(err instanceof Error ? err.message : 'Failed to connect to agent API');
+      setAgentStatus(null);
     } finally {
-      setLoading(false)
+      setLoading(false); // Déplacez setLoading ici pour garantir le chargement initial
     }
-  }, [apiBaseUrl])
+  }, [apiBaseUrl]);
 
   // Initial load and refresh
   useEffect(() => {
-    fetchAgentStatus()
-    const interval = setInterval(fetchAgentStatus, 5000) // Refresh every 5 seconds
-    return () => clearInterval(interval)
-  }, [fetchAgentStatus])
+    fetchAgentStatus();
+    const interval = setInterval(fetchAgentStatus, 5000); // Refresh every 5 seconds
+    return () => clearInterval(interval);
+  }, [fetchAgentStatus]);
 
   const handleStartAgent = async (agentType: string) => {
     try {
       const response = await fetch(`${apiBaseUrl}/agents/start/${agentType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-      })
+      });
       if (!response.ok) {
-        throw new Error(`Failed to start agent: ${response.statusText}`)
+        throw new Error(`Failed to start agent: ${response.statusText}`);
       }
-      fetchAgentStatus() // Refresh status
+      fetchAgentStatus(); // Refresh status
     } catch (err) {
-      console.error('Failed to start agent:', err)
-      setError(err instanceof Error ? err.message : 'Failed to start agent')
+      console.error('Failed to start agent:', err);
+      setError(err instanceof Error ? err.message : 'Failed to start agent');
     }
-  }
+  };
 
   const handleStopAgent = async (agentType: string) => {
     try {
       const response = await fetch(`${apiBaseUrl}/agents/stop/${agentType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-      })
+      });
       if (!response.ok) {
-        throw new Error(`Failed to stop agent: ${response.statusText}`)
+        throw new Error(`Failed to stop agent: ${response.statusText}`);
       }
-      fetchAgentStatus() // Refresh status
+      fetchAgentStatus(); // Refresh status
     } catch (err) {
-      console.error('Failed to stop agent:', err)
-      setError(err instanceof Error ? err.message : 'Failed to stop agent')
+      console.error('Failed to stop agent:', err);
+      setError(err instanceof Error ? err.message : 'Failed to stop agent');
     }
-  }
+  };
 
   const handleTestAgent = async (agentType: string) => {
-    setCallingAgent(agentType)
-    setTestResponse(null)
-    
+    setCallingAgent(agentType);
+    setTestResponse(null);
     try {
-      const prompts = {
+      const prompts: Record<string, string> = {
         sentinel: "Analyze the current system health and report any issues.",
         researcher: "Investigate the latest system patterns and provide insights.",
         architect: "Design a solution for the current coordination challenges.",
@@ -142,7 +144,7 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
         creative: "Suggest innovative improvements to the agent system.",
         ceo: "Make an executive decision about the current system priorities.",
         orchestrator: "Report on the overall system coordination status.",
-      }
+      };
 
       const response = await fetch(`${apiBaseUrl}/agents/call/${agentType}`, {
         method: 'POST',
@@ -151,53 +153,49 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
           prompt: prompts[agentType as keyof typeof prompts] || "Report your current status.",
           timeout: 30000
         }),
-      })
-      
+      });
+
       if (!response.ok) {
-        throw new Error(`Failed to call agent: ${response.statusText}`)
+        throw new Error(`Failed to call agent: ${response.statusText}`);
       }
-      
-      const data = await response.json()
-      setTestResponse(data.response || 'No response received')
+
+      const data = await response.json();
+      setTestResponse(data.response || 'No response received');
     } catch (err) {
-      console.error('Failed to call agent:', err)
-      setTestResponse(`Error: ${err instanceof Error ? err.message : 'Failed to call agent'}`)
+      console.error('Failed to call agent:', err);
+      setTestResponse(`Error: ${err instanceof Error ? err.message : 'Failed to call agent'}`);
     } finally {
-      setCallingAgent(null)
+      setCallingAgent(null);
     }
-  }
+  };
 
   const formatDuration = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    const secs = Math.floor(seconds % 60)
-    
-    if (hours > 0) return `${hours}h ${minutes}m`
-    if (minutes > 0) return `${minutes}m ${secs}s`
-    return `${secs}s`
-  }
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m ${secs}s`;
+    return `${secs}s`;
+  };
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center bg-slate-900/30 rounded-lg border border-slate-700/50">
-        <div className="flex items-center gap-2 text-slate-400">
-          <RefreshCw className="w-4 h-4 animate-spin" />
-          <span>Loading agents...</span>
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <RefreshCw className="w-8 h-8 text-slate-400 mx-auto animate-spin" />
+          <p className="text-slate-500 mt-2">Loading agents...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="h-full flex flex-col bg-slate-900/30 rounded-lg border border-slate-700/50">
+    <div className="flex flex-col h-full bg-slate-900 text-slate-100 overflow-auto max-h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Activity className="w-5 h-5 text-violet-400" />
-            <h2 className="text-lg font-semibold text-slate-200">ELF Agents</h2>
-          </div>
-
+      <div className="flex items-center justify-between p-4 border-b border-slate-700">
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          <Activity className="w-5 h-5 text-violet-400" />
+          ELF Agents
           {/* Connection status */}
           <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
             !error ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
@@ -214,7 +212,7 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
               </>
             )}
           </div>
-        </div>
+        </h2>
 
         {/* Stats */}
         {agentStatus && (
@@ -265,13 +263,14 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
             </div>
           </div>
         ) : agentStatus ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
             {agentStatus.agents.map((agent) => {
-              const IconComponent = AGENT_ICONS[agent.type as keyof typeof AGENT_ICONS] || Activity
-              const statusClass = STATUS_COLORS[agent.status as keyof typeof STATUS_COLORS] || STATUS_COLORS.stopped
-              
+              const IconComponent = AGENT_ICONS[agent.type as keyof typeof AGENT_ICONS] || Activity;
+              // Corrige l'orthographe de STATUS_COLORS
+              const statusClass = STATUS_COLORS[agent.status as keyof typeof STATUS_COLORS] || STATUS_COLORS.stopped;
+
               return (
-                 <div key={`${agent.type}-${agent.system || 'elf'}`} className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4">
+                <div key={`${agent.type}-${agent.system || 'elf'}`} className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4">
                   {/* Agent Header */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -304,13 +303,13 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
                   {/* Agent Info */}
                   <div className="space-y-2 mb-3">
                     <p className="text-sm text-slate-300">{agent.description}</p>
-                    
+
                     {agent.status === 'running' && agent.start_time && (
                       <div className="text-xs text-slate-400">
                         Started: {new Date(agent.start_time).toLocaleTimeString()}
                       </div>
                     )}
-                    
+
                     {agent.error_count > 0 && (
                       <div className="text-xs text-red-400">
                         Errors: {agent.error_count}
@@ -339,7 +338,7 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
                         Start
                       </button>
                     )}
-                    
+
                     <button
                       onClick={() => handleTestAgent(agent.type)}
                       disabled={callingAgent === agent.type || agent.status !== 'running'}
@@ -355,7 +354,7 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
                     </button>
                   </div>
 
-                  {/* Test Response */}
+                  {/* Test Response - Affiché seulement si une réponse existe et n'est pas en cours de chargement */}
                   {testResponse && callingAgent === null && (
                     <div className="mt-3 p-2 bg-slate-700/50 rounded text-xs">
                       <div className="font-semibold text-slate-300 mb-1">Response:</div>
@@ -366,27 +365,12 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
                     </div>
                   )}
                 </div>
-              )
+              );
             })}
-          </div>
-        ) : null}
+          </div>) : (
+          <div className="text-center text-slate-500">No agent data available.</div>
+        )}
       </div>
-
-      {/* Orchestrator Stats Footer */}
-      {agentStatus && (
-        <div className="px-4 py-3 border-t border-slate-700/50">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-4 text-slate-400">
-              <span>Sessions: {agentStatus.orchestrator.stats.total_sessions_created}</span>
-              <span>Messages: {agentStatus.orchestrator.stats.total_messages_sent}</span>
-              <span>Started: {agentStatus.orchestrator.stats.agents_started}</span>
-            </div>
-            <div className="text-slate-500">
-              Last updated: {new Date(agentStatus.timestamp).toLocaleTimeString()}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
-  )
+  );
 }

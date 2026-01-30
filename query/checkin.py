@@ -338,6 +338,44 @@ class CheckinOrchestrator:
             traceback.print_exc()
             return False
 
+    def start_learning_daemon(self):
+        """Step 9: Start the learning daemon for automatic learning extraction."""
+        print("\n[Learning] 🚀 Starting learning daemon...")
+
+        try:
+            # Check if daemon is already running
+            import subprocess
+
+            result = subprocess.run(
+                ["pgrep", "-f", "learning-daemon.py"], capture_output=True, text=True
+            )
+
+            if result.returncode == 0:
+                print("[Learning] ✅ Learning daemon already running")
+                return True
+
+            # Start the daemon script
+            daemon_script = self.elf_home / "scripts" / "start-learning-daemon.sh"
+            if not daemon_script.exists():
+                print(f"[Learning] ❌ Daemon script not found: {daemon_script}")
+                return False
+
+            # Start daemon
+            result = subprocess.run(
+                ["bash", str(daemon_script)], capture_output=True, text=True, timeout=10
+            )
+
+            if result.returncode == 0:
+                print("[Learning] ✅ Learning daemon started successfully")
+                return True
+            else:
+                print(f"[Learning] ❌ Failed to start daemon: {result.stderr}")
+                return False
+
+        except Exception as e:
+            print(f"[Learning] ⚠️  Warning: Could not start learning daemon: {e}")
+            return False
+
     def run(self):
         """Execute the complete checkin workflow."""
         # Step 1: Display Banner
@@ -367,6 +405,9 @@ class CheckinOrchestrator:
         launch_services = self.prompt_launch_opencode()
         if launch_services:
             self.launch_opencode_services()
+
+        # Step 9: Start learning daemon for automatic learning extraction
+        self.start_learning_daemon()
 
         print("\n[OK] Checkin complete - Ready to work!")
 

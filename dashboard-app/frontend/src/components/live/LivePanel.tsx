@@ -228,13 +228,13 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-scroll">
         {viewMode === 'agents' ? (
           <AgentsPanel />
         ) : (
           <div className="flex h-full">
             {/* Left: Task Kanban */}
-            <div className="flex-1 p-4 overflow-hidden">
+            <div className="flex-1 p-4 overflow-y-auto ]">
               <TaskKanban
                 sessions={taskSessions}
                 selectedSession={selectedSession}
