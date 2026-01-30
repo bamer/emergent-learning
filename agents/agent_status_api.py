@@ -31,6 +31,7 @@ except ImportError:
 sys.path.insert(0, str(Path(__file__).parent))
 
 from orchestrator import AgentOrchestrator, AgentType, AgentStatus
+import requests
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -55,6 +56,17 @@ def init_orchestrator():
     return orchestrator
 
 
+def get_opencode_agents():
+    """Get list of available OpenCode agents."""
+    try:
+        response = requests.get("http://localhost:4096/agent", timeout=5)
+        if response.status_code == 200:
+            return response.json()
+    except Exception as e:
+        logger.warning(f"Failed to get OpenCode agents: {e}")
+    return []
+
+
 @app.route("/agents/status", methods=["GET"])
 def get_agents_status():
     """Get current status of all agents."""
@@ -67,8 +79,8 @@ def get_agents_status():
             "timestamp": datetime.now().isoformat(),
             "orchestrator": {
                 "running": status["orchestrator"]["running"],
-                "uptime_seconds": status["orchestrator"]["uptime_seconds"],
-                "stats": status["orchestrator"]["stats"],
+                "start_time": status["orchestrator"]["start_time"],
+                "stats": status["stats"],
             },
             "agents": [],
         }
@@ -92,29 +104,112 @@ def get_agents_status():
             "ceo": {"display": "CEO", "role": "executive", "primary": False},
         }
 
+        # Add ELF agents
         for agent_type, agent_info in status["agents"].items():
             role_info = role_mapping.get(
                 agent_type,
                 {"display": agent_type.title(), "role": "unknown", "primary": False},
             )
 
+            # Get agent definition to get missing fields
+            agent_def = None
+            try:
+                agent_enum = AgentType(agent_type)
+                agent_def = orch.agents.get(agent_enum)
+            except ValueError:
+                pass
+
             dashboard_status["agents"].append(
                 {
                     "type": agent_type,
                     "name": agent_info["name"],
                     "display_name": role_info["display"],
-                    "description": agent_info["description"],
+                    "description": agent_def.description
+                    if agent_def
+                    else f"{role_info['display']} Agent",
                     "icon": agent_info["icon"],
                     "role": role_info["role"],
                     "is_primary": role_info["primary"],
                     "status": agent_info["status"],
-                    "priority": agent_info["priority"],
+                    "priority": agent_def.priority if agent_def else 5,
                     "session_id": agent_info["session_id"],
-                    "last_activity": agent_info["last_activity"],
-                    "start_time": agent_info["start_time"],
+                    "last_activity": agent_def.last_activity.isoformat()
+                    if agent_def and agent_def.last_activity
+                    else agent_info["last_activity"],
+                    "start_time": agent_def.start_time.isoformat()
+                    if agent_def and agent_def.start_time
+                    else agent_info["start_time"],
                     "error_count": agent_info["error_count"],
-                    "auto_start": agent_info["auto_start"],
+                    "auto_start": agent_def.auto_start if agent_def else False,
                     "status_display": _get_status_display(agent_info["status"]),
+                    "system": "elf",
+                }
+            )
+
+        # Add OpenCode agents (show all, including overlapping ones for transparency)
+        opencode_agents = get_opencode_agents()
+        oc_role_mapping = {
+            "ceo": {"display": "OC CEO", "role": "executive", "primary": False},
+            "researcher": {
+                "display": "OC Researcher",
+                "role": "investigation",
+                "primary": False,
+            },
+            "architect": {
+                "display": "OC Architect",
+                "role": "design",
+                "primary": False,
+            },
+            "skeptic": {"display": "OC Skeptic", "role": "review", "primary": False},
+            "creative": {
+                "display": "OC Creative",
+                "role": "innovation",
+                "primary": False,
+            },
+            "learning-extractor": {
+                "display": "Learning Extractor",
+                "role": "synthesis",
+                "primary": False,
+            },
+            "build": {"display": "Builder", "role": "execution", "primary": True},
+            "plan": {"display": "Planner", "role": "planning", "primary": False},
+            "explore": {"display": "Explorer", "role": "discovery", "primary": False},
+            "general": {"display": "Generalist", "role": "general", "primary": False},
+        }
+
+        # Add ALL OpenCode agents (including overlapping ones)
+        for agent in opencode_agents:
+            agent_name = agent.get("name", "")
+
+            role_info = oc_role_mapping.get(
+                agent_name,
+                {
+                    "display": f"OC {agent_name.title()}",
+                    "role": "unknown",
+                    "primary": False,
+                },
+            )
+
+            dashboard_status["agents"].append(
+                {
+                    "type": agent_name,
+                    "name": agent.get("name", ""),
+                    "display_name": role_info["display"],
+                    "description": agent.get(
+                        "description", f"OpenCode {agent_name} agent"
+                    ),
+                    "icon": "🔷",  # Default icon for OpenCode agents
+                    "role": role_info["role"],
+                    "is_primary": role_info["primary"],
+                    "status": "unknown",  # We don't have real status for OC agents yet
+                    "priority": 10,  # Lower priority for OpenCode agents
+                    "session_id": None,
+                    "last_activity": None,
+                    "start_time": None,
+                    "error_count": 0,
+                    "auto_start": False,
+                    "status_display": _get_status_display("stopped"),
+                    "system": "opencode",
                 }
             )
 

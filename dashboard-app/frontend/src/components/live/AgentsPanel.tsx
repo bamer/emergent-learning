@@ -271,7 +271,7 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
               const statusClass = STATUS_COLORS[agent.status as keyof typeof STATUS_COLORS] || STATUS_COLORS.stopped
               
               return (
-                <div key={agent.type} className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4">
+                 <div key={`${agent.type}-${agent.system || 'elf'}`} className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4">
                   {/* Agent Header */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -282,6 +282,16 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
                         <h3 className="font-semibold text-slate-200 flex items-center gap-2">
                           {agent.display_name}
                           {agent.is_primary && <Crown className="w-3 h-3 text-yellow-400" />}
+                          {agent.system === 'opencode' && (
+                            <span className="text-xs px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded">
+                              OC
+                            </span>
+                          )}
+                          {agent.system === 'elf' && (
+                            <span className="text-xs px-1.5 py-0.5 bg-violet-500/20 text-violet-400 rounded">
+                              ELF
+                            </span>
+                          )}
                         </h3>
                         <p className="text-xs text-slate-400">{agent.role}</p>
                       </div>

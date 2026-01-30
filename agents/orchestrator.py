@@ -55,17 +55,17 @@ except ImportError as e:
     agent_execution_available = False
     AgentExecutionEngine = None
     PatternResponseHandler = None
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(
-            "/home/bamer/.opencode/emergent-learning/logs/orchestrator.log"
-        ),
-        logging.StreamHandler(),
-    ],
-)
-logger = logging.getLogger(__name__)
+
+# Import Personality Manager
+try:
+    from agent_personality_manager import personality_manager, PersonalityManager
+
+    personality_manager_available = True
+except ImportError as e:
+    logger.warning(f"⚠️ Personality manager not available: {e}")
+    personality_manager_available = False
+    personality_manager = None
+    PersonalityManager = None
 
 
 class AgentStatus(Enum):
@@ -137,12 +137,15 @@ class AgentOrchestrator:
         else:
             self.execution_engine = None
             self.pattern_handler = None
-        self.pattern_handler = (
-            PatternResponseHandler() if agent_execution_available else None
-        )
-        self.pattern_handler = (
-            PatternResponseHandler() if PatternResponseHandler else None
-        )
+
+        # Initialize Personality Manager with OpenCode precedence
+        if personality_manager_available:
+            # You can change this to True if you want OpenCode agents to take precedence
+            self.personality_manager = PersonalityManager(
+                opencode_precedence=False  # Set to True to prioritize OpenCode agents
+            )
+        else:
+            self.personality_manager = None
 
         # Orchestrator state
         self.running = False
@@ -381,14 +384,33 @@ class AgentOrchestrator:
             return False
 
     def call_agent(
-        self, agent_type: AgentType, prompt: str, timeout: int = 300
+        self,
+        agent_type: AgentType,
+        prompt: str,
+        timeout: int = 300,
+        model: Optional[str] = None,
     ) -> Optional[str]:
-        """Call a specific agent with a prompt."""
+        """Call a specific agent with a prompt and optional model override."""
         if agent_type not in self.agents:
             logger.error(f"Unknown agent type: {agent_type}")
             return None
 
         agent = self.agents[agent_type]
+
+        # Determine optimal model using personality manager
+        target_model = "opencode/big-pickle"  # fallback
+        if self.personality_manager and personality_manager_available:
+            # Get model from personality manager (with override support)
+            target_model = self.personality_manager.get_optimal_model(
+                agent_type.name, prompt, model
+            )
+            logger.info(
+                f"🧠 Personality-selected model for {agent.name}: {target_model}"
+            )
+        else:
+            # Fallback to manual override or default
+            target_model = model or "opencode/big-pickle"
+            logger.info(f"🔄 Using model override for {agent.name}: {target_model}")
 
         # Start agent if not running
         if agent.status == AgentStatus.STOPPED:
@@ -399,20 +421,69 @@ class AgentOrchestrator:
             agent.status = AgentStatus.BUSY
             agent.last_activity = datetime.now()
 
-            # Send message to agent session
-            response = self._send_agent_message(agent, prompt, timeout)
-
-            if response:
-                self.stats["total_messages_sent"] += 1
-                logger.info(f"📞 Agent {agent.name} responded ({len(response)} chars)")
-                self._record_agent_event(
-                    agent_type, "agent_called", f"Agent {agent.name} handled request"
+            # Get prompt prefix from personality manager
+            if self.personality_manager and personality_manager_available:
+                prompt_prefix = self.personality_manager.get_agent_prompt_prefix(
+                    agent_type.name
                 )
+                full_prompt = f"{prompt_prefix}\n\n{prompt}"
             else:
-                logger.warning(f"⚠️ Agent {agent.name} did not respond")
+                # Fallback to hardcoded prefixes
+                if agent.agent_type == AgentType.SENTINEL:
+                    full_prompt = (
+                        f"@sentinel\n\nYou are Sentinel monitoring agent. {prompt}"
+                    )
+                elif agent.agent_type == AgentType.RESEARCHER:
+                    full_prompt = f"@researcher\n\nYou are Researcher investigation agent. {prompt}"
+                elif agent.agent_type == AgentType.ARCHITECT:
+                    full_prompt = (
+                        f"@architect\n\nYou are Architect design agent. {prompt}"
+                    )
+                elif agent.agent_type == AgentType.SKEPTIC:
+                    full_prompt = (
+                        f"@skeptic\n\nYou are Skeptic critical analysis agent. {prompt}"
+                    )
+                elif agent.agent_type == AgentType.CREATIVE:
+                    full_prompt = (
+                        f"@creative\n\nYou are Creative innovation agent. {prompt}"
+                    )
+                elif agent.agent_type == AgentType.CEO:
+                    full_prompt = (
+                        f"@general\n\nYou are CEO decision-making agent. {prompt}"
+                    )
+                else:
+                    full_prompt = prompt
 
-            agent.status = AgentStatus.RUNNING
-            return response
+            # Parse model string for API
+            provider, model_id = "opencode", "big-pickle"
+            if "/" in target_model:
+                provider, model_id = target_model.split("/", 1)
+            else:
+                provider, model_id = "opencode", target_model
+
+            message_data = {
+                "model": {"providerID": provider, "modelID": model_id},
+                "parts": [{"type": "text", "text": full_prompt}],
+            }
+
+            response = requests.post(
+                f"{self.server_url}/session/{agent.session_id}/message",
+                json=message_data,
+                timeout=timeout,
+            )
+
+            if response.status_code == 200:
+                parts = response.json().get("parts", [])
+                result = ""
+                for part in parts:
+                    if part.get("type") == "text":
+                        result += part.get("text", "")
+                return result.strip() if result else None
+            else:
+                logger.error(
+                    f"Failed to send message to {agent.name}: {response.status_code}"
+                )
+                return None
 
         except Exception as e:
             agent.status = AgentStatus.ERROR
@@ -420,39 +491,6 @@ class AgentOrchestrator:
             logger.error(f"❌ Exception calling agent {agent.name}: {e}")
             self.stats["errors_handled"] += 1
             return None
-
-    def get_agent_status(self) -> Dict[str, Any]:
-        """Get current status of all agents."""
-        status = {
-            "orchestrator": {
-                "running": self.running,
-                "uptime_seconds": (datetime.now() - self.start_time).total_seconds()
-                if hasattr(self, "start_time") and self.start_time
-                else 0,
-                "stats": self.stats.copy(),
-            },
-            "agents": {},
-        }
-
-        for agent_type, agent in self.agents.items():
-            status["agents"][agent_type.value] = {
-                "name": agent.name,
-                "description": agent.description,
-                "icon": agent.icon,
-                "status": agent.status.value,
-                "priority": agent.priority,
-                "session_id": agent.session_id,
-                "last_activity": agent.last_activity.isoformat()
-                if agent.last_activity
-                else None,
-                "start_time": agent.start_time.isoformat()
-                if agent.start_time
-                else None,
-                "error_count": agent.error_count,
-                "auto_start": agent.auto_start,
-            }
-
-        return status
 
     def _create_agent_session(self, agent: AgentDefinition) -> Optional[Dict[str, Any]]:
         """Create OpenCode session for an agent."""
@@ -623,7 +661,7 @@ class AgentOrchestrator:
                         self._notify_ceo_of_inbox(inbox_items)
 
     def _record_orchestrator_event(
-        self, event_type: str, summary: str, data: Dict[str, Any] = None
+        self, event_type: str, summary: str, data: Optional[Dict[str, Any]] = None
     ):
         """Record orchestrator events to database."""
         try:
@@ -658,7 +696,7 @@ class AgentOrchestrator:
         agent_type: AgentType,
         event_type: str,
         summary: str,
-        data: Dict[str, Any] = None,
+        data: Optional[Dict[str, Any]] = None,
     ):
         """Record agent-specific events to database."""
         try:
@@ -748,6 +786,42 @@ Priority: CRITICAL - System stability issues require executive decisions.
 
         except Exception as e:
             logger.error(f"❌ Failed to notify CEO of inbox items: {e}")
+
+    def get_agent_status(self):
+        """Get current status of all agents."""
+        agent_statuses = {}
+        for agent_type, agent in self.agents.items():
+            agent_statuses[agent_type.value] = {
+                "name": agent.name,
+                "status": agent.status.value,
+                "icon": agent.icon,
+                "session_id": agent.session_id,
+                "error_count": agent.error_count,
+                "last_activity": agent.last_activity.isoformat()
+                if agent.last_activity
+                else None,
+                "start_time": agent.start_time.isoformat()
+                if agent.start_time
+                else None,
+                "priority": agent.priority,
+                "auto_start": agent.auto_start,
+                "description": agent.description,
+            }
+
+        # Calculate uptime if orchestrator is running
+        uptime_seconds = 0
+        if self.running and self.start_time:
+            uptime_seconds = (datetime.now() - self.start_time).total_seconds()
+
+        return {
+            "orchestrator": {
+                "running": self.running,
+                "start_time": self.start_time.isoformat() if self.start_time else None,
+                "uptime_seconds": int(uptime_seconds),
+            },
+            "agents": agent_statuses,
+            "stats": self.stats.copy(),
+        }
 
 
 def main():

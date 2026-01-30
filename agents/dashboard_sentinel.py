@@ -505,7 +505,7 @@ Respond with JSON format:
         return actions_taken
 
     def record_to_event_chronicle(
-        self, event_type: str, status: str, summary: str, data: Dict[str, Any] = None
+        self, event_type: str, status: str, summary: str, data: Optional[Dict[str, Any]] = None
     ):
         """Record event to event_chronicle table for dashboard visibility.
 
