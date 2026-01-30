@@ -10,12 +10,21 @@ Provides endpoints for:
 import logging
 from typing import Optional
 from fastapi import APIRouter, Query
+from pydantic import BaseModel
 import requests
 import sqlite3
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/semantic", tags=["semantic"])
+
+
+class SemanticSearchRequest(BaseModel):
+    """Request model for semantic search."""
+    query: str
+    top_k: int = 5
+    source_type: Optional[str] = None
+    min_similarity: float = 0.0
+router = APIRouter(prefix="/api/v1/semantic", tags=["semantic"])
 
 BASE_DIR = Path.home() / ".opencode" / "emergent-learning"
 DB_PATH = BASE_DIR / "memory" / "index.db"
@@ -43,21 +52,17 @@ async def semantic_stats():
 
 
 @router.post("/search")
-async def semantic_search(
-    query: str, top_k: int = 5, source_type: Optional[str] = None
-):
+async def semantic_search(request: SemanticSearchRequest):
     """
     Perform semantic search across indexed files.
 
     Args:
-        query: Search query text
-        top_k: Number of results to return (default: 5)
-        source_type: Optional filter by file type (python, bash, etc.)
+        request: SemanticSearchRequest with query, top_k, and optional source_type
     """
     try:
-        payload = {"query": query, "top_k": top_k}
-        if source_type:
-            payload["source_type"] = source_type
+        payload = {"query": request.query, "top_k": request.top_k, "min_similarity": request.min_similarity}
+        if request.source_type:
+            payload["source_type"] = request.source_type
 
         response = requests.post(f"{SEMANTIC_API}/search", json=payload, timeout=30)
 

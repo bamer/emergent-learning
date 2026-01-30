@@ -304,6 +304,7 @@ def semantic_search():
         query = data["query"]
         top_k = data.get("top_k", DEFAULT_TOP_K)
         source_type = data.get("source_type")  # Optional filter
+        min_similarity = data.get("min_similarity", 0.0)  # Optional threshold
 
         if not query.strip():
             return jsonify({"error": "Empty query"}), 400
@@ -362,6 +363,11 @@ def semantic_search():
 
         # Sort by similarity and take top_k
         results.sort(key=lambda x: x["similarity"], reverse=True)
+        
+        # Filter by minimum similarity threshold
+        if min_similarity > 0:
+            results = [r for r in results if r["similarity"] >= min_similarity]
+        
         top_results = results[:top_k]
 
         return jsonify(
@@ -370,6 +376,7 @@ def semantic_search():
                 "results": top_results,
                 "total_matches": len(results),
                 "returned": len(top_results),
+                "min_similarity_applied": min_similarity,
             }
         )
 

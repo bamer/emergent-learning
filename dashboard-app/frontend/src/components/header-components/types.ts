@@ -10,7 +10,7 @@ export interface CeoItem {
   path: string
 }
 
-export type TabId = 'overview' | 'heuristics' | 'runs' | 'timeline' | 'query' | 'analytics' | 'graph' | 'sessions' | 'assumptions' | 'spikes' | 'invariants' | 'fraud'
+export type TabId = 'overview' | 'heuristics' | 'runs' | 'timeline' | 'query' | 'analytics' | 'graph' | 'sessions' | 'assumptions' | 'spikes' | 'invariants' | 'fraud' | 'semantic'
 
 export type TabGroup = 'knowledge' | 'research' | 'operations' | 'analysis'
 
@@ -66,6 +66,7 @@ export const tabs: TabConfig[] = [
   // Analysis group - insights & queries
   { id: 'analytics', label: 'Analytics', icon: TrendingUp, group: 'analysis' },
   { id: 'query', label: 'Query', icon: Search, group: 'analysis' },
+  { id: 'semantic', label: 'Semantic', icon: Brain, group: 'analysis' },
   { id: 'fraud', label: 'Fraud', icon: Shield, group: 'analysis' },
 ]
 
