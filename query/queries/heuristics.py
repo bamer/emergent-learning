@@ -167,22 +167,13 @@ class HeuristicQueryMixin(BaseQueryMixin):
                 m = get_manager()
                 async with m:
                     async with m.connection():
-                        # Include global heuristics (project_path IS NULL) and location-specific ones
-                        if current_loc:
-                            heuristics_query = (Heuristic
-                                .select()
-                                .where(
-                                    (Heuristic.domain == domain) &
-                                    ((Heuristic.project_path.is_null()) | (Heuristic.project_path == current_loc))
-                                )
-                                .order_by(Heuristic.confidence.desc(), Heuristic.times_validated.desc())
-                                .limit(limit))
-                        else:
-                            heuristics_query = (Heuristic
-                                .select()
-                                .where(Heuristic.domain == domain)
-                                .order_by(Heuristic.confidence.desc(), Heuristic.times_validated.desc())
-                                .limit(limit))
+                        # Query heuristics by domain
+                        # Note: project_path column not yet implemented in schema
+                        heuristics_query = (Heuristic
+                            .select()
+                            .where(Heuristic.domain == domain)
+                            .order_by(Heuristic.confidence.desc(), Heuristic.times_validated.desc())
+                            .limit(limit))
                         heuristics = []
                         async for h in heuristics_query:
                             heuristics.append(h.__data__.copy())

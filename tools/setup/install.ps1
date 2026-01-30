@@ -1,0 +1,1089 @@
+# Emergent Learning Framework - Windows Installer
+# Run with: PowerShell -ExecutionPolicy Bypass -File install.ps1 [options]
+
+param(
+    [switch]$CoreOnly,
+    [switch]$NoDashboard,
+    [switch]$NoSwarm,
+    [switch]$All,
+    [switch]$Help
+)
+
+$ErrorActionPreference = "Stop"
+
+# Helper function: Copy only if source and destination are different paths
+# Fixes issue #12 where cloning directly to target directory causes Copy-Item to fail
+function Copy-IfDifferent {
+    param(
+        [string]$Source,
+        [string]$Destination,
+        [switch]$Recurse
+    )
+
+    # Check if source exists
+    if (-not (Test-Path $Source)) {
+        return $false
+    }
+
+    # Resolve source to absolute path
+    $resolvedSrc = (Resolve-Path $Source).Path
+
+    # For destination, we need to handle both existing and non-existing paths
+    # If destination is a directory and source is a file, append the filename
+    if ((Test-Path $Destination) -and (Test-Path $Destination -PathType Container) -and (Test-Path $Source -PathType Leaf)) {
+        $resolvedDst = Join-Path (Resolve-Path $Destination).Path (Split-Path $Source -Leaf)
+    }
+    elseif (Test-Path $Destination) {
+        $resolvedDst = (Resolve-Path $Destination).Path
+    }
+    else {
+        # Destination doesn't exist - normalize the path
+        $resolvedDst = [System.IO.Path]::GetFullPath($Destination)
+    }
+
+    # Normalize paths for comparison (handle trailing slashes, case-insensitivity on Windows)
+    $normalizedSrc = $resolvedSrc.TrimEnd('\', '/').ToLower()
+    $normalizedDst = $resolvedDst.TrimEnd('\', '/').ToLower()
+
+    if ($normalizedSrc -eq $normalizedDst) {
+        # Source and destination are the same - skip copy
+        return $false
+    }
+
+    if ($Recurse) {
+        Copy-Item -Path $Source -Destination $Destination -Recurse -Force
+    }
+    else {
+        Copy-Item -Path $Source -Destination $Destination -Force
+    }
+    return $true
+}
+
+# Helper to check if we're running from the target directory (in-place install)
+function Test-InPlaceInstall {
+    param(
+        [string]$ScriptDir,
+        [string]$TargetDir
+    )
+
+    $normalizedScript = $ScriptDir.TrimEnd('\', '/').ToLower()
+    $normalizedTarget = $TargetDir.TrimEnd('\', '/').ToLower()
+
+    return $normalizedScript -eq $normalizedTarget
+}
+
+# Helper function: Run native commands silently, only report actual failures
+function Invoke-NativeCommand {
+    param(
+        [string]$Command,
+        [string[]]$Arguments,
+        [string]$SuccessMessage,
+        [switch]$ContinueOnError
+    )
+
+    $oldPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+
+    try {
+        $argList = @()
+        if ($Arguments) {
+            $argList = $Arguments
+        }
+
+        # Run command and capture all output
+        $exitCode = 0
+        try {
+            # Execute and pipe to null to avoid return value, but capture exit code
+            & $Command @argList 2>&1 | Out-Null
+            $exitCode = $LASTEXITCODE
+        }
+        catch {
+            $exitCode = 1
+        }
+
+        if ($exitCode -eq 0) {
+            if ($SuccessMessage) {
+                Write-Host "  $SuccessMessage" -ForegroundColor Green
+            }
+        }
+        else {
+            if ($ContinueOnError) {
+                Write-Host "  Warning: $Command had issues (exit code $exitCode)" -ForegroundColor Yellow
+            }
+            else {
+                throw "Command failed with exit code $exitCode"
+            }
+        }
+    }
+    finally {
+        $ErrorActionPreference = $oldPreference
+    }
+}
+
+function Test-DbHasUserData {
+    param(
+        [string]$DbPath,
+        [string]$PythonCmd
+    )
+
+    if (-not (Test-Path $DbPath)) {
+        return $false
+    }
+    if (-not $PythonCmd) {
+        return $true
+    }
+
+    $checkScript = @'
+import sqlite3
+import sys
+
+db_path = sys.argv[1]
+try:
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT name FROM sqlite_master "
+        "WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+    )
+    tables = [row[0] for row in cursor.fetchall()]
+    if not tables:
+        print("0")
+        sys.exit(0)
+    skip_tables = {"schema_version", "db_operations"}
+    for table in tables:
+        if table in skip_tables:
+            continue
+        cursor.execute(f"SELECT 1 FROM {table} LIMIT 1")
+        if cursor.fetchone():
+            print("1")
+            sys.exit(0)
+    print("0")
+except Exception:
+    print("1")
+finally:
+    try:
+        conn.close()
+    except Exception:
+        pass
+'@
+
+    try {
+        $result = $checkScript | & $PythonCmd - $DbPath 2>$null
+        return $result.Trim() -eq "1"
+    }
+    catch {
+        return $true
+    }
+}
+
+function Invoke-LegacyMigration {
+    param(
+        [string]$LegacyDir,
+        [string]$TargetDir,
+        [string]$PythonCmd
+    )
+
+    if (-not (Test-Path $LegacyDir)) {
+        return
+    }
+
+    $normalizedLegacy = [System.IO.Path]::GetFullPath($LegacyDir).TrimEnd('\', '/').ToLower()
+    $normalizedTarget = [System.IO.Path]::GetFullPath($TargetDir).TrimEnd('\', '/').ToLower()
+    if ($normalizedLegacy -eq $normalizedTarget) {
+        return
+    }
+
+    $legacyDb = Join-Path $LegacyDir "memory\index.db"
+    if (-not (Test-Path $legacyDb)) {
+        return
+    }
+
+    $targetDb = Join-Path $TargetDir "memory\index.db"
+    if (Test-DbHasUserData -DbPath $targetDb -PythonCmd $PythonCmd) {
+        return
+    }
+
+    $targetDbDir = Split-Path $targetDb -Parent
+    if (-not (Test-Path $targetDbDir)) {
+        New-Item -ItemType Directory -Path $targetDbDir -Force | Out-Null
+    }
+
+    if (Test-Path $targetDb) {
+        $backupPath = "$targetDb.pre-legacy-migration"
+        Copy-Item -Path $targetDb -Destination $backupPath -Force
+    }
+
+    Copy-Item -Path $legacyDb -Destination $targetDb -Force
+
+    $legacyGolden = Join-Path $LegacyDir "memory\golden-rules.md"
+    $targetGolden = Join-Path $TargetDir "memory\golden-rules.md"
+    if ((Test-Path $legacyGolden) -and (-not (Test-Path $targetGolden))) {
+        Copy-Item -Path $legacyGolden -Destination $targetGolden -Force
+    }
+
+    Write-Host "  Migrated legacy data to $TargetDir" -ForegroundColor Cyan
+}
+
+
+if ($Help) {
+    Write-Host "Usage: install.ps1 [OPTIONS]"
+    Write-Host ""
+    Write-Host "Options:"
+    Write-Host "  -CoreOnly      Install only core (query system, hooks, golden rules)"
+    Write-Host "  -NoDashboard   Skip dashboard installation (skips visual UI at localhost:3001)"
+    Write-Host "  -NoSwarm       Skip swarm/conductor/watcher installation"
+    Write-Host "  -All           Install everything (default)"
+    Write-Host "  -Help          Show this help"
+    Write-Host ""
+    Write-Host "Components:"
+    Write-Host "  Core:      Query system, learning hooks, golden rules, AGENTS.md"
+    Write-Host "  Dashboard: React UI for monitoring (localhost:3001)"
+    Write-Host "  Swarm:     Multi-agent conductor, watcher, agent personas"
+    exit 0
+}
+
+# Default: install all
+$InstallDashboard = -not $NoDashboard -and -not $CoreOnly
+$InstallSwarm = -not $NoSwarm -and -not $CoreOnly
+
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "  Emergent Learning Framework Installer" -ForegroundColor Cyan
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Estimated installation time: ~2 minutes" -ForegroundColor Cyan
+Write-Host ""
+
+Write-Host "Installation mode:"
+Write-Host "  Core:      " -NoNewline; Write-Host "Yes" -ForegroundColor Green
+Write-Host "  Dashboard: " -NoNewline
+if ($InstallDashboard) { Write-Host "Yes" -ForegroundColor Green } else { Write-Host "No" -ForegroundColor Yellow }
+Write-Host "  Swarm:     " -NoNewline
+if ($InstallSwarm) { Write-Host "Yes" -ForegroundColor Green } else { Write-Host "No" -ForegroundColor Yellow }
+Write-Host ""
+
+# Get paths
+$SetupDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ScriptDir = (Resolve-Path (Join-Path $SetupDir "..\..")).Path
+$ClaudeDir = Join-Path $env:USERPROFILE ".opencode"
+$EmergentLearningDir = Join-Path $ClaudeDir "emergent-learning"
+$HooksDir = Join-Path $ClaudeDir "hooks"
+$SettingsFile = Join-Path $ClaudeDir "settings.json"
+$BaseInstallDir = if ($env:ELF_BASE_PATH) { (Resolve-Path $env:ELF_BASE_PATH).Path } else { $ScriptDir }
+
+# Detect in-place installation (cloned directly to target)
+$InPlaceInstall = Test-InPlaceInstall -ScriptDir $ScriptDir -TargetDir $EmergentLearningDir
+if ($InPlaceInstall) {
+    Write-Host "  Detected: In-place installation (repo cloned to target directory)" -ForegroundColor Cyan
+    Write-Host "  Note: Skipping self-copy operations" -ForegroundColor Cyan
+    Write-Host ""
+}
+
+# Check prerequisites
+Write-Host "[Step 1/5] Checking prerequisites..." -ForegroundColor Yellow
+
+# Check Python - prefer python3 if available
+$pythonCmd = "python"
+if (Get-Command python3 -ErrorAction SilentlyContinue) {
+    $pythonCmd = "python3"
+    $pythonVersion = python3 --version 2>&1
+    Write-Host "  Python: $pythonVersion" -ForegroundColor Green
+}
+elseif (Get-Command python -ErrorAction SilentlyContinue) {
+    $pythonCmd = "python"
+    $pythonVersion = python --version 2>&1
+    Write-Host "  Python: $pythonVersion" -ForegroundColor Green
+}
+else {
+    Write-Host "  ERROR: Python not found. Please install Python 3.8+" -ForegroundColor Red
+    Write-Host "  Fix: Install Python from https://python.org" -ForegroundColor Yellow
+    Write-Host "  Then: Run this installer again" -ForegroundColor Yellow
+    exit 1
+}
+
+# Check Bun/Node (only if installing dashboard)
+$hasBun = $false
+if ($InstallDashboard) {
+    if (Get-Command bun -ErrorAction SilentlyContinue) {
+        $bunVersion = bun --version 2>&1
+        Write-Host "  Bun: $bunVersion" -ForegroundColor Green
+        $hasBun = $true
+    }
+    elseif (Get-Command node -ErrorAction SilentlyContinue) {
+        $nodeVersion = node --version 2>&1
+        Write-Host "  Node: $nodeVersion" -ForegroundColor Green
+    }
+    else {
+        # Auto-install Bun without prompting
+        Write-Host "  Bun/Node not found - auto-installing Bun..." -ForegroundColor Cyan
+        try {
+            # Download and run Bun installer (suppress noisy output)
+            $ProgressPreference = 'SilentlyContinue'
+            $ErrorActionPreference = 'SilentlyContinue'
+            Invoke-RestMethod bun.sh/install.ps1 | Invoke-Expression 2>&1 | Out-Null
+            $ErrorActionPreference = 'Stop'
+            
+            # Refresh PATH for current session
+            $env:BUN_INSTALL = "$env:USERPROFILE\.bun"
+            $env:PATH = "$env:BUN_INSTALL\bin;$env:PATH"
+            
+            # Verify installation
+            if (Get-Command bun -ErrorAction SilentlyContinue) {
+                $bunVersion = bun --version 2>&1
+                Write-Host "  Bun: $bunVersion (auto-installed)" -ForegroundColor Green
+                $hasBun = $true
+            }
+            else {
+                Write-Host "  Bun installed - restart PowerShell and run again to continue" -ForegroundColor Yellow
+                exit 0
+            }
+        }
+        catch {
+            Write-Host "  Could not auto-install Bun, skipping dashboard..." -ForegroundColor Yellow
+            $script:InstallDashboard = $false
+        }
+    }
+}
+Write-Host "[OK] Prerequisites met" -ForegroundColor Green
+Write-Host ""
+
+# Migrate legacy data if running from a repo-based install
+$migrationBaseDir = $BaseInstallDir
+Invoke-LegacyMigration -LegacyDir $EmergentLearningDir -TargetDir $migrationBaseDir -PythonCmd $pythonCmd
+
+Write-Host "[Step 2/5] Creating directory structure..." -ForegroundColor Yellow
+
+# Create directories
+$MemoryDir = Join-Path $EmergentLearningDir "memory"
+$directories = @(
+    $ClaudeDir,
+    $EmergentLearningDir,
+    $MemoryDir,
+    (Join-Path $MemoryDir "failures"),
+    (Join-Path $MemoryDir "successes"),
+    (Join-Path $EmergentLearningDir "query"),
+    (Join-Path $EmergentLearningDir "ceo-inbox"),
+    $HooksDir,
+    (Join-Path $HooksDir "learning-loop")
+)
+
+if ($InstallSwarm) {
+    $AgentsDir = Join-Path $EmergentLearningDir "agents"
+    $directories += @(
+        $AgentsDir,
+        (Join-Path $AgentsDir "researcher"),
+        (Join-Path $AgentsDir "architect"),
+        (Join-Path $AgentsDir "skeptic"),
+        (Join-Path $AgentsDir "creative"),
+        (Join-Path $EmergentLearningDir "conductor"),
+        (Join-Path $EmergentLearningDir "watcher")
+    )
+}
+
+foreach ($dir in $directories) {
+    if (-not (Test-Path $dir)) {
+        New-Item -ItemType Directory -Path $dir -Force | Out-Null
+    }
+}
+Write-Host "  Created directory structure (7 directories for core)" -ForegroundColor Green
+
+$coordinationBases = @($BaseInstallDir, $EmergentLearningDir) | Select-Object -Unique
+foreach ($base in $coordinationBases) {
+    $coordinationDir = Join-Path $base ".coordination"
+    if (-not (Test-Path $coordinationDir)) {
+        New-Item -ItemType Directory -Path $coordinationDir -Force | Out-Null
+    }
+}
+
+# === CORE INSTALLATION ===
+Write-Host ""
+Write-Host "[Step 3/5] Installing core components..." -ForegroundColor Yellow
+
+$srcDir = $ScriptDir
+$srcQueryDir = Join-Path $srcDir "src\query"
+$srcTemplatesDir = Join-Path $srcDir "templates"
+$dstQueryDir = Join-Path $EmergentLearningDir "query"
+
+# Copy core files (using safe copy that skips if src=dst)
+# Copy all query Python files (query.py, models.py, exceptions.py, utils.py, validators.py, etc.)
+Get-ChildItem -Path $srcQueryDir -Filter "*.py" -ErrorAction SilentlyContinue | ForEach-Object {
+    Copy-IfDifferent -Source $_.FullName -Destination $dstQueryDir | Out-Null
+}
+# Copy queries subdirectory with query mixins
+$srcQueriesSubdir = Join-Path $srcQueryDir "queries"
+$dstQueriesSubdir = Join-Path $dstQueryDir "queries"
+if (Test-Path $srcQueriesSubdir) {
+    New-Item -ItemType Directory -Path $dstQueriesSubdir -Force | Out-Null
+    Get-ChildItem -Path $srcQueriesSubdir -Filter "*.py" -ErrorAction SilentlyContinue | ForEach-Object {
+        Copy-IfDifferent -Source $_.FullName -Destination $dstQueriesSubdir | Out-Null
+    }
+}
+Copy-IfDifferent -Source (Join-Path $srcTemplatesDir "golden-rules.md") -Destination (Join-Path $MemoryDir "golden-rules.md") | Out-Null
+Copy-IfDifferent -Source (Join-Path $srcTemplatesDir "init_db.sql") -Destination (Join-Path $MemoryDir "init_db.sql") | Out-Null
+Write-Host "  Copied query system" -ForegroundColor Green
+
+# Copy elf_paths.py for modules that import it directly
+$elfPathsSrc = Join-Path $srcDir "src\elf_paths.py"
+if (Test-Path $elfPathsSrc) {
+    Copy-IfDifferent -Source $elfPathsSrc -Destination (Join-Path $EmergentLearningDir "elf_paths.py") | Out-Null
+}
+
+# Create Python virtual environment for ELF
+$venvDir = Join-Path $EmergentLearningDir ".venv"
+$venvPython = $null
+$venvPythonPath = Join-Path $venvDir "Scripts\python.exe"
+$needCreate = $false
+
+# Check if existing venv is valid
+if (-not (Test-Path $venvDir)) {
+    $needCreate = $true
+}
+elseif (-not (Test-Path $venvPythonPath)) {
+    Write-Host "  Existing venv appears broken, recreating..." -ForegroundColor Yellow
+    Remove-Item -Path $venvDir -Recurse -Force -ErrorAction SilentlyContinue
+    $needCreate = $true
+}
+else {
+    # Test if venv python actually works
+    & $venvPythonPath -c "import sys; sys.exit(0)" 2>&1 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  Existing venv Python not working, recreating..." -ForegroundColor Yellow
+        Remove-Item -Path $venvDir -Recurse -Force -ErrorAction SilentlyContinue
+        $needCreate = $true
+    }
+}
+
+if ($needCreate) {
+    Write-Host "  Creating Python virtual environment..." -ForegroundColor Yellow
+    $venvOutput = & $pythonCmd -m venv $venvDir 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "  Warning: Failed to create venv (exit code $LASTEXITCODE)" -ForegroundColor Yellow
+        if ($venvOutput -match "ensurepip") {
+            Write-Host "  Hint: venv module may be missing. Try reinstalling Python with pip." -ForegroundColor Yellow
+        }
+        elseif ($venvOutput -match "access|permission") {
+            Write-Host "  Hint: Permission denied. Check write access to $EmergentLearningDir" -ForegroundColor Yellow
+        }
+        else {
+            Write-Host "  Error: $venvOutput" -ForegroundColor Yellow
+        }
+        Write-Host "  Falling back to system Python." -ForegroundColor Yellow
+    }
+    else {
+        Write-Host "  Virtual environment created" -ForegroundColor Green
+    }
+}
+
+# Determine venv python path and verify it works
+if (Test-Path $venvPythonPath) {
+    $venvPython = $venvPythonPath
+    $venvPipCmd = Join-Path $venvDir "Scripts\pip.exe"
+    Write-Host "  Using venv Python: $venvPython" -ForegroundColor Green
+}
+else {
+    $venvPipCmd = if ($pythonCmd -eq "python3") { "pip3" } else { "pip" }
+    Write-Host "  Using system Python (venv not available)" -ForegroundColor Yellow
+}
+
+# Install core Python dependencies into venv
+$requirementsFile = Join-Path $srcDir "requirements.txt"
+# Define pipCmd for fallback cases (also used later for dashboard backend)
+$pipCmd = if ($pythonCmd -eq "python3") { "pip3" } else { "pip" }
+
+if (Test-Path $venvPythonPath) {
+    # Use venv pip
+    if (Test-Path $requirementsFile) {
+        Invoke-NativeCommand -Command $venvPython -Arguments @("-m", "pip", "install", "-q", "--upgrade", "pip") -SuccessMessage "Upgraded pip in venv" -ContinueOnError
+        Invoke-NativeCommand -Command $venvPipCmd -Arguments @("install", "-q", "-r", $requirementsFile) -SuccessMessage "Installed Python dependencies in venv (from requirements.txt)" -ContinueOnError
+    }
+    else {
+        Invoke-NativeCommand -Command $venvPipCmd -Arguments @("install", "-q", "peewee-aio[aiosqlite]", "aiofiles") -SuccessMessage "Installed Python dependencies in venv (peewee-aio)" -ContinueOnError
+    }
+
+    # Verify peewee-aio is available in venv
+    $verifyResult = & $venvPython -c "import peewee_aio; print('ok')" 2>&1
+    if ($verifyResult -ne "ok") {
+        Write-Host "  Installing peewee-aio in venv (required dependency)..." -ForegroundColor Yellow
+        Invoke-NativeCommand -Command $venvPipCmd -Arguments @("install", "-q", "peewee-aio[aiosqlite]", "aiofiles") -SuccessMessage "Installed peewee-aio in venv" -ContinueOnError
+
+        # Final check
+        $finalCheck = & $venvPython -c "import peewee_aio; print('ok')" 2>&1
+        if ($finalCheck -ne "ok") {
+            Write-Host "  Warning: Core dependency peewee_aio not available." -ForegroundColor Yellow
+            Write-Host "  Try: $venvPython -m pip install peewee-aio[aiosqlite]" -ForegroundColor Yellow
+        }
+    }
+    Write-Host "  Virtual environment ready" -ForegroundColor Green
+}
+else {
+    # Fallback to system pip
+    $pipCmd = if ($pythonCmd -eq "python3") { "pip3" } else { "pip" }
+    if (Test-Path $requirementsFile) {
+        Invoke-NativeCommand -Command $pipCmd -Arguments @("install", "-q", "-r", $requirementsFile) -SuccessMessage "Installed Python dependencies (from requirements.txt)" -ContinueOnError
+    }
+    else {
+        Invoke-NativeCommand -Command $pipCmd -Arguments @("install", "-q", "peewee-aio[aiosqlite]", "aiofiles") -SuccessMessage "Installed Python dependencies (peewee-aio)" -ContinueOnError
+    }
+
+    # Verify peewee-aio is available (critical for query system)
+    $verifyResult = & $pythonCmd -c "import peewee_aio; print('ok')" 2>&1
+    if ($verifyResult -ne "ok") {
+        Write-Host "  Installing peewee-aio (required dependency)..." -ForegroundColor Yellow
+        Invoke-NativeCommand -Command $pipCmd -Arguments @("install", "-q", "peewee-aio[aiosqlite]", "aiofiles") -SuccessMessage "Installed peewee-aio" -ContinueOnError
+    }
+}
+
+# Copy hooks to emergent-learning directory (skip if in-place install)
+if (-not $InPlaceInstall) {
+    $srcHooksDir = Join-Path $ScriptDir "src\hooks"
+    $srcHooksDir = Join-Path $ScriptDir "src\hooks"
+    if (Test-Path $srcHooksDir) {
+        Copy-Item -Path $srcHooksDir -Destination $EmergentLearningDir -Recurse -Force
+    }
+    Write-Host "  Copied learning hooks to emergent-learning" -ForegroundColor Green
+}
+else {
+    Write-Host "  Hooks already in place (in-place install)" -ForegroundColor Green
+}
+
+
+# Copy scripts (using safe copy)
+$scriptsDst = Join-Path $EmergentLearningDir "scripts"
+New-Item -ItemType Directory -Path $scriptsDst -Force | Out-Null
+$scriptsSource = Join-Path $ScriptDir "tools\scripts"
+if (Test-Path $scriptsSource) {
+    # Copy shell scripts
+    Get-ChildItem -Path $scriptsSource -Filter "*.sh" -ErrorAction SilentlyContinue | ForEach-Object {
+        Copy-IfDifferent -Source $_.FullName -Destination $scriptsDst | Out-Null
+    }
+    # Copy Python scripts (includes check-invariants.py and others)
+    Get-ChildItem -Path $scriptsSource -Filter "*.py" -ErrorAction SilentlyContinue | ForEach-Object {
+        Copy-IfDifferent -Source $_.FullName -Destination $scriptsDst | Out-Null
+    }
+}
+Write-Host "  Copied recording scripts (shell and Python)" -ForegroundColor Green
+
+# Copy all slash commands (/checkin, /search, /swarm, etc.)
+$commandsDir = Join-Path $ClaudeDir "commands"
+New-Item -ItemType Directory -Path $commandsDir -Force | Out-Null
+$srcCommandsDir = Join-Path $ScriptDir "library\commands"
+if (Test-Path $srcCommandsDir) {
+    Get-ChildItem -Path $srcCommandsDir -Filter "*.md" -ErrorAction SilentlyContinue | ForEach-Object {
+        Copy-Item -Path $_.FullName -Destination $commandsDir -Force
+    }
+    Get-ChildItem -Path $srcCommandsDir -Filter "*.py" -ErrorAction SilentlyContinue | ForEach-Object {
+        Copy-Item -Path $_.FullName -Destination $commandsDir -Force
+    }
+}
+Write-Host "  Copied slash commands (/checkin, /search, /swarm)" -ForegroundColor Green
+
+# Initialize database
+# Initialize database
+$dbPath = Join-Path $MemoryDir "index.db"
+
+if (-not (Test-Path $dbPath)) {
+    # Initialize database using Python (most reliable cross-platform)
+    $queryScript = Join-Path $dstQueryDir "query.py"
+    if (Test-Path $queryScript) {
+        # Use venv Python if available, otherwise system Python
+        $pythonToUse = if ($venvPython) { $venvPython } else { $pythonCmd }
+        & $pythonToUse $queryScript --validate 2>&1 | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  Initialized database" -ForegroundColor Green
+        }
+        else {
+            Write-Host "  Database initialization skipped (will init on first use)" -ForegroundColor Yellow
+        }
+    }
+    else {
+        Write-Host "  Database will be initialized on first use" -ForegroundColor Yellow
+    }
+}
+else {
+    Write-Host "  Database already exists" -ForegroundColor Green
+}
+
+# Seed golden rules into database
+$seedScript = Join-Path $scriptsDst "seed_golden_rules.py"
+if (-not (Test-Path $seedScript)) {
+    $seedScript = Join-Path $ScriptDir "..\..\scripts\seed_golden_rules.py"
+}
+$goldenRulesMd = Join-Path $MemoryDir "golden-rules.md"
+
+if ((Test-Path $seedScript) -and (Test-Path $goldenRulesMd)) {
+    $pythonToUse = if ($venvPython) { $venvPython } else { $pythonCmd }
+    Write-Host "  Seeding golden rules into database..." -ForegroundColor Yellow
+    $seedOutput = & $pythonToUse $seedScript 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        # Extract the result line
+        $resultLine = $seedOutput | Where-Object { $_ -match "After:|Inserted:" } | Select-Object -Last 1
+        if ($resultLine) {
+            Write-Host "  $resultLine" -ForegroundColor Green
+        } else {
+            Write-Host "  Golden rules seeded" -ForegroundColor Green
+        }
+    }
+    else {
+        Write-Host "  Warning: Golden rules seeding had issues" -ForegroundColor Yellow
+    }
+}
+else {
+    Write-Host "  Warning: Could not seed golden rules (script or template not found)" -ForegroundColor Yellow
+}
+
+# === SWARM INSTALLATION ===
+if ($InstallSwarm) {
+    Write-Host ""
+    Write-Host "[Installing] Swarm components..." -ForegroundColor Yellow
+
+    # Copy conductor (using safe copy)
+    $conductorSrc = Join-Path $srcDir "src\conductor"
+    $conductorDst = Join-Path $EmergentLearningDir "conductor"
+    Get-ChildItem -Path $conductorSrc -Filter "*.py" | ForEach-Object {
+        Copy-IfDifferent -Source $_.FullName -Destination $conductorDst | Out-Null
+    }
+    Get-ChildItem -Path $conductorSrc -Filter "*.sql" -ErrorAction SilentlyContinue | ForEach-Object {
+        Copy-IfDifferent -Source $_.FullName -Destination $conductorDst | Out-Null
+    }
+    Write-Host "  Copied conductor module" -ForegroundColor Green
+
+    # Copy watcher module (using safe copy)
+    $watcherSrc = Join-Path $srcDir "src\watcher"
+    $watcherDst = Join-Path $EmergentLearningDir "watcher"
+    Get-ChildItem -Path $watcherSrc -Filter "*.py" | ForEach-Object {
+        Copy-IfDifferent -Source $_.FullName -Destination $watcherDst | Out-Null
+    }
+    Get-ChildItem -Path $watcherSrc -Filter "*.md" -ErrorAction SilentlyContinue | ForEach-Object {
+        Copy-IfDifferent -Source $_.FullName -Destination $watcherDst | Out-Null
+    }
+    Write-Host "  Copied watcher module" -ForegroundColor Green
+
+    # Copy agent personas (using safe copy)
+    $srcAgentsDir = Join-Path $srcDir "src\agents"
+    $dstAgentsDir = Join-Path $EmergentLearningDir "agents"
+    $agents = @("researcher", "architect", "skeptic", "creative")
+    foreach ($agent in $agents) {
+        $agentSrc = Join-Path $srcAgentsDir $agent
+        $agentDst = Join-Path $dstAgentsDir $agent
+        if (Test-Path $agentSrc) {
+            Get-ChildItem -Path $agentSrc | ForEach-Object {
+                Copy-IfDifferent -Source $_.FullName -Destination $agentDst | Out-Null
+            }
+        }
+    }
+    Write-Host "  Copied agent personas" -ForegroundColor Green
+
+    # Copy agent coordination plugin (goes to different location, always safe)
+    $claudePluginsDir = Join-Path $ClaudeDir "plugins"
+    $pluginsDir = Join-Path $claudePluginsDir "agent-coordination"
+    $pluginsUtilsDir = Join-Path $pluginsDir "utils"
+    $pluginsHooksDir = Join-Path $pluginsDir "hooks"
+    New-Item -ItemType Directory -Path $pluginsUtilsDir -Force | Out-Null
+    New-Item -ItemType Directory -Path $pluginsHooksDir -Force | Out-Null
+
+    $srcPluginsDir = Join-Path $ScriptDir "library\plugins"
+    $pluginSrc = Join-Path $srcPluginsDir "agent-coordination"
+    $pluginSrcUtils = Join-Path $pluginSrc "utils"
+    $pluginSrcHooks = Join-Path $pluginSrc "hooks"
+    if (Test-Path $pluginSrc) {
+        Get-ChildItem -Path $pluginSrcUtils -Filter "*.py" -ErrorAction SilentlyContinue | ForEach-Object {
+            Copy-Item -Path $_.FullName -Destination $pluginsUtilsDir -Force
+        }
+        Get-ChildItem -Path $pluginSrcHooks -Filter "*.py" -ErrorAction SilentlyContinue | ForEach-Object {
+            Copy-Item -Path $_.FullName -Destination $pluginsHooksDir -Force
+        }
+        Get-ChildItem -Path $pluginSrcHooks -Filter "*.json" -ErrorAction SilentlyContinue | ForEach-Object {
+            Copy-Item -Path $_.FullName -Destination $pluginsHooksDir -Force
+        }
+    }
+    Write-Host "  Copied agent coordination plugin" -ForegroundColor Green
+}
+
+# === DASHBOARD INSTALLATION ===
+if ($InstallDashboard) {
+    Write-Host ""
+    Write-Host "[Installing] Dashboard..." -ForegroundColor Yellow
+
+    $dashboardSrc = Join-Path $srcDir "apps\dashboard"
+    $dashboardDst = Join-Path $EmergentLearningDir "dashboard-app"
+
+    if (Test-Path $dashboardSrc) {
+        # For in-place install, skip the copy entirely
+        if (-not $InPlaceInstall) {
+            if (Test-Path $dashboardDst) {
+                Remove-Item -Path $dashboardDst -Recurse -Force
+            }
+            Copy-Item -Path $dashboardSrc -Destination $dashboardDst -Recurse
+            Write-Host "  Copied dashboard" -ForegroundColor Green
+        }
+        else {
+            Write-Host "  Dashboard already in place (in-place install)" -ForegroundColor Cyan
+        }
+
+        # Install frontend dependencies (only if node_modules missing)
+        $frontendDir = Join-Path $dashboardDst "frontend"
+        $nodeModulesPath = Join-Path $frontendDir "node_modules"
+        if ((Test-Path $frontendDir) -and (-not (Test-Path $nodeModulesPath))) {
+            Write-Host "  [Installing] Frontend dependencies (node_modules not found)..." -ForegroundColor Yellow
+            Set-Location $frontendDir
+            if ($hasBun) {
+                Invoke-NativeCommand -Command "bun" -Arguments @("install") -SuccessMessage "Installed frontend dependencies (bun)" -ContinueOnError
+            }
+            else {
+                Invoke-NativeCommand -Command "npm" -Arguments @("install") -SuccessMessage "Installed frontend dependencies (npm)" -ContinueOnError
+            }
+        }
+        elseif ((Test-Path $frontendDir) -and (Test-Path $nodeModulesPath)) {
+            Write-Host "  Frontend dependencies already installed" -ForegroundColor Green
+        }
+
+        # Install backend dependencies (use venv pip if available)
+        $backendDir = Join-Path $dashboardDst "backend"
+        if (Test-Path $backendDir) {
+            $backendPipCmd = if ($venvPython) { $venvPipCmd } else { $pipCmd }
+            Invoke-NativeCommand -Command $backendPipCmd -Arguments @("install", "-q", "fastapi", "uvicorn", "aiofiles", "websockets", "peewee") -SuccessMessage "Installed backend dependencies" -ContinueOnError
+        }
+
+        Set-Location $ScriptDir
+    }
+}
+
+# === CHECK CLAUDE CODE ===
+Write-Host ""
+Write-Host "[Step 4/5] Checking optional components..." -ForegroundColor Yellow
+try {
+    $claudeVersion = claude --version 2>&1
+    Write-Host "  Opencode: $claudeVersion" -ForegroundColor Green
+}
+catch {
+    Write-Host "  WARNING: Opencode not found (optional for now)" -ForegroundColor Yellow
+    Write-Host "  Note: ELF requires Opencode to work. Install from: https://claude.ai/download" -ForegroundColor Yellow
+    Write-Host "  Installation will continue, but ELF won't be functional until you install Opencode." -ForegroundColor Yellow
+}
+
+# === CONFIGURE SETTINGS.JSON ===
+Write-Host ""
+Write-Host "[Step 5/5] Configuring Opencode settings..." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "  About to modify settings.json:" -ForegroundColor Cyan
+Write-Host "  - Adding PreToolUse hook (runs before each task)"
+Write-Host "  - Adding PostToolUse hook (runs after each task)"
+Write-Host "  - Adding UserPromptSubmit hook (checkin heuristic reminder)"
+Write-Host "  - Preserving your existing hooks (if any)"
+Write-Host "  - Creating backup at settings.json.backup"
+Write-Host ""
+
+# Prefer src/ (actual files) over hooks/ (symlinks may not work reliably)
+$hookLearningLoopCandidates = @(
+    (Join-Path $BaseInstallDir "src\hooks\learning-loop"),
+    (Join-Path $BaseInstallDir "hooks\learning-loop"),
+    (Join-Path $EmergentLearningDir "src\hooks\learning-loop")
+)
+$hookLearningLoop = ($hookLearningLoopCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1)
+if (-not $hookLearningLoop) {
+    $hookLearningLoop = Join-Path $BaseInstallDir "hooks\learning-loop"
+}
+$hookMainDir = Split-Path $hookLearningLoop -Parent
+$preToolHook = Join-Path $hookLearningLoop "pre_tool_learning.py"
+$postToolHook = Join-Path $hookLearningLoop "post_tool_learning.py"
+$checkinHook = Join-Path $hookMainDir "checkin_heuristic_reminder.py"
+$checkinHookExists = Test-Path $checkinHook
+
+# Backup existing settings if present
+if (Test-Path $SettingsFile) {
+    $backupFile = Join-Path $ClaudeDir "settings.json.backup"
+    Copy-Item -Path $SettingsFile -Destination $backupFile -Force
+    Write-Host "  Backed up existing settings to settings.json.backup" -ForegroundColor Green
+}
+
+$settings = @{}
+if (Test-Path $SettingsFile) {
+    try {
+        $settings = Get-Content $SettingsFile -Raw | ConvertFrom-Json -AsHashtable
+    }
+    catch {
+        $settings = @{}
+    }
+}
+
+if (-not $settings.ContainsKey("hooks")) {
+    $settings["hooks"] = @{}
+}
+
+# Create ELF hooks - use venv python if available, otherwise system python
+$hookPythonCmd = if ($venvPython) { "`"$venvPython`"" } else { $pythonCmd }
+
+$elfPreHook = @{
+    "matcher" = "Task"
+    "hooks"   = @(
+        @{
+            "type"    = "command"
+            "command" = "$hookPythonCmd `"$preToolHook`""
+        }
+    )
+}
+
+$elfPostHook = @{
+    "matcher" = "Task"
+    "hooks"   = @(
+        @{
+            "type"    = "command"
+            "command" = "$hookPythonCmd `"$postToolHook`""
+        }
+    )
+}
+
+# Hook for file operations (trail tracking for hotspots)
+$elfFileOpsHook = @{
+    "matcher" = "Read|Edit|Write|Glob|Grep"
+    "hooks"   = @(
+        @{
+            "type"    = "command"
+            "command" = "$hookPythonCmd `"$postToolHook`""
+        }
+    )
+}
+
+# Hook for checkin commands (proactive heuristic recording reminder)
+$elfCheckinHook = $null
+if ($checkinHookExists) {
+    $elfCheckinHook = @{
+        "matcher" = ""
+        "hooks"   = @(
+            @{
+                "type"    = "command"
+                "command" = "$hookPythonCmd `"$checkinHook`""
+            }
+        )
+    }
+}
+
+# Merge with existing hooks (don't overwrite user's other hooks)
+if (-not $settings["hooks"].ContainsKey("PreToolUse")) {
+    $settings["hooks"]["PreToolUse"] = @()
+}
+if (-not $settings["hooks"].ContainsKey("PostToolUse")) {
+    $settings["hooks"]["PostToolUse"] = @()
+}
+
+# Remove any existing ELF hooks (to avoid duplicates on reinstall)
+# Remove hooks where command contains "learning-loop" or "checkin_heuristic"
+$settings["hooks"]["PreToolUse"] = @($settings["hooks"]["PreToolUse"] | Where-Object {
+        -not ($_.hooks -and ($_.hooks | Where-Object { $_.command -like "*learning-loop*" }))
+    })
+$settings["hooks"]["PostToolUse"] = @($settings["hooks"]["PostToolUse"] | Where-Object {
+        -not ($_.hooks -and ($_.hooks | Where-Object { $_.command -like "*learning-loop*" }))
+    })
+if (-not $settings["hooks"].ContainsKey("UserPromptSubmit")) {
+    $settings["hooks"]["UserPromptSubmit"] = @()
+}
+$settings["hooks"]["UserPromptSubmit"] = @($settings["hooks"]["UserPromptSubmit"] | Where-Object {
+        -not ($_.hooks -and ($_.hooks | Where-Object { $_.command -like "*checkin_heuristic*" }))
+    })
+
+# Add ELF hooks using ArrayList to avoid nested array issues
+[System.Collections.ArrayList]$preHooks = @($settings["hooks"]["PreToolUse"])
+$preHooks.Add($elfPreHook) | Out-Null
+$settings["hooks"]["PreToolUse"] = $preHooks
+
+[System.Collections.ArrayList]$postHooks = @($settings["hooks"]["PostToolUse"])
+$postHooks.Add($elfPostHook) | Out-Null
+$postHooks.Add($elfFileOpsHook) | Out-Null
+$settings["hooks"]["PostToolUse"] = $postHooks
+
+[System.Collections.ArrayList]$userPromptHooks = @($settings["hooks"]["UserPromptSubmit"])
+if ($elfCheckinHook) {
+    $userPromptHooks.Add($elfCheckinHook) | Out-Null
+}
+$settings["hooks"]["UserPromptSubmit"] = $userPromptHooks
+
+# Write without BOM (UTF8 BOM can break JSON parsers)
+$jsonContent = $settings | ConvertTo-Json -Depth 10
+[System.IO.File]::WriteAllText($SettingsFile, $jsonContent, [System.Text.UTF8Encoding]::new($false))
+Write-Host "  Configured hooks (preserved existing hooks)" -ForegroundColor Green
+
+# Validate settings.json
+try {
+    Get-Content $SettingsFile -Raw | ConvertFrom-Json | Out-Null
+    Write-Host "  [OK] settings.json validated" -ForegroundColor Green
+}
+catch {
+    Write-Host "  [ERROR] settings.json validation failed!" -ForegroundColor Red
+    Write-Host "  Fix: Restore from backup: Copy-Item $ClaudeDir\settings.json.backup $SettingsFile" -ForegroundColor Yellow
+    Write-Host "  Then: Run installer again" -ForegroundColor Yellow
+    exit 1
+}
+
+# === CLAUDE.MD SETUP (Issue #13: Interactive prompts) ===
+$claudeMdDst = Join-Path $ClaudeDir "AGENTS.md"
+$templatesDir = Join-Path $ScriptDir "templates"
+$claudeMdSrc = Join-Path $templatesDir "AGENTS.md.template"
+
+if (-not (Test-Path $claudeMdDst)) {
+    # No existing AGENTS.md - fresh install
+    if (Test-Path $claudeMdSrc) {
+        Copy-Item -Path $claudeMdSrc -Destination $claudeMdDst
+        Write-Host "  Created AGENTS.md" -ForegroundColor Green
+    }
+}
+else {
+    # Existing AGENTS.md found - check if ELF already configured
+    $existingContent = Get-Content $claudeMdDst -Raw
+    if ($existingContent -match "Emergent Learning Framework") {
+        Write-Host "  AGENTS.md already contains ELF configuration (skipped)" -ForegroundColor Green
+    }
+    else {
+        # Existing config without ELF - prompt user for action
+        Write-Host ""
+        Write-Host "  Existing AGENTS.md detected!" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "  How would you like to add ELF configuration?" -ForegroundColor Cyan
+        Write-Host "    [1] Merge    - Keep your config, add ELF below (Recommended)" -ForegroundColor White
+        Write-Host "    [2] Replace  - Use ELF only (your config backed up)" -ForegroundColor White
+        Write-Host "    [3] Skip     - Don't modify AGENTS.md" -ForegroundColor White
+        Write-Host ""
+
+        $choice = Read-Host "  Enter choice (1/2/3)"
+
+        switch ($choice) {
+            "1" {
+                # Merge: Keep existing + append ELF
+                $backupFile = Join-Path $ClaudeDir "AGENTS.md.backup"
+                Copy-Item -Path $claudeMdDst -Destination $backupFile -Force
+
+                $elfContent = Get-Content $claudeMdSrc -Raw
+                $mergedContent = @"
+$existingContent
+
+
+# ==============================================
+# EMERGENT LEARNING FRAMEWORK - AUTO-APPENDED
+# ==============================================
+
+$elfContent
+"@
+                [System.IO.File]::WriteAllText($claudeMdDst, $mergedContent, [System.Text.UTF8Encoding]::new($false))
+                Write-Host "  Merged ELF with your config (backup: AGENTS.md.backup)" -ForegroundColor Green
+            }
+            "2" {
+                # Replace: Backup existing, use ELF only
+                $backupFile = Join-Path $ClaudeDir "AGENTS.md.backup"
+                Copy-Item -Path $claudeMdDst -Destination $backupFile -Force
+                Copy-Item -Path $claudeMdSrc -Destination $claudeMdDst -Force
+                Write-Host "  Replaced with ELF config (your config backed up to AGENTS.md.backup)" -ForegroundColor Green
+            }
+            "3" {
+                # Skip: Don't modify
+                Write-Host "  Skipped AGENTS.md modification" -ForegroundColor Yellow
+                Write-Host "  Note: ELF may not function correctly without AGENTS.md instructions" -ForegroundColor Yellow
+            }
+            default {
+                Write-Host "  Invalid choice. Skipping AGENTS.md modification." -ForegroundColor Yellow
+                Write-Host "  Run installer again to configure AGENTS.md" -ForegroundColor Yellow
+            }
+        }
+    }
+}
+
+function Install-Ollama {
+    # Install Ollama and pull the embedding model
+    Write-Host "  Checking Ollama installation..." -ForegroundColor Yellow
+
+    if (Get-Command ollama -ErrorAction SilentlyContinue) {
+        Write-Host "  Ollama is installed" -ForegroundColor Green
+
+        # Check if nomic-embed-text model is available
+        $ollamaList = ollama list 2>$null
+        if ($ollamaList -match "nomic-embed-text") {
+            Write-Host "  nomic-embed-text model is ready" -ForegroundColor Green
+        }
+        else {
+            Write-Host "  Pulling nomic-embed-text model (this may take a moment)..." -ForegroundColor Yellow
+            try {
+                $pullOutput = ollama pull nomic-embed-text 2>&1
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "  nomic-embed-text model installed" -ForegroundColor Green
+                }
+                else {
+                    Write-Host "  Warning: Could not pull nomic-embed-text model" -ForegroundColor Yellow
+                    Write-Host "  You can install it manually with: ollama pull nomic-embed-text" -ForegroundColor Yellow
+                }
+            }
+            catch {
+                Write-Host "  Warning: Could not pull nomic-embed-text model" -ForegroundColor Yellow
+            }
+        }
+    }
+    else {
+        Write-Host "  Ollama is not installed" -ForegroundColor Yellow
+        Write-Host "  For semantic search, install Ollama from:" -ForegroundColor Cyan
+        Write-Host "    https://ollama.com/download/windows" -ForegroundColor White
+        Write-Host ""
+        Write-Host "  Then pull the embedding model:" -ForegroundColor Cyan
+        Write-Host "    ollama pull nomic-embed-text" -ForegroundColor White
+        Write-Host ""
+        Write-Host "  ELF will use keyword fallback until Ollama is available" -ForegroundColor Yellow
+    }
+}
+
+function Install-GitHooks {
+    # Install git pre-commit hook enforcement
+    # Priority: REPO_ROOT (dev env) -> ELF_DIR (if it happens to be a git repo)
+    $repoRootGit = Join-Path $BaseInstallDir ".git\hooks"
+    $elfDirGit = Join-Path $EmergentLearningDir ".git\hooks"
+    
+    $gitHooksDir = $null
+    if (Test-Path $repoRootGit) {
+        $gitHooksDir = $repoRootGit
+    }
+    elseif (Test-Path $elfDirGit) {
+        $gitHooksDir = $elfDirGit
+    }
+
+    $preCommitSrc = Join-Path $ScriptDir "tools\setup\git-hooks\pre-commit"
+    # Fallback to older location if moved
+    if (-not (Test-Path $preCommitSrc)) {
+        $preCommitSrc = Join-Path $ScriptDir "src\hooks\git-hooks\pre-commit"
+    }
+
+    if ($gitHooksDir -and (Test-Path $preCommitSrc)) {
+        $dest = Join-Path $gitHooksDir "pre-commit"
+        Copy-Item -Path $preCommitSrc -Destination $dest -Force
+        # No chmod needed on Windows
+        Write-Host "  [ELF] Git pre-commit hook installed to $gitHooksDir" -ForegroundColor Green
+    }
+}
+
+Install-GitHooks
+Install-Ollama
+
+# === DONE ===
+Write-Host ""
+Write-Host "============================================" -ForegroundColor Green
+Write-Host "  Installation Complete!" -ForegroundColor Green
+Write-Host "============================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Installed:"
+Write-Host "  [+] Core (query system, hooks, golden rules)" -ForegroundColor Green
+if ($InstallDashboard) {
+    Write-Host "  [+] Dashboard (localhost:3001)" -ForegroundColor Green
+}
+if ($InstallSwarm) {
+    Write-Host "  [+] Swarm (conductor, watcher, agent personas)" -ForegroundColor Green
+}
+Write-Host ""
+Write-Host "Next steps (copy-paste ready):"
+Write-Host ""
+Write-Host "  # 1. Review your configuration:"
+Write-Host "  Get-Content ~/.opencode/AGENTS.md"
+Write-Host ""
+if ($InstallDashboard) {
+    Write-Host "  # 2. Start the dashboard:"
+    Write-Host "  Set-Location ~/.opencode/emergent-learning/dashboard-app; ./run-dashboard.ps1"
+    Write-Host ""
+}
+Write-Host "  # 3. Test the query system:"
+Write-Host "  python3 ~/.opencode/emergent-learning/query/query.py --context"
+Write-Host ""
+Write-Host "  # 4. Start using Opencode (it will now query the building automatically!)"
+Write-Host "  claude"
+Write-Host ""

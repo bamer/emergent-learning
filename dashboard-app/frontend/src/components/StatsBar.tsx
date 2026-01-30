@@ -49,19 +49,19 @@ export default function StatsBar({ stats, onNavigate }: StatsBarProps) {
       switch (type) {
         case 'runs':
         case 'success_rate':
-          data = await api.get('/api/runs?limit=100')
+          data = await api.get('/api/v1/runs?limit=100')
           break
         case 'heuristics':
-          data = await api.get('/api/heuristics?limit=100')
+          data = await api.get('/api/v1/heuristics?limit=100')
           break
         case 'golden':
-          data = await api.get('/api/heuristics?golden_only=true&limit=100')
+          data = await api.get('/api/v1/heuristics?golden_only=true&limit=100')
           break
         case 'hotspots':
-          data = await api.get('/api/hotspots')
+          data = await api.get('/api/v1/hotspots')
           break
         case 'queries':
-          data = await api.get('/api/queries?limit=100')
+          data = await api.get('/api/v1/queries?limit=100')
           break
       }
       setDrillDownData(data)

@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+# Pre-commit hook: Autonomous Ralph Loop executor
+#
+# Checks if a PRD exists and runs Ralph loop to complete stories
+# Each commit can trigger one story completion
+#
+# Set SKIP_RALPH=1 to bypass Ralph, or use:
+#   git commit --no-verify
+#
+
+set -e
+
+if [ "$SKIP_RALPH" = "1" ]; then
+    exit 0
+fi
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+PRD_FILE="$REPO_ROOT/prd.json"
+
+if [ ! -f "$PRD_FILE" ]; then
+    exit 0
+fi
+
+RALPH_SCRIPT="$REPO_ROOT/tools/scripts/ralph.sh"
+
+if [ ! -f "$RALPH_SCRIPT" ]; then
+    echo "⚠️  Ralph Loop not found - skipping"
+    exit 0
+fi
+
+if [ ! -x "$RALPH_SCRIPT" ]; then
+    chmod +x "$RALPH_SCRIPT"
+fi
+
+echo "🔄 Ralph Loop: Executing next story..."
+echo ""
+
+if bash "$RALPH_SCRIPT" --max-iterations 1; then
+    echo ""
+    echo "✓ Ralph Loop completed"
+    exit 0
+else
+    echo ""
+    echo "⚠️  Ralph Loop encountered an issue"
+    echo "   Review progress.txt for details"
+    echo ""
+    echo "   Or skip Ralph with:"
+    echo "   SKIP_RALPH=1 git commit -m 'message'"
+    exit 1
+fi

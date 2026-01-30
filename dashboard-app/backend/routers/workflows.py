@@ -11,7 +11,7 @@ from fastapi import APIRouter
 from models import WorkflowCreate, ActionResult
 from utils import get_db, dict_from_row
 
-router = APIRouter(prefix="/api", tags=["workflows"])
+router = APIRouter(prefix="/api/v1", tags=["workflows"])
 logger = logging.getLogger(__name__)
 
 # Path will be set from main.py
@@ -54,14 +54,17 @@ async def create_workflow(workflow: WorkflowCreate) -> ActionResult:
             name=workflow.name,
             description=workflow.description,
             nodes=workflow.nodes,
-            edges=workflow.edges
+            edges=workflow.edges,
         )
 
         return ActionResult(
             success=True,
             message=f"Created workflow '{workflow.name}'",
-            data={"workflow_id": workflow_id}
+            data={"workflow_id": workflow_id},
         )
     except Exception as e:
         logger.error(f"Error creating workflow '{workflow.name}': {e}", exc_info=True)
-        return ActionResult(success=False, message="Failed to create workflow. Please check workflow configuration.")
+        return ActionResult(
+            success=False,
+            message="Failed to create workflow. Please check workflow configuration.",
+        )

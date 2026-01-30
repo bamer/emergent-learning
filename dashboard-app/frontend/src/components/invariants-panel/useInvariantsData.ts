@@ -40,7 +40,7 @@ export function useInvariantsData(
       if (statusFilter !== 'all') params.append('status', statusFilter)
       if (domainFilter !== 'all') params.append('domain', domainFilter)
 
-      const data = await api.get(`/api/invariants?${params.toString()}`)
+      const data = await api.get(`/api/v1/invariants?${params.toString()}`)
       setInvariants(data || [])
 
       // Extract unique domains
@@ -56,7 +56,7 @@ export function useInvariantsData(
   const handleValidate = async (id: number) => {
     setActionLoading(id)
     try {
-      await api.post(`/api/invariants/${id}/validate`)
+      await api.post(`/api/v1/invariants/${id}/validate`)
       // Update locally
       setInvariants(prev => prev.map(i =>
         i.id === id
@@ -73,7 +73,7 @@ export function useInvariantsData(
   const handleViolate = async (id: number) => {
     setActionLoading(id)
     try {
-      await api.post(`/api/invariants/${id}/violate`)
+      await api.post(`/api/v1/invariants/${id}/violate`)
       // Update locally
       setInvariants(prev => prev.map(i =>
         i.id === id

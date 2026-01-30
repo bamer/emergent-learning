@@ -37,7 +37,7 @@ bun run dev
 ## URLs
 
 - **Dashboard**: http://localhost:3001
-- **API**: http://localhost:8888
+- **API v1**: http://localhost:8888/api/v1
 - **API Docs**: http://localhost:8888/docs
 
 ## Architecture
@@ -60,21 +60,17 @@ dashboard-app/
 ## API Endpoints
 
 ### Stats & Data
-- `GET /api/stats` - System statistics
-- `GET /api/heuristics` - All heuristics
-- `GET /api/hotspots` - Code hotspots
-- `GET /api/runs` - Agent runs
-- `GET /api/timeline` - Event timeline
-- `GET /api/anomalies` - Detected anomalies
-
-### Actions
-- `POST /api/actions/heuristic/{id}/promote` - Promote to golden
-- `POST /api/actions/heuristic/{id}/demote` - Demote from golden
-- `POST /api/actions/run/{id}/retry` - Retry failed run
-- `POST /api/actions/open-editor` - Open file in VS Code
-
-### Query
-- `POST /api/query` - Natural language query
+- `GET /api/v1/stats` - System statistics
+- `GET /api/v1/heuristics` - All heuristics
+- `GET /api/v1/hotspots` - Code hotspots
+- `GET /api/v1/runs` - Agent runs
+- `GET /api/v1/timeline` - Event timeline
+- `GET /api/v1/anomalies` - Detected anomalies
+- `POST /api/v1/heuristics/{id}/promote` - Promote to golden
+- `POST /api/v1/heuristics/{id}/demote` - Demote from golden
+- `POST /api/v1/runs/{id}/retry` - Retry failed run
+- `POST /api/v1/actions/open-editor` - Open file in VS Code
+- `POST /api/v1/query` - Natural language query
 
 ### WebSocket
 - `WS /ws` - Real-time updates

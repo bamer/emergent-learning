@@ -10,7 +10,7 @@ export function useGraphData() {
     const fetchGraphData = async () => {
       try {
         setLoading(true)
-        const response = await fetch('/api/heuristic-graph')
+        const response = await fetch('/api/v1/heuristic-graph')
         if (!response.ok) throw new Error('Failed to fetch graph data')
         const data = await response.json()
         setGraphData(data)

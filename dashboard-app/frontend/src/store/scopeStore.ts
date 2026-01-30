@@ -39,7 +39,7 @@ export const useScopeStore = create<ScopeState>()(
             fetchProjectContext: async () => {
                 set({ isLoading: true })
                 try {
-                    const response = await fetch('/api/context')
+                    const response = await fetch('/api/v1/context')
                     if (response.ok) {
                         const ctx = await response.json()
                         set({

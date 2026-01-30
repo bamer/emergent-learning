@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException
 from models import ActionResult
 from utils import get_db, dict_from_row, escape_like
 
-router = APIRouter(prefix="/api", tags=["runs"])
+router = APIRouter(prefix="/api/v1", tags=["runs"])
 
 
 @router.get("/runs")
@@ -25,7 +25,7 @@ async def get_runs(days: int = 7, limit: int = 50, status: Optional[str] = None)
             FROM workflow_runs
             WHERE created_at > datetime('now', ?)
         """
-        params = [f'-{days} days']
+        params = [f"-{days} days"]
 
         if status:
             query += " AND status = ?"
@@ -52,35 +52,47 @@ async def get_run(run_id: int):
             raise HTTPException(status_code=404, detail="Run not found")
 
         # Get executions
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT * FROM node_executions
             WHERE run_id = ?
             ORDER BY created_at
-        """, (run_id,))
+        """,
+            (run_id,),
+        )
         run["executions"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Get trails
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT * FROM trails
             WHERE run_id = ?
             ORDER BY created_at
-        """, (run_id,))
+        """,
+            (run_id,),
+        )
         run["trails"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Get decisions
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT * FROM conductor_decisions
             WHERE run_id = ?
             ORDER BY created_at
-        """, (run_id,))
+        """,
+            (run_id,),
+        )
         run["decisions"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Get workflow edges if available
         if run.get("workflow_id"):
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT * FROM workflow_edges
                 WHERE workflow_id = ?
-            """, (run["workflow_id"],))
+            """,
+                (run["workflow_id"],),
+            )
             run["edges"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         return run
@@ -106,12 +118,15 @@ async def get_run_diff(run_id: int):
             raise HTTPException(status_code=404, detail="Run not found")
 
         # Get trails (file locations touched) for this run
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DISTINCT location, scent, message
             FROM trails
             WHERE run_id = ? AND location_type = 'file'
             ORDER BY location
-        """, (run_id,))
+        """,
+            (run_id,),
+        )
         trails = cursor.fetchall()
 
         # Generate mock diffs based on trails
@@ -124,78 +139,202 @@ async def get_run_diff(run_id: int):
             # Create a realistic-looking mock diff
             if scent == "blocker":
                 changes = [
-                    {"type": "context", "lineNumber": 1, "oldLineNumber": 10, "newLineNumber": 10, "content": "def process_data(data):"},
-                    {"type": "context", "lineNumber": 2, "oldLineNumber": 11, "newLineNumber": 11, "content": "    if not data:"},
-                    {"type": "remove", "lineNumber": 3, "oldLineNumber": 12, "content": "        raise ValueError('Data is empty')"},
-                    {"type": "add", "lineNumber": 4, "newLineNumber": 12, "content": "        logger.warning('Empty data received, using defaults')"},
-                    {"type": "add", "lineNumber": 5, "newLineNumber": 13, "content": "        return get_default_data()"},
-                    {"type": "context", "lineNumber": 6, "oldLineNumber": 13, "newLineNumber": 14, "content": "    return data"},
+                    {
+                        "type": "context",
+                        "lineNumber": 1,
+                        "oldLineNumber": 10,
+                        "newLineNumber": 10,
+                        "content": "def process_data(data):",
+                    },
+                    {
+                        "type": "context",
+                        "lineNumber": 2,
+                        "oldLineNumber": 11,
+                        "newLineNumber": 11,
+                        "content": "    if not data:",
+                    },
+                    {
+                        "type": "remove",
+                        "lineNumber": 3,
+                        "oldLineNumber": 12,
+                        "content": "        raise ValueError('Data is empty')",
+                    },
+                    {
+                        "type": "add",
+                        "lineNumber": 4,
+                        "newLineNumber": 12,
+                        "content": "        logger.warning('Empty data received, using defaults')",
+                    },
+                    {
+                        "type": "add",
+                        "lineNumber": 5,
+                        "newLineNumber": 13,
+                        "content": "        return get_default_data()",
+                    },
+                    {
+                        "type": "context",
+                        "lineNumber": 6,
+                        "oldLineNumber": 13,
+                        "newLineNumber": 14,
+                        "content": "    return data",
+                    },
                 ]
-                diffs.append({
-                    "path": location,
-                    "changes": changes,
-                    "additions": 2,
-                    "deletions": 1
-                })
+                diffs.append(
+                    {
+                        "path": location,
+                        "changes": changes,
+                        "additions": 2,
+                        "deletions": 1,
+                    }
+                )
             elif scent == "discovery":
                 changes = [
-                    {"type": "context", "lineNumber": 1, "oldLineNumber": 45, "newLineNumber": 45, "content": "class DataProcessor:"},
-                    {"type": "add", "lineNumber": 2, "newLineNumber": 46, "content": "    def validate_input(self, data):"},
-                    {"type": "add", "lineNumber": 3, "newLineNumber": 47, "content": "        \"\"\"Validate input data before processing.\"\"\""},
-                    {"type": "add", "lineNumber": 4, "newLineNumber": 48, "content": "        if not isinstance(data, dict):"},
-                    {"type": "add", "lineNumber": 5, "newLineNumber": 49, "content": "            raise TypeError('Data must be a dictionary')"},
-                    {"type": "add", "lineNumber": 6, "newLineNumber": 50, "content": "        return True"},
-                    {"type": "add", "lineNumber": 7, "newLineNumber": 51, "content": ""},
-                    {"type": "context", "lineNumber": 8, "oldLineNumber": 46, "newLineNumber": 52, "content": "    def process(self, data):"},
+                    {
+                        "type": "context",
+                        "lineNumber": 1,
+                        "oldLineNumber": 45,
+                        "newLineNumber": 45,
+                        "content": "class DataProcessor:",
+                    },
+                    {
+                        "type": "add",
+                        "lineNumber": 2,
+                        "newLineNumber": 46,
+                        "content": "    def validate_input(self, data):",
+                    },
+                    {
+                        "type": "add",
+                        "lineNumber": 3,
+                        "newLineNumber": 47,
+                        "content": '        """Validate input data before processing."""',
+                    },
+                    {
+                        "type": "add",
+                        "lineNumber": 4,
+                        "newLineNumber": 48,
+                        "content": "        if not isinstance(data, dict):",
+                    },
+                    {
+                        "type": "add",
+                        "lineNumber": 5,
+                        "newLineNumber": 49,
+                        "content": "            raise TypeError('Data must be a dictionary')",
+                    },
+                    {
+                        "type": "add",
+                        "lineNumber": 6,
+                        "newLineNumber": 50,
+                        "content": "        return True",
+                    },
+                    {
+                        "type": "add",
+                        "lineNumber": 7,
+                        "newLineNumber": 51,
+                        "content": "",
+                    },
+                    {
+                        "type": "context",
+                        "lineNumber": 8,
+                        "oldLineNumber": 46,
+                        "newLineNumber": 52,
+                        "content": "    def process(self, data):",
+                    },
                 ]
-                diffs.append({
-                    "path": location,
-                    "changes": changes,
-                    "additions": 6,
-                    "deletions": 0
-                })
+                diffs.append(
+                    {
+                        "path": location,
+                        "changes": changes,
+                        "additions": 6,
+                        "deletions": 0,
+                    }
+                )
             else:
                 changes = [
-                    {"type": "context", "lineNumber": 1, "oldLineNumber": 20, "newLineNumber": 20, "content": "# Configuration"},
-                    {"type": "remove", "lineNumber": 2, "oldLineNumber": 21, "content": "DEBUG = True"},
-                    {"type": "add", "lineNumber": 3, "newLineNumber": 21, "content": "DEBUG = False"},
-                    {"type": "context", "lineNumber": 4, "oldLineNumber": 22, "newLineNumber": 22, "content": "TIMEOUT = 30"},
+                    {
+                        "type": "context",
+                        "lineNumber": 1,
+                        "oldLineNumber": 20,
+                        "newLineNumber": 20,
+                        "content": "# Configuration",
+                    },
+                    {
+                        "type": "remove",
+                        "lineNumber": 2,
+                        "oldLineNumber": 21,
+                        "content": "DEBUG = True",
+                    },
+                    {
+                        "type": "add",
+                        "lineNumber": 3,
+                        "newLineNumber": 21,
+                        "content": "DEBUG = False",
+                    },
+                    {
+                        "type": "context",
+                        "lineNumber": 4,
+                        "oldLineNumber": 22,
+                        "newLineNumber": 22,
+                        "content": "TIMEOUT = 30",
+                    },
                 ]
-                diffs.append({
-                    "path": location,
-                    "changes": changes,
-                    "additions": 1,
-                    "deletions": 1
-                })
+                diffs.append(
+                    {
+                        "path": location,
+                        "changes": changes,
+                        "additions": 1,
+                        "deletions": 1,
+                    }
+                )
 
         # If no trails found, return empty diffs with explanation
         if not diffs:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT node_name, output
                 FROM node_executions
                 WHERE run_id = ? AND output IS NOT NULL
                 LIMIT 5
-            """, (run_id,))
+            """,
+                (run_id,),
+            )
             executions = cursor.fetchall()
 
             if executions:
                 for execution in executions:
                     changes = [
-                        {"type": "context", "lineNumber": 1, "oldLineNumber": 1, "newLineNumber": 1, "content": f"# Changes from: {execution['node_name']}"},
-                        {"type": "add", "lineNumber": 2, "newLineNumber": 2, "content": "# Output:"},
-                        {"type": "add", "lineNumber": 3, "newLineNumber": 3, "content": str(execution['output'])[:100] + "..."},
+                        {
+                            "type": "context",
+                            "lineNumber": 1,
+                            "oldLineNumber": 1,
+                            "newLineNumber": 1,
+                            "content": f"# Changes from: {execution['node_name']}",
+                        },
+                        {
+                            "type": "add",
+                            "lineNumber": 2,
+                            "newLineNumber": 2,
+                            "content": "# Output:",
+                        },
+                        {
+                            "type": "add",
+                            "lineNumber": 3,
+                            "newLineNumber": 3,
+                            "content": str(execution["output"])[:100] + "...",
+                        },
                     ]
-                    diffs.append({
-                        "path": f"output/{execution['node_name']}.txt",
-                        "changes": changes,
-                        "additions": 2,
-                        "deletions": 0
-                    })
+                    diffs.append(
+                        {
+                            "path": f"output/{execution['node_name']}.txt",
+                            "changes": changes,
+                            "additions": 2,
+                            "deletions": 0,
+                        }
+                    )
 
         return {
             "run_id": run_id,
             "diffs": diffs,
-            "note": "This is mock data. Future versions will track actual file changes."
+            "note": "This is mock data. Future versions will track actual file changes.",
         }
 
 
@@ -212,14 +351,16 @@ async def retry_run(run_id: int) -> ActionResult:
             raise HTTPException(status_code=404, detail="Run not found")
 
         if run["status"] not in ("failed", "cancelled"):
-            return ActionResult(success=False, message="Can only retry failed or cancelled runs")
+            return ActionResult(
+                success=False, message="Can only retry failed or cancelled runs"
+            )
 
         # For now, just log the retry request
         # In production, this would trigger re-execution
         return ActionResult(
             success=True,
             message=f"Retry requested for run #{run_id}",
-            data={"original_run_id": run_id}
+            data={"original_run_id": run_id},
         )
 
 
@@ -229,7 +370,8 @@ async def get_hotspots(days: int = 7, limit: int = 50):
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 location,
                 COUNT(*) as trail_count,
@@ -243,7 +385,9 @@ async def get_hotspots(days: int = 7, limit: int = 50):
             GROUP BY location
             ORDER BY total_strength DESC
             LIMIT ?
-        """, (f'-{days} days', limit))
+        """,
+            (f"-{days} days", limit),
+        )
 
         hotspots = []
         for row in cursor.fetchall():
@@ -259,13 +403,16 @@ async def get_hotspots(days: int = 7, limit: int = 50):
 
             # Escape SQL wildcards to prevent wildcard injection
             base_name_escaped = escape_like(base_name)
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, rule, confidence, domain
                 FROM heuristics
                 WHERE LOWER(rule) LIKE ? OR LOWER(domain) LIKE ?
                 ORDER BY confidence DESC
                 LIMIT 3
-            """, (f'%{base_name_escaped}%', f'%{base_name_escaped}%'))
+            """,
+                (f"%{base_name_escaped}%", f"%{base_name_escaped}%"),
+            )
             hs["related_heuristics"] = [dict_from_row(r) for r in cursor.fetchall()]
 
             hotspots.append(hs)
@@ -279,7 +426,8 @@ async def get_hotspots_treemap(days: int = 7):
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 location,
                 SUM(strength) as value,
@@ -288,7 +436,9 @@ async def get_hotspots_treemap(days: int = 7):
             FROM trails
             WHERE created_at > datetime('now', ?)
             GROUP BY location
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
 
         # Build tree structure
         root = {"name": "root", "children": []}
@@ -313,7 +463,7 @@ async def get_hotspots_treemap(days: int = 7):
             current = root
 
             for i, part in enumerate(parts[:-1]):
-                path = "/".join(parts[:i+1])
+                path = "/".join(parts[: i + 1])
                 if path not in dir_map:
                     new_node = {"name": part, "children": [], "path": path}
                     dir_map[path] = new_node
@@ -321,13 +471,15 @@ async def get_hotspots_treemap(days: int = 7):
                 current = dir_map[path]
 
             # Add leaf node
-            current["children"].append({
-                "name": parts[-1],
-                "value": value,
-                "color": color,
-                "scents": scents,
-                "count": row["count"],
-                "path": location
-            })
+            current["children"].append(
+                {
+                    "name": parts[-1],
+                    "value": value,
+                    "color": color,
+                    "scents": scents,
+                    "count": row["count"],
+                    "path": location,
+                }
+            )
 
         return root

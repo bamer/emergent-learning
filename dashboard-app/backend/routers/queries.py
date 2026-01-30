@@ -10,7 +10,7 @@ from fastapi import APIRouter
 from models import QueryRequest
 from utils import get_db, dict_from_row, escape_like
 
-router = APIRouter(prefix="/api", tags=["queries"])
+router = APIRouter(prefix="/api/v1", tags=["queries"])
 
 
 @router.get("/queries")
@@ -20,7 +20,7 @@ async def get_queries(
     domain: Optional[str] = None,
     query_type: Optional[str] = None,
     status: Optional[str] = None,
-    sort_by: str = "recent"
+    sort_by: str = "recent",
 ):
     """Get building queries with optional filtering."""
     with get_db() as conn:
@@ -58,7 +58,7 @@ async def get_queries(
         sort_map = {
             "recent": "created_at DESC",
             "oldest": "created_at ASC",
-            "slowest": "duration_ms DESC"
+            "slowest": "duration_ms DESC",
         }
         query += f" ORDER BY {sort_map.get(sort_by, 'created_at DESC')}"
 
@@ -79,47 +79,66 @@ async def natural_language_query(request: QueryRequest):
         "learnings": [],
         "hotspots": [],
         "runs": [],
-        "summary": ""
+        "summary": "",
     }
 
     with get_db() as conn:
         cursor = conn.cursor()
 
         # Extract keywords
-        keywords = re.findall(r'\b\w{3,}\b', query)
+        keywords = re.findall(r"\b\w{3,}\b", query)
         # Escape each keyword individually before joining to prevent wildcard injection
         escaped_keywords = [escape_like(kw) for kw in keywords]
         keyword_pattern = "%".join(escaped_keywords) if escaped_keywords else "%"
 
         # Search heuristics
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, domain, rule, confidence, times_validated
             FROM heuristics
             WHERE LOWER(rule) LIKE ? OR LOWER(domain) LIKE ? OR LOWER(explanation) LIKE ?
             ORDER BY confidence DESC
             LIMIT ?
-        """, (f'%{keyword_pattern}%', f'%{keyword_pattern}%', f'%{keyword_pattern}%', request.limit))
+        """,
+            (
+                f"%{keyword_pattern}%",
+                f"%{keyword_pattern}%",
+                f"%{keyword_pattern}%",
+                request.limit,
+            ),
+        )
         results["heuristics"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Search learnings
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, type, title, summary, domain
             FROM learnings
             WHERE LOWER(title) LIKE ? OR LOWER(summary) LIKE ? OR LOWER(domain) LIKE ?
             ORDER BY created_at DESC
             LIMIT ?
-        """, (f'%{keyword_pattern}%', f'%{keyword_pattern}%', f'%{keyword_pattern}%', request.limit))
+        """,
+            (
+                f"%{keyword_pattern}%",
+                f"%{keyword_pattern}%",
+                f"%{keyword_pattern}%",
+                request.limit,
+            ),
+        )
         results["learnings"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Search hot spots
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT location, SUM(strength) as strength, COUNT(*) as count
             FROM trails
             WHERE LOWER(location) LIKE ?
             GROUP BY location
             ORDER BY strength DESC
             LIMIT ?
-        """, (f'%{keyword_pattern}%', request.limit))
+        """,
+            (f"%{keyword_pattern}%", request.limit),
+        )
         results["hotspots"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Generate summary
@@ -127,6 +146,8 @@ async def natural_language_query(request: QueryRequest):
         l_count = len(results["learnings"])
         hs_count = len(results["hotspots"])
 
-        results["summary"] = f"Found {h_count} heuristics, {l_count} learnings, and {hs_count} hot spots matching '{request.query}'"
+        results["summary"] = (
+            f"Found {h_count} heuristics, {l_count} learnings, and {hs_count} hot spots matching '{request.query}'"
+        )
 
     return results

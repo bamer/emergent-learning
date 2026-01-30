@@ -16,12 +16,12 @@ export function useDashboardData() {
   const loadData = useCallback(async () => {
     try {
       const [statsData, hotspotsData, runsData, timelineData, anomaliesData, eventsData] = await Promise.all([
-        api.get('/api/stats').catch(() => null),
-        api.get('/api/hotspots').catch(() => []),
-        api.get('/api/runs?limit=100').catch(() => []),
-        api.get('/api/timeline').catch(() => null),
-        api.get('/api/anomalies').catch(() => []),
-        api.get('/api/events?limit=100').catch(() => []),
+        api.get('/api/v1/stats').catch(() => null),
+        api.get('/api/v1/hotspots').catch(() => []),
+        api.get('/api/v1/runs?limit=100').catch(() => []),
+        api.get('/api/v1/timeline').catch(() => null),
+        api.get('/api/v1/anomalies').catch(() => []),
+        api.get('/api/v1/events?limit=100').catch(() => []),
       ])
       if (statsData) setStats(statsData)
       setHotspots(hotspotsData || [])
@@ -43,7 +43,7 @@ export function useDashboardData() {
 
   const loadStats = useCallback(async () => {
     try {
-      const data = await api.get('/api/stats')
+      const data = await api.get('/api/v1/stats')
       if (data) setStats(data)
     } catch (err) {
       console.error('Failed to load stats:', err)
@@ -57,15 +57,15 @@ export function useDashboardData() {
     // Auto-refresh stats, runs, and events every 10 seconds
     const interval = setInterval(() => {
       // Refresh stats
-      api.get('/api/stats').then(data => {
+      api.get('/api/v1/stats').then(data => {
         if (data) setStats(data)
       }).catch(() => { })
       // Refresh runs
-      api.get('/api/runs?limit=100').then(data => {
+      api.get('/api/v1/runs?limit=100').then(data => {
         if (data) setRuns(data)
       }).catch(() => { })
       // Refresh events
-      api.get('/api/events?limit=100').then(data => {
+      api.get('/api/v1/events?limit=100').then(data => {
         if (data) setEvents(data)
       }).catch(() => { })
     }, 30000)

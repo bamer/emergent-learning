@@ -16,7 +16,7 @@ export function useHeuristics(options?: UseHeuristicsOptions) {
 
   const reloadHeuristics = useCallback(async () => {
     try {
-      const data = await api.get(`/api/heuristics?scope=${scopeRef.current}`)
+      const data = await api.get(`/api/v1/heuristics?scope=${scopeRef.current}`)
       setHeuristics(data || [])
     } catch (err) {
       console.error('Failed to load heuristics:', err)
@@ -25,7 +25,7 @@ export function useHeuristics(options?: UseHeuristicsOptions) {
 
   const promoteHeuristic = useCallback(async (id: number) => {
     try {
-      await api.post(`/api/heuristics/${id}/promote`)
+      await api.post(`/api/v1/heuristics/${id}/promote`)
       setHeuristics(prev => prev.map(h =>
         h.id === id ? { ...h, is_golden: true } : h
       ))
@@ -38,7 +38,7 @@ export function useHeuristics(options?: UseHeuristicsOptions) {
 
   const demoteHeuristic = useCallback(async (id: number) => {
     try {
-      await api.post(`/api/heuristics/${id}/demote`)
+      await api.post(`/api/v1/heuristics/${id}/demote`)
       setHeuristics(prev => prev.map(h =>
         h.id === id ? { ...h, is_golden: false } : h
       ))
@@ -51,7 +51,7 @@ export function useHeuristics(options?: UseHeuristicsOptions) {
 
   const deleteHeuristic = useCallback(async (id: number) => {
     try {
-      await api.del(`/api/heuristics/${id}`)
+      await api.del(`/api/v1/heuristics/${id}`)
       setHeuristics(prev => prev.filter(h => h.id !== id))
       if (onStatsChange) onStatsChange()
     } catch (err) {
@@ -65,7 +65,7 @@ export function useHeuristics(options?: UseHeuristicsOptions) {
     updates: { rule?: string; explanation?: string; domain?: string }
   ) => {
     try {
-      await api.put(`/api/heuristics/${id}`, updates)
+      await api.put(`/api/v1/heuristics/${id}`, updates)
       setHeuristics(prev => prev.map(h =>
         h.id === id ? { ...h, ...updates } : h
       ))

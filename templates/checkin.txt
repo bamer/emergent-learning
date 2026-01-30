@@ -1,0 +1,8 @@
+CHECK-IN TEMPLATE
+
+When checking in, provide:
+1. Summary of work completed
+2. Any failures or learnings recorded
+3. Status of servers/services if applicable
+
+NOTE: Read golden rules from memory/golden-rules.md if needed.

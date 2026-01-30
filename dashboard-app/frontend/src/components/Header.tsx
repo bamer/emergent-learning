@@ -32,7 +32,7 @@ export default function Header({ isConnected, onOpenCommandPalette }: HeaderProp
   useEffect(() => {
     const fetchCeoInbox = async () => {
       try {
-        const res = await fetch('/api/ceo-inbox')
+        const res = await fetch('/api/v1/ceo-inbox')
         if (res.ok) {
           const data = await res.json()
           setCeoItems(data)
@@ -51,7 +51,7 @@ export default function Header({ isConnected, onOpenCommandPalette }: HeaderProp
     setLoadingContent(true)
     playClick()
     try {
-      const res = await fetch(`/api/ceo-inbox/${item.filename}`)
+      const res = await fetch(`/api/v1/ceo-inbox/${item.filename}`)
       if (res.ok) {
         const data = await res.json()
         setItemContent(data.content)

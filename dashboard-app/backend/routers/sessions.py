@@ -12,11 +12,14 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 
-UUID_PATTERN = re.compile(r'^(agent-)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.IGNORECASE)
+UUID_PATTERN = re.compile(
+    r"^(agent-)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
 
 from utils.database import get_base_path
 
-router = APIRouter(prefix="/api", tags=["sessions"])
+router = APIRouter(prefix="/api/v1", tags=["sessions"])
 logger = logging.getLogger(__name__)
 
 # Path to summarizer script
@@ -65,7 +68,7 @@ async def get_sessions(
     days: Optional[int] = Query(None, ge=1),
     project: Optional[str] = None,
     search: Optional[str] = None,
-    include_agent: bool = False
+    include_agent: bool = False,
 ):
     """
     Get list of sessions with metadata.
@@ -96,14 +99,14 @@ async def get_sessions(
             days=days,
             project=project,
             search=search,
-            include_agent=include_agent
+            include_agent=include_agent,
         )
 
         return {
             "sessions": [asdict(s) for s in sessions],
             "total": total,
             "offset": offset,
-            "limit": limit
+            "limit": limit,
         }
 
     except Exception as e:
@@ -243,7 +246,9 @@ def _run_summarizer(session_id: str, use_llm: bool = True):
 
 
 @router.post("/sessions/{session_id}/summarize")
-async def trigger_summarize(session_id: str, background_tasks: BackgroundTasks, use_llm: bool = True):
+async def trigger_summarize(
+    session_id: str, background_tasks: BackgroundTasks, use_llm: bool = True
+):
     """
     Trigger summarization of a session.
 
@@ -280,7 +285,7 @@ async def trigger_batch_summarize(
     background_tasks: BackgroundTasks,
     older_than_hours: float = 1.0,
     limit: int = 10,
-    use_llm: bool = True
+    use_llm: bool = True,
 ):
     """
     Trigger batch summarization of old unsummarized sessions.
@@ -295,33 +300,48 @@ async def trigger_batch_summarize(
     """
     try:
         cmd = [
-            sys.executable, str(SUMMARIZER_SCRIPT),
+            sys.executable,
+            str(SUMMARIZER_SCRIPT),
             "--batch",
-            "--older-than", f"{older_than_hours}h",
-            "--limit", str(limit)
+            "--older-than",
+            f"{older_than_hours}h",
+            "--limit",
+            str(limit),
         ]
         if not use_llm:
             cmd.append("--no-llm")
 
         def run_batch():
             try:
-                result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+                result = subprocess.run(
+                    cmd, capture_output=True, text=True, timeout=300
+                )
                 if result.returncode != 0:
                     logger.error(f"Batch summarizer failed: {result.stderr}")
                 else:
                     logger.info(f"Batch summarization completed: {result.stdout}")
             except subprocess.TimeoutExpired:
-                logger.error("Batch summarizer timed out after 300s - consider reducing limit or running manually")
+                logger.error(
+                    "Batch summarizer timed out after 300s - consider reducing limit or running manually"
+                )
             except Exception as e:
                 logger.error(f"Batch summarizer error: {e}")
 
         background_tasks.add_task(run_batch)
 
-        return {"status": "queued", "limit": limit, "older_than_hours": older_than_hours}
+        return {
+            "status": "queued",
+            "limit": limit,
+            "older_than_hours": older_than_hours,
+        }
 
     except Exception as e:
         logger.error(f"Error triggering batch summarize: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to trigger batch summarization")
+        raise HTTPException(
+            status_code=500, detail="Failed to trigger batch summarization"
+        )
+
+
 @router.post("/sessions/check-in")
 async def check_in(background_tasks: BackgroundTasks):
     """
@@ -344,15 +364,15 @@ async def check_in(background_tasks: BackgroundTasks):
 
         # Check if already summarized
         summary = session_index.get_session_summary(sid)
-        
+
         if summary:
             return {
                 "status": "ready",
                 "session_id": sid,
                 "project": latest_session.project,
-                "summary": summary
+                "summary": summary,
             }
-        
+
         # Not summarized? Trigger it in the background
         logger.info(f"Check-in: Triggering background summary for {sid}")
         background_tasks.add_task(_run_summarizer, sid, use_llm=True)
@@ -361,7 +381,7 @@ async def check_in(background_tasks: BackgroundTasks):
             "status": "initiated",
             "session_id": sid,
             "project": latest_session.project,
-            "message": "Summarizing most recent session in background..."
+            "message": "Summarizing most recent session in background...",
         }
 
     except Exception as e:

@@ -25,12 +25,16 @@ export default async (plugin) => {
       const toolName = input?.tool || "unknown";
       console.log(`[ELF] pre-learning → ${toolName}`);
 
-      const script = `${LEARNING_LOOP_DIR}/pre_tool_learning.py`;
-      const script_semantic_memory = `/home/bamer/OPC_ELF/Emergent-Learning-Framework_ELF/.hooks-templates/PreToolUse/semantic-memory.py`;
-      const data = { input, output, tool_name: toolName };
+const script = `${LEARNING_LOOP_DIR}/pre_tool_learning.py`;
+const data = { input, output, tool_name: toolName };
 
-        $`python3 ${script} ${JSON.stringify(data)}`;
-        $`python3 ${script_semantic_memory} ${JSON.stringify(data)}`;
+  // Use direct command execution for OpenCode
+  const { execSync } = require('child_process');
+  try {
+    execSync(`python3 ${script} '${JSON.stringify(data)}'`, { stdio: 'inherit' });
+  } catch (error) {
+    console.error(`[ELF] Error in pre-tool hook: ${error.message}`);
+  }
 
     },
 
@@ -41,32 +45,47 @@ export default async (plugin) => {
       const toolName = input?.tool || "unknown";
       console.log(`[ELF] post-learning → ${toolName}`);
 
-      const data = { input, output, tool_name: toolName };
+const data = { input, output, tool_name: toolName };
 
-        $`python3 ${LEARNING_LOOP_DIR}/post_tool_learning.py ${JSON.stringify(data)}`;
-
-        $`python3 ${LEARNING_LOOP_DIR}/record_pheromone.py ${JSON.stringify(data)}`;
-
-        $`python3 /home/bamer/OPC_ELF/Emergent-Learning-Framework_ELF/.hooks-templates/PostToolUse/sync-golden-rules.py ${JSON.stringify(data)}`;
+  // Use direct command execution for OpenCode
+  const { execSync } = require('child_process');
+  try {
+    execSync(`python3 ${LEARNING_LOOP_DIR}/post_tool_learning.py '${JSON.stringify(data)}'`, { stdio: 'inherit' });
+    execSync(`python3 ${LEARNING_LOOP_DIR}/record_pheromone.py '${JSON.stringify(data)}'`, { stdio: 'inherit' });
+    execSync(`python3 ${HOOKS_DIR}/post_tool_use/sync-golden-rules.py '${JSON.stringify(data)}'`, { stdio: 'inherit' });
+  } catch (error) {
+    console.error(`[ELF] Error in post-tool hook: ${error.message}`);
+  }
     },
 
     /**
      * Session created
      */
     "session.created": async (data) => {
-      console.log("[ELF] session check-in");
+console.log("[ELF] session check-in");
 
-        $`python3 ${ELF_DIR}/query/checkin.py ${JSON.stringify(data)}`
+  // Use direct command execution for OpenCode
+  const { execSync } = require('child_process');
+  try {
+    execSync(`python3 ${ELF_DIR}/query/checkin.py '${JSON.stringify(data)}'`, { stdio: 'inherit' });
+  } catch (error) {
+    console.error(`[ELF] Error in session check-in: ${error.message}`);
+  }
     },
 
     /**
      * Session deleted
      */
     "session.deleted": async (data) => {
-      console.log("[ELF] session checkout");
+console.log("[ELF] session checkout");
 
-  
-        $`python3 ${ELF_DIR}/query/checkout.py ${JSON.stringify(data)}`
+  // Use direct command execution for OpenCode
+  const { execSync } = require('child_process');
+  try {
+    execSync(`python3 ${ELF_DIR}/query/checkout.py '${JSON.stringify(data)}'`, { stdio: 'inherit' });
+  } catch (error) {
+    console.error(`[ELF] Error in session check-out: ${error.message}`);
+  }
     
     },
 
@@ -78,7 +97,13 @@ export default async (plugin) => {
 
       const data = { input, output, event: "session_compacting" };
 
-        $`python3 ${HOOKS_DIR}/pre_tool_learning.py ${JSON.stringify(data)}`
+  // Use direct command execution for OpenCode
+  const { execSync } = require('child_process');
+  try {
+    execSync(`python3 ${HOOKS_DIR}/pre_tool_learning.py '${JSON.stringify(data)}'`, { stdio: 'inherit' });
+  } catch (error) {
+    console.error(`[ELF] Error in session compacting: ${error.message}`);
+  }
     }
   };
 };

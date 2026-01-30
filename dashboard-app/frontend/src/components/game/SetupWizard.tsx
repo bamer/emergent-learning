@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { AlertCircle, Check, Loader2, Sparkles, Wand2, X } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
 
-const SETUP_API = '/api/setup'
+const SETUP_API = '/api/v1/setup'
 
 interface SetupStatus {
     configured: boolean

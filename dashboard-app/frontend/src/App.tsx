@@ -166,7 +166,7 @@ function AppContent() {
     const performCheckIn = async () => {
       try {
         console.log('[Check-in] Initiating startup handshake...')
-        const response = await api.post('/api/sessions/check-in')
+        const response = await api.post('/api/v1/sessions/check-in')
 
         if (response?.status === 'initiated') {
           notifications.info(
@@ -217,7 +217,7 @@ function AppContent() {
 
   const handleRetryRun = async (runId: string) => {
     try {
-      await api.post(`/api/runs/${runId}/retry`)
+      await api.post(`/api/v1/runs/${runId}/retry`)
     } catch (err) {
       console.error('Failed to retry run:', err)
     }
@@ -225,7 +225,7 @@ function AppContent() {
 
   const handleOpenInEditor = useCallback(async (path: string, line?: number) => {
     try {
-      await api.post('/api/open-in-editor', { path, line })
+      await api.post('/api/v1/open-in-editor', { path, line })
     } catch (err) {
       console.error('Failed to open in editor:', err)
       notifications.error('Editor Error', `Could not open ${path.split('/').pop() || 'file'} in editor`)

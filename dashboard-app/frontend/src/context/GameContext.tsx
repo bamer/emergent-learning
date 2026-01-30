@@ -76,12 +76,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAuth = useCallback(async () => {
         try {
             // 1. Check Auth Session
-            const authRes = await fetch('http://localhost:8888/api/auth/me', { credentials: 'include' });
+            const authRes = await fetch('http://localhost:8888/api/v1/auth/me', { credentials: 'include' });
             const authData = await authRes.json();
 
             if (authData.is_authenticated) {
                 // 2. Fetch Authoritative Game State
-                const gameRes = await fetch('http://localhost:8888/api/game/state', { credentials: 'include' });
+                const gameRes = await fetch('http://localhost:8888/api/v1/game/state', { credentials: 'include' });
                 const gameData = await gameRes.json();
 
                 setState(prev => ({
@@ -96,7 +96,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }));
 
                 // 3. Sync to global leaderboard (non-blocking)
-                fetch('http://localhost:8888/api/game/sync-global', {
+                fetch('http://localhost:8888/api/v1/game/sync-global', {
                     method: 'POST',
                     credentials: 'include'
                 }).catch(() => {/* Ignore errors - global sync is best-effort */});
@@ -135,7 +135,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setState(prev => {
             const newScore = prev.score + points;
             // Optimistic update
-            fetch('http://localhost:8888/api/game/sync', {
+            fetch('http://localhost:8888/api/v1/game/sync', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
@@ -154,7 +154,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const verifyStar = async () => {
         try {
-            const res = await fetch('http://localhost:8888/api/game/verify-star', { method: 'POST', credentials: 'include' });
+            const res = await fetch('http://localhost:8888/api/v1/game/verify-star', { method: 'POST', credentials: 'include' });
             const data = await res.json();
             if (data.success) {
                 await checkAuth(); // Refresh state
@@ -168,11 +168,11 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const login = () => {
-        window.location.href = 'http://localhost:8888/api/auth/login';
+        window.location.href = 'http://localhost:8888/api/v1/auth/login';
     };
 
     const logout = async () => {
-        await fetch('http://localhost:8888/api/auth/logout', { method: 'POST', credentials: 'include' });
+        await fetch('http://localhost:8888/api/v1/auth/logout', { method: 'POST', credentials: 'include' });
         setState(prev => ({
             ...prev,
             githubUser: null,
@@ -214,7 +214,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const setTalkinheadAutolaunch = async (enabled: boolean) => {
         try {
-            const res = await fetch('http://localhost:8888/api/game/talkinhead-settings', {
+            const res = await fetch('http://localhost:8888/api/v1/game/talkinhead-settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

@@ -64,6 +64,14 @@ async def initialize_database(db_path: Optional[str] = None) -> Manager:
     # Ensure parent directory exists
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
+    # Run migrations to ensure schema is up-to-date
+    try:
+        from .migrations import run_migrations_async
+        await run_migrations_async(str(db_path))
+    except Exception as e:
+        import sys
+        print(f"Warning: Migration failed: {e}", file=sys.stderr)
+
     # Create manager with aiosqlite URL
     # Note: aiosqlite uses file path directly (not traditional URL format for file DBs)
     manager = Manager(f'aiosqlite:///{db_path}')
@@ -115,6 +123,13 @@ def get_manager() -> Manager:
 
 async def create_tables():
     """Create all tables if they don't exist (async)."""
+    # First run migrations to ensure schema is up-to-date
+    try:
+        from .migrations import run_migrations_async
+        await run_migrations_async()
+    except ImportError:
+        pass  # Migrations module not available yet
+    
     m = get_manager()
     async with m:
         async with m.connection():
@@ -169,6 +184,14 @@ def initialize_database_sync(db_path: Optional[str] = None) -> Manager:
         db_path = Path(db_path).expanduser()
 
     db_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Run migrations to ensure schema is up-to-date
+    try:
+        from .migrations import run_migrations_sync
+        run_migrations_sync(str(db_path))
+    except Exception as e:
+        import sys
+        print(f"Warning: Migration failed: {e}", file=sys.stderr)
 
     manager = Manager(f'aiosqlite:///{db_path}')
 

@@ -5,7 +5,7 @@ Analytics Router - Stats, timeline, learning velocity, events, anomalies, domain
 from fastapi import APIRouter
 from utils import get_db, dict_from_row
 
-router = APIRouter(prefix="/api", tags=["analytics"])
+router = APIRouter(prefix="/api/v1", tags=["analytics"])
 
 
 @router.get("/stats")
@@ -48,31 +48,64 @@ async def get_stats():
             """)
             row = cursor.fetchone()
             keys = [
-                "total_runs", "total_executions", "total_trails", "total_heuristics", "golden_rules",
-                "total_learnings", "failures", "successes", "total_decisions", "accepted_decisions",
-                "superseded_decisions", "successful_runs", "failed_runs", "avg_confidence",
-                "total_validations", "total_violations", "metrics_last_hour", "runs_today",
-                "total_queries", "queries_today", "avg_query_duration_ms", "total_invariants",
-                "active_invariants", "violated_invariants", "total_invariant_violations"
+                "total_runs",
+                "total_executions",
+                "total_trails",
+                "total_heuristics",
+                "golden_rules",
+                "total_learnings",
+                "failures",
+                "successes",
+                "total_decisions",
+                "accepted_decisions",
+                "superseded_decisions",
+                "successful_runs",
+                "failed_runs",
+                "avg_confidence",
+                "total_validations",
+                "total_violations",
+                "metrics_last_hour",
+                "runs_today",
+                "total_queries",
+                "queries_today",
+                "avg_query_duration_ms",
+                "total_invariants",
+                "active_invariants",
+                "violated_invariants",
+                "total_invariant_violations",
             ]
             # Map values to keys, defaulting None to 0 for counts/sums if appropriate
             for i, key in enumerate(keys):
                 val = row[i]
-                if val is None and key.startswith(("total_", "avg_", "metrics_", "runs_", "active_", "violated_", "failures", "successes", "golden_rules")):
-                     val = 0
+                if val is None and key.startswith(
+                    (
+                        "total_",
+                        "avg_",
+                        "metrics_",
+                        "runs_",
+                        "active_",
+                        "violated_",
+                        "failures",
+                        "successes",
+                        "golden_rules",
+                    )
+                ):
+                    val = 0
                 stats[key] = val
 
         except Exception as e:
-             # Fallback if the massive query fails (unlikely, but safe)
-             print(f"Stats query failed: {e}")
-             return {}
+            # Fallback if the massive query fails (unlikely, but safe)
+            print(f"Stats query failed: {e}")
+            return {}
 
         # Spike reports stats (Separate safe query as table might not exist)
         try:
             cursor.execute("SELECT COUNT(*) FROM spike_reports")
             stats["total_spike_reports"] = cursor.fetchone()[0]
 
-            cursor.execute("SELECT AVG(usefulness_score) FROM spike_reports WHERE usefulness_score > 0")
+            cursor.execute(
+                "SELECT AVG(usefulness_score) FROM spike_reports WHERE usefulness_score > 0"
+            )
             stats["avg_spike_usefulness"] = cursor.fetchone()[0] or 0
 
             cursor.execute("SELECT SUM(time_invested_minutes) FROM spike_reports")
@@ -92,52 +125,64 @@ async def get_timeline(days: int = 7):
         cursor = conn.cursor()
 
         # Runs by day
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DATE(created_at) as date, COUNT(*) as runs
             FROM workflow_runs
             WHERE created_at > datetime('now', ?)
             GROUP BY DATE(created_at)
             ORDER BY date
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         runs_by_day = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Trails by day
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DATE(created_at) as date, COUNT(*) as trails, SUM(strength) as strength
             FROM trails
             WHERE created_at > datetime('now', ?)
             GROUP BY DATE(created_at)
             ORDER BY date
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         trails_by_day = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Validations by day
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DATE(timestamp) as date, COUNT(*) as validations
             FROM metrics
             WHERE metric_type = 'heuristic_validated'
               AND timestamp > datetime('now', ?)
             GROUP BY DATE(timestamp)
             ORDER BY date
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         validations_by_day = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Failures by day
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DATE(timestamp) as date, COUNT(*) as failures
             FROM metrics
             WHERE metric_type = 'auto_failure_capture'
               AND timestamp > datetime('now', ?)
             GROUP BY DATE(timestamp)
             ORDER BY date
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         failures_by_day = [dict_from_row(r) for r in cursor.fetchall()]
 
         return {
             "runs": runs_by_day,
             "trails": trails_by_day,
             "validations": validations_by_day,
-            "failures": failures_by_day
+            "failures": failures_by_day,
         }
 
 
@@ -148,17 +193,21 @@ async def get_learning_velocity(days: int = 30):
         cursor = conn.cursor()
 
         # Heuristics created per day
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DATE(created_at) as date, COUNT(*) as count
             FROM heuristics
             WHERE created_at > datetime('now', ?)
             GROUP BY DATE(created_at)
             ORDER BY date
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         heuristics_by_day = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Learnings created per day
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DATE(created_at) as date,
                    COUNT(*) as total,
                    SUM(CASE WHEN type = 'failure' THEN 1 ELSE 0 END) as failures,
@@ -167,11 +216,14 @@ async def get_learning_velocity(days: int = 30):
             WHERE created_at > datetime('now', ?)
             GROUP BY DATE(created_at)
             ORDER BY date
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         learnings_by_day = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Golden rule promotions per day
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DATE(updated_at) as date, COUNT(*) as count
             FROM heuristics
             WHERE is_golden = 1
@@ -179,21 +231,27 @@ async def get_learning_velocity(days: int = 30):
               AND updated_at > created_at
             GROUP BY DATE(updated_at)
             ORDER BY date
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         promotions_by_day = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Confidence improvement rate - track average confidence over time
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DATE(updated_at) as date, AVG(confidence) as avg_confidence
             FROM heuristics
             WHERE updated_at > datetime('now', ?)
             GROUP BY DATE(updated_at)
             ORDER BY date
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         confidence_by_day = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Calculate weekly aggregates for trend analysis
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 strftime('%Y-W%W', created_at) as week,
                 COUNT(*) as heuristics_count
@@ -201,11 +259,14 @@ async def get_learning_velocity(days: int = 30):
             WHERE created_at > datetime('now', ?)
             GROUP BY week
             ORDER BY week
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         heuristics_by_week = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Learning streak - consecutive days with new heuristics or learnings
-        cursor.execute("""
+        cursor.execute(
+            """
             WITH RECURSIVE dates(date) AS (
                 SELECT DATE('now')
                 UNION ALL
@@ -226,12 +287,15 @@ async def get_learning_velocity(days: int = 30):
             INNER JOIN activity a ON d.date = a.date
             WHERE d.date <= DATE('now')
             ORDER BY d.date DESC
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         streak_result = cursor.fetchone()
         current_streak = streak_result[0] if streak_result else 0
 
         # Success/failure trend - ratio over time
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT DATE(created_at) as date,
                    COUNT(*) as total,
                    CAST(SUM(CASE WHEN type = 'success' THEN 1 ELSE 0 END) AS FLOAT) /
@@ -241,37 +305,45 @@ async def get_learning_velocity(days: int = 30):
             GROUP BY DATE(created_at)
             HAVING total > 0
             ORDER BY date
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         success_trend = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Calculate velocity trends (% change week over week)
         heuristics_trend = 0.0
         if len(heuristics_by_week) >= 2:
-            recent_week = heuristics_by_week[-1]['heuristics_count']
-            prev_week = heuristics_by_week[-2]['heuristics_count']
+            recent_week = heuristics_by_week[-1]["heuristics_count"]
+            prev_week = heuristics_by_week[-2]["heuristics_count"]
             if prev_week > 0:
                 heuristics_trend = ((recent_week - prev_week) / prev_week) * 100
 
         # Total stats for the period
-        total_heuristics_period = sum(d['count'] for d in heuristics_by_day)
-        total_learnings_period = sum(d['total'] for d in learnings_by_day)
-        total_promotions_period = sum(d['count'] for d in promotions_by_day)
+        total_heuristics_period = sum(d["count"] for d in heuristics_by_day)
+        total_learnings_period = sum(d["total"] for d in learnings_by_day)
+        total_promotions_period = sum(d["count"] for d in promotions_by_day)
 
         # Failure-to-learning conversion rate
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COUNT(*) as total_failures
             FROM learnings
             WHERE type = 'failure'
               AND created_at > datetime('now', ?)
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         total_failures = cursor.fetchone()[0] or 0
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COUNT(*) as heuristics_from_failures
             FROM heuristics
             WHERE source_type = 'failure'
               AND created_at > datetime('now', ?)
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         heuristics_from_failures = cursor.fetchone()[0] or 0
 
         failure_to_learning_rate = 0.0
@@ -282,24 +354,29 @@ async def get_learning_velocity(days: int = 30):
         avg_confidence_start = 0.0
         avg_confidence_end = 0.0
         if len(confidence_by_day) >= 2:
-            avg_confidence_start = confidence_by_day[0].get('avg_confidence', 0) or 0
-            avg_confidence_end = confidence_by_day[-1].get('avg_confidence', 0) or 0
+            avg_confidence_start = confidence_by_day[0].get("avg_confidence", 0) or 0
+            avg_confidence_end = confidence_by_day[-1].get("avg_confidence", 0) or 0
         confidence_improvement = avg_confidence_end - avg_confidence_start
 
         # Golden rule promotion rate
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT COUNT(*) as total_promotable
             FROM heuristics
             WHERE confidence >= 0.8
               AND times_validated >= 5
               AND is_golden = 0
               AND created_at > datetime('now', ?)
-        """, (f'-{days} days',))
+        """,
+            (f"-{days} days",),
+        )
         total_promotable = cursor.fetchone()[0] or 0
 
         promotion_rate = 0.0
         if total_promotable + total_promotions_period > 0:
-            promotion_rate = (total_promotions_period / (total_promotable + total_promotions_period)) * 100
+            promotion_rate = (
+                total_promotions_period / (total_promotable + total_promotions_period)
+            ) * 100
 
         return {
             "heuristics_by_day": heuristics_by_day,
@@ -318,8 +395,8 @@ async def get_learning_velocity(days: int = 30):
                 "learnings": total_learnings_period,
                 "promotions": total_promotions_period,
                 "failures": total_failures,
-                "heuristics_from_failures": heuristics_from_failures
-            }
+                "heuristics_from_failures": heuristics_from_failures,
+            },
         }
 
 
@@ -332,13 +409,16 @@ async def get_events(limit: int = 50):
         events = []
 
         # Recent metrics (last hour)
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT metric_type, metric_name, metric_value, tags, context, timestamp
             FROM metrics
             WHERE timestamp > datetime('now', '-1 hour')
             ORDER BY timestamp DESC
             LIMIT ?
-        """, (limit,))
+        """,
+            (limit,),
+        )
 
         for row in cursor.fetchall():
             r = dict_from_row(row)
@@ -358,13 +438,15 @@ async def get_events(limit: int = 50):
             else:
                 message = f"{event_type}: {r['metric_name']}"
 
-            events.append({
-                "type": event_type,
-                "message": message,
-                "timestamp": r["timestamp"],
-                "tags": r["tags"],
-                "context": r["context"]
-            })
+            events.append(
+                {
+                    "type": event_type,
+                    "message": message,
+                    "timestamp": r["timestamp"],
+                    "tags": r["tags"],
+                    "context": r["context"],
+                }
+            )
 
         return events
 
@@ -403,12 +485,14 @@ async def get_anomalies():
             HAVING fail_count >= 3
         """)
         for row in cursor.fetchall():
-            anomalies.append({
-                "type": "repeated_failure",
-                "severity": "error",
-                "message": f"Node '{row['node_name']}' failed {row['fail_count']} times in 24h",
-                "data": {"node_name": row["node_name"], "count": row["fail_count"]}
-            })
+            anomalies.append(
+                {
+                    "type": "repeated_failure",
+                    "severity": "error",
+                    "message": f"Node '{row['node_name']}' failed {row['fail_count']} times in 24h",
+                    "data": {"node_name": row["node_name"], "count": row["fail_count"]},
+                }
+            )
 
         # Sudden hot spots
         cursor.execute("""
@@ -426,12 +510,14 @@ async def get_anomalies():
             LIMIT 5
         """)
         for row in cursor.fetchall():
-            anomalies.append({
-                "type": "new_hotspot",
-                "severity": "info",
-                "message": f"New hot spot: {row['location']} ({row['count']} trails)",
-                "data": {"location": row["location"], "strength": row["strength"]}
-            })
+            anomalies.append(
+                {
+                    "type": "new_hotspot",
+                    "severity": "info",
+                    "message": f"New hot spot: {row['location']} ({row['count']} trails)",
+                    "data": {"location": row["location"], "strength": row["strength"]},
+                }
+            )
 
         # Heuristics being violated frequently
         cursor.execute("""
@@ -442,12 +528,17 @@ async def get_anomalies():
             LIMIT 5
         """)
         for row in cursor.fetchall():
-            anomalies.append({
-                "type": "heuristic_violations",
-                "severity": "warning",
-                "message": f"Heuristic violated {row['times_violated']}x: {row['rule'][:50]}...",
-                "data": {"heuristic_id": row["id"], "violations": row["times_violated"]}
-            })
+            anomalies.append(
+                {
+                    "type": "heuristic_violations",
+                    "severity": "warning",
+                    "message": f"Heuristic violated {row['times_violated']}x: {row['rule'][:50]}...",
+                    "data": {
+                        "heuristic_id": row["id"],
+                        "violations": row["times_violated"],
+                    },
+                }
+            )
 
         # Stale runs (running for too long)
         cursor.execute("""
@@ -457,11 +548,13 @@ async def get_anomalies():
               AND started_at < datetime('now', '-1 hour')
         """)
         for row in cursor.fetchall():
-            anomalies.append({
-                "type": "stale_run",
-                "severity": "warning",
-                "message": f"Run #{row['id']} ({row['workflow_name']}) has been running for >1 hour",
-                "data": {"run_id": row["id"]}
-            })
+            anomalies.append(
+                {
+                    "type": "stale_run",
+                    "severity": "warning",
+                    "message": f"Run #{row['id']} ({row['workflow_name']}) has been running for >1 hour",
+                    "data": {"run_id": row["id"]},
+                }
+            )
 
     return anomalies

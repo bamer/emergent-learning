@@ -18,7 +18,7 @@ from pydantic import BaseModel
 
 from utils.database import get_db, dict_from_row
 
-router = APIRouter(prefix="/api/live", tags=["live"])
+router = APIRouter(prefix="/api/v1/live", tags=["live"])
 logger = logging.getLogger(__name__)
 
 # Path to Claude Code tasks directory
@@ -42,12 +42,12 @@ def _load_session_names() -> Dict[str, str]:
             continue
 
         try:
-            with open(index_file, 'r') as f:
+            with open(index_file, "r") as f:
                 data = json.load(f)
-                for entry in data.get('entries', []):
-                    session_id = entry.get('sessionId', '')
+                for entry in data.get("entries", []):
+                    session_id = entry.get("sessionId", "")
                     # Prefer summary, fall back to truncated firstPrompt
-                    name = entry.get('summary') or entry.get('firstPrompt', '')[:50]
+                    name = entry.get("summary") or entry.get("firstPrompt", "")[:50]
                     if session_id and name:
                         session_names[session_id] = name
         except (json.JSONDecodeError, IOError) as e:
@@ -58,6 +58,7 @@ def _load_session_names() -> Dict[str, str]:
 
 class SignalRequest(BaseModel):
     """Request body for adding a note to a task."""
+
     task_id: str
     session_id: str
     note_text: str
@@ -65,6 +66,7 @@ class SignalRequest(BaseModel):
 
 class TaskStatusRequest(BaseModel):
     """Request body for changing task status."""
+
     status: str  # 'blocked', 'cancelled', 'pending', 'in_progress', 'completed'
     reason: Optional[str] = None
 
@@ -82,23 +84,23 @@ def _load_tasks_from_dir() -> Dict[str, List[Dict[str, Any]]]:
             continue
 
         session_id = session_dir.name
-        session_name = session_names.get(session_id, session_id[:8] + '...')
+        session_name = session_names.get(session_id, session_id[:8] + "...")
         tasks = []
 
         for task_file in session_dir.glob("*.json"):
             try:
-                with open(task_file, 'r') as f:
+                with open(task_file, "r") as f:
                     task_data = json.load(f)
-                    task_data['session_id'] = session_id
-                    task_data['session_name'] = session_name
-                    task_data['file_path'] = str(task_file)
+                    task_data["session_id"] = session_id
+                    task_data["session_name"] = session_name
+                    task_data["file_path"] = str(task_file)
                     tasks.append(task_data)
             except (json.JSONDecodeError, IOError) as e:
                 logger.warning(f"Failed to load task file {task_file}: {e}")
 
         if tasks:
             # Sort by ID (numeric)
-            tasks.sort(key=lambda t: int(t.get('id', 0)))
+            tasks.sort(key=lambda t: int(t.get("id", 0)))
             sessions[session_id] = tasks
 
     return sessions
@@ -208,17 +210,20 @@ async def _generate_trail_events(request: Request):
         try:
             with get_db() as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT id, location, scent, strength, agent_id, message, created_at
                     FROM trails
                     WHERE id > ?
                     ORDER BY created_at ASC
-                """, (last_trail_id,))
+                """,
+                    (last_trail_id,),
+                )
 
                 new_trails = [dict_from_row(r) for r in cursor.fetchall()]
 
                 if new_trails:
-                    last_trail_id = max(t['id'] for t in new_trails)
+                    last_trail_id = max(t["id"] for t in new_trails)
                     yield f"data: {json.dumps({'type': 'new_trails', 'trails': new_trails})}\n\n"
 
         except Exception as e:
@@ -246,7 +251,7 @@ async def stream_tasks(request: Request):
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",  # Disable nginx buffering
-        }
+        },
     )
 
 
@@ -268,7 +273,7 @@ async def stream_trails(request: Request):
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
-        }
+        },
     )
 
 
@@ -295,18 +300,20 @@ async def get_active_sessions():
         # Count by status
         status_counts = {}
         for task in tasks:
-            status = task.get('status', 'pending')
+            status = task.get("status", "pending")
             status_counts[status] = status_counts.get(status, 0) + 1
 
-        result.append({
-            'session_id': session_id,
-            'task_count': len(tasks),
-            'status_counts': status_counts,
-            'last_activity': last_activity,
-        })
+        result.append(
+            {
+                "session_id": session_id,
+                "task_count": len(tasks),
+                "status_counts": status_counts,
+                "last_activity": last_activity,
+            }
+        )
 
     # Sort by last activity, most recent first
-    result.sort(key=lambda s: s.get('last_activity') or '', reverse=True)
+    result.sort(key=lambda s: s.get("last_activity") or "", reverse=True)
 
     return result
 
@@ -325,34 +332,39 @@ async def add_task_signal(signal: SignalRequest):
     task_file = TASKS_DIR / signal.session_id / f"{signal.task_id}.json"
 
     if not task_file.exists():
-        raise HTTPException(status_code=404, detail=f"Task {signal.task_id} not found in session {signal.session_id}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Task {signal.task_id} not found in session {signal.session_id}",
+        )
 
     try:
         # Load existing task
-        with open(task_file, 'r') as f:
+        with open(task_file, "r") as f:
             task_data = json.load(f)
 
         # Add note
-        if 'notes' not in task_data:
-            task_data['notes'] = []
+        if "notes" not in task_data:
+            task_data["notes"] = []
 
         note_entry = {
-            'text': signal.note_text,
-            'timestamp': datetime.now().isoformat(),
-            'source': 'dashboard'
+            "text": signal.note_text,
+            "timestamp": datetime.now().isoformat(),
+            "source": "dashboard",
         }
-        task_data['notes'].append(note_entry)
+        task_data["notes"].append(note_entry)
 
         # Save back
-        with open(task_file, 'w') as f:
+        with open(task_file, "w") as f:
             json.dump(task_data, f, indent=2)
 
-        logger.info(f"Added note to task {signal.task_id} in session {signal.session_id}")
+        logger.info(
+            f"Added note to task {signal.task_id} in session {signal.session_id}"
+        )
 
         return {
             "status": "ok",
             "task_id": signal.task_id,
-            "note_added": signal.note_text
+            "note_added": signal.note_text,
         }
 
     except json.JSONDecodeError as e:
@@ -374,38 +386,42 @@ async def update_task_status(session_id: str, task_id: str, request: TaskStatusR
     Returns:
         {"status": "ok", "task_id": "...", "new_status": "..."}
     """
-    valid_statuses = {'pending', 'in_progress', 'completed', 'blocked', 'cancelled'}
+    valid_statuses = {"pending", "in_progress", "completed", "blocked", "cancelled"}
     if request.status not in valid_statuses:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+            detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}",
         )
 
     task_file = TASKS_DIR / session_id / f"{task_id}.json"
 
     if not task_file.exists():
-        raise HTTPException(status_code=404, detail=f"Task {task_id} not found in session {session_id}")
+        raise HTTPException(
+            status_code=404, detail=f"Task {task_id} not found in session {session_id}"
+        )
 
     try:
         # Load existing task
-        with open(task_file, 'r') as f:
+        with open(task_file, "r") as f:
             task_data = json.load(f)
 
-        old_status = task_data.get('status', 'pending')
-        task_data['status'] = request.status
+        old_status = task_data.get("status", "pending")
+        task_data["status"] = request.status
 
         # Add status change to notes if reason provided
         if request.reason:
-            if 'notes' not in task_data:
-                task_data['notes'] = []
-            task_data['notes'].append({
-                'text': f"Status changed from {old_status} to {request.status}: {request.reason}",
-                'timestamp': datetime.now().isoformat(),
-                'source': 'dashboard'
-            })
+            if "notes" not in task_data:
+                task_data["notes"] = []
+            task_data["notes"].append(
+                {
+                    "text": f"Status changed from {old_status} to {request.status}: {request.reason}",
+                    "timestamp": datetime.now().isoformat(),
+                    "source": "dashboard",
+                }
+            )
 
         # Save back
-        with open(task_file, 'w') as f:
+        with open(task_file, "w") as f:
             json.dump(task_data, f, indent=2)
 
         logger.info(f"Updated task {task_id} status to {request.status}")
@@ -414,7 +430,7 @@ async def update_task_status(session_id: str, task_id: str, request: TaskStatusR
             "status": "ok",
             "task_id": task_id,
             "old_status": old_status,
-            "new_status": request.status
+            "new_status": request.status,
         }
 
     except json.JSONDecodeError as e:

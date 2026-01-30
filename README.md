@@ -1,0 +1,370 @@
+<p align="center">
+  <img src="docs/assets/header.gif" alt="Emergent Learning Framework" width="100%">
+</p>
+
+# Emergent Learning Framework
+
+> Persistent memory and pattern tracking for Opencode sessions.
+
+Opencode learns from your failures and successes, building institutional knowledge that persists across sessions. Patterns strengthen automatically. Install once, watch knowledge compound over weeks.
+
+## Install
+
+```bash
+./install.sh              # Mac/Linux
+./install.ps1             # Windows
+```
+
+**Windows:** Run the installer from PowerShell or CMD; Git Bash is not supported.
+
+**Default path:** `~/.opencode/emergent-learning` (override with `ELF_BASE_PATH` to run from a different location).
+
+**New to ELF?** See the [Getting Started Guide](GETTING_STARTED.md) for detailed step-by-step instructions including prerequisites and troubleshooting.
+
+## First Use: Say "check in"
+
+**Every session, start with `check in`.** This is the most important habit:
+
+```
+You: check in
+
+Claude: [Queries building, starts dashboard, returns golden rules + heuristics]
+```
+
+**Auto-Setup on First Check-In:**
+- **New user:** Everything installs automatically - config, commands, hooks
+- **Existing AGENTS.md:** Selection boxes to choose merge/replace/skip
+- **Already configured:** Proceeds normally
+
+**What "check in" does:**
+- **First time ever:** Auto-installs config, hooks, /search, /checkin, /checkout, /swarm commands
+- **Start of session:** Loads knowledge, starts dashboard at http://localhost:3001 (Ctrl+click to open)
+- **When stuck:** Searches for relevant patterns that might help
+- **Before closing:** Run `/checkout` to record learnings (CYA - cover your ass)
+
+**When to check in / checkout:**
+| Moment | Command | Why |
+|--------|---------|-----|
+| Start of every session | `/checkin` | Load context, start dashboard, prevent repeating mistakes |
+| When you hit a problem | `/search` | See if building knows about this issue |
+| Before closing session | `/checkout` | Record postmortems, heuristics, failures, and notes |
+
+## Dashboard Views
+
+### Domain Cards
+![Domain Cards](docs/assets/dashboard-cards.png)
+Browse knowledge by domain - see heuristic counts, golden rules, and confidence at a glance. Click any card to inspect.
+
+### Galaxy View
+![Galaxy View](docs/assets/dashboard-galaxy.png)
+3D visualization of your knowledge domains as orbiting planets. Eve watches from the corner, ready to celebrate your wins.
+
+### Eve - TalkinHead
+Animated avatar overlay that appears on your desktop. Celebrates task completions with voice and animation. Hover for controls (Ctrl+Q close, Ctrl+Click move, Alt+Click resize).
+
+## Core Features
+
+| Feature | What It Does |
+|---------|--------------|
+| **Persistent Learning** | Failures and successes recorded to SQLite, survive across sessions |
+| **Heuristics** | Patterns gain confidence through validation (0.0 -> 1.0) |
+| **Golden Rules** | High-confidence heuristics promoted to constitutional principles |
+| **Pheromone Trails** | Files touched by tasks tracked for hotspot analysis |
+| **Coordinated Swarms** | Multi-agent workflows with specialized personas |
+| **Local Dashboard** | Visual monitoring at http://localhost:3001 (no API tokens used) |
+| **Session History** | Browse all Opencode sessions in dashboard - search, filter by project/date, expand to see full conversations |
+| **Cross-Session Continuity** | Pick up where you left off - search what you asked in previous sessions. Lightweight retrieval (~500 tokens), or ~20k for heavy users reviewing full day |
+| **Async Watcher** | Background Haiku monitors your work, escalates to Opus only when needed. 95% cheaper than constant Opus monitoring |
+
+### Hotspots
+![Hotspots](docs/assets/Hotspots.png)
+Treemap of file activity - see which files get touched most and spot anomalies at a glance.
+
+### Graph
+![Graph](docs/assets/graph.png)
+Interactive knowledge graph showing how heuristics connect across domains.
+
+### Analytics
+![Analytics](docs/assets/analytics.png)
+Track learning velocity, success rates, and confidence trends over time.
+
+### Cross-Session Continuity
+
+Ever close a session and forget what you were working on? Use `/search` with natural language:
+
+```
+/search what was my last prompt?
+/search what was I working on yesterday?
+/search find prompts about git
+/search when did I last check in?
+```
+
+Just type `/search` followed by your question in plain English. Pick up where you left off instantly.
+
+**Token Usage:** ~500 tokens for quick lookups, scales with how much history you request.
+
+### Session History (Dashboard)
+
+Browse your Opencode session history visually in the dashboard's **Sessions** tab:
+
+- **Search** - Filter sessions by prompt text
+- **Project Filter** - Focus on specific projects
+- **Date Range** - Today, 7 days, 30 days, or all time
+- **Expandable Cards** - Click to see full conversation with user/assistant messages
+- **Tool Usage** - See what tools Claude used in each response
+
+No tokens consumed - reads directly from `~/.opencode/projects/` JSONL files.
+
+### Async Watcher
+
+A background Haiku agent monitors coordination state every 30 seconds. When it detects something that needs attention, it escalates to Opus automatically.
+
+```
+┌─────────────────┐     exit 1      ┌─────────────────┐
+│  Haiku (Tier 1) │ ──────────────► │  Opus (Tier 2)  │
+│  Fast checks    │   "need help"   │  Deep analysis  │
+│  ~$0.001/check  │                 │  ~$0.10/call    │
+└─────────────────┘                 └─────────────────┘
+```
+
+Runs automatically - no user interaction required. See [src/watcher/README.md](src/watcher/README.md) for configuration and details.
+
+## How It Works
+
+```
++---------------------------------------------------+
+|              The Learning Loop                    |
++---------------------------------------------------+
+|  QUERY   ->  Check building for knowledge         |
+|  APPLY   ->  Use heuristics during task           |
+|  RECORD  ->  Capture outcome (success/failure)    |
+|  PERSIST ->  Update confidence scores             |
+|                    |                              |
+|         (cycle repeats, patterns strengthen)      |
++---------------------------------------------------+
+```
+
+## Auto-Learning with [LEARNED:] Markers
+
+Subagents can mark discoveries inline to auto-record learnings:
+
+```
+[LEARNED:domain] The lesson or pattern discovered
+```
+
+Examples:
+- `[LEARNED:react] Always use refs for callbacks in useEffect`
+- `[LEARNED:api] Validate input at system boundaries`
+
+**How it works:** Post-tool hooks extract markers and convert them to heuristics (if they contain "always", "never", "should", "must") or observations. Domain is optional—defaults to "general" if not specified.
+
+**Benefit:** Quick, inline learning capture without manual recording. Automatic confidence tracking.
+
+---
+
+## Key Phrases
+
+| Say This / Command | What Happens |
+|----------|--------------|
+| `/checkin` | Start dashboard, query building, show golden rules + heuristics |
+| `check in` | Same as /checkin |
+| `query the building` | Same as /checkin |
+| `what does the building know about X` | Search for topic X |
+| `/checkout` | Record postmortems, heuristics, failures, and notes before closing |
+| `/search [question]` | Search session history with natural language |
+| `record this failure: [lesson]` | Create failure log |
+| `record this success: [pattern]` | Document what worked |
+
+## Quick Commands
+
+```bash
+# Start of session - load context
+/checkin
+
+# Before closing - record learnings
+/checkout
+
+# Check what has been learned
+python src/query/query.py --stats
+
+# Search session history
+/search what was I working on yesterday?
+
+# Start dashboard manually (if needed)
+cd apps/dashboard && ./run-dashboard.sh
+
+# Multi-agent swarm (Pro/Max plans)
+/swarm investigate the authentication system
+```
+
+## Programmatic Usage (v0.2.0+)
+
+The QuerySystem uses async/await for non-blocking database operations:
+
+```python
+import asyncio
+from query import QuerySystem
+
+async def main():
+    # Initialize with factory method
+    qs = await QuerySystem.create()
+
+    try:
+        # Build context for a task
+        context = await qs.build_context("My task", domain="debugging")
+
+        # Query by domain
+        results = await qs.query_by_domain("testing", limit=10)
+
+        # Get statistics
+        stats = await qs.get_statistics()
+
+        # Run multiple queries concurrently (2.9x faster for mixed workloads)
+        context, stats, recent = await asyncio.gather(
+            qs.build_context("task"),
+            qs.get_statistics(),
+            qs.query_recent(limit=5)
+        )
+    finally:
+        await qs.cleanup()
+
+asyncio.run(main())
+```
+
+**CLI unchanged** - handles async internally:
+```bash
+python -m query --context --domain debugging
+python -m query --stats
+python -m query --validate
+```
+
+See [query/MIGRATION.md](query/MIGRATION.md) for migration guide from sync API.
+
+## Swarm Agents (100 Specialists)
+
+ELF integrates **100 specialized agents** from [wshobson/agents](https://github.com/wshobson/agents):
+
+| Category | Agents | Use Case |
+|----------|--------|----------|
+| **backend** | backend-architect, graphql-architect, fastapi-pro | API design, microservices |
+| **frontend** | frontend-developer, mobile-developer, ui-ux-designer | UI/UX, mobile apps |
+| **infrastructure** | cloud-architect, kubernetes-architect, terraform-specialist | DevOps, cloud |
+| **security** | security-auditor, threat-modeling-expert | Security hardening |
+| **database** | database-architect, sql-pro, data-engineer | Schema, queries |
+| **quality** | code-reviewer, test-automator, tdd-orchestrator | Reviews, testing |
+| **ai_ml** | ai-engineer, prompt-engineer, ml-engineer | AI/ML development |
+| **languages** | python-pro, typescript-pro, rust-pro, golang-pro + 13 more | Language specialists |
+
+**Install agent pool:**
+```bash
+./tools/setup/install-agents.sh
+```
+
+**Use with swarm:**
+```bash
+/swarm implement a new REST API    # Auto-selects backend-architect, security-auditor
+/swarm optimize database queries   # Auto-selects database-architect, sql-pro
+```
+
+See [Swarm Wiki](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Swarm) for full agent list and usage.
+
+## Documentation
+
+**Quick Start:** [Getting Started Guide](GETTING_STARTED.md) - Step-by-step setup from zero to running
+
+Full documentation in the [Wiki](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki):
+
+- [Installation](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Installation) - Prerequisites, options, troubleshooting
+- [Configuration](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Configuration) - AGENTS.md, settings.json, hooks
+- [Dashboard](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Dashboard) - Tabs, stats, themes
+- [Swarm](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Swarm) - Multi-agent coordination, blackboard pattern
+- [CLI Reference](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/CLI-Reference) - All query commands
+- [Golden Rules](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Golden-Rules) - How to customize principles
+- [Migration](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Migration) - Upgrading, team setup
+- [Architecture](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Architecture) - Database schema, hooks system
+- [Token Costs](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/wiki/Token-Costs) - Usage breakdown, optimization
+
+## Plan Compatibility
+
+| Plan | Core + Dashboard | Swarm |
+|------|------------------|-------|
+| Free | Yes | No |
+| Pro ($20) | Yes | Yes |
+| Max ($100+) | Yes | Yes |
+
+## Troubleshooting
+
+### Windows Git Bash not supported (Issue #11)
+
+If you see `Cannot find module @rollup/rollup-win32-x64-msvc` when starting the dashboard:
+
+**Cause:** Git Bash makes npm think it's running on Linux, so it installs Linux-specific binaries instead of Windows binaries.
+
+**Fix Option 1:** Use PowerShell or CMD for npm install:
+```powershell
+cd apps/dashboard/frontend
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**Fix Option 2:** Use Bun (handles platform detection correctly):
+```bash
+bun install
+```
+
+The run-dashboard.sh script will now detect this issue and warn you before failing.
+
+## Links
+
+- [Opencode Docs](https://docs.anthropic.com/en/docs/claude-code)
+- [Hooks System](https://docs.anthropic.com/en/docs/claude-code/hooks)
+- [Community & Support](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/discussions)
+
+## License
+
+MIT License
+
+Copyright (c) 2025
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+<a href="https://www.buymeacoffee.com/Spacehunterz">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" width="150">
+</a>
+
+## Credits
+
+- **Agent Pool:** [wshobson/agents](https://github.com/wshobson/agents) - 100 specialized agent personas by [@wshobson](https://github.com/wshobson)
+- **Persistent semantic memory system for Opencode:** [zacdcook/claude-code-semantic-memory](https://github.com/zacdcook/claude-code-semantic-memory) by [@zacdcook](https://github.com/zacdcook)
+
+## Contributors 🙏
+
+A special thanks to the incredible humans shaping ELF:
+
+- **🐛 [@Mimosel](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/discussions)** - #1 Bug Tester & UX Champion
+
+  Mimosel has been instrumental in identifying edge cases, questioning assumptions, and pushing the framework to be better. From catching critical bugs to proposing features like `/checkout`, your relentless testing and thoughtful feedback have made ELF what it is today. 🚀 The framework wouldn't be nearly as solid without you!
+
+---
+
+## Development Status
+
+ELF is under heavy active development. Rapid commits reflect live experimentation, architectural refinement, and real-world usage. The main branch represents active research and may change frequently. Stable checkpoints will be published as versioned GitHub releases; users who prefer stability should rely on tagged releases rather than the latest commit.
+
+**Not accepting pull requests. Questions welcome via [Discussions](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/discussions).**

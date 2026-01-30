@@ -33,7 +33,7 @@ export default function AssumptionsPanel({ className = '' }: AssumptionsPanelPro
       if (domainFilter !== 'all') params.append('domain', domainFilter)
       if (minConfidence > 0) params.append('min_confidence', (minConfidence / 100).toString())
 
-      const data = await api.get(`/api/assumptions?${params.toString()}`)
+      const data = await api.get(`/api/v1/assumptions?${params.toString()}`)
       setAssumptions(data || [])
 
       const uniqueDomains = Array.from(new Set(data?.map((a: Assumption) => a.domain).filter(Boolean))) as string[]
@@ -48,7 +48,7 @@ export default function AssumptionsPanel({ className = '' }: AssumptionsPanelPro
   const handleVerify = async (id: number) => {
     setActionLoading(id)
     try {
-      await api.post(`/api/assumptions/${id}/verify`)
+      await api.post(`/api/v1/assumptions/${id}/verify`)
       setAssumptions(prev => prev.map(a =>
         a.id === id
           ? { ...a, verified_count: a.verified_count + 1, status: 'verified' as const, last_verified_at: new Date().toISOString() }
@@ -64,7 +64,7 @@ export default function AssumptionsPanel({ className = '' }: AssumptionsPanelPro
   const handleChallenge = async (id: number) => {
     setActionLoading(id)
     try {
-      await api.post(`/api/assumptions/${id}/challenge`)
+      await api.post(`/api/v1/assumptions/${id}/challenge`)
       setAssumptions(prev => prev.map(a =>
         a.id === id
           ? { ...a, challenged_count: a.challenged_count + 1, status: 'challenged' as const }

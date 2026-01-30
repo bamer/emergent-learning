@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 audit_logger = logging.getLogger(f"{__name__}.audit")
 
 # Router
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -26,11 +26,14 @@ limiter = Limiter(key_func=get_remote_address)
 # Configuration - GitHub OAuth
 # Option 1: Direct OAuth (set GITHUB_CLIENT_ID + GITHUB_CLIENT_SECRET)
 # Option 2: Worker proxy (set OAUTH_WORKER_URL only - client_id fetched from worker)
-OAUTH_WORKER_URL = os.environ.get("OAUTH_WORKER_URL", "https://elf-oauth.elf0auth.workers.dev")
+OAUTH_WORKER_URL = os.environ.get(
+    "OAUTH_WORKER_URL", "https://elf-oauth.elf0auth.workers.dev"
+)
 GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID")
 GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET")
 
 USE_OAUTH_WORKER = not GITHUB_CLIENT_SECRET
+
 
 async def get_oauth_config():
     """Get OAuth config - from env or worker"""
@@ -43,12 +46,16 @@ async def get_oauth_config():
         GITHUB_CLIENT_ID = data.get("client_id")
         return GITHUB_CLIENT_ID
 
+
 # Session encryption key - auto-generate if not set
 SESSION_ENCRYPTION_KEY = os.environ.get("SESSION_ENCRYPTION_KEY")
 if not SESSION_ENCRYPTION_KEY:
     from cryptography.fernet import Fernet
+
     SESSION_ENCRYPTION_KEY = Fernet.generate_key().decode()
-    logger.warning("SESSION_ENCRYPTION_KEY not set - generated temporary key (sessions won't persist across restarts)")
+    logger.warning(
+        "SESSION_ENCRYPTION_KEY not set - generated temporary key (sessions won't persist across restarts)"
+    )
 
 cipher = Fernet(SESSION_ENCRYPTION_KEY.encode())
 SESSION_DOMAIN = os.environ.get("SESSION_DOMAIN", "localhost")
@@ -58,18 +65,20 @@ SESSION_IDLE_TIMEOUT = int(os.environ.get("SESSION_IDLE_TIMEOUT", "86400"))
 async_redis_client = None
 USE_REDIS = False
 
+
 async def init_redis():
     """Initialize async Redis client during FastAPI startup"""
     global async_redis_client, USE_REDIS
     try:
         from redis.asyncio import Redis
+
         async_redis_client = Redis(
             host=os.environ.get("REDIS_HOST", "localhost"),
             port=int(os.environ.get("REDIS_PORT", 6379)),
             db=0,
             decode_responses=False,
             socket_connect_timeout=5,
-            socket_timeout=5
+            socket_timeout=5,
         )
         await async_redis_client.ping()
         USE_REDIS = True
@@ -78,7 +87,9 @@ async def init_redis():
         logger.warning("Redis module not installed - using in-memory sessions")
         USE_REDIS = False
     except Exception as e:
-        logger.warning(f"Redis unavailable - using in-memory sessions: {type(e).__name__}")
+        logger.warning(
+            f"Redis unavailable - using in-memory sessions: {type(e).__name__}"
+        )
         USE_REDIS = False
 
 
@@ -101,7 +112,9 @@ class InMemorySessionStore:
 
         # Prevent unbounded growth
         if len(self.sessions) >= self.MAX_SESSIONS:
-            logger.warning(f"In-memory session store at capacity ({self.MAX_SESSIONS}), purging oldest sessions")
+            logger.warning(
+                f"In-memory session store at capacity ({self.MAX_SESSIONS}), purging oldest sessions"
+            )
             self._purge_oldest_sessions()
 
         now = time.time()
@@ -118,13 +131,17 @@ class InMemorySessionStore:
         # Check if session exceeded max age (absolute timeout)
         if now - created_timestamp > self.max_age:
             del self.sessions[token]
-            audit_logger.warning(f"Session expired by max age: {token[:8]}... (age: {now - created_timestamp:.0f}s)")
+            audit_logger.warning(
+                f"Session expired by max age: {token[:8]}... (age: {now - created_timestamp:.0f}s)"
+            )
             return None
 
         # Check if session is idle (idle timeout)
         if now - last_access > self.idle_timeout:
             del self.sessions[token]
-            audit_logger.warning(f"Session expired by idle timeout: {token[:8]}... (idle: {now - last_access:.0f}s)")
+            audit_logger.warning(
+                f"Session expired by idle timeout: {token[:8]}... (idle: {now - last_access:.0f}s)"
+            )
             return None
 
         # Update last access time
@@ -146,7 +163,8 @@ class InMemorySessionStore:
             return
 
         expired = [
-            token for token, (_, created, last_access) in self.sessions.items()
+            token
+            for token, (_, created, last_access) in self.sessions.items()
             if (now - created > self.max_age) or (now - last_access > self.idle_timeout)
         ]
 
@@ -163,14 +181,16 @@ class InMemorySessionStore:
         # Sort by created timestamp and remove oldest sessions
         sorted_sessions = sorted(
             self.sessions.items(),
-            key=lambda x: x[1][1]  # created_timestamp
+            key=lambda x: x[1][1],  # created_timestamp
         )
 
         purge_count = len(sorted_sessions) // 4
         for token, _ in sorted_sessions[:purge_count]:
             del self.sessions[token]
 
-        audit_logger.warning(f"Purged {purge_count} oldest in-memory sessions due to capacity limit")
+        audit_logger.warning(
+            f"Purged {purge_count} oldest in-memory sessions due to capacity limit"
+        )
 
 
 # Initialize in-memory session store with max age and idle timeout
@@ -180,6 +200,7 @@ SESSIONS = IN_MEMORY_SESSIONS
 
 class SessionData(BaseModel):
     """Validated session data structure"""
+
     model_config = {"frozen": True}
 
     id: int = Field(..., gt=0)
@@ -220,7 +241,9 @@ async def create_session(user_data: SessionData) -> str:
 
     if USE_REDIS and async_redis_client:
         try:
-            await async_redis_client.setex(f"session:{token}", SESSION_MAX_AGE, encrypted)
+            await async_redis_client.setex(
+                f"session:{token}", SESSION_MAX_AGE, encrypted
+            )
             logger.info(f"Session stored in Redis: {token[:20]}...")
         except Exception as e:
             logger.error(f"Failed to store session in Redis: {type(e).__name__}")
@@ -228,7 +251,9 @@ async def create_session(user_data: SessionData) -> str:
             logger.info(f"Session fallback to in-memory: {token[:20]}...")
     else:
         IN_MEMORY_SESSIONS.set(token, encrypted)
-        logger.info(f"Session stored in-memory: {token[:20]}... (sessions count: {len(IN_MEMORY_SESSIONS.sessions)})")
+        logger.info(
+            f"Session stored in-memory: {token[:20]}... (sessions count: {len(IN_MEMORY_SESSIONS.sessions)})"
+        )
 
     return token
 
@@ -326,7 +351,7 @@ async def exchange_code_for_token(code: str, redirect_uri: str) -> dict:
         if USE_OAUTH_WORKER:
             resp = await client.post(
                 f"{OAUTH_WORKER_URL}/oauth/token",
-                json={"code": code, "redirect_uri": redirect_uri}
+                json={"code": code, "redirect_uri": redirect_uri},
             )
             return resp.json()
         else:
@@ -337,8 +362,8 @@ async def exchange_code_for_token(code: str, redirect_uri: str) -> dict:
                     "client_id": GITHUB_CLIENT_ID,
                     "client_secret": GITHUB_CLIENT_SECRET,
                     "code": code,
-                    "redirect_uri": redirect_uri
-                }
+                    "redirect_uri": redirect_uri,
+                },
             )
             return resp.json()
 
@@ -355,27 +380,49 @@ async def callback(request: Request, code: str, response: Response):
         access_token = token_data.get("access_token")
 
         if not access_token:
-            error_msg = token_data.get("error_description", token_data.get("error", "Unknown error"))
-            audit_logger.warning(f"Failed to get GitHub access token from {client_ip}: {error_msg}")
-            raise HTTPException(status_code=400, detail=f"Failed to get access token: {error_msg}")
+            error_msg = token_data.get(
+                "error_description", token_data.get("error", "Unknown error")
+            )
+            audit_logger.warning(
+                f"Failed to get GitHub access token from {client_ip}: {error_msg}"
+            )
+            raise HTTPException(
+                status_code=400, detail=f"Failed to get access token: {error_msg}"
+            )
 
         async with httpx.AsyncClient() as client:
             user_res = await client.get(
                 "https://api.github.com/user",
-                headers={"Authorization": f"token {access_token}"}
+                headers={"Authorization": f"token {access_token}"},
             )
             user_data = user_res.json()
 
-        return await handle_login(response, user_data["id"], user_data["login"], user_data.get("avatar_url"), access_token, client_ip)
+        return await handle_login(
+            response,
+            user_data["id"],
+            user_data["login"],
+            user_data.get("avatar_url"),
+            access_token,
+            client_ip,
+        )
 
     except HTTPException:
         raise
     except Exception as e:
-        audit_logger.error(f"OAuth callback error from {client_ip}: {type(e).__name__}: {e}")
+        audit_logger.error(
+            f"OAuth callback error from {client_ip}: {type(e).__name__}: {e}"
+        )
         raise HTTPException(status_code=400, detail="OAuth authentication failed")
 
 
-async def handle_login(response: Response, github_id: int, username: str, avatar_url: Optional[str], access_token: str, client_ip: str = "unknown") -> RedirectResponse:
+async def handle_login(
+    response: Response,
+    github_id: int,
+    username: str,
+    avatar_url: Optional[str],
+    access_token: str,
+    client_ip: str = "unknown",
+) -> RedirectResponse:
     """Common login logic: Upsert User, Create Session, Redirect."""
     try:
         with get_db() as conn:
@@ -385,12 +432,20 @@ async def handle_login(response: Response, github_id: int, username: str, avatar
             if existing:
                 user_id = existing["id"]
                 is_new_user = False
-                cursor.execute("UPDATE users SET username = ?, avatar_url = ? WHERE id = ?", (username, avatar_url, user_id))
+                cursor.execute(
+                    "UPDATE users SET username = ?, avatar_url = ? WHERE id = ?",
+                    (username, avatar_url, user_id),
+                )
             else:
-                cursor.execute("INSERT INTO users (github_id, username, avatar_url) VALUES (?, ?, ?)", (github_id, username, avatar_url))
+                cursor.execute(
+                    "INSERT INTO users (github_id, username, avatar_url) VALUES (?, ?, ?)",
+                    (github_id, username, avatar_url),
+                )
                 user_id = cursor.lastrowid
                 is_new_user = True
-                cursor.execute("INSERT OR IGNORE INTO game_state (user_id) VALUES (?)", (user_id,))
+                cursor.execute(
+                    "INSERT OR IGNORE INTO game_state (user_id) VALUES (?)", (user_id,)
+                )
             conn.commit()
 
         session_data = SessionData(
@@ -398,13 +453,15 @@ async def handle_login(response: Response, github_id: int, username: str, avatar
             github_id=github_id,
             username=username,
             avatar_url=avatar_url,
-            access_token=access_token
+            access_token=access_token,
         )
         token = await create_session(session_data)
 
         # Audit log successful login
         event_type = "new_user_signup" if is_new_user else "user_login"
-        audit_logger.info(f"{event_type}: user_id={user_id} username={username} github_id={github_id} from {client_ip}")
+        audit_logger.info(
+            f"{event_type}: user_id={user_id} username={username} github_id={github_id} from {client_ip}"
+        )
 
         redirect = RedirectResponse(url="http://localhost:3001")
         redirect.set_cookie(
@@ -414,11 +471,13 @@ async def handle_login(response: Response, github_id: int, username: str, avatar
             secure=True,
             max_age=86400 * 7,
             samesite="strict",
-            domain=SESSION_DOMAIN
+            domain=SESSION_DOMAIN,
         )
         return redirect
     except Exception as e:
-        audit_logger.error(f"Login failed for github_id={github_id} from {client_ip}: {type(e).__name__}: {e}")
+        audit_logger.error(
+            f"Login failed for github_id={github_id} from {client_ip}: {type(e).__name__}: {e}"
+        )
         raise
 
 
@@ -430,9 +489,13 @@ async def get_current_user(request: Request) -> Dict[str, Any]:
         return {"is_authenticated": False}
     user = await get_session(token)
     if not user:
-        audit_logger.debug(f"Invalid/expired session token attempted: {token[:8] if token else 'None'}...")
+        audit_logger.debug(
+            f"Invalid/expired session token attempted: {token[:8] if token else 'None'}..."
+        )
         return {"is_authenticated": False}
-    audit_logger.debug(f"Session validated for user_id={user.id} username={user.username}")
+    audit_logger.debug(
+        f"Session validated for user_id={user.id} username={user.username}"
+    )
     return {**user.model_dump(), "is_authenticated": True}
 
 
@@ -448,9 +511,13 @@ async def logout(response: Response, request: Request) -> Dict[str, bool]:
         user_session = await get_session(token)
         success = await delete_session(token)
         if user_session:
-            audit_logger.info(f"user_logout: user_id={user_session.id} username={user_session.username} from {client_ip}")
+            audit_logger.info(
+                f"user_logout: user_id={user_session.id} username={user_session.username} from {client_ip}"
+            )
         else:
-            audit_logger.debug(f"Logout attempted with invalid/expired token from {client_ip}")
+            audit_logger.debug(
+                f"Logout attempted with invalid/expired token from {client_ip}"
+            )
     else:
         audit_logger.debug(f"Logout attempted without session token from {client_ip}")
 

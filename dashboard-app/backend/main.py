@@ -29,9 +29,11 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 # Load environment variables from .env.local (development) or .env (production)
 from pathlib import Path
+
 env_local = Path(__file__).parent / ".env.local"
 env_file = env_local if env_local.exists() else Path(__file__).parent / ".env"
 load_dotenv(env_file)
+
 
 # Path import helpers
 def _import_get_base_path() -> Optional[callable]:
@@ -50,25 +52,28 @@ def _import_get_base_path() -> Optional[callable]:
         sys.path.insert(0, str(base / "src"))
         try:
             from elf_paths import get_base_path
+
             return get_base_path
         except ImportError:
             continue
     return None
+
 
 def get_base_path() -> Path:
     imported = _import_get_base_path()
     if imported is not None:
         return imported(Path(__file__))
 
-    env_path = os.environ.get('ELF_BASE_PATH')
+    env_path = os.environ.get("ELF_BASE_PATH")
     if env_path:
         return Path(env_path)
 
     current = Path(__file__).resolve()
     for parent in current.parents:
-        if (parent / '.coordination').exists() or (parent / '.git').exists():
+        if (parent / ".coordination").exists() or (parent / ".git").exists():
             return parent
     return Path.home() / ".opencode" / "emergent-learning"
+
 
 # Ensure src is in python path for models and utils
 current_dir = Path(__file__).resolve().parent
@@ -80,10 +85,13 @@ FRONTEND_PATH = current_dir.parent / "frontend" / "dist"
 
 # Internal imports
 from utils import (
-    get_db, dict_from_row,
+    get_db,
+    dict_from_row,
     ConnectionManager,
-    ProjectContext, init_project_context,
-    AutoCapture, auto_capture
+    ProjectContext,
+    init_project_context,
+    AutoCapture,
+    auto_capture,
 )
 from utils.database import initialize_database, create_tables
 from session_index import SessionIndex
@@ -109,36 +117,36 @@ from routers.auth import init_redis
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="Emergent Learning Dashboard",
     description="Interactive dashboard for AI agent orchestration and learning",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # ==============================================================================
 # Background Task: Auto-Summarizer
 # ==============================================================================
 
+
 async def run_auto_summarizer():
     """Background task to automatically summarize completed sessions."""
     logger.info("Auto-summarizer background task started")
-    
+
     # Path to summarizer script
     summarizer_script = EMERGENT_LEARNING_PATH / "scripts" / "summarize-session.py"
-    
+
     while True:
         try:
             # Wait 5 minutes before first run and between runs
             # This allows the system to startup and sessions to complete
-            await asyncio.sleep(300) 
-            
+            await asyncio.sleep(300)
+
             logger.info("Running scheduled batch summarization...")
-            
+
             # Check if script exists
             if not summarizer_script.exists():
                 logger.warning(f"Summarizer script not found at {summarizer_script}")
@@ -147,39 +155,41 @@ async def run_auto_summarizer():
             # Run batch summarization for sessions older than 30 minutes
             # Limit 5 per batch to avoid overloading
             cmd = [
-                sys.executable, str(summarizer_script),
+                sys.executable,
+                str(summarizer_script),
                 "--batch",
-                "--older-than", "30m",
-                "--limit", "5"
+                "--older-than",
+                "30m",
+                "--limit",
+                "5",
             ]
-            
+
             # Run using asyncio subprocess
             process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
             stdout, stderr = await process.communicate()
-            
+
             if process.returncode != 0:
                 logger.error(f"Auto-summarizer failed: {stderr.decode()}")
             else:
                 output = stdout.decode().strip()
                 if "Summarized" in output:
                     logger.info(f"Auto-summarizer: {output}")
-                
+
         except Exception as e:
             logger.error(f"Auto-summarizer error: {e}")
-            
+
         # Run every 10 minutes (600s) + execution time
         await asyncio.sleep(600)
+
 
 # CORS - restricted to local development origins only
 # SECURITY: Since backend is localhost-only, this primarily prevents
 # malicious websites from making requests if user visits them
 ALLOWED_ORIGINS = [
-    "http://localhost:3001",   # Vite dev server
-    "http://localhost:8888",   # Backend serving frontend
+    "http://localhost:3001",  # Vite dev server
+    "http://localhost:8888",  # Backend serving frontend
     "http://127.0.0.1:3001",
     "http://127.0.0.1:8888",
 ]
@@ -201,6 +211,7 @@ app.add_middleware(
 # Request Size Limit Middleware
 # ==============================================================================
 
+
 class LimitUploadSize(BaseHTTPMiddleware):
     """Limit request body size to prevent DoS"""
 
@@ -214,9 +225,9 @@ class LimitUploadSize(BaseHTTPMiddleware):
                 content_length = int(request.headers["content-length"])
                 if content_length > self.max_upload_size:
                     from fastapi.responses import JSONResponse
+
                     return JSONResponse(
-                        {"error": "Request body too large"},
-                        status_code=413
+                        {"error": "Request body too large"}, status_code=413
                     )
         response = await call_next(request)
         return response
@@ -241,7 +252,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 
         # Restrict browser features
-        response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+        response.headers["Permissions-Policy"] = (
+            "geolocation=(), microphone=(), camera=()"
+        )
 
         return response
 
@@ -299,40 +312,68 @@ app.include_router(live_router)
 # ==============================================================================
 
 ALLOWED_TABLE_CONFIGS = {
-    'metrics': {
-        'columns': frozenset(['id', 'metric_type', 'metric_name', 'metric_value', 'timestamp']),
-        'order_by': frozenset(['timestamp', 'id', 'metric_type']),
+    "metrics": {
+        "columns": frozenset(
+            ["id", "metric_type", "metric_name", "metric_value", "timestamp"]
+        ),
+        "order_by": frozenset(["timestamp", "id", "metric_type"]),
     },
-    'trails': {
-        'columns': frozenset(['id', 'location', 'scent', 'strength', 'agent_id', 'message', 'created_at']),
-        'order_by': frozenset(['created_at', 'id', 'strength']),
+    "trails": {
+        "columns": frozenset(
+            ["id", "location", "scent", "strength", "agent_id", "message", "created_at"]
+        ),
+        "order_by": frozenset(["created_at", "id", "strength"]),
     },
-    'workflow_runs': {
-        'columns': frozenset(['id', 'workflow_name', 'status', 'phase', 'created_at']),
-        'order_by': frozenset(['created_at', 'id']),
+    "workflow_runs": {
+        "columns": frozenset(["id", "workflow_name", "status", "phase", "created_at"]),
+        "order_by": frozenset(["created_at", "id"]),
     },
-    'heuristics': {
-        'columns': frozenset(['id', 'domain', 'rule', 'confidence', 'is_golden', 'updated_at', 'created_at']),
-        'order_by': frozenset(['updated_at', 'created_at', 'confidence', 'id']),
+    "heuristics": {
+        "columns": frozenset(
+            [
+                "id",
+                "domain",
+                "rule",
+                "confidence",
+                "is_golden",
+                "updated_at",
+                "created_at",
+            ]
+        ),
+        "order_by": frozenset(["updated_at", "created_at", "confidence", "id"]),
     },
-    'learnings': {
-        'columns': frozenset(['id', 'type', 'title', 'summary', 'domain', 'created_at']),
-        'order_by': frozenset(['created_at', 'id']),
+    "learnings": {
+        "columns": frozenset(
+            ["id", "type", "title", "summary", "domain", "created_at"]
+        ),
+        "order_by": frozenset(["created_at", "id"]),
     },
-    'decisions': {
-        'columns': frozenset(['id', 'title', 'status', 'domain', 'created_at']),
-        'order_by': frozenset(['created_at', 'id', 'status']),
+    "decisions": {
+        "columns": frozenset(["id", "title", "status", "domain", "created_at"]),
+        "order_by": frozenset(["created_at", "id", "status"]),
     },
-    'invariants': {
-        'columns': frozenset(['id', 'statement', 'status', 'severity', 'domain', 'violation_count', 'created_at']),
-        'order_by': frozenset(['created_at', 'id', 'violation_count', 'severity']),
+    "invariants": {
+        "columns": frozenset(
+            [
+                "id",
+                "statement",
+                "status",
+                "severity",
+                "domain",
+                "violation_count",
+                "created_at",
+            ]
+        ),
+        "order_by": frozenset(["created_at", "id", "violation_count", "severity"]),
     },
 }
 
 MAX_QUERY_LIMIT = 1000
 
 
-def _validate_query_params(table: str, columns: str, order_by: str, limit: int) -> tuple:
+def _validate_query_params(
+    table: str, columns: str, order_by: str, limit: int
+) -> tuple:
     """
     Validate query parameters against whitelist to prevent SQL injection.
 
@@ -345,21 +386,25 @@ def _validate_query_params(table: str, columns: str, order_by: str, limit: int) 
 
     config = ALLOWED_TABLE_CONFIGS[table]
 
-    col_list = [c.strip() for c in columns.split(',')]
+    col_list = [c.strip() for c in columns.split(",")]
     for col in col_list:
-        if not col or not col.replace('_', '').isalnum():
+        if not col or not col.replace("_", "").isalnum():
             logger.warning(f"SQL injection blocked: invalid column format '{col}'")
             raise ValueError(f"Invalid column format: {col}")
-        if col not in config['columns']:
-            logger.warning(f"SQL injection blocked: column '{col}' not allowed for {table}")
+        if col not in config["columns"]:
+            logger.warning(
+                f"SQL injection blocked: column '{col}' not allowed for {table}"
+            )
             raise ValueError(f"Column '{col}' not allowed for table '{table}'")
 
     order_by = order_by.strip()
-    if not order_by.replace('_', '').isalnum():
+    if not order_by.replace("_", "").isalnum():
         logger.warning(f"SQL injection blocked: invalid order_by format '{order_by}'")
         raise ValueError(f"Invalid order_by format: {order_by}")
-    if order_by not in config['order_by']:
-        logger.warning(f"SQL injection blocked: order_by '{order_by}' not allowed for {table}")
+    if order_by not in config["order_by"]:
+        logger.warning(
+            f"SQL injection blocked: order_by '{order_by}' not allowed for {table}"
+        )
         raise ValueError(f"Order by '{order_by}' not allowed for table '{table}'")
 
     if not isinstance(limit, int) or limit < 1:
@@ -372,6 +417,7 @@ def _validate_query_params(table: str, columns: str, order_by: str, limit: int) 
 # ==============================================================================
 # Background Task: Monitor for Changes
 # ==============================================================================
+
 
 def _get_db_change_counts():
     """Synchronous DB operations for monitor_changes (runs in dedicated thread)."""
@@ -400,13 +446,13 @@ def _get_db_change_counts():
         invariants_count = cursor.fetchone()[0]
 
         return {
-            'metrics': metrics_count,
-            'trails': trail_count,
-            'runs': run_count,
-            'heuristics': heuristics_count,
-            'learnings': learnings_count,
-            'decisions': decisions_count,
-            'invariants': invariants_count,
+            "metrics": metrics_count,
+            "trails": trail_count,
+            "runs": run_count,
+            "heuristics": heuristics_count,
+            "learnings": learnings_count,
+            "decisions": decisions_count,
+            "invariants": invariants_count,
         }
 
 
@@ -417,7 +463,9 @@ def _get_recent_data(table: str, columns: str, order_by: str, limit: int = 5):
     All parameters are validated against whitelist before query execution.
     Runs in dedicated thread via asyncio.to_thread().
     """
-    table, columns, order_by, limit = _validate_query_params(table, columns, order_by, limit)
+    table, columns, order_by, limit = _validate_query_params(
+        table, columns, order_by, limit
+    )
 
     with get_db() as conn:
         cursor = conn.cursor()
@@ -442,67 +490,94 @@ async def monitor_changes():
             # Wrap blocking DB operations in thread to prevent blocking event loop
             counts = await asyncio.to_thread(_get_db_change_counts)
 
-            metrics_count = counts['metrics']
-            trail_count = counts['trails']
-            run_count = counts['runs']
-            heuristics_count = counts['heuristics']
-            learnings_count = counts['learnings']
-            decisions_count = counts['decisions']
-            invariants_count = counts['invariants']
+            metrics_count = counts["metrics"]
+            trail_count = counts["trails"]
+            run_count = counts["runs"]
+            heuristics_count = counts["heuristics"]
+            learnings_count = counts["learnings"]
+            decisions_count = counts["decisions"]
+            invariants_count = counts["invariants"]
 
             # Broadcast if changes detected
             if metrics_count > last_metrics_count:
                 recent = await asyncio.to_thread(
-                    _get_recent_data, "metrics", "metric_type, metric_name, metric_value, timestamp", "timestamp"
+                    _get_recent_data,
+                    "metrics",
+                    "metric_type, metric_name, metric_value, timestamp",
+                    "timestamp",
                 )
                 await manager.broadcast_update("metrics", {"recent": recent})
                 last_metrics_count = metrics_count
 
             if trail_count > last_trail_count:
                 recent = await asyncio.to_thread(
-                    _get_recent_data, "trails", "location, scent, strength, agent_id, message, created_at", "created_at"
+                    _get_recent_data,
+                    "trails",
+                    "location, scent, strength, agent_id, message, created_at",
+                    "created_at",
                 )
                 await manager.broadcast_update("trails", {"recent": recent})
                 last_trail_count = trail_count
 
             if run_count > last_run_count:
                 recent = await asyncio.to_thread(
-                    _get_recent_data, "workflow_runs", "id, workflow_name, status, phase, created_at", "created_at", 1
+                    _get_recent_data,
+                    "workflow_runs",
+                    "id, workflow_name, status, phase, created_at",
+                    "created_at",
+                    1,
                 )
-                await manager.broadcast_update("runs", {"latest": recent[0] if recent else None})
+                await manager.broadcast_update(
+                    "runs", {"latest": recent[0] if recent else None}
+                )
                 last_run_count = run_count
 
             if heuristics_count > last_heuristics_count:
                 recent = await asyncio.to_thread(
-                    _get_recent_data, "heuristics", "id, domain, rule, confidence, is_golden, updated_at", "updated_at"
+                    _get_recent_data,
+                    "heuristics",
+                    "id, domain, rule, confidence, is_golden, updated_at",
+                    "updated_at",
                 )
                 await manager.broadcast_update("heuristics", {"recent": recent})
                 last_heuristics_count = heuristics_count
 
             if learnings_count > last_learnings_count:
                 recent = await asyncio.to_thread(
-                    _get_recent_data, "learnings", "id, type, title, summary, domain, created_at", "created_at"
+                    _get_recent_data,
+                    "learnings",
+                    "id, type, title, summary, domain, created_at",
+                    "created_at",
                 )
                 await manager.broadcast_update("learnings", {"recent": recent})
                 last_learnings_count = learnings_count
 
             if decisions_count > last_decisions_count:
                 recent = await asyncio.to_thread(
-                    _get_recent_data, "decisions", "id, title, status, domain, created_at", "created_at"
+                    _get_recent_data,
+                    "decisions",
+                    "id, title, status, domain, created_at",
+                    "created_at",
                 )
                 await manager.broadcast_update("decisions", {"recent": recent})
                 last_decisions_count = decisions_count
 
             if invariants_count > last_invariants_count:
                 recent = await asyncio.to_thread(
-                    _get_recent_data, "invariants", "id, statement, status, severity, domain, violation_count, created_at", "created_at"
+                    _get_recent_data,
+                    "invariants",
+                    "id, statement, status, severity, domain, violation_count, created_at",
+                    "created_at",
                 )
                 await manager.broadcast_update("invariants", {"recent": recent})
                 last_invariants_count = invariants_count
 
             # Rescan session index every 5 minutes
             current_time = datetime.now()
-            if last_session_scan is None or (current_time - last_session_scan).total_seconds() > 300:
+            if (
+                last_session_scan is None
+                or (current_time - last_session_scan).total_seconds() > 300
+            ):
                 try:
                     session_count = await asyncio.to_thread(session_index.scan)
                     logger.info(f"Session index refreshed: {session_count} sessions")
@@ -521,7 +596,9 @@ async def startup_event():
     # Initialize project context
     ctx = init_project_context()
     if ctx.has_project:
-        logger.info(f"Project context detected: {ctx.project_name} at {ctx.project_root}")
+        logger.info(
+            f"Project context detected: {ctx.project_name} at {ctx.project_root}"
+        )
     else:
         logger.info("No project context - using global scope only")
 
@@ -567,16 +644,19 @@ async def shutdown_event():
 # WebSocket Endpoint
 # ==============================================================================
 
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         # Send initial state
-        await websocket.send_json({
-            "type": "connected",
-            "timestamp": datetime.now().isoformat(),
-            "message": "Connected to Emergent Learning Dashboard"
-        })
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "timestamp": datetime.now().isoformat(),
+                "message": "Connected to Emergent Learning Dashboard",
+            }
+        )
 
         while True:
             # Keep connection alive, handle any incoming messages
@@ -606,8 +686,9 @@ if FRONTEND_PATH.exists():
     @app.get("/{path:path}")
     async def serve_frontend(path: str):
         # Don't serve frontend for API paths
-        if path.startswith("api/"):
+        if path.startswith("api/v1/") or path.startswith("api/"):
             from fastapi import HTTPException
+
             raise HTTPException(status_code=404, detail="Not found")
 
         file_path = FRONTEND_PATH / path
@@ -622,5 +703,6 @@ if FRONTEND_PATH.exists():
 
 if __name__ == "__main__":
     import uvicorn
+
     # SECURITY: Bind to localhost only - prevents exposure on public networks
     uvicorn.run(app, host="127.0.0.1", port=8888, reload=True)

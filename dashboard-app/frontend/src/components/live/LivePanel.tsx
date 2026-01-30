@@ -24,7 +24,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
   // Connect to task SSE
   useEffect(() => {
     const connectTaskSSE = () => {
-      const eventSource = new EventSource(`${apiBaseUrl}/api/live/tasks`)
+      const eventSource = new EventSource(`${apiBaseUrl}/api/v1/live/tasks`)
       taskEventSourceRef.current = eventSource
 
       eventSource.onopen = () => {
@@ -67,7 +67,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
   // Connect to trail SSE
   useEffect(() => {
     const connectTrailSSE = () => {
-      const eventSource = new EventSource(`${apiBaseUrl}/api/live/trails`)
+      const eventSource = new EventSource(`${apiBaseUrl}/api/v1/live/trails`)
       trailEventSourceRef.current = eventSource
 
       eventSource.onopen = () => {
@@ -108,7 +108,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
 
   // Send note to task
   const handleSendNote = useCallback(async (sessionId: string, taskId: string, note: string) => {
-    const response = await fetch(`${apiBaseUrl}/api/live/signal`, {
+    const response = await fetch(`${apiBaseUrl}/api/v1/live/signal`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -131,7 +131,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
     status: string,
     reason?: string
   ) => {
-    const response = await fetch(`${apiBaseUrl}/api/live/task/${sessionId}/${taskId}/status`, {
+    const response = await fetch(`${apiBaseUrl}/api/v1/live/task/${sessionId}/${taskId}/status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status, reason }),

@@ -8,15 +8,20 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException
 
 from models import (
-    DecisionCreate, DecisionUpdate,
-    AssumptionCreate, AssumptionUpdate,
-    InvariantCreate, InvariantUpdate,
-    SpikeReportCreate, SpikeReportUpdate, SpikeReportRate,
-    ActionResult
+    DecisionCreate,
+    DecisionUpdate,
+    AssumptionCreate,
+    AssumptionUpdate,
+    InvariantCreate,
+    InvariantUpdate,
+    SpikeReportCreate,
+    SpikeReportUpdate,
+    SpikeReportRate,
+    ActionResult,
 )
 from utils import get_db, dict_from_row, escape_like
 
-router = APIRouter(prefix="/api", tags=["knowledge"])
+router = APIRouter(prefix="/api/v1", tags=["knowledge"])
 
 # ConnectionManager will be injected from main.py
 manager = None
@@ -32,11 +37,10 @@ def set_manager(m):
 # Learnings
 # ==============================================================================
 
+
 @router.get("/learnings")
 async def get_learnings(
-    type: Optional[str] = None,
-    domain: Optional[str] = None,
-    limit: int = 50
+    type: Optional[str] = None, domain: Optional[str] = None, limit: int = 50
 ):
     """Get learnings (failures, successes, observations)."""
     with get_db() as conn:
@@ -64,12 +68,13 @@ async def get_learnings(
 # Decisions
 # ==============================================================================
 
+
 @router.get("/decisions")
 async def get_decisions(
     domain: Optional[str] = None,
     status: Optional[str] = None,
     skip: int = 0,
-    limit: int = 50
+    limit: int = 50,
 ):
     """Get architecture decisions with optional filtering."""
     with get_db() as conn:
@@ -113,30 +118,39 @@ async def get_decision(decision_id: int):
             raise HTTPException(status_code=404, detail="Decision not found")
 
         # Get related decisions (same domain)
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, title, status, created_at
             FROM decisions
             WHERE domain = ? AND id != ?
             ORDER BY created_at DESC
             LIMIT 5
-        """, (decision["domain"], decision_id))
+        """,
+            (decision["domain"], decision_id),
+        )
         decision["related"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         # If this decision supersedes another, get the superseded decision
         if decision.get("superseded_by"):
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, title, status
                 FROM decisions
                 WHERE id = ?
-            """, (decision["superseded_by"],))
+            """,
+                (decision["superseded_by"],),
+            )
             decision["supersedes"] = dict_from_row(cursor.fetchone())
 
         # Get decisions that this one superseded
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, title, status, created_at
             FROM decisions
             WHERE superseded_by = ?
-        """, (decision_id,))
+        """,
+            (decision_id,),
+        )
         decision["superseded_decisions"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         return decision
@@ -148,39 +162,45 @@ async def create_decision(decision: DecisionCreate) -> ActionResult:
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO decisions (
                 title, context, options_considered, decision, rationale,
                 domain, files_touched, tests_added, status, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            decision.title,
-            decision.context,
-            decision.options_considered,
-            decision.decision,
-            decision.rationale,
-            decision.domain,
-            decision.files_touched,
-            decision.tests_added,
-            decision.status,
-            datetime.now().isoformat(),
-            datetime.now().isoformat()
-        ))
+        """,
+            (
+                decision.title,
+                decision.context,
+                decision.options_considered,
+                decision.decision,
+                decision.rationale,
+                decision.domain,
+                decision.files_touched,
+                decision.tests_added,
+                decision.status,
+                datetime.now().isoformat(),
+                datetime.now().isoformat(),
+            ),
+        )
 
         decision_id = cursor.lastrowid
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("decision_created", {
-                "decision_id": decision_id,
-                "title": decision.title,
-                "domain": decision.domain
-            })
+            await manager.broadcast_update(
+                "decision_created",
+                {
+                    "decision_id": decision_id,
+                    "title": decision.title,
+                    "domain": decision.domain,
+                },
+            )
 
         return ActionResult(
             success=True,
             message=f"Created decision: {decision.title}",
-            data={"decision_id": decision_id}
+            data={"decision_id": decision_id},
         )
 
 
@@ -240,16 +260,21 @@ async def update_decision(decision_id: int, update: DecisionUpdate) -> ActionRes
         params.append(datetime.now().isoformat())
         params.append(decision_id)
 
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             UPDATE decisions
             SET {", ".join(updates)}
             WHERE id = ?
-        """, params)
+        """,
+            params,
+        )
 
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("decision_updated", {"decision_id": decision_id})
+            await manager.broadcast_update(
+                "decision_updated", {"decision_id": decision_id}
+            )
 
         return ActionResult(success=True, message="Decision updated")
 
@@ -269,13 +294,19 @@ async def delete_decision(decision_id: int) -> ActionResult:
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("decision_deleted", {"decision_id": decision_id})
+            await manager.broadcast_update(
+                "decision_deleted", {"decision_id": decision_id}
+            )
 
-        return ActionResult(success=True, message=f"Deleted decision: {decision['title']}")
+        return ActionResult(
+            success=True, message=f"Deleted decision: {decision['title']}"
+        )
 
 
 @router.post("/decisions/{decision_id}/supersede")
-async def supersede_decision(decision_id: int, new_decision: DecisionCreate) -> ActionResult:
+async def supersede_decision(
+    decision_id: int, new_decision: DecisionCreate
+) -> ActionResult:
     """Supersede a decision with a new one."""
     with get_db() as conn:
         cursor = conn.cursor()
@@ -286,47 +317,56 @@ async def supersede_decision(decision_id: int, new_decision: DecisionCreate) -> 
             raise HTTPException(status_code=404, detail="Decision not found")
 
         # Create new decision
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO decisions (
                 title, context, options_considered, decision, rationale,
                 domain, files_touched, tests_added, status, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            new_decision.title,
-            new_decision.context,
-            new_decision.options_considered,
-            new_decision.decision,
-            new_decision.rationale,
-            new_decision.domain,
-            new_decision.files_touched,
-            new_decision.tests_added,
-            new_decision.status,
-            datetime.now().isoformat(),
-            datetime.now().isoformat()
-        ))
+        """,
+            (
+                new_decision.title,
+                new_decision.context,
+                new_decision.options_considered,
+                new_decision.decision,
+                new_decision.rationale,
+                new_decision.domain,
+                new_decision.files_touched,
+                new_decision.tests_added,
+                new_decision.status,
+                datetime.now().isoformat(),
+                datetime.now().isoformat(),
+            ),
+        )
 
         new_decision_id = cursor.lastrowid
 
         # Update old decision to mark it as superseded
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE decisions
             SET status = 'superseded', superseded_by = ?, updated_at = ?
             WHERE id = ?
-        """, (new_decision_id, datetime.now().isoformat(), decision_id))
+        """,
+            (new_decision_id, datetime.now().isoformat(), decision_id),
+        )
 
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("decision_superseded", {
-                "old_decision_id": decision_id,
-                "new_decision_id": new_decision_id,
-                "title": new_decision.title
-            })
+            await manager.broadcast_update(
+                "decision_superseded",
+                {
+                    "old_decision_id": decision_id,
+                    "new_decision_id": new_decision_id,
+                    "title": new_decision.title,
+                },
+            )
 
         return ActionResult(
             success=True,
             message=f"Superseded decision #{decision_id} with #{new_decision_id}",
-            data={"new_decision_id": new_decision_id, "old_decision_id": decision_id}
+            data={"new_decision_id": new_decision_id, "old_decision_id": decision_id},
         )
 
 
@@ -334,13 +374,14 @@ async def supersede_decision(decision_id: int, new_decision: DecisionCreate) -> 
 # Assumptions
 # ==============================================================================
 
+
 @router.get("/assumptions")
 async def get_assumptions(
     domain: Optional[str] = None,
     status: Optional[str] = None,
     min_confidence: Optional[float] = None,
     skip: int = 0,
-    limit: int = 50
+    limit: int = 50,
 ):
     """Get assumptions with optional filtering."""
     with get_db() as conn:
@@ -388,13 +429,16 @@ async def get_assumption(assumption_id: int):
             raise HTTPException(status_code=404, detail="Assumption not found")
 
         if assumption.get("domain"):
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, assumption, status, confidence, created_at
                 FROM assumptions
                 WHERE domain = ? AND id != ?
                 ORDER BY created_at DESC
                 LIMIT 5
-            """, (assumption["domain"], assumption_id))
+            """,
+                (assumption["domain"], assumption_id),
+            )
             assumption["related"] = [dict_from_row(r) for r in cursor.fetchall()]
         else:
             assumption["related"] = []
@@ -413,40 +457,48 @@ async def create_assumption(assumption: AssumptionCreate) -> ActionResult:
             confidence = 0.5
         confidence = max(0.0, min(1.0, confidence))
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO assumptions (
                 assumption, context, source, confidence, domain,
                 status, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, 'active', ?, ?)
-        """, (
-            assumption.assumption,
-            assumption.context,
-            assumption.source,
-            confidence,
-            assumption.domain,
-            datetime.now().isoformat(),
-            datetime.now().isoformat()
-        ))
+        """,
+            (
+                assumption.assumption,
+                assumption.context,
+                assumption.source,
+                confidence,
+                assumption.domain,
+                datetime.now().isoformat(),
+                datetime.now().isoformat(),
+            ),
+        )
 
         assumption_id = cursor.lastrowid
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("assumption_created", {
-                "assumption_id": assumption_id,
-                "assumption": assumption.assumption[:100],
-                "domain": assumption.domain
-            })
+            await manager.broadcast_update(
+                "assumption_created",
+                {
+                    "assumption_id": assumption_id,
+                    "assumption": assumption.assumption[:100],
+                    "domain": assumption.domain,
+                },
+            )
 
         return ActionResult(
             success=True,
             message=f"Created assumption #{assumption_id}",
-            data={"assumption_id": assumption_id}
+            data={"assumption_id": assumption_id},
         )
 
 
 @router.put("/assumptions/{assumption_id}")
-async def update_assumption(assumption_id: int, update: AssumptionUpdate) -> ActionResult:
+async def update_assumption(
+    assumption_id: int, update: AssumptionUpdate
+) -> ActionResult:
     """Update an existing assumption."""
     with get_db() as conn:
         cursor = conn.cursor()
@@ -476,11 +528,11 @@ async def update_assumption(assumption_id: int, update: AssumptionUpdate) -> Act
             params.append(confidence)
 
         if update.status is not None:
-            valid_statuses = ['active', 'verified', 'challenged', 'invalidated']
+            valid_statuses = ["active", "verified", "challenged", "invalidated"]
             if update.status not in valid_statuses:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}"
+                    detail=f"Invalid status. Must be one of: {', '.join(valid_statuses)}",
                 )
             updates.append("status = ?")
             params.append(update.status)
@@ -496,16 +548,21 @@ async def update_assumption(assumption_id: int, update: AssumptionUpdate) -> Act
         params.append(datetime.now().isoformat())
         params.append(assumption_id)
 
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             UPDATE assumptions
             SET {", ".join(updates)}
             WHERE id = ?
-        """, params)
+        """,
+            params,
+        )
 
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("assumption_updated", {"assumption_id": assumption_id})
+            await manager.broadcast_update(
+                "assumption_updated", {"assumption_id": assumption_id}
+            )
 
         return ActionResult(success=True, message="Assumption updated")
 
@@ -521,11 +578,16 @@ async def verify_assumption(assumption_id: int) -> ActionResult:
         if not assumption:
             raise HTTPException(status_code=404, detail="Assumption not found")
 
-        new_verified = assumption['verified_count'] + 1
-        total_checks = new_verified + assumption['challenged_count']
-        new_confidence = new_verified / total_checks if total_checks > 0 else assumption['confidence']
+        new_verified = assumption["verified_count"] + 1
+        total_checks = new_verified + assumption["challenged_count"]
+        new_confidence = (
+            new_verified / total_checks
+            if total_checks > 0
+            else assumption["confidence"]
+        )
 
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE assumptions
             SET verified_count = ?,
                 confidence = ?,
@@ -533,27 +595,35 @@ async def verify_assumption(assumption_id: int) -> ActionResult:
                 last_verified_at = ?,
                 updated_at = ?
             WHERE id = ?
-        """, (
-            new_verified,
-            new_confidence,
-            datetime.now().isoformat(),
-            datetime.now().isoformat(),
-            assumption_id
-        ))
+        """,
+            (
+                new_verified,
+                new_confidence,
+                datetime.now().isoformat(),
+                datetime.now().isoformat(),
+                assumption_id,
+            ),
+        )
 
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("assumption_verified", {
-                "assumption_id": assumption_id,
-                "verified_count": new_verified,
-                "confidence": new_confidence
-            })
+            await manager.broadcast_update(
+                "assumption_verified",
+                {
+                    "assumption_id": assumption_id,
+                    "verified_count": new_verified,
+                    "confidence": new_confidence,
+                },
+            )
 
         return ActionResult(
             success=True,
             message=f"Assumption #{assumption_id} verified (count: {new_verified})",
-            data={"verified_count": new_verified, "new_confidence": round(new_confidence, 3)}
+            data={
+                "verified_count": new_verified,
+                "new_confidence": round(new_confidence, 3),
+            },
         )
 
 
@@ -568,44 +638,55 @@ async def challenge_assumption(assumption_id: int) -> ActionResult:
         if not assumption:
             raise HTTPException(status_code=404, detail="Assumption not found")
 
-        new_challenged = assumption['challenged_count'] + 1
-        total_checks = assumption['verified_count'] + new_challenged
-        new_confidence = assumption['verified_count'] / total_checks if total_checks > 0 else 0
+        new_challenged = assumption["challenged_count"] + 1
+        total_checks = assumption["verified_count"] + new_challenged
+        new_confidence = (
+            assumption["verified_count"] / total_checks if total_checks > 0 else 0
+        )
 
-        new_status = assumption['status']
+        new_status = assumption["status"]
         if new_confidence < 0.3:
-            new_status = 'challenged'
+            new_status = "challenged"
         if new_confidence == 0:
-            new_status = 'invalidated'
+            new_status = "invalidated"
 
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE assumptions
             SET challenged_count = ?,
                 confidence = ?,
                 status = ?,
                 updated_at = ?
             WHERE id = ?
-        """, (
-            new_challenged,
-            new_confidence,
-            new_status,
-            datetime.now().isoformat(),
-            assumption_id
-        ))
+        """,
+            (
+                new_challenged,
+                new_confidence,
+                new_status,
+                datetime.now().isoformat(),
+                assumption_id,
+            ),
+        )
 
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("assumption_challenged", {
-                "assumption_id": assumption_id,
-                "challenged_count": new_challenged,
-                "confidence": new_confidence
-            })
+            await manager.broadcast_update(
+                "assumption_challenged",
+                {
+                    "assumption_id": assumption_id,
+                    "challenged_count": new_challenged,
+                    "confidence": new_confidence,
+                },
+            )
 
         return ActionResult(
             success=True,
             message=f"Assumption #{assumption_id} challenged (count: {new_challenged})",
-            data={"challenged_count": new_challenged, "new_confidence": round(new_confidence, 3)}
+            data={
+                "challenged_count": new_challenged,
+                "new_confidence": round(new_confidence, 3),
+            },
         )
 
 
@@ -615,7 +696,9 @@ async def delete_assumption(assumption_id: int) -> ActionResult:
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("SELECT assumption FROM assumptions WHERE id = ?", (assumption_id,))
+        cursor.execute(
+            "SELECT assumption FROM assumptions WHERE id = ?", (assumption_id,)
+        )
         assumption = cursor.fetchone()
         if not assumption:
             raise HTTPException(status_code=404, detail="Assumption not found")
@@ -624,14 +707,19 @@ async def delete_assumption(assumption_id: int) -> ActionResult:
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("assumption_deleted", {"assumption_id": assumption_id})
+            await manager.broadcast_update(
+                "assumption_deleted", {"assumption_id": assumption_id}
+            )
 
-        return ActionResult(success=True, message=f"Deleted assumption #{assumption_id}")
+        return ActionResult(
+            success=True, message=f"Deleted assumption #{assumption_id}"
+        )
 
 
 # ==============================================================================
 # Invariants
 # ==============================================================================
+
 
 @router.get("/invariants")
 async def get_invariants(
@@ -640,7 +728,7 @@ async def get_invariants(
     status: Optional[str] = None,
     severity: Optional[str] = None,
     skip: int = 0,
-    limit: int = 50
+    limit: int = 50,
 ):
     """Get invariants with optional filtering."""
     with get_db() as conn:
@@ -692,13 +780,16 @@ async def get_invariant(invariant_id: int):
             raise HTTPException(status_code=404, detail="Invariant not found")
 
         if invariant.get("domain"):
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, statement, status, severity, created_at
                 FROM invariants
                 WHERE domain = ? AND id != ?
                 ORDER BY created_at DESC
                 LIMIT 5
-            """, (invariant["domain"], invariant_id))
+            """,
+                (invariant["domain"], invariant_id),
+            )
             invariant["related"] = [dict_from_row(r) for r in cursor.fetchall()]
         else:
             invariant["related"] = []
@@ -712,37 +803,43 @@ async def create_invariant(invariant: InvariantCreate) -> ActionResult:
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO invariants (
                 statement, rationale, domain, scope, validation_type,
                 validation_code, severity, status, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?)
-        """, (
-            invariant.statement,
-            invariant.rationale,
-            invariant.domain,
-            invariant.scope,
-            invariant.validation_type,
-            invariant.validation_code,
-            invariant.severity,
-            datetime.now().isoformat(),
-            datetime.now().isoformat()
-        ))
+        """,
+            (
+                invariant.statement,
+                invariant.rationale,
+                invariant.domain,
+                invariant.scope,
+                invariant.validation_type,
+                invariant.validation_code,
+                invariant.severity,
+                datetime.now().isoformat(),
+                datetime.now().isoformat(),
+            ),
+        )
 
         invariant_id = cursor.lastrowid
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("invariant_created", {
-                "invariant_id": invariant_id,
-                "statement": invariant.statement[:100],
-                "domain": invariant.domain
-            })
+            await manager.broadcast_update(
+                "invariant_created",
+                {
+                    "invariant_id": invariant_id,
+                    "statement": invariant.statement[:100],
+                    "domain": invariant.domain,
+                },
+            )
 
         return ActionResult(
             success=True,
             message=f"Created invariant: {invariant.statement[:50]}...",
-            data={"invariant_id": invariant_id}
+            data={"invariant_id": invariant_id},
         )
 
 
@@ -798,16 +895,21 @@ async def update_invariant(invariant_id: int, update: InvariantUpdate) -> Action
         params.append(datetime.now().isoformat())
         params.append(invariant_id)
 
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             UPDATE invariants
             SET {", ".join(updates)}
             WHERE id = ?
-        """, params)
+        """,
+            params,
+        )
 
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("invariant_updated", {"invariant_id": invariant_id})
+            await manager.broadcast_update(
+                "invariant_updated", {"invariant_id": invariant_id}
+            )
 
         return ActionResult(success=True, message="Invariant updated")
 
@@ -823,21 +925,29 @@ async def validate_invariant(invariant_id: int) -> ActionResult:
         if not invariant:
             raise HTTPException(status_code=404, detail="Invariant not found")
 
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE invariants
             SET last_validated_at = ?, updated_at = ?
             WHERE id = ?
-        """, (datetime.now().isoformat(), datetime.now().isoformat(), invariant_id))
+        """,
+            (datetime.now().isoformat(), datetime.now().isoformat(), invariant_id),
+        )
 
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("invariant_validated", {"invariant_id": invariant_id})
+            await manager.broadcast_update(
+                "invariant_validated", {"invariant_id": invariant_id}
+            )
 
         return ActionResult(
             success=True,
             message=f"Invariant #{invariant_id} marked as validated",
-            data={"invariant_id": invariant_id, "validated_at": datetime.now().isoformat()}
+            data={
+                "invariant_id": invariant_id,
+                "validated_at": datetime.now().isoformat(),
+            },
         )
 
 
@@ -847,34 +957,46 @@ async def record_invariant_violation(invariant_id: int) -> ActionResult:
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("SELECT statement, violation_count FROM invariants WHERE id = ?", (invariant_id,))
+        cursor.execute(
+            "SELECT statement, violation_count FROM invariants WHERE id = ?",
+            (invariant_id,),
+        )
         invariant = cursor.fetchone()
         if not invariant:
             raise HTTPException(status_code=404, detail="Invariant not found")
 
         new_count = (invariant["violation_count"] or 0) + 1
 
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE invariants
             SET violation_count = ?,
                 last_violated_at = ?,
                 updated_at = ?,
                 status = CASE WHEN ? >= 3 THEN 'violated' ELSE status END
             WHERE id = ?
-        """, (new_count, datetime.now().isoformat(), datetime.now().isoformat(), new_count, invariant_id))
+        """,
+            (
+                new_count,
+                datetime.now().isoformat(),
+                datetime.now().isoformat(),
+                new_count,
+                invariant_id,
+            ),
+        )
 
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("invariant_violated", {
-                "invariant_id": invariant_id,
-                "violation_count": new_count
-            })
+            await manager.broadcast_update(
+                "invariant_violated",
+                {"invariant_id": invariant_id, "violation_count": new_count},
+            )
 
         return ActionResult(
             success=True,
             message=f"Recorded violation for invariant #{invariant_id} (total: {new_count})",
-            data={"invariant_id": invariant_id, "violation_count": new_count}
+            data={"invariant_id": invariant_id, "violation_count": new_count},
         )
 
 
@@ -893,14 +1015,19 @@ async def delete_invariant(invariant_id: int) -> ActionResult:
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("invariant_deleted", {"invariant_id": invariant_id})
+            await manager.broadcast_update(
+                "invariant_deleted", {"invariant_id": invariant_id}
+            )
 
-        return ActionResult(success=True, message=f"Deleted invariant: {invariant['statement'][:50]}...")
+        return ActionResult(
+            success=True, message=f"Deleted invariant: {invariant['statement'][:50]}..."
+        )
 
 
 # ==============================================================================
 # Spike Reports
 # ==============================================================================
+
 
 @router.get("/spike-reports")
 async def get_spike_reports(
@@ -909,7 +1036,7 @@ async def get_spike_reports(
     search: Optional[str] = None,
     sort_by: str = "recent",
     skip: int = 0,
-    limit: int = 50
+    limit: int = 50,
 ):
     """Get spike reports with optional filtering."""
     with get_db() as conn:
@@ -929,7 +1056,7 @@ async def get_spike_reports(
             params.append(domain)
 
         if tags:
-            tag_list = [t.strip() for t in tags.split(',')]
+            tag_list = [t.strip() for t in tags.split(",")]
             tag_conditions = " OR ".join(["tags LIKE ?" for _ in tag_list])
             query += f" AND ({tag_conditions})"
             params.extend([f"%{escape_like(tag)}%" for tag in tag_list])
@@ -943,7 +1070,7 @@ async def get_spike_reports(
             "recent": "created_at DESC",
             "useful": "usefulness_score DESC",
             "accessed": "access_count DESC",
-            "time": "time_invested_minutes DESC"
+            "time": "time_invested_minutes DESC",
         }
         query += f" ORDER BY {sort_map.get(sort_by, 'created_at DESC')}"
         query += " LIMIT ? OFFSET ?"
@@ -955,10 +1082,7 @@ async def get_spike_reports(
 
 
 @router.get("/spike-reports/search")
-async def search_spike_reports(
-    q: str,
-    limit: int = 20
-):
+async def search_spike_reports(q: str, limit: int = 20):
     """Full-text search spike reports."""
     with get_db() as conn:
         cursor = conn.cursor()
@@ -966,7 +1090,8 @@ async def search_spike_reports(
         escaped_q = escape_like(q)
         search_pattern = f"%{escaped_q}%"
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, title, topic, question, findings, gotchas,
                    time_invested_minutes, domain, tags, usefulness_score, created_at
             FROM spike_reports
@@ -974,8 +1099,17 @@ async def search_spike_reports(
                   OR findings LIKE ? OR gotchas LIKE ? OR tags LIKE ?
             ORDER BY usefulness_score DESC, created_at DESC
             LIMIT ?
-        """, (search_pattern, search_pattern, search_pattern,
-              search_pattern, search_pattern, search_pattern, limit))
+        """,
+            (
+                search_pattern,
+                search_pattern,
+                search_pattern,
+                search_pattern,
+                search_pattern,
+                search_pattern,
+                limit,
+            ),
+        )
 
         return [dict_from_row(r) for r in cursor.fetchall()]
 
@@ -993,22 +1127,28 @@ async def get_spike_report(spike_id: int):
             raise HTTPException(status_code=404, detail="Spike report not found")
 
         # Increment access count
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE spike_reports
             SET access_count = COALESCE(access_count, 0) + 1
             WHERE id = ?
-        """, (spike_id,))
+        """,
+            (spike_id,),
+        )
         conn.commit()
 
         # Get related spikes (same domain or overlapping tags)
         if spike.get("domain"):
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, title, topic, usefulness_score, created_at
                 FROM spike_reports
                 WHERE domain = ? AND id != ?
                 ORDER BY usefulness_score DESC
                 LIMIT 5
-            """, (spike["domain"], spike_id))
+            """,
+                (spike["domain"], spike_id),
+            )
             spike["related"] = [dict_from_row(r) for r in cursor.fetchall()]
         else:
             spike["related"] = []
@@ -1022,39 +1162,41 @@ async def create_spike_report(spike: SpikeReportCreate) -> ActionResult:
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO spike_reports (
                 title, topic, question, findings, gotchas, resources,
                 time_invested_minutes, domain, tags, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            spike.title,
-            spike.topic,
-            spike.question,
-            spike.findings,
-            spike.gotchas,
-            spike.resources,
-            spike.time_invested_minutes,
-            spike.domain,
-            spike.tags,
-            datetime.now().isoformat(),
-            datetime.now().isoformat()
-        ))
+        """,
+            (
+                spike.title,
+                spike.topic,
+                spike.question,
+                spike.findings,
+                spike.gotchas,
+                spike.resources,
+                spike.time_invested_minutes,
+                spike.domain,
+                spike.tags,
+                datetime.now().isoformat(),
+                datetime.now().isoformat(),
+            ),
+        )
 
         spike_id = cursor.lastrowid
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("spike_report_created", {
-                "spike_id": spike_id,
-                "title": spike.title,
-                "domain": spike.domain
-            })
+            await manager.broadcast_update(
+                "spike_report_created",
+                {"spike_id": spike_id, "title": spike.title, "domain": spike.domain},
+            )
 
         return ActionResult(
             success=True,
             message=f"Created spike report: {spike.title}",
-            data={"spike_id": spike_id}
+            data={"spike_id": spike_id},
         )
 
 
@@ -1114,16 +1256,21 @@ async def update_spike_report(spike_id: int, update: SpikeReportUpdate) -> Actio
         params.append(datetime.now().isoformat())
         params.append(spike_id)
 
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             UPDATE spike_reports
             SET {", ".join(updates)}
             WHERE id = ?
-        """, params)
+        """,
+            params,
+        )
 
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("spike_report_updated", {"spike_id": spike_id})
+            await manager.broadcast_update(
+                "spike_report_updated", {"spike_id": spike_id}
+            )
 
         return ActionResult(success=True, message="Spike report updated")
 
@@ -1137,32 +1284,38 @@ async def rate_spike_report(spike_id: int, rating: SpikeReportRate) -> ActionRes
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT usefulness_score, access_count
             FROM spike_reports WHERE id = ?
-        """, (spike_id,))
+        """,
+            (spike_id,),
+        )
         row = cursor.fetchone()
 
         if not row:
             raise HTTPException(status_code=404, detail="Spike report not found")
 
-        current_score = row['usefulness_score'] or 0
-        access_count = row['access_count'] or 1
+        current_score = row["usefulness_score"] or 0
+        access_count = row["access_count"] or 1
 
         new_score = (current_score * access_count + rating.score) / (access_count + 1)
 
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE spike_reports
             SET usefulness_score = ?, updated_at = ?
             WHERE id = ?
-        """, (new_score, datetime.now().isoformat(), spike_id))
+        """,
+            (new_score, datetime.now().isoformat(), spike_id),
+        )
 
         conn.commit()
 
         return ActionResult(
             success=True,
             message=f"Rated spike report with score {rating.score}",
-            data={"new_average": round(new_score, 2)}
+            data={"new_average": round(new_score, 2)},
         )
 
 
@@ -1181,6 +1334,10 @@ async def delete_spike_report(spike_id: int) -> ActionResult:
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("spike_report_deleted", {"spike_id": spike_id})
+            await manager.broadcast_update(
+                "spike_report_deleted", {"spike_id": spike_id}
+            )
 
-        return ActionResult(success=True, message=f"Deleted spike report: {spike['title']}")
+        return ActionResult(
+            success=True, message=f"Deleted spike report: {spike['title']}"
+        )

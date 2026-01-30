@@ -30,7 +30,7 @@ export default function SessionHistoryPanel({ className = '' }: SessionHistoryPa
     try {
       const days = dateFilter === 'today' ? 1 : dateFilter === '7days' ? 7 : dateFilter === '30days' ? 30 : 0
       const params = days > 0 ? `?limit=50&days=${days}` : '?limit=50'
-      const data = await api.get(`/api/sessions${params}`)
+      const data = await api.get(`/api/v1/sessions${params}`)
       setSessions(data?.sessions || [])
     } catch (err) {
       console.error('Failed to load sessions:', err)
@@ -41,7 +41,7 @@ export default function SessionHistoryPanel({ className = '' }: SessionHistoryPa
 
   const loadProjects = async () => {
     try {
-      const data = await api.get('/api/projects')
+      const data = await api.get('/api/v1/projects')
       setProjects(data?.map((p: any) => p.name) || [])
     } catch (err) {
       console.error('Failed to load projects:', err)
@@ -58,7 +58,7 @@ export default function SessionHistoryPanel({ className = '' }: SessionHistoryPa
 
     setLoadingSession(sessionId)
     try {
-      const data: SessionDetail = await api.get(`/api/sessions/${sessionId}`)
+      const data: SessionDetail = await api.get(`/api/v1/sessions/${sessionId}`)
       setExpandedSession(data)
       setExpandedId(sessionId)
     } catch (err) {

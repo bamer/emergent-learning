@@ -28,7 +28,7 @@ export default function SpikeReportsPanel({ className = '' }: SpikeReportsPanelP
       if (domainFilter !== 'all') params.append('domain', domainFilter)
       if (tagFilter !== 'all') params.append('tags', tagFilter)
 
-      const data = await api.get(`/api/spike-reports?${params.toString()}`)
+      const data = await api.get(`/api/v1/spike-reports?${params.toString()}`)
       setReports(data || [])
 
       const uniqueDomains = Array.from(new Set(data?.map((r: SpikeReport) => r.domain).filter(Boolean))) as string[]
@@ -46,7 +46,7 @@ export default function SpikeReportsPanel({ className = '' }: SpikeReportsPanelP
   const searchReports = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await api.get(`/api/spike-reports/search?q=${encodeURIComponent(searchQuery)}`)
+      const data = await api.get(`/api/v1/spike-reports/search?q=${encodeURIComponent(searchQuery)}`)
       setReports(data || [])
     } catch (err) {
       console.error('Failed to search spike reports:', err)
@@ -73,7 +73,7 @@ export default function SpikeReportsPanel({ className = '' }: SpikeReportsPanelP
   const handleRate = async (id: number, score: number) => {
     setRatingLoading(id)
     try {
-      await api.post(`/api/spike-reports/${id}/rate`, { score })
+      await api.post(`/api/v1/spike-reports/${id}/rate`, { score })
       setReports(prev => prev.map(r =>
         r.id === id ? { ...r, usefulness_score: score } : r
       ))

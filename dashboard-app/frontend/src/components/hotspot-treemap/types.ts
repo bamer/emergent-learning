@@ -1,4 +1,4 @@
-// API returns this format from /api/hotspots
+// API returns this format from /api/v1/hotspots
 export interface ApiHotspot {
   location: string
   trail_count: number

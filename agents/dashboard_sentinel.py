@@ -4,6 +4,12 @@ AI Dashboard Sentinel - Intelligent monitoring agent with Claude Haiku model
 
 This agent uses Claude Haiku for intelligent analysis of dashboard health,
 pattern recognition, and autonomous decision-making.
+
+NOW WITH AGENT EXECUTION ENGINE INTEGRATION:
+- Detects patterns
+- Calls appropriate agents to analyze
+- Escalates critical issues to CEO
+- Executes decisions autonomously
 """
 
 import sqlite3
@@ -23,6 +29,16 @@ try:
 except ImportError:
     print("Warning: Task tool not available, falling back to simple monitoring")
     Task = None
+
+# Import Agent Execution Engine
+sys.path.insert(0, str(Path(__file__).parent))
+try:
+    from agent_execution_engine import AgentExecutionEngine
+    from pattern_response_handler import PatternResponseHandler
+except ImportError as e:
+    print(f"Warning: Agent execution components not available: {e}")
+    AgentExecutionEngine = None
+    PatternResponseHandler = None
 
 # Setup logging
 logging.basicConfig(
@@ -54,6 +70,10 @@ class AISentinel:
         self.learned_patterns = {}
         self.performance_history = []
         self.adaptation_count = 0
+        
+        # Initialize Agent Execution Engine and Pattern Response Handler
+        self.execution_engine = AgentExecutionEngine() if AgentExecutionEngine else None
+        self.pattern_handler = PatternResponseHandler() if PatternResponseHandler else None
 
     def collect_metrics(self) -> Dict[str, Any]:
         """Collect comprehensive dashboard metrics."""
@@ -463,7 +483,7 @@ Respond with JSON format:
             logger.error(f"Failed to record event to chronicle: {e}")
 
     def run_monitoring_cycle(self):
-        """Execute one complete monitoring cycle."""
+        """Execute one complete monitoring cycle with full agent execution workflow."""
         logger.info(f"🤖 {self.name} - Starting monitoring cycle...")
 
         # Collect metrics
@@ -475,6 +495,15 @@ Respond with JSON format:
         # Pattern detection
         patterns = self.detect_patterns(metrics)
         analysis["patterns"].extend(patterns)
+
+        # AGENT EXECUTION: Call agents for detected patterns
+        agent_execution_results = []
+        if patterns and self.execution_engine and self.pattern_handler:
+            agent_execution_results = self._execute_agent_workflows(
+                patterns=patterns,
+                metrics=metrics,
+                analysis=analysis
+            )
 
         # Display results
         self.display_status(metrics, analysis)
@@ -488,6 +517,7 @@ Respond with JSON format:
             "metrics": metrics,
             "analysis": analysis,
             "actions_taken": actions,
+            "agent_executions": agent_execution_results,
         }
 
         # Record to event chronicle for dashboard
@@ -500,11 +530,87 @@ Respond with JSON format:
             data={
                 'metrics': metrics,
                 'analysis': analysis,
-                'actions': actions
+                'actions': actions,
+                'agent_executions': agent_execution_results
             }
         )
 
         return self.last_analysis
+    
+    def _execute_agent_workflows(
+        self,
+        patterns: List[str],
+        metrics: Dict[str, Any],
+        analysis: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """
+        Execute full agent workflow for detected patterns.
+        
+        THIS IS THE MISSING LINK - Actually calls agents!
+        """
+        logger.info(f"\n{'='*70}")
+        logger.info(f"🚀 EXECUTING AGENT WORKFLOWS FOR {len(patterns)} PATTERNS")
+        logger.info(f"{'='*70}")
+        
+        execution_results = []
+        
+        for pattern in patterns:
+            try:
+                logger.info(f"\n📍 Processing pattern: {pattern}")
+                
+                # Step 1: Get pattern handler recommendations
+                handler_result = self.pattern_handler.handle_pattern(pattern, metrics)
+                agent_to_call = handler_result.get("agent_called")
+                recommendations = handler_result.get("recommendations", [])
+                
+                if not agent_to_call:
+                    logger.warning(f"⚠️  No agent determined for pattern: {pattern}")
+                    continue
+                
+                logger.info(f"✅ Determined agent: {agent_to_call}")
+                
+                # Step 2: EXECUTE AGENT via Engine (THIS ACTUALLY CALLS THE AGENT!)
+                logger.info(f"📞 Calling {agent_to_call} agent...")
+                
+                result = self.execution_engine.execute_pattern_response(
+                    pattern=pattern,
+                    agent_to_call=agent_to_call,
+                    recommendations=recommendations,
+                    context=metrics
+                )
+                
+                execution_results.append(result)
+                
+                # Log execution result
+                if result.get("status") == "completed":
+                    logger.info(f"✅ Workflow completed for pattern: {pattern}")
+                    logger.info(f"   Agent analysis: {result.get('agent_analysis', '')[:100]}...")
+                    logger.info(f"   Is critical: {result.get('is_critical', False)}")
+                    if result.get("ceo_decision"):
+                        logger.info(f"   CEO decision: {result.get('ceo_decision', '')[:100]}...")
+                    if result.get("actions"):
+                        logger.info(f"   Actions to execute: {len(result.get('actions', []))} items")
+                        for i, action in enumerate(result.get('actions', []), 1):
+                            logger.info(f"     {i}. {action}")
+                else:
+                    logger.error(f"❌ Workflow failed for pattern: {pattern}")
+                    logger.error(f"   Status: {result.get('status')}")
+            
+            except Exception as e:
+                logger.error(f"❌ Agent execution failed for pattern '{pattern}': {e}")
+                execution_results.append({
+                    "pattern": pattern,
+                    "status": "error",
+                    "error": str(e)
+                })
+        
+        logger.info(f"\n{'='*70}")
+        logger.info(f"✅ AGENT WORKFLOWS EXECUTION COMPLETE")
+        logger.info(f"   Patterns processed: {len(patterns)}")
+        logger.info(f"   Successful workflows: {len([r for r in execution_results if r.get('status') == 'completed'])}")
+        logger.info(f"{'='*70}\n")
+        
+        return execution_results
 
     def display_status(self, metrics: Dict[str, Any], analysis: Dict[str, Any]):
         """Display comprehensive status dashboard."""

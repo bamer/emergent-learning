@@ -1,0 +1,72 @@
+{
+  "exported_at": "2026-01-29T02:26:21.549211",
+  "source": "local_elf_database",
+  "heuristics": [
+    {
+      "id": 1,
+      "domain": "test-crud",
+      "rule": "Always test your code before deploying",
+      "explanation": "Testing prevents bugs in production",
+      "source_type": null,
+      "confidence": 0.95,
+      "is_golden": true,
+      "created_at": "2026-01-29 00:25:04.657500",
+      "status": "active"
+    },
+    {
+      "id": 2,
+      "domain": "general",
+      "rule": "Think Before Coding: State assumptions explicitly. Present multiple interpretations when ambiguity exists. Push back when a simpler approach exists. Stop when confused and ask for clarification.",
+      "explanation": "LLMs often pick an interpretation silently and run with it. This principle forces explicit reasoning:\n- State assumptions explicitly \u2014 If uncertain, ask rather than guess\n- Present multiple interpretations \u2014 Don't pick silently when ambiguity exists\n- Push back when warranted \u2014 If a simpler approach exists, say so\n- Stop when confused \u2014 Name what's unclear and ask for clarification",
+      "source_type": null,
+      "confidence": 0.95,
+      "is_golden": true,
+      "created_at": "2026-01-29 05:31:43.162056",
+      "status": "active"
+    },
+    {
+      "id": 3,
+      "domain": "general",
+      "rule": "Simplicity First: Minimum code that solves the problem. No features beyond what was asked. No abstractions for single-use code. No flexibility that was not requested. If 200 lines could be 50, rewrite it.",
+      "explanation": "Combat the tendency toward overengineering:\n- No features beyond what was asked\n- No abstractions for single-use code\n- No \"flexibility\" or \"configurability\" that wasn't requested\n- No error handling for impossible scenarios\n- If 200 lines could be 50, rewrite it\nThe test: Would a senior engineer say this is overcomplicated? If yes, simplify.",
+      "source_type": null,
+      "confidence": 0.95,
+      "is_golden": true,
+      "created_at": "2026-01-29 05:31:43.181035",
+      "status": "active"
+    },
+    {
+      "id": 4,
+      "domain": "general",
+      "rule": "Surgical Changes: Touch only what you must. Do not improve adjacent code, comments, or formatting. Match existing style. Remove only what YOUR changes made unused. Every changed line should trace directly to the user request.",
+      "explanation": "When editing existing code:\n- Don't \"improve\" adjacent code, comments, or formatting\n- Don't refactor things that aren't broken\n- Match existing style, even if you'd do it differently\n- If you notice unrelated dead code, mention it \u2014 don't delete it\n\nWhen your changes create orphans:\n- Remove imports/variables/functions that YOUR changes made unused\n- Don't remove pre-existing dead code unless asked\n\nThe test: Every changed line should trace directly to the user's request.",
+      "source_type": null,
+      "confidence": 0.95,
+      "is_golden": true,
+      "created_at": "2026-01-29 05:31:43.198316",
+      "status": "active"
+    },
+    {
+      "id": 5,
+      "domain": "general",
+      "rule": "Goal-Driven Execution: Define success criteria before coding. Write tests first, then make them pass. State a brief plan with verification steps. Transform imperative tasks into verifiable goals.",
+      "explanation": "Transform imperative tasks into verifiable goals:\n- \"Add validation\" \u2192 \"Write tests for invalid inputs, then make them pass\"\n- \"Fix the bug\" \u2192 \"Write a test that reproduces it, then make it pass\"\n- \"Refactor X\" \u2192 \"Ensure tests pass before and after\"\n\nFor multi-step tasks, state a brief plan:\n1. [Step] \u2192 verify: [check]\n2. [Step] \u2192 verify: [check]\n3. [Step] \u2192 verify: [check]\n\nCore insight: Clear success criteria enable independent looping; vague ones demand constant clarification.",
+      "source_type": null,
+      "confidence": 0.95,
+      "is_golden": true,
+      "created_at": "2026-01-29 05:31:43.215211",
+      "status": "active"
+    },
+    {
+      "id": 6,
+      "domain": "database",
+      "rule": "When SQLite migrations fail with 'no such column', check if the column exists under a different name before assuming it's missing",
+      "explanation": "The workflow_runs table had 'workflow' instead of 'workflow_id'. Adding the missing column and recording migrations as applied fixed the issue. Schema drift can occur when tables are created by different code paths.",
+      "source_type": "observation",
+      "confidence": 0.85,
+      "is_golden": false,
+      "created_at": "2026-01-29T01:02:05.940399",
+      "status": "active"
+    }
+  ]
+}

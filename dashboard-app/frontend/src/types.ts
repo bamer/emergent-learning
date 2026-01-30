@@ -1,4 +1,4 @@
-// Stats from API /api/stats endpoint
+// Stats from API /api/v1/stats endpoint
 export interface Stats {
   total_runs: number
   total_executions: number

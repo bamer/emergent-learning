@@ -12,7 +12,7 @@ from fastapi import APIRouter, HTTPException
 from models import HeuristicUpdate, ActionResult
 from utils import get_db, dict_from_row
 
-router = APIRouter(prefix="/api", tags=["heuristics"])
+router = APIRouter(prefix="/api/v1", tags=["heuristics"])
 
 # ConnectionManager will be injected from main.py
 manager = None
@@ -30,7 +30,7 @@ async def get_heuristics(
     golden_only: bool = False,
     sort_by: str = "confidence",
     limit: int = 50,
-    scope: str = "global"
+    scope: str = "global",
 ):
     """Get heuristics with optional filtering. scope: 'global' or 'project'"""
     with get_db(scope) as conn:
@@ -46,7 +46,7 @@ async def get_heuristics(
             FROM heuristics
             WHERE 1=1
         """
-        
+
         # (Legacy code removed - unifying query for consistency)
         params = []
 
@@ -62,7 +62,7 @@ async def get_heuristics(
             "confidence": "confidence DESC",
             "validated": "times_validated DESC",
             "violated": "times_violated DESC",
-            "recent": "created_at DESC"
+            "recent": "created_at DESC",
         }
         query += f" ORDER BY {sort_map.get(sort_by, 'confidence DESC')}"
         query += " LIMIT ?"
@@ -78,32 +78,41 @@ async def get_heuristic(heuristic_id: int):
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT * FROM heuristics WHERE id = ?
-        """, (heuristic_id,))
+        """,
+            (heuristic_id,),
+        )
         heuristic = dict_from_row(cursor.fetchone())
 
         if not heuristic:
             raise HTTPException(status_code=404, detail="Heuristic not found")
 
         # Get validation/violation history from metrics
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT metric_type, timestamp, context
             FROM metrics
             WHERE tags LIKE ?
             ORDER BY timestamp DESC
             LIMIT 20
-        """, (f"%heuristic_id:{heuristic_id}%",))
+        """,
+            (f"%heuristic_id:{heuristic_id}%",),
+        )
         heuristic["history"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         # Get related heuristics (same domain)
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, rule, confidence
             FROM heuristics
             WHERE domain = ? AND id != ?
             ORDER BY confidence DESC
             LIMIT 5
-        """, (heuristic["domain"], heuristic_id))
+        """,
+            (heuristic["domain"], heuristic_id),
+        )
         heuristic["related"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         return heuristic
@@ -133,18 +142,20 @@ async def get_heuristic_graph():
         # Create nodes
         nodes = []
         for h in heuristics:
-            nodes.append({
-                "id": h["id"],
-                "label": h["rule"][:50] + ("..." if len(h["rule"]) > 50 else ""),
-                "fullText": h["rule"],
-                "domain": h["domain"],
-                "confidence": h["confidence"],
-                "is_golden": bool(h["is_golden"]),
-                "times_validated": h["times_validated"],
-                "times_violated": h["times_violated"],
-                "explanation": h["explanation"],
-                "created_at": h["created_at"]
-            })
+            nodes.append(
+                {
+                    "id": h["id"],
+                    "label": h["rule"][:50] + ("..." if len(h["rule"]) > 50 else ""),
+                    "fullText": h["rule"],
+                    "domain": h["domain"],
+                    "confidence": h["confidence"],
+                    "is_golden": bool(h["is_golden"]),
+                    "times_validated": h["times_validated"],
+                    "times_violated": h["times_violated"],
+                    "explanation": h["explanation"],
+                    "created_at": h["created_at"],
+                }
+            )
 
         # Create edges based on:
         # 1. Same domain (strong connection)
@@ -160,15 +171,17 @@ async def get_heuristic_graph():
         # Create edges for same domain
         for domain, ids in domain_map.items():
             for i, id1 in enumerate(ids):
-                for id2 in ids[i+1:]:
-                    edges.append({
-                        "id": edge_id,
-                        "source": id1,
-                        "target": id2,
-                        "strength": 1.0,
-                        "type": "same_domain",
-                        "label": domain
-                    })
+                for id2 in ids[i + 1 :]:
+                    edges.append(
+                        {
+                            "id": edge_id,
+                            "source": id1,
+                            "target": id2,
+                            "strength": 1.0,
+                            "type": "same_domain",
+                            "label": domain,
+                        }
+                    )
                     edge_id += 1
 
         # Create edges for keyword similarity (limit to avoid too many edges)
@@ -178,8 +191,43 @@ async def get_heuristic_graph():
             if not text:
                 return set()
             # Remove common words and extract significant terms
-            stopwords = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'should', 'could', 'may', 'might', 'must', 'can'}
-            words = re.findall(r'\w+', text.lower())
+            stopwords = {
+                "the",
+                "a",
+                "an",
+                "and",
+                "or",
+                "but",
+                "in",
+                "on",
+                "at",
+                "to",
+                "for",
+                "of",
+                "with",
+                "is",
+                "are",
+                "was",
+                "were",
+                "be",
+                "been",
+                "being",
+                "have",
+                "has",
+                "had",
+                "do",
+                "does",
+                "did",
+                "will",
+                "would",
+                "should",
+                "could",
+                "may",
+                "might",
+                "must",
+                "can",
+            }
+            words = re.findall(r"\w+", text.lower())
             return {w for w in words if len(w) > 3 and w not in stopwords}
 
         # Build keyword map
@@ -192,7 +240,7 @@ async def get_heuristic_graph():
 
         # Find keyword-based connections (only strong overlaps)
         for i, h1 in enumerate(heuristics):
-            for h2 in heuristics[i+1:]:
+            for h2 in heuristics[i + 1 :]:
                 # Skip if same domain (already connected)
                 if h1["domain"] == h2["domain"]:
                     continue
@@ -205,14 +253,16 @@ async def get_heuristic_graph():
                 if len(overlap) >= 2:  # At least 2 common keywords
                     strength = len(overlap) / max(len(keywords1), len(keywords2))
                     if strength > 0.2:  # Only strong connections
-                        edges.append({
-                            "id": edge_id,
-                            "source": h1["id"],
-                            "target": h2["id"],
-                            "strength": strength,
-                            "type": "keyword_similarity",
-                            "label": ", ".join(list(overlap)[:3])
-                        })
+                        edges.append(
+                            {
+                                "id": edge_id,
+                                "source": h1["id"],
+                                "target": h2["id"],
+                                "strength": strength,
+                                "type": "keyword_similarity",
+                                "label": ", ".join(list(overlap)[:3]),
+                            }
+                        )
                         edge_id += 1
 
         # Limit edges per node to avoid clutter (keep strongest connections)
@@ -239,8 +289,8 @@ async def get_heuristic_graph():
                 "total_nodes": len(nodes),
                 "total_edges": len(filtered_edges),
                 "golden_rules": sum(1 for n in nodes if n["is_golden"]),
-                "domains": len(domain_map)
-            }
+                "domains": len(domain_map),
+            },
         }
 
 
@@ -259,25 +309,31 @@ async def promote_to_golden(heuristic_id: int) -> ActionResult:
         if heuristic["is_golden"]:
             return ActionResult(success=False, message="Already a golden rule")
 
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE heuristics
             SET is_golden = 1, updated_at = ?
             WHERE id = ?
-        """, (datetime.now().isoformat(), heuristic_id))
+        """,
+            (datetime.now().isoformat(), heuristic_id),
+        )
 
         # Log the promotion
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO metrics (metric_type, metric_name, metric_value, context, timestamp)
             VALUES ('golden_rule_promotion', 'manual_promotion', ?, ?, ?)
-        """, (heuristic_id, heuristic["rule"][:100], datetime.now().isoformat()))
+        """,
+            (heuristic_id, heuristic["rule"][:100], datetime.now().isoformat()),
+        )
 
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("heuristic_promoted", {
-                "heuristic_id": heuristic_id,
-                "rule": heuristic["rule"]
-            })
+            await manager.broadcast_update(
+                "heuristic_promoted",
+                {"heuristic_id": heuristic_id, "rule": heuristic["rule"]},
+            )
 
         return ActionResult(success=True, message="Promoted to golden rule")
 
@@ -288,19 +344,26 @@ async def demote_from_golden(heuristic_id: int) -> ActionResult:
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE heuristics
             SET is_golden = 0, updated_at = ?
             WHERE id = ? AND is_golden = 1
-        """, (datetime.now().isoformat(), heuristic_id))
+        """,
+            (datetime.now().isoformat(), heuristic_id),
+        )
 
         if cursor.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Heuristic not found or not a golden rule")
+            raise HTTPException(
+                status_code=404, detail="Heuristic not found or not a golden rule"
+            )
 
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("heuristic_demoted", {"heuristic_id": heuristic_id})
+            await manager.broadcast_update(
+                "heuristic_demoted", {"heuristic_id": heuristic_id}
+            )
 
         return ActionResult(success=True, message="Demoted from golden rule")
 
@@ -342,16 +405,21 @@ async def update_heuristic(heuristic_id: int, update: HeuristicUpdate) -> Action
         params.append(datetime.now().isoformat())
         params.append(heuristic_id)
 
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             UPDATE heuristics
             SET {", ".join(updates)}
             WHERE id = ?
-        """, params)
+        """,
+            params,
+        )
 
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("heuristic_updated", {"heuristic_id": heuristic_id})
+            await manager.broadcast_update(
+                "heuristic_updated", {"heuristic_id": heuristic_id}
+            )
 
         return ActionResult(success=True, message="Heuristic updated")
 
@@ -370,6 +438,8 @@ async def delete_heuristic(heuristic_id: int) -> ActionResult:
         conn.commit()
 
         if manager:
-            await manager.broadcast_update("heuristic_deleted", {"heuristic_id": heuristic_id})
+            await manager.broadcast_update(
+                "heuristic_deleted", {"heuristic_id": heuristic_id}
+            )
 
         return ActionResult(success=True, message="Heuristic deleted")

@@ -8,11 +8,14 @@ Supports both global and project-specific databases.
 import sqlite3
 import os
 import sys
+import threading
+import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, List
 from dataclasses import dataclass
 import logging
+from queue import Queue, Empty
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +28,6 @@ def get_base_path() -> Path:
     return Path.home() / ".opencode" / "emergent-learning"
 
 
-
 EMERGENT_LEARNING_PATH = get_base_path()
 GLOBAL_DB_PATH = EMERGENT_LEARNING_PATH / "memory" / "index.db"
 
@@ -36,6 +38,7 @@ DB_PATH = GLOBAL_DB_PATH
 @dataclass
 class ProjectContext:
     """Current project context for the dashboard."""
+
     has_project: bool = False
     project_name: Optional[str] = None
     project_root: Optional[Path] = None
@@ -59,17 +62,18 @@ def detect_project_context(start_path: Optional[Path] = None) -> ProjectContext:
     current = start_path
 
     while True:
-        elf_dir = current / '.elf'
+        elf_dir = current / ".elf"
         if elf_dir.exists() and elf_dir.is_dir():
-            db_path = elf_dir / 'learnings.db'
+            db_path = elf_dir / "learnings.db"
             project_name = current.name
-            config_path = elf_dir / 'config.yaml'
+            config_path = elf_dir / "config.yaml"
             if config_path.exists():
                 try:
                     import yaml
-                    with open(config_path, 'r', encoding='utf-8') as f:
+
+                    with open(config_path, "r", encoding="utf-8") as f:
                         config = yaml.safe_load(f) or {}
-                    project_name = config.get('project', {}).get('name', current.name)
+                    project_name = config.get("project", {}).get("name", current.name)
                 except Exception:
                     pass
 
@@ -77,7 +81,7 @@ def detect_project_context(start_path: Optional[Path] = None) -> ProjectContext:
                 has_project=True,
                 project_name=project_name,
                 project_root=current,
-                project_db_path=db_path if db_path.exists() else None
+                project_db_path=db_path if db_path.exists() else None,
             )
 
         parent = current.parent
@@ -105,8 +109,132 @@ def get_project_context() -> ProjectContext:
 
 def escape_like(s: str) -> str:
     """Escape SQL LIKE wildcards to prevent wildcard injection."""
-    return s.replace(chr(92), chr(92)+chr(92)).replace('%', chr(92)+'%').replace('_', chr(92)+'_')
+    return (
+        s.replace(chr(92), chr(92) + chr(92))
+        .replace("%", chr(92) + "%")
+        .replace("_", chr(92) + "_")
+    )
 
+
+class ConnectionPool:
+    """SQLite connection pool for managing concurrent database access."""
+
+    def __init__(self, db_path: Path, max_connections: int = 20, timeout: float = 30.0):
+        self.db_path = db_path
+        self.max_connections = max_connections
+        self.timeout = timeout
+        self.pool: Queue[sqlite3.Connection] = Queue(maxsize=max_connections)
+        self.active_connections = 0
+        self.lock = threading.Lock()
+
+        # Ensure database directory exists
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Initialize pool with a few connections
+        for _ in range(min(5, max_connections)):
+            conn = self._create_connection()
+            self.pool.put(conn)
+            self.active_connections += 1
+
+    def _create_connection(self) -> sqlite3.Connection:
+        """Create a new SQLite connection with optimal settings for concurrency."""
+        conn = sqlite3.connect(
+            str(self.db_path),
+            timeout=self.timeout,
+            check_same_thread=False,
+            isolation_level=None,  # Autocommit mode for better concurrency
+        )
+        conn.row_factory = sqlite3.Row
+
+        # Enable WAL mode for better concurrent reads/writes
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA cache_size=10000")
+        cursor.execute("PRAGMA temp_store=memory")
+        cursor.close()
+
+        return conn
+
+    def get_connection(self) -> sqlite3.Connection:
+        """Get a connection from the pool, creating one if needed."""
+        try:
+            # Try to get existing connection from pool
+            conn = self.pool.get(timeout=1.0)
+
+            # Verify connection is still alive
+            try:
+                conn.execute("SELECT 1")
+                return conn
+            except sqlite3.Error:
+                # Connection is dead, create a new one
+                return self._create_connection()
+
+        except Empty:
+            # Pool is empty, try to create new connection if under limit
+            with self.lock:
+                if self.active_connections < self.max_connections:
+                    conn = self._create_connection()
+                    self.active_connections += 1
+                    return conn
+                else:
+                    # Wait for a connection to become available
+                    return self.pool.get(timeout=self.timeout)
+
+    def return_connection(self, conn: sqlite3.Connection):
+        """Return a connection to the pool."""
+        try:
+            # Reset connection state
+            try:
+                conn.rollback()  # Ensure no pending transaction
+                conn.execute("SELECT 1")  # Verify connection is still good
+            except sqlite3.Error:
+                # Connection is bad, don't return to pool
+                with self.lock:
+                    self.active_connections -= 1
+                conn.close()
+                return
+
+            self.pool.put(conn, timeout=1.0)
+        except:
+            # Pool is full or other error, close connection
+            with self.lock:
+                self.active_connections -= 1
+            conn.close()
+
+    def close_all(self):
+        """Close all connections in the pool."""
+        while not self.pool.empty():
+            try:
+                conn = self.pool.get_nowait()
+                conn.close()
+            except Empty:
+                break
+        with self.lock:
+            self.active_connections = 0
+
+
+# Global connection pools
+_pools: Dict[str, ConnectionPool] = {}
+_pools_lock = threading.Lock()
+
+
+def get_pool(db_path: Path) -> ConnectionPool:
+    """Get or create a connection pool for the given database path."""
+    db_key = str(db_path.resolve())
+
+    with _pools_lock:
+        if db_key not in _pools:
+            _pools[db_key] = ConnectionPool(db_path)
+        return _pools[db_key]
+
+
+def close_all_pools():
+    """Close all connection pools (for shutdown)."""
+    with _pools_lock:
+        for pool in _pools.values():
+            pool.close_all()
+        _pools.clear()
 
 
 def init_game_tables(conn):
@@ -153,9 +281,10 @@ def init_game_tables(conn):
 
     conn.commit()
 
+
 @contextmanager
 def get_db(scope: str = "global"):
-    """Get database connection with row factory."""
+    """Get database connection from connection pool with row factory."""
     if scope == "project":
         ctx = get_project_context()
         if ctx.project_db_path and ctx.project_db_path.exists():
@@ -165,52 +294,54 @@ def get_db(scope: str = "global"):
     else:
         db_path = GLOBAL_DB_PATH
 
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-
-    conn = sqlite3.connect(str(db_path), timeout=10.0)
-    conn.row_factory = sqlite3.Row
+    # Get connection pool and acquire a connection
+    pool = get_pool(db_path)
+    conn = pool.get_connection()
 
     try:
         init_game_tables(conn)
         yield conn
     except Exception:
-        conn.rollback()
+        try:
+            conn.rollback()
+        except:
+            pass
         raise
     finally:
-        conn.close()
+        pool.return_connection(conn)
 
 
 @contextmanager
 def get_global_db():
-    """Get global database connection."""
-    conn = sqlite3.connect(str(GLOBAL_DB_PATH), timeout=10.0)
-    conn.row_factory = sqlite3.Row
+    """Get global database connection from pool."""
+    pool = get_pool(GLOBAL_DB_PATH)
+    conn = pool.get_connection()
     try:
         yield conn
     finally:
-        conn.close()
+        pool.return_connection(conn)
 
 
 @contextmanager
 def get_project_db():
-    """Get project database connection (falls back to global if no project)."""
+    """Get project database connection from pool (falls back to global if no project)."""
     ctx = get_project_context()
     if ctx.project_db_path and ctx.project_db_path.exists():
         db_path = ctx.project_db_path
     else:
         db_path = GLOBAL_DB_PATH
 
-    conn = sqlite3.connect(str(db_path), timeout=10.0)
-    conn.row_factory = sqlite3.Row
+    pool = get_pool(db_path)
+    conn = pool.get_connection()
     try:
         yield conn
     finally:
-        conn.close()
+        pool.return_connection(conn)
 
 
 def dict_from_row(row) -> dict:
     """Convert sqlite3.Row to dict."""
-    return dict(row) if row else None
+    return dict(row) if row else {}
 
 
 async def initialize_database():
@@ -320,7 +451,7 @@ async def create_tables():
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
+
         # ==============================================================================
         # Assumptions
         # ==============================================================================
@@ -438,7 +569,7 @@ async def create_tables():
                 FOREIGN KEY (run_id) REFERENCES workflow_runs(id)
             )
         """)
-        
+
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS conductor_decisions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -450,7 +581,7 @@ async def create_tables():
                 FOREIGN KEY (run_id) REFERENCES workflow_runs(id) ON DELETE CASCADE
             )
         """)
-        
+
         # ==============================================================================
         # Session Summaries
         # ==============================================================================

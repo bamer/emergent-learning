@@ -1,0 +1,87 @@
+# Ralph Loop Progress Tracking
+
+This file is append-only. Each iteration adds its learnings here.
+It serves as the institutional memory bridging fresh Opencode sessions.
+
+## How to Use
+
+Each session should append an entry like:
+
+```
+## [ISO Date] - [Story ID]: [Brief Title]
+- Learning 1
+- Learning 2
+- Issue encountered and resolution
+```
+
+---
+
+## Session History
+
+(Entries appear here as each iteration completes)
+
+### 2026-01-15 - Ralph Loop Restructuring Completed
+- LEARNED:workflow: Ralph Loop must spawn FRESH sessions per story, not orchestrate locally
+- LEARNED:architecture: Three-file blackboard pattern: prd.json (state) + progress.txt (memory) + prompt.md (work order)
+- LEARNED:workflow: Previous implementation was fundamentally wrong - had simulated agents instead of real sessions
+- LEARNED:performance: Context degradation solved by: one story per iteration + fresh session + prd.json as memory
+- LEARNED:bash: Use Python for JSON parsing in bash scripts when jq unavailable (Windows compatibility)
+- Fixed pre-commit hook to call ralph.sh instead of old orchestrator
+- Tested: ralph.sh correctly identifies stories, generates prompts, updates status
+- Key design: Each iteration is stateless except for git history + prd.json + progress.txt
+
+### 2026-01-15 - Ralph Loop Ready for Real Execution
+- ralph.sh fully functional: bash orchestrator, PRD parsing, story selection working
+- init-ralph.sh bootstrap script created and tested
+- Documentation complete (ralph-loop-guide.md)
+- NOTE: ralph.sh is meant to spawn NEW sessions, not run within current session
+- claude-code CLI needs to be installed for ralph.sh to spawn iterations
+- In normal operation: user runs `bash ralph.sh` → spawns fresh claude-code per story
+- Each spawned session reads prompt.md, implements story, updates progress.txt, exits
+- This is a FEATURE: fresh context per iteration prevents degradation
+
+### 2026-01-15 - UX Layer Complete: Three Skills for One-Command Work
+- /loop skill created: One-command to start entire work session
+- /start-work script: Auto-init PRD if missing, then launch ralph.sh
+- /prd skill created: Manage PRD (show, validate, create)
+- New scripts: start-work.sh, prd.sh
+- WORKFLOW IS NOW: Just type /loop and everything runs automatically
+- Auto-initialization: First time /loop runs, creates default PRD if missing
+- User can now turn on PC, run one command, and walk away
+- All work is orchestrated, documented, and committed automatically
+
+---
+
+## Patterns Learned
+
+### Context Management
+- Each fresh session has clean context
+- Only cross-session memory: git history + prd.json + this file
+- Do not rely on in-memory state between iterations
+
+### Story Completion
+- One story per iteration keeps scope tight
+- Acceptance criteria must be testable
+- Commit message should reference story ID
+
+### Progress Tracking
+- Use [LEARNED:domain] markers in session work
+- Append final summary to this file before exiting
+- Focus on transferable lessons, not just outcomes
+
+---
+
+## Known Issues
+
+(Tracking problems discovered during iterations)
+
+---
+
+## Next Steps
+
+(Guidance for future iterations)
+
+---
+
+Generated: 2026-01-15
+Ralph Loop Version: 1.0.0

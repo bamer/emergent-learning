@@ -1,0 +1,20 @@
+# Emergent Learning Framework - Core Dependencies
+# Install with: pip install -r requirements.txt
+
+# Database ORM (async)
+peewee-aio[aiosqlite]>=1.0.0
+
+# Async file I/O
+aiofiles>=23.0.0
+
+# Async HTTP client (for Ollama embeddings)
+aiohttp>=3.8.0
+
+# Numerical operations (for embeddings and statistics)
+numpy>=1.21.0
+scipy>=1.7.0
+
+# Note: The dashboard has additional dependencies in dashboard-app/backend/requirements.txt
+
+# YAML config parsing (for per-project config)
+PyYAML>=6.0

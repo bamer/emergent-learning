@@ -54,7 +54,7 @@ check_dashboard() {
     fi
 }
 
-# Fonction pour démarrer le serveur OpenCode dans une fenêtre séparée
+    # Fonction pour démarrer le serveur OpenCode dans une fenêtre séparée
 start_opencode_separated_terminal() {
     echo -e "${PURPLE}🌐 Démarrage du Serveur OpenCode dans Terminal Séparée...${NC}"
     echo ""
@@ -95,23 +95,23 @@ start_opencode_separated_terminal() {
         TERMINAL_NAME="terminal standard"
     fi
     
-    if [ -n "$TERMINAL_CMD" ]; then
+    if [ -z "$TERMINAL_CMD" ]; then
         echo -e "${GREEN}📱 Terminal détecté: ${TERMINAL_NAME}${NC}"
         
         # Préparer le script à exécuter dans la nouvelle fenêtre
-        SERVER_SCRIPT="
-echo -e '${GREEN}🌐 SERVEUR OPENCODE - TERMINAL SÉPARÉE${NC}'
-echo -e '${GREEN}=============================================${NC}'
-echo -e '${BLUE}Port: 4096${NC}'
-echo -e '${BLUE}État: Démarrage en cours...${NC}'
-echo -e '${BLUE}Terminal: ${TERMINAL_NAME}${NC}'
-echo -e '${BLUE}Arrêt: Fermez cette fenêtre (Ctrl+C)${NC}'
-echo -e '${GREEN}=============================================${NC}'
-echo ''
-echo -e '${YELLOW}⚡ Lancement du serveur...${NC}'
-cd '$ELF_DIR'
+        SERVER_SCRIPT='
+echo -e "${GREEN}🌐 SERVEUR OPENCODE - TERMINAL SÉPARÉE${NC}"
+echo -e "${GREEN}=============================================${NC}"
+echo -e "${BLUE}Port: 4096${NC}"
+echo -e "${BLUE}État: Démarrage en cours...${NC}"
+echo -e "${BLUE}Terminal: ${TERMINAL_NAME}${NC}"
+echo -e "${BLUE}Arrêt: Fermez cette fenêtre (Ctrl+C)${NC}"
+echo -e "${GREEN}=============================================${NC}"
+echo ""
+echo -e "${YELLOW}⚡ Lancement du serveur...${NC}"
+cd "'$ELF_DIR'"
 opencode server --port 4096
-        "
+        '
         
         # Exécuter dans la nouvelle fenêtre
         if command -v gnome-terminal >/dev/null 2>&1; then
@@ -150,26 +150,6 @@ opencode server --port 4096
         
         echo -e "${RED}❌ Timeout: Le serveur n'a pas démarré rapidement${NC}"
         return 1
-    else
-        echo -e "${RED}❌ Aucun terminal approprié trouvé${NC}"
-        echo -e "${YELLOW}🔄 Lancement en arrière-plan à la place...${NC}"
-        
-        # Lancer en arrière-plan
-        cd "$ELF_DIR"
-        opencode server --port 4096 &
-        OPENCODE_PID=$!
-        echo -e "${GREEN}✅ Serveur OpenCode démarré en arrière-plan (PID: $OPENCODE_PID)${NC}"
-        
-        # Attendre un peu pour le démarrage
-        sleep 3
-        
-        if curl -s http://localhost:4096/global/health >/dev/null 2>&1; then
-            echo -e "${GREEN}✅ Serveur prêt!${NC}"
-        else
-            echo -e "${YELLOW}⚠️  Vérification du serveur impossible${NC}"
-        fi
-        
-        return 0
     fi
 }
 
@@ -308,9 +288,16 @@ case "${1:-}" in
         echo -e "${BLUE}🔍 Vérification prérequis...${NC}"
         
         if ! check_opencode; then
-            echo -e "${RED}❌ Serveur OpenCode requis mais non démarré${NC}"
+            echo -e "${RED}❌ OpenCode server requis mais non démarré${NC}"
             echo -e "   Démarrez: ${BLUE}opencode server --port 4096${NC}"
             echo -e "   Ou: ${BLUE}$0 --opencode${NC}"
+            exit 1
+        fi
+        
+        # Vérifier que la commande opencode est disponible
+        if ! command -v opencode >/dev/null 2>&1 && ! command -v /home/bamer/.local/share/opencode/bin/opencode >/dev/null 2>&1; then
+            echo -e "${RED}❌ Commande opencode non trouvée dans PATH${NC}"
+            echo -e "   Installation requise: ${BLUE}https://opencode.ai${NC}"
             exit 1
         fi
         

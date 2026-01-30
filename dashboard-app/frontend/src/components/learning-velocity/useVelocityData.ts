@@ -12,7 +12,7 @@ export function useVelocityData(timeframe: number) {
   const fetchData = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/learning-velocity?days=${timeframe}`)
+      const response = await fetch(`/api/v1/learning-velocity?days=${timeframe}`)
       const result = await response.json()
       setData(result)
     } catch (error) {

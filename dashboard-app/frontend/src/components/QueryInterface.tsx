@@ -24,7 +24,7 @@ export default function QueryInterface() {
     setResult(null)
 
     try {
-      const data = await api.post('/api/query', { query: queryText })
+      const data = await api.post('/api/v1/query', { query: queryText })
       setResult(data)
       setHistory(prev => [queryText, ...prev.filter(h => h !== queryText).slice(0, 9)])
     } catch (err) {

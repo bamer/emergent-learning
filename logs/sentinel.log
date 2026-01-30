@@ -1,730 +1,483 @@
-2026-01-27 23:35:02,187 - INFO - 🚀 Dashboard Sentinel AI starting continuous monitoring (interval: 30s)
-2026-01-27 23:35:02,187 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:35:32,197 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:36:02,205 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:36:13,445 - INFO - 🚀 Dashboard Sentinel AI starting continuous monitoring (interval: 30s)
-2026-01-27 23:36:13,446 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:36:32,217 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:36:43,454 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:37:02,230 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:37:02,239 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:37:13,461 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:37:32,239 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:37:32,252 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:37:43,471 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:38:02,252 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:38:02,262 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:38:13,476 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:38:13,488 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:38:32,263 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:38:32,274 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:38:43,488 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:38:43,500 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:39:02,275 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:39:02,286 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:39:13,500 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:39:13,512 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:39:32,287 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:39:32,299 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:39:43,512 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:39:43,526 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:40:02,299 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:40:02,310 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:40:13,526 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:40:13,532 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:40:32,311 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:40:32,323 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:40:43,532 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:40:43,544 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:41:02,323 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:41:02,335 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:41:13,544 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:41:13,553 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:41:32,335 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:41:32,346 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:41:43,553 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:41:43,563 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:42:02,347 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:42:02,357 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:42:13,564 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:42:13,576 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:42:32,357 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:42:32,365 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:42:43,576 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:42:43,583 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:43:02,365 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:43:02,378 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:43:13,583 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:43:13,595 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:43:32,379 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:43:32,391 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:43:43,596 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:43:43,608 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:44:02,392 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:44:02,404 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:44:13,608 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:44:13,620 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:44:32,405 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:44:32,417 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:44:43,620 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:44:43,633 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:45:02,417 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:45:02,430 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:45:13,633 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:45:13,640 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:45:32,431 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:45:32,443 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:45:43,640 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:45:43,652 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:46:02,444 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:46:02,455 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:46:13,653 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:46:13,663 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:46:32,455 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:46:32,464 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:46:43,663 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:46:43,675 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:47:02,465 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:47:02,478 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:47:13,676 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:47:13,688 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:47:32,478 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:47:32,487 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:47:43,689 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:47:43,700 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:48:02,490 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:48:02,505 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:48:13,700 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:48:13,712 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:48:32,505 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:48:32,517 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:48:43,713 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:48:43,720 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:49:02,517 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:49:02,529 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:49:13,720 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:49:13,729 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:49:32,529 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:49:32,541 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:49:43,729 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:49:43,740 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:50:02,541 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:50:02,553 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:50:13,741 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:50:13,752 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:50:32,554 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:50:32,565 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:50:43,752 - INFO - 🤖 Dashboard Sentinel AI - Starting monitoring cycle...
-2026-01-27 23:50:43,761 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-27 23:51:00,082 - INFO - 🚀 Dashboard Sentinel AI - Complete Edition starting comprehensive monitoring (interval: 30s)
-2026-01-27 23:51:00,083 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:51:30,094 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:52:00,109 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:52:30,122 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:53:00,132 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:53:30,144 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:54:00,156 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:54:30,165 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:55:00,173 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:55:30,183 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:56:00,195 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:56:30,204 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:57:00,213 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:57:30,225 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:58:00,236 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:58:30,248 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:59:00,260 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-27 23:59:30,273 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:00:00,281 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:00:30,292 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:01:00,304 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:01:30,315 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:02:00,327 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:02:30,338 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:03:00,350 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:03:30,361 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:04:00,373 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:04:30,380 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:05:00,391 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:05:30,403 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:06:00,416 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:06:30,427 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:07:00,440 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:07:30,451 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:08:00,460 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:08:30,472 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:09:00,481 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:09:30,490 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:10:00,500 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:10:30,513 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:11:00,524 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:11:30,536 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:12:00,543 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:12:30,551 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:13:00,563 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:13:30,574 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:14:00,586 - INFO - 🤖 Dashboard Sentinel AI - Complete Edition - Starting comprehensive monitoring cycle...
-2026-01-28 00:14:32,779 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-28 01:11:24,710 - INFO - 🚀 Dashboard Sentinel AI - Complete Edition starting comprehensive monitoring (interval: 30s)
-2026-01-28 01:59:36,280 - INFO - 🚀 Dashboard Sentinel AI - Complete Edition starting comprehensive monitoring (interval: 30s)
-2026-01-28 02:00:07,661 - INFO - ✅ Learning recorded: Test Learning
-2026-01-28 02:00:07,670 - INFO - ✅ Heuristic created: Test rule from Sentinel...
-2026-01-28 02:00:07,675 - ERROR - ❌ Failed to generate spike report: 500
-2026-01-28 02:00:42,861 - INFO - 🤖 Dashboard Sentinel AI - Starting comprehensive monitoring cycle...
-2026-01-28 02:00:42,879 - INFO - ✅ Learning recorded: High Productivity Pattern Detected
-2026-01-28 02:00:42,880 - INFO - 🤖 Auto-generated 1 knowledge entries
-2026-01-29 19:13:54,896 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 19:15:31,181 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 19:45:50,116 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 19:47:49,068 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 19:47:50,316 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 19:48:24,405 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 19:58:34,128 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 20:01:34,204 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615880>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:01:34,204 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:01:36,194 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 20:01:36,195 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57ff8f96a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:01:36,195 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:01:49,377 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15da30>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:01:49,377 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:01:50,642 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e289b80>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:01:50,642 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:01:54,730 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2ca9f0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:01:54,731 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:02:04,206 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615c70>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:02:04,206 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:02:06,196 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec154c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:02:06,196 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:02:19,378 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15de20>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:02:19,378 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:02:20,643 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a180>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:02:20,643 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:02:24,734 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f9ca0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:02:24,734 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:02:34,208 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6165a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:02:34,208 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:02:36,198 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec15c70>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:02:36,198 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:02:49,379 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15e750>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:02:49,379 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:02:50,644 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28aab0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:02:50,645 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:02:54,735 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fa5a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:02:54,735 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:03:04,209 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616ed0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:03:04,210 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:03:06,199 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16390>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:03:06,199 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:03:19,381 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f080>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:03:19,381 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:03:20,646 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28b3e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:03:20,646 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:03:24,736 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2faed0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:03:24,736 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:03:34,211 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f5e35c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:03:34,211 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:03:36,201 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57febe26c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:03:36,202 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:03:49,382 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b12b650>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:03:49,383 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:03:50,647 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e4f0890>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:03:50,648 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:03:54,738 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2cb7a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:03:54,739 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:03:55,734 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 20:03:55,735 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbdd97650>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:03:55,735 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:04:04,213 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616d50>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:04:04,213 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:04:06,203 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec166c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:04:06,203 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:04:19,384 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15efc0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:04:19,384 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:04:20,650 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28af90>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:04:20,651 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:04:24,741 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fac00>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:04:24,741 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:04:25,736 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd05640>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:04:25,736 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:04:34,214 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616420>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:04:34,214 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:04:36,206 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec15eb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:04:36,206 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:04:49,385 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15e690>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:04:49,385 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:04:50,653 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a660>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:04:50,653 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:04:54,742 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fa5d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:04:54,742 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:04:55,738 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd05dc0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:04:55,738 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:05:04,215 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615850>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:05:04,216 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:05:06,208 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec15460>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:05:06,208 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:05:19,386 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15dd30>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:05:19,386 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:05:20,654 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e289ca0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:05:20,654 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:05:24,744 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f9d30>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:05:24,744 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:05:25,740 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd064e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:05:25,740 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:05:34,218 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6177d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:05:34,218 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:05:36,209 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec17320>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:05:36,209 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:05:49,387 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f9b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:05:49,388 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:05:50,655 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28bd10>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:05:50,655 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:05:54,745 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fb800>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:05:54,745 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:05:55,742 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbccd3560>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:05:55,742 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:06:04,219 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f444140>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:06:04,219 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:06:06,210 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec17bf0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:06:06,210 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:06:19,388 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4af8c320>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:06:19,389 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:06:20,656 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e0bc680>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:06:20,656 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:06:24,747 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef12c170>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:06:24,747 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:06:25,743 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd06840>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:06:25,743 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:06:34,221 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f597e30>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:06:34,221 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:06:36,211 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e58001bb230>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:06:36,211 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:06:49,390 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b399370>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:06:49,390 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:06:50,658 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e949130>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:06:50,658 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:06:54,750 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef5653a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:06:54,750 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:06:55,745 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd05f70>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:06:55,745 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:07:04,223 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6177d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:07:04,223 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:07:06,213 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec17860>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:07:06,214 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:07:19,391 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15fb00>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:07:19,391 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:07:20,659 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28bd40>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:07:20,660 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:07:24,752 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fbec0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:07:24,752 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:07:25,747 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd056a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:07:25,747 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:07:34,225 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615850>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:07:34,225 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:07:36,215 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16d80>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:07:36,215 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:07:49,392 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15d700>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:07:49,392 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:07:50,660 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a090>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:07:50,661 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:07:54,754 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fb590>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:07:54,754 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:07:55,748 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd07440>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:07:55,749 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:08:04,226 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6163f0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:08:04,226 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:08:06,216 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec156a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:08:06,216 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:08:19,393 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15e510>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:08:19,393 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:08:20,662 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a9f0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:08:20,662 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:08:24,756 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f9d60>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:08:24,756 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:08:25,750 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd07d10>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:08:25,751 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:08:34,227 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6168d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:08:34,227 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:08:36,217 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16540>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:08:36,218 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:08:49,394 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15ee70>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:08:49,394 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:08:50,663 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28b410>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:08:50,663 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:08:54,758 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fa1b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:08:54,758 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:08:55,755 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbccd22a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:08:55,755 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:09:04,228 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f5e3530>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:09:04,228 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:09:06,220 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fea4c0b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:09:06,220 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:09:19,395 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f4d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:09:19,395 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:09:20,664 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e0bc680>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:09:20,664 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:09:24,760 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fb1d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:09:24,760 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:09:25,756 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd077a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:09:25,756 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:09:34,231 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f617320>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:09:34,231 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:09:36,222 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16a50>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:09:36,222 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:09:49,396 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15eed0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:09:49,396 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:09:50,668 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28b620>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:09:50,668 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:09:54,764 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2cb890>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:09:54,764 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:09:55,759 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd06d50>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:09:55,759 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:10:04,232 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616750>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:10:04,233 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:10:06,224 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec161e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:10:06,224 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:10:19,398 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15e750>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:10:19,398 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:10:20,669 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28b290>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:10:20,669 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:10:24,765 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2facf0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:10:24,765 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:10:25,760 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd05b80>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:10:25,760 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:10:34,235 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616660>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:10:34,235 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:10:36,226 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec154c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:10:36,226 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:10:49,399 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15dee0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:10:49,399 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:10:50,670 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a960>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:10:50,670 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:10:54,766 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fa4e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:10:54,766 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:10:55,762 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd066c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:10:55,762 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:11:04,237 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615c70>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:11:04,237 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:11:06,228 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16ff0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:11:06,228 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:11:19,400 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f8f0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:11:19,400 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:11:20,671 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a870>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:11:20,671 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:11:24,767 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f9be0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:11:24,767 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:11:25,764 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcb3c200>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:11:25,764 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:11:34,238 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6155b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:11:34,239 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:11:36,230 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec17b90>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:11:36,230 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:11:49,401 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15ff50>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:11:49,401 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:11:50,672 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e97bbf0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:11:50,672 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:11:54,768 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fba40>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:11:54,768 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:11:55,767 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd06c60>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:11:55,767 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:12:04,240 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a77071e660>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:12:04,240 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:12:06,232 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57febe3d10>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:12:06,232 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:12:19,404 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b3c18b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:12:19,404 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:12:20,673 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e0bc050>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:12:20,673 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:12:24,769 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2a0890>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:12:24,769 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:12:25,768 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd05eb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:12:25,768 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:12:34,242 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f87c410>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:12:34,242 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:12:36,235 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57febe26c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:12:36,236 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:12:49,406 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b3c33b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:12:49,406 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:12:50,675 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e25a900>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:12:50,675 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:12:54,770 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef27fd70>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:12:54,770 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:12:55,769 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd05880>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:12:55,770 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:13:04,244 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f617b60>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:13:04,244 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:13:06,238 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec17b90>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:13:06,238 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:13:19,407 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15fce0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:13:19,407 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:13:20,677 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28bcb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:13:20,677 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:13:24,771 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fba10>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:13:24,771 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:13:25,772 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd07350>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:13:25,772 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:13:34,246 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615eb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:13:34,246 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:13:36,240 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16ff0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:13:36,240 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:13:49,409 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f800>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:13:49,409 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:13:50,678 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e289e20>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:13:50,678 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:13:54,772 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f9610>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:13:54,772 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:13:55,774 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd07da0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:13:55,774 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:14:04,248 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6167e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:14:04,248 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:14:06,242 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec154c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:14:06,242 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:14:19,411 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15deb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:14:19,411 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:14:20,679 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a6c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:14:20,679 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:14:24,773 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fa2a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:14:24,774 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:14:25,775 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbeaebaa0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:14:25,776 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:14:34,250 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616cf0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:14:34,251 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:14:36,244 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec15d90>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:14:36,244 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:14:49,413 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f110>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:14:49,413 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:14:50,682 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a7b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:14:50,682 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:14:54,775 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fad50>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:14:54,775 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:14:55,778 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcc84ec0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:14:55,778 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:15:04,253 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6170b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:15:04,253 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:15:06,246 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16a20>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:15:06,247 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:15:19,414 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b12a870>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:15:19,414 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:15:20,684 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e20c9e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:15:20,684 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:15:24,776 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef6d7d10>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:15:24,776 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:15:25,780 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd07da0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:15:25,780 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:15:34,255 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f444a40>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:15:34,255 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:15:36,248 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fea4c980>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:15:36,249 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:15:49,418 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4af8cbf0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:15:49,418 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:15:50,685 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e0bcef0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:15:50,685 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:15:54,777 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef12ca10>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:15:54,778 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:15:55,782 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd07350>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:15:55,782 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:16:04,257 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616a20>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:16:04,258 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:16:06,251 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec160f0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:16:06,252 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:16:19,420 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f3e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:16:19,420 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:16:20,687 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28b230>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:16:20,687 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:16:24,779 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fb0e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:16:24,780 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:16:25,784 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd05880>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:16:25,784 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:16:34,259 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616720>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:16:34,259 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:16:36,252 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec160c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:16:36,253 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:16:49,422 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15e690>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:16:49,422 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:16:50,689 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28af00>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:16:50,689 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:16:54,780 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fa810>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:16:54,781 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:16:55,786 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd06330>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:16:55,787 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:17:04,261 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615f70>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:17:04,262 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:17:06,253 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec153d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:17:06,254 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:17:19,424 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15dfa0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:17:19,425 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:17:20,690 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e289850>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:17:20,690 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:17:24,782 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f98b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:17:24,782 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:17:25,788 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd06b70>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:17:25,788 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:17:34,264 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615880>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:17:34,264 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:17:36,254 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec173b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:17:36,255 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:17:49,426 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15d7c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:17:49,426 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:17:50,692 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e289d30>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:17:50,692 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:17:54,783 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f99d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:17:54,783 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:17:55,791 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcb3cb60>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:17:55,791 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:18:04,266 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f617cb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:18:04,267 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:18:06,256 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec17da0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:18:06,256 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:18:19,428 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15fe90>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:18:19,428 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:18:20,693 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e25acf0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:18:20,693 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:18:24,784 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fbe60>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:18:24,784 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:18:25,792 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd06660>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:18:25,792 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:18:34,269 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f444890>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:18:34,269 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:18:36,257 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fea4c800>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:18:36,257 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:18:49,430 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4af8c8c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:18:49,431 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:18:50,696 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e0bcd70>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:18:50,696 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:18:54,785 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef12c890>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:18:54,785 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:18:55,795 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd055b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:18:55,795 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:19:04,271 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f617fb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:19:04,271 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:19:06,258 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16ea0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:19:06,258 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:19:19,433 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f7a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:19:19,434 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:19:20,698 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28ba40>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:19:20,698 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:19:24,786 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fbc80>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:19:24,786 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:19:25,796 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd074a0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:19:25,796 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:19:34,272 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6158e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:19:34,272 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:19:36,259 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16f30>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:19:36,259 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:19:49,436 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15e240>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:19:49,436 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:19:50,700 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a0c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:19:50,700 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:19:54,787 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fb8c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:19:54,787 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:19:55,798 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd079e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:19:55,798 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:20:04,274 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6152b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:20:04,274 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:20:06,260 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec157c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:20:06,260 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:20:19,438 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15e930>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:20:19,438 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:20:20,701 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a120>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:20:20,702 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:20:24,789 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f9970>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:20:24,789 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:20:25,801 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbde22660>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:20:25,801 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:20:34,276 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616b70>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:20:34,276 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:20:36,262 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec161e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:20:36,262 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:20:49,440 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15edb0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:20:49,440 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:20:50,703 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28b290>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:20:50,703 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:20:54,790 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fa5d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:20:54,790 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:20:55,803 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcb3c9e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:20:55,803 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:04,278 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6170b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:04,278 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:06,264 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec16600>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:06,264 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:19,442 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15e9f0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:19,442 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:20,704 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28b5c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:20,704 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:24,791 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fae70>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:24,791 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:25,805 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd07dd0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:25,806 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:32,497 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 20:21:32,498 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x744c0c14d670>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:32,499 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:34,281 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f444410>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:34,282 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:36,267 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fea4c950>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:36,267 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:49,444 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4af8cb90>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:49,445 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:50,706 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e0bc5c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:50,707 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:54,793 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef12c9e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:54,793 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:21:55,807 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd071d0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:21:55,808 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:02,500 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x744c0bae9dc0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:02,500 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:04,283 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f616d50>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:04,284 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:06,268 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec15e20>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:06,268 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:10,218 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 20:22:10,219 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7a813b216540>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:10,219 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:19,446 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15f350>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:19,447 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:20,709 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28b410>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:20,709 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:24,795 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fa150>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:24,795 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:25,809 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd057c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:25,810 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:32,501 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x744c0baea540>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:32,501 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:34,285 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f6173b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:34,286 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:36,269 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec170b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:36,269 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:40,221 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7a813b245730>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:40,221 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:49,448 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15de50>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:49,448 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:50,710 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e28a690>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:50,710 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:54,797 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2f9c70>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:54,797 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:22:55,811 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd05d60>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:22:55,812 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:23:02,503 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x744c0baeac60>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:23:02,503 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:23:04,287 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73a76f615970>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:23:04,288 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:23:06,270 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7e57fec178c0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:23:06,270 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:23:10,222 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7a813b245ee0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:23:10,222 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:23:11,904 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 20:23:11,905 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7d5283cb6f90>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:23:11,905 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:23:19,449 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x785f4b15d820>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:23:19,450 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:23:20,714 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x77934e289ac0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:23:20,714 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:23:24,798 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x75b8ef2fb740>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:23:24,798 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:23:25,814 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x70ddbcd069f0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:23:25,814 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:23:30,328 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 20:23:30,329 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=3001): Max retries exceeded with url: / (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x752e3f07bb60>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-29 20:23:30,329 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-29 20:25:37,503 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 20:27:27,485 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 20:27:53,141 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
-2026-01-29 20:28:33,973 - INFO - 👔 Dashboard Sentinel AI - CEO Advisor Edition starting CEO advisory monitoring (interval: 30s)
+2026-01-30 12:11:38,735 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73c3178561e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 12:11:38,736 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 12:11:43,507 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7d5f09513740>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 12:11:43,507 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 12:42:42,385 - INFO - ======================================================================
+2026-01-30 12:42:42,385 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 12:42:42,385 - INFO - ======================================================================
+2026-01-30 12:42:42,385 - INFO - Interval: 30s
+2026-01-30 12:42:42,385 - INFO - Log level: INFO
+2026-01-30 12:42:42,385 - INFO - Standard ELF Integration: Enabled
+2026-01-30 12:42:42,385 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 12:42:42,385 - INFO - ======================================================================
+2026-01-30 12:42:42,385 - INFO - ✓ Sentinel initialized
+2026-01-30 12:42:42,385 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 12:42:42,385 - INFO - 
+2026-01-30 12:42:42,385 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
+2026-01-30 12:42:42,385 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:42:42,394 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
+2026-01-30 12:42:52,924 - INFO - ======================================================================
+2026-01-30 12:42:52,924 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 12:42:52,924 - INFO - ======================================================================
+2026-01-30 12:42:52,924 - INFO - Interval: 30s
+2026-01-30 12:42:52,924 - INFO - Log level: INFO
+2026-01-30 12:42:52,924 - INFO - Standard ELF Integration: Enabled
+2026-01-30 12:42:52,924 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 12:42:52,924 - INFO - ======================================================================
+2026-01-30 12:42:52,925 - INFO - ✓ Sentinel initialized
+2026-01-30 12:42:52,925 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 12:42:52,925 - INFO - 
+2026-01-30 12:42:52,925 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
+2026-01-30 12:42:52,925 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:42:52,936 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
+2026-01-30 12:43:12,395 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:43:12,403 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
+2026-01-30 12:43:22,936 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:43:22,946 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
+2026-01-30 12:43:42,404 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:43:42,412 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
+2026-01-30 12:43:52,946 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:43:52,956 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
+2026-01-30 12:44:22,956 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:44:22,972 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
+2026-01-30 12:44:52,972 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:44:52,978 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:45:22,980 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:45:22,987 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:45:39,884 - INFO - ======================================================================
+2026-01-30 12:45:39,884 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 12:45:39,884 - INFO - ======================================================================
+2026-01-30 12:45:39,884 - INFO - Interval: 30s
+2026-01-30 12:45:39,884 - INFO - Log level: INFO
+2026-01-30 12:45:39,884 - INFO - Standard ELF Integration: Enabled
+2026-01-30 12:45:39,884 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 12:45:39,884 - INFO - ======================================================================
+2026-01-30 12:45:39,884 - INFO - ✓ Sentinel initialized
+2026-01-30 12:45:39,884 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 12:45:39,884 - INFO - 
+2026-01-30 12:45:39,884 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
+2026-01-30 12:45:39,884 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:45:52,990 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:45:53,000 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:46:09,895 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:46:23,004 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:46:23,010 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:46:39,906 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:46:53,013 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:46:53,035 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:47:09,921 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:47:23,039 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:47:23,046 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:47:39,930 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:47:39,941 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:47:53,049 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:47:53,063 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:48:09,945 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:48:09,953 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:48:23,068 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:48:23,081 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:48:39,956 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:48:39,963 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:48:53,086 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:48:53,098 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:49:09,966 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:49:09,974 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:49:23,102 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:49:23,115 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:49:39,977 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:49:39,986 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:49:53,119 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:49:53,133 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:50:09,990 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:50:09,998 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:50:23,137 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:50:23,144 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:50:40,050 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:50:40,061 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:50:53,146 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:50:53,162 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:51:10,065 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:51:10,075 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:51:23,167 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:51:23,175 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:51:40,079 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:51:40,087 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:51:53,179 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:51:53,185 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:52:10,091 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:52:23,188 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:52:23,199 - INFO - 🔍 Patterns detected: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 12:52:28,206 - ERROR - Failed to record event to chronicle: database is locked
+2026-01-30 12:52:40,099 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:52:58,206 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:52:58,212 - INFO - 🔍 Patterns detected: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 12:53:10,109 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:53:28,215 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:53:40,121 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:53:58,225 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:54:10,132 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:54:10,142 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:54:28,239 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:54:28,247 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 12:56:44,136 - INFO - ======================================================================
+2026-01-30 12:56:44,136 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 12:56:44,136 - INFO - ======================================================================
+2026-01-30 12:56:44,136 - INFO - Interval: 30s
+2026-01-30 12:56:44,136 - INFO - Log level: INFO
+2026-01-30 12:56:44,136 - INFO - Standard ELF Integration: Enabled
+2026-01-30 12:56:44,136 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 12:56:44,136 - INFO - ======================================================================
+2026-01-30 12:56:44,136 - INFO - ✓ Sentinel initialized
+2026-01-30 12:56:44,136 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 12:56:44,136 - INFO - 
+2026-01-30 12:56:44,136 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
+2026-01-30 12:56:44,136 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:57:00,438 - INFO - ======================================================================
+2026-01-30 12:57:00,438 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 12:57:00,438 - INFO - ======================================================================
+2026-01-30 12:57:00,438 - INFO - Interval: 30s
+2026-01-30 12:57:00,438 - INFO - Log level: INFO
+2026-01-30 12:57:00,438 - INFO - Standard ELF Integration: Enabled
+2026-01-30 12:57:00,438 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 12:57:00,438 - INFO - ======================================================================
+2026-01-30 12:57:00,438 - INFO - ✓ Sentinel initialized
+2026-01-30 12:57:00,438 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 12:57:00,438 - INFO - 
+2026-01-30 12:57:00,438 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
+2026-01-30 12:57:00,438 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:57:14,146 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:57:19,859 - INFO - ======================================================================
+2026-01-30 12:57:19,859 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 12:57:19,859 - INFO - ======================================================================
+2026-01-30 12:57:19,859 - INFO - Interval: 30s
+2026-01-30 12:57:19,859 - INFO - Log level: INFO
+2026-01-30 12:57:19,859 - INFO - Standard ELF Integration: Enabled
+2026-01-30 12:57:19,859 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 12:57:19,859 - INFO - ======================================================================
+2026-01-30 12:57:19,859 - INFO - ✓ Sentinel initialized
+2026-01-30 12:57:19,859 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 12:57:19,859 - INFO - 
+2026-01-30 12:57:19,859 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
+2026-01-30 12:57:19,859 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:57:49,048 - INFO - ======================================================================
+2026-01-30 12:57:49,048 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 12:57:49,048 - INFO - ======================================================================
+2026-01-30 12:57:49,048 - INFO - Interval: 30s
+2026-01-30 12:57:49,048 - INFO - Log level: INFO
+2026-01-30 12:57:49,049 - INFO - Standard ELF Integration: Enabled
+2026-01-30 12:57:49,049 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 12:57:49,049 - INFO - ======================================================================
+2026-01-30 12:57:49,049 - INFO - ✓ Sentinel initialized
+2026-01-30 12:57:49,049 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 12:57:49,049 - INFO - 
+2026-01-30 12:57:49,049 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
+2026-01-30 12:57:49,049 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:58:19,060 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:58:26,610 - INFO - ======================================================================
+2026-01-30 12:58:26,610 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 12:58:26,610 - INFO - ======================================================================
+2026-01-30 12:58:26,610 - INFO - Interval: 30s
+2026-01-30 12:58:26,610 - INFO - Log level: INFO
+2026-01-30 12:58:26,610 - INFO - Standard ELF Integration: Enabled
+2026-01-30 12:58:26,610 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 12:58:26,610 - INFO - ======================================================================
+2026-01-30 12:58:26,610 - INFO - ✓ Sentinel initialized
+2026-01-30 12:58:26,610 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 12:58:26,610 - INFO - 
+2026-01-30 12:58:26,610 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
+2026-01-30 12:58:26,610 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:58:56,621 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:59:10,134 - INFO - ======================================================================
+2026-01-30 12:59:10,135 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 12:59:10,135 - INFO - ======================================================================
+2026-01-30 12:59:10,135 - INFO - Interval: 30s
+2026-01-30 12:59:10,135 - INFO - Log level: INFO
+2026-01-30 12:59:10,135 - INFO - Standard ELF Integration: Enabled
+2026-01-30 12:59:10,135 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 12:59:10,135 - INFO - ======================================================================
+2026-01-30 12:59:10,135 - INFO - ✓ Sentinel initialized
+2026-01-30 12:59:10,135 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 12:59:10,135 - INFO - 
+2026-01-30 12:59:10,135 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
+2026-01-30 12:59:10,135 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 12:59:40,147 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:00:10,159 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:00:40,175 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:01:10,190 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:01:10,205 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:01:40,209 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:01:40,221 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:02:10,226 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:02:10,232 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:02:40,236 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:02:40,244 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:03:20,277 - INFO - ======================================================================
+2026-01-30 13:03:20,277 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 13:03:20,277 - INFO - ======================================================================
+2026-01-30 13:03:20,277 - INFO - Interval: 30s
+2026-01-30 13:03:20,278 - INFO - Log level: INFO
+2026-01-30 13:03:20,278 - INFO - Standard ELF Integration: Enabled
+2026-01-30 13:03:20,278 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 13:03:20,278 - INFO - ======================================================================
+2026-01-30 13:03:20,278 - INFO - ✓ Sentinel initialized
+2026-01-30 13:03:20,278 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 13:03:20,278 - INFO - 
+2026-01-30 13:03:20,278 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
+2026-01-30 13:03:20,278 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:03:50,291 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:04:20,304 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:04:50,321 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:05:20,339 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:05:20,348 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:05:50,351 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:05:50,359 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:06:20,362 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:06:20,370 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:06:50,372 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:06:50,378 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:07:20,380 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:07:20,390 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:07:50,394 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:07:50,402 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:08:20,405 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:08:20,413 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:08:50,417 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:08:50,423 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:09:20,426 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:09:20,434 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:09:50,437 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:09:50,446 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:10:20,450 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:10:20,460 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:10:50,464 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:10:50,470 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:11:20,473 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:11:20,486 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:11:50,490 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:11:50,498 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:14:30,217 - INFO - ======================================================================
+2026-01-30 13:14:30,217 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 13:14:30,218 - INFO - ======================================================================
+2026-01-30 13:14:30,218 - INFO - Interval: 30s
+2026-01-30 13:14:30,218 - INFO - Log level: INFO
+2026-01-30 13:14:30,218 - INFO - Standard ELF Integration: Enabled
+2026-01-30 13:14:30,218 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 13:14:30,218 - INFO - ======================================================================
+2026-01-30 13:14:31,027 - INFO - ✓ Sentinel initialized
+2026-01-30 13:14:31,027 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 13:14:31,027 - INFO - 
+2026-01-30 13:14:31,027 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
+2026-01-30 13:14:31,027 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:15:01,038 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:15:31,053 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:16:01,074 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:16:31,090 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:16:31,098 - INFO - 
+======================================================================
+2026-01-30 13:16:31,098 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 13:16:31,098 - INFO - ======================================================================
+2026-01-30 13:16:31,098 - INFO - 
+📍 Processing pattern: Declining activity trend detected
+2026-01-30 13:16:31,098 - INFO - 🔍 Handling pattern: Declining activity trend detected
+2026-01-30 13:16:31,099 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
+2026-01-30 13:16:31,099 - INFO - 📞 Should call agent: researcher
+2026-01-30 13:16:31,099 - INFO - 💡 Recommendation: Investigate root cause of activity decline
+2026-01-30 13:16:31,099 - INFO - 💡 Recommendation: Check if users are disengaged
+2026-01-30 13:16:31,099 - INFO - 💡 Recommendation: Review recent system changes
+2026-01-30 13:16:31,099 - INFO - 💡 Recommendation: Consider running user survey or analysis
+2026-01-30 13:16:36,108 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 13:16:36,108 - INFO - ✅ Determined agent: researcher
+2026-01-30 13:16:36,108 - INFO - 📞 Calling researcher agent...
+2026-01-30 13:16:36,108 - INFO - 
+======================================================================
+2026-01-30 13:16:36,108 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
+2026-01-30 13:16:36,108 - INFO - ======================================================================
+2026-01-30 13:16:36,109 - INFO - 
+[1️⃣ AGENT CALL] Calling researcher agent...
+2026-01-30 13:17:36,194 - ERROR - ❌ Agent researcher failed to respond
+2026-01-30 13:17:36,194 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
+2026-01-30 13:17:36,194 - ERROR -    Status: agent_failed
+2026-01-30 13:17:36,194 - INFO - 
+======================================================================
+2026-01-30 13:17:36,194 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 13:17:36,194 - INFO -    Patterns processed: 1
+2026-01-30 13:17:36,194 - INFO -    Successful workflows: 0
+2026-01-30 13:17:36,194 - INFO - ======================================================================
+
+2026-01-30 13:17:36,195 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:17:41,209 - ERROR - Failed to record event to chronicle: database is locked
+2026-01-30 13:18:11,209 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:18:11,217 - INFO - 
+======================================================================
+2026-01-30 13:18:11,218 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 13:18:11,218 - INFO - ======================================================================
+2026-01-30 13:18:11,218 - INFO - 
+📍 Processing pattern: Declining activity trend detected
+2026-01-30 13:18:11,218 - INFO - 🔍 Handling pattern: Declining activity trend detected
+2026-01-30 13:18:16,226 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
+2026-01-30 13:18:16,226 - INFO - 📞 Should call agent: researcher
+2026-01-30 13:18:16,226 - INFO - 💡 Recommendation: Investigate root cause of activity decline
+2026-01-30 13:18:16,226 - INFO - 💡 Recommendation: Check if users are disengaged
+2026-01-30 13:18:16,226 - INFO - 💡 Recommendation: Review recent system changes
+2026-01-30 13:18:16,226 - INFO - 💡 Recommendation: Consider running user survey or analysis
+2026-01-30 13:18:21,241 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 13:18:21,242 - INFO - ✅ Determined agent: researcher
+2026-01-30 13:18:21,243 - INFO - 📞 Calling researcher agent...
+2026-01-30 13:18:21,243 - INFO - 
+======================================================================
+2026-01-30 13:18:21,243 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
+2026-01-30 13:18:21,244 - INFO - ======================================================================
+2026-01-30 13:18:21,244 - INFO - 
+[1️⃣ AGENT CALL] Calling researcher agent...
+2026-01-30 13:19:21,339 - ERROR - ❌ Agent researcher failed to respond
+2026-01-30 13:19:21,340 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
+2026-01-30 13:19:21,340 - ERROR -    Status: agent_failed
+2026-01-30 13:19:21,340 - INFO - 
+======================================================================
+2026-01-30 13:19:21,340 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 13:19:21,341 - INFO -    Patterns processed: 1
+2026-01-30 13:19:21,341 - INFO -    Successful workflows: 0
+2026-01-30 13:19:21,341 - INFO - ======================================================================
+
+2026-01-30 13:19:21,341 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:19:26,353 - ERROR - Failed to record event to chronicle: database is locked
+2026-01-30 13:19:56,353 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:19:56,363 - INFO - 
+======================================================================
+2026-01-30 13:19:56,363 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 13:19:56,363 - INFO - ======================================================================
+2026-01-30 13:19:56,363 - INFO - 
+📍 Processing pattern: Declining activity trend detected
+2026-01-30 13:19:56,363 - INFO - 🔍 Handling pattern: Declining activity trend detected
+2026-01-30 13:20:01,374 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
+2026-01-30 13:20:01,374 - INFO - 📞 Should call agent: researcher
+2026-01-30 13:20:01,374 - INFO - 💡 Recommendation: Investigate root cause of activity decline
+2026-01-30 13:20:01,374 - INFO - 💡 Recommendation: Check if users are disengaged
+2026-01-30 13:20:01,375 - INFO - 💡 Recommendation: Review recent system changes
+2026-01-30 13:20:01,375 - INFO - 💡 Recommendation: Consider running user survey or analysis
+2026-01-30 13:20:06,385 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 13:20:06,385 - INFO - ✅ Determined agent: researcher
+2026-01-30 13:20:06,386 - INFO - 📞 Calling researcher agent...
+2026-01-30 13:20:06,386 - INFO - 
+======================================================================
+2026-01-30 13:20:06,386 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
+2026-01-30 13:20:06,386 - INFO - ======================================================================
+2026-01-30 13:20:06,386 - INFO - 
+[1️⃣ AGENT CALL] Calling researcher agent...
+2026-01-30 13:21:06,469 - ERROR - ❌ Agent researcher failed to respond
+2026-01-30 13:21:06,470 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
+2026-01-30 13:21:06,470 - ERROR -    Status: agent_failed
+2026-01-30 13:21:06,470 - INFO - 
+======================================================================
+2026-01-30 13:21:06,470 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 13:21:06,470 - INFO -    Patterns processed: 1
+2026-01-30 13:21:06,470 - INFO -    Successful workflows: 0
+2026-01-30 13:21:06,470 - INFO - ======================================================================
+
+2026-01-30 13:21:06,470 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:21:11,482 - ERROR - Failed to record event to chronicle: database is locked
+2026-01-30 13:21:41,483 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:21:41,493 - INFO - 
+======================================================================
+2026-01-30 13:21:41,493 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 13:21:41,493 - INFO - ======================================================================
+2026-01-30 13:21:41,493 - INFO - 
+📍 Processing pattern: Declining activity trend detected
+2026-01-30 13:21:41,493 - INFO - 🔍 Handling pattern: Declining activity trend detected
+2026-01-30 13:21:46,504 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
+2026-01-30 13:21:46,504 - INFO - 📞 Should call agent: researcher
+2026-01-30 13:21:46,504 - INFO - 💡 Recommendation: Investigate root cause of activity decline
+2026-01-30 13:21:46,504 - INFO - 💡 Recommendation: Check if users are disengaged
+2026-01-30 13:21:46,504 - INFO - 💡 Recommendation: Review recent system changes
+2026-01-30 13:21:46,504 - INFO - 💡 Recommendation: Consider running user survey or analysis
+2026-01-30 13:21:51,515 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 13:21:51,515 - INFO - ✅ Determined agent: researcher
+2026-01-30 13:21:51,516 - INFO - 📞 Calling researcher agent...
+2026-01-30 13:21:51,516 - INFO - 
+======================================================================
+2026-01-30 13:21:51,516 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
+2026-01-30 13:21:51,516 - INFO - ======================================================================
+2026-01-30 13:21:51,516 - INFO - 
+[1️⃣ AGENT CALL] Calling researcher agent...
+2026-01-30 13:22:51,580 - ERROR - ❌ Agent researcher failed to respond
+2026-01-30 13:22:51,580 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
+2026-01-30 13:22:51,580 - ERROR -    Status: agent_failed
+2026-01-30 13:22:51,580 - INFO - 
+======================================================================
+2026-01-30 13:22:51,580 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 13:22:51,580 - INFO -    Patterns processed: 1
+2026-01-30 13:22:51,580 - INFO -    Successful workflows: 0
+2026-01-30 13:22:51,580 - INFO - ======================================================================
+
+2026-01-30 13:22:51,581 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:22:56,592 - ERROR - Failed to record event to chronicle: database is locked
+2026-01-30 13:23:26,593 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:23:26,600 - INFO - 
+======================================================================
+2026-01-30 13:23:26,600 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 13:23:26,600 - INFO - ======================================================================
+2026-01-30 13:23:26,600 - INFO - 
+📍 Processing pattern: Declining activity trend detected
+2026-01-30 13:23:26,600 - INFO - 🔍 Handling pattern: Declining activity trend detected
+2026-01-30 13:23:31,609 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
+2026-01-30 13:23:31,611 - INFO - 📞 Should call agent: researcher
+2026-01-30 13:23:31,612 - INFO - 💡 Recommendation: Investigate root cause of activity decline
+2026-01-30 13:23:31,612 - INFO - 💡 Recommendation: Check if users are disengaged
+2026-01-30 13:23:31,612 - INFO - 💡 Recommendation: Review recent system changes
+2026-01-30 13:23:31,612 - INFO - 💡 Recommendation: Consider running user survey or analysis
+2026-01-30 13:23:36,623 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 13:23:36,623 - INFO - ✅ Determined agent: researcher
+2026-01-30 13:23:36,624 - INFO - 📞 Calling researcher agent...
+2026-01-30 13:23:36,624 - INFO - 
+======================================================================
+2026-01-30 13:23:36,624 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
+2026-01-30 13:23:36,624 - INFO - ======================================================================
+2026-01-30 13:23:36,624 - INFO - 
+[1️⃣ AGENT CALL] Calling researcher agent...
+2026-01-30 13:24:36,713 - ERROR - ❌ Agent researcher failed to respond
+2026-01-30 13:24:36,713 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
+2026-01-30 13:24:36,713 - ERROR -    Status: agent_failed
+2026-01-30 13:24:36,713 - INFO - 
+======================================================================
+2026-01-30 13:24:36,713 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 13:24:36,714 - INFO -    Patterns processed: 1
+2026-01-30 13:24:36,714 - INFO -    Successful workflows: 0
+2026-01-30 13:24:36,714 - INFO - ======================================================================
+
+2026-01-30 13:24:36,714 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:24:41,723 - ERROR - Failed to record event to chronicle: database is locked
+2026-01-30 13:25:11,724 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 13:25:11,735 - INFO - 
+======================================================================
+2026-01-30 13:25:11,736 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 13:25:11,736 - INFO - ======================================================================
+2026-01-30 13:25:11,736 - INFO - 
+📍 Processing pattern: Declining activity trend detected
+2026-01-30 13:25:11,736 - INFO - 🔍 Handling pattern: Declining activity trend detected
+2026-01-30 13:25:16,749 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
+2026-01-30 13:25:16,749 - INFO - 📞 Should call agent: researcher
+2026-01-30 13:25:16,749 - INFO - 💡 Recommendation: Investigate root cause of activity decline
+2026-01-30 13:25:16,749 - INFO - 💡 Recommendation: Check if users are disengaged
+2026-01-30 13:25:16,749 - INFO - 💡 Recommendation: Review recent system changes
+2026-01-30 13:25:16,749 - INFO - 💡 Recommendation: Consider running user survey or analysis
+2026-01-30 13:25:21,757 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 13:25:21,757 - INFO - ✅ Determined agent: researcher
+2026-01-30 13:25:21,757 - INFO - 📞 Calling researcher agent...
+2026-01-30 13:25:21,757 - INFO - 
+======================================================================
+2026-01-30 13:25:21,758 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
+2026-01-30 13:25:21,758 - INFO - ======================================================================
+2026-01-30 13:25:21,758 - INFO - 
+[1️⃣ AGENT CALL] Calling researcher agent...
+2026-01-30 13:26:21,845 - ERROR - ❌ Agent researcher failed to respond
+2026-01-30 13:26:21,846 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
+2026-01-30 13:26:21,846 - ERROR -    Status: agent_failed
+2026-01-30 13:26:21,846 - INFO - 
+======================================================================
+2026-01-30 13:26:21,846 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 13:26:21,846 - INFO -    Patterns processed: 1
+2026-01-30 13:26:21,846 - INFO -    Successful workflows: 0
+2026-01-30 13:26:21,846 - INFO - ======================================================================
+
+2026-01-30 13:26:21,847 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 13:26:26,857 - ERROR - Failed to record event to chronicle: database is locked

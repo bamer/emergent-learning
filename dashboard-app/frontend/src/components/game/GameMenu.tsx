@@ -34,7 +34,7 @@ export const GameMenu: React.FC = () => {
 
     const handleLoginClick = async () => {
         try {
-            const res = await fetch('/api/setup/status');
+            const res = await fetch('/api/v1/setup/status');
             const data = await res.json();
             if (data.configured) {
                 login();

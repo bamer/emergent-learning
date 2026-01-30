@@ -24,7 +24,7 @@ export default function FraudReviewPanel({ className = '' }: FraudReviewPanelPro
   const loadReports = async () => {
     setLoading(true)
     try {
-      const data = await api.get('/api/fraud-reports')
+      const data = await api.get('/api/v1/fraud-reports')
       setReports(data || [])
     } catch (err) {
       console.error('Failed to load fraud reports:', err)
@@ -35,7 +35,7 @@ export default function FraudReviewPanel({ className = '' }: FraudReviewPanelPro
 
   const loadReportDetails = async (reportId: number) => {
     try {
-      const data = await api.get(`/api/fraud-reports/${reportId}`)
+      const data = await api.get(`/api/v1/fraud-reports/${reportId}`)
       setSelectedReport(data)
       setExpandedId(reportId)
     } catch (err) {
@@ -46,7 +46,7 @@ export default function FraudReviewPanel({ className = '' }: FraudReviewPanelPro
   const handleReview = async (reportId: number, outcome: ReviewOutcome) => {
     setActionLoading(reportId)
     try {
-      await api.post(`/api/fraud-reports/${reportId}/review`, {
+      await api.post(`/api/v1/fraud-reports/${reportId}/review`, {
         outcome,
         reviewed_by: 'human',
         notes: null

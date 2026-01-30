@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException
 
 from models import FraudReviewRequest, ActionResult
 
-router = APIRouter(prefix="/api", tags=["fraud"])
+router = APIRouter(prefix="/api/v1", tags=["fraud"])
 logger = logging.getLogger(__name__)
 
 # Path will be set from main.py
@@ -31,6 +31,7 @@ def get_fraud_reviewer():
     # Import FraudReviewer from the query directory
     sys.path.insert(0, str(EMERGENT_LEARNING_PATH / "query"))
     from fraud_review import FraudReviewer
+
     return FraudReviewer()
 
 
@@ -54,7 +55,9 @@ async def get_fraud_report(report_id: int):
         report = reviewer.get_report_with_signals(report_id)
 
         if not report:
-            raise HTTPException(status_code=404, detail=f"Fraud report {report_id} not found")
+            raise HTTPException(
+                status_code=404, detail=f"Fraud report {report_id} not found"
+            )
 
         return report
     except HTTPException:
@@ -65,7 +68,9 @@ async def get_fraud_report(report_id: int):
 
 
 @router.post("/fraud-reports/{report_id}/review")
-async def review_fraud_report(report_id: int, review: FraudReviewRequest) -> ActionResult:
+async def review_fraud_report(
+    report_id: int, review: FraudReviewRequest
+) -> ActionResult:
     """Record human review outcome for a fraud report."""
     try:
         reviewer = get_fraud_reviewer()
@@ -73,15 +78,19 @@ async def review_fraud_report(report_id: int, review: FraudReviewRequest) -> Act
             fraud_report_id=report_id,
             outcome=review.outcome,
             reviewed_by=review.reviewed_by,
-            notes=review.notes
+            notes=review.notes,
         )
 
-        outcome_msg = "confirmed as fraud" if review.outcome == "true_positive" else "marked as false positive"
+        outcome_msg = (
+            "confirmed as fraud"
+            if review.outcome == "true_positive"
+            else "marked as false positive"
+        )
 
         return ActionResult(
             success=True,
             message=f"Fraud report #{report_id} {outcome_msg}",
-            data=result
+            data=result,
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

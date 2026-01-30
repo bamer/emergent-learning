@@ -14,7 +14,7 @@ from fastapi import APIRouter, HTTPException
 from models import ActionResult, OpenInEditorRequest
 from utils import get_db, dict_from_row
 
-router = APIRouter(prefix="/api", tags=["admin"])
+router = APIRouter(prefix="/api/v1", tags=["admin"])
 logger = logging.getLogger(__name__)
 
 # Path will be set from main.py
@@ -77,27 +77,33 @@ async def get_ceo_inbox():
             continue
 
         try:
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
 
             # Parse frontmatter-style metadata from content
-            title_match = re.search(r'^#\s+(.+)$', content, re.MULTILINE)
-            priority_match = re.search(r'\*\*Priority:\*\*\s*(\w+)', content)
-            status_match = re.search(r'\*\*Status:\*\*\s*(\w+)', content)
-            date_match = re.search(r'\*\*Date:\*\*\s*([\d-]+)', content)
+            title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
+            priority_match = re.search(r"\*\*Priority:\*\*\s*(\w+)", content)
+            status_match = re.search(r"\*\*Status:\*\*\s*(\w+)", content)
+            date_match = re.search(r"\*\*Date:\*\*\s*([\d-]+)", content)
 
             # Get first paragraph after title as summary
-            summary_match = re.search(r'^##\s+Context\s*\n+(.+?)(?=\n\n|\n##)', content, re.MULTILINE | re.DOTALL)
+            summary_match = re.search(
+                r"^##\s+Context\s*\n+(.+?)(?=\n\n|\n##)",
+                content,
+                re.MULTILINE | re.DOTALL,
+            )
             summary = summary_match.group(1).strip()[:200] if summary_match else ""
 
-            items.append({
-                "filename": file_path.name,
-                "title": title_match.group(1) if title_match else file_path.stem,
-                "priority": priority_match.group(1) if priority_match else "Medium",
-                "status": status_match.group(1) if status_match else "Pending",
-                "date": date_match.group(1) if date_match else None,
-                "summary": summary,
-                "path": str(file_path)
-            })
+            items.append(
+                {
+                    "filename": file_path.name,
+                    "title": title_match.group(1) if title_match else file_path.stem,
+                    "priority": priority_match.group(1) if priority_match else "Medium",
+                    "status": status_match.group(1) if status_match else "Pending",
+                    "date": date_match.group(1) if date_match else None,
+                    "summary": summary,
+                    "path": str(file_path),
+                }
+            )
         except Exception as e:
             logger.error(f"Error reading CEO inbox item {file_path}: {e}")
             continue
@@ -115,7 +121,7 @@ async def get_ceo_inbox_item(filename: str):
     if EMERGENT_LEARNING_PATH is None:
         raise HTTPException(status_code=500, detail="Paths not configured")
 
-    if not re.match(r'^[\w\-]+\.md$', filename):
+    if not re.match(r"^[\w\-]+\.md$", filename):
         raise HTTPException(status_code=400, detail="Invalid filename")
 
     ceo_inbox_dir = (EMERGENT_LEARNING_PATH / "ceo-inbox").resolve()
@@ -131,7 +137,7 @@ async def get_ceo_inbox_item(filename: str):
         raise HTTPException(status_code=404, detail="Item not found")
 
     try:
-        content = file_path.read_text(encoding='utf-8')
+        content = file_path.read_text(encoding="utf-8")
         return {"filename": filename, "content": content}
     except Exception as e:
         logger.error(f"Error reading CEO inbox item {filename}: {e}")
@@ -180,7 +186,7 @@ async def export_data(export_type: str, format: str = "json"):
                 "learnings": [],
                 "runs": [],
                 "trails": [],
-                "metrics_summary": {}
+                "metrics_summary": {},
             }
 
             cursor.execute("SELECT * FROM heuristics ORDER BY confidence DESC")
@@ -189,7 +195,9 @@ async def export_data(export_type: str, format: str = "json"):
             cursor.execute("SELECT * FROM learnings ORDER BY created_at DESC")
             data["learnings"] = [dict_from_row(r) for r in cursor.fetchall()]
 
-            cursor.execute("SELECT * FROM workflow_runs ORDER BY created_at DESC LIMIT 100")
+            cursor.execute(
+                "SELECT * FROM workflow_runs ORDER BY created_at DESC LIMIT 100"
+            )
             data["runs"] = [dict_from_row(r) for r in cursor.fetchall()]
 
             cursor.execute("""
@@ -206,9 +214,13 @@ async def export_data(export_type: str, format: str = "json"):
                 FROM metrics
                 GROUP BY metric_type
             """)
-            data["metrics_summary"] = {r["metric_type"]: r["count"] for r in cursor.fetchall()}
+            data["metrics_summary"] = {
+                r["metric_type"]: r["count"] for r in cursor.fetchall()
+            }
         else:
-            raise HTTPException(status_code=400, detail=f"Unknown export type: {export_type}")
+            raise HTTPException(
+                status_code=400, detail=f"Unknown export type: {export_type}"
+            )
 
         return data
 
@@ -224,7 +236,9 @@ async def open_in_editor(request: OpenInEditorRequest) -> ActionResult:
 
         if not _is_path_allowed(file_path):
             logger.warning(f"Path traversal blocked: {filepath}")
-            return ActionResult(success=False, message="Access denied: path not in allowed directories")
+            return ActionResult(
+                success=False, message="Access denied: path not in allowed directories"
+            )
 
         if line_number:
             subprocess.Popen(["code", "-g", f"{file_path}:{line_number}"])
@@ -234,7 +248,9 @@ async def open_in_editor(request: OpenInEditorRequest) -> ActionResult:
         return ActionResult(success=True, message=f"Opened {filepath} in VS Code")
     except Exception as e:
         logger.error(f"Error opening file in editor: {e}", exc_info=True)
-        return ActionResult(success=False, message="Failed to open file in editor. Please try again.")
+        return ActionResult(
+            success=False, message="Failed to open file in editor. Please try again."
+        )
 
 
 # ==============================================================================
@@ -289,7 +305,7 @@ def _perform_backup(keep_count: int = DEFAULT_BACKUP_KEEP_COUNT) -> dict:
         backups = sorted(
             backup_dir.glob("elf_backup_*.db"),
             key=lambda p: p.stat().st_mtime,
-            reverse=True
+            reverse=True,
         )
         deleted = []
         for old_backup in backups[keep_count:]:
@@ -304,7 +320,7 @@ def _perform_backup(keep_count: int = DEFAULT_BACKUP_KEEP_COUNT) -> dict:
             "backup_path": str(backup_path),
             "size_bytes": backup_path.stat().st_size,
             "rotated_out": deleted,
-            "created_at": datetime.now().isoformat()
+            "created_at": datetime.now().isoformat(),
         }
 
     except sqlite3.Error as e:
@@ -343,23 +359,25 @@ async def list_backups() -> dict:
     backups = sorted(
         backup_dir.glob("elf_backup_*.db"),
         key=lambda p: p.stat().st_mtime,
-        reverse=True
+        reverse=True,
     )
 
     backup_list = []
     for backup in backups:
         stat = backup.stat()
-        backup_list.append({
-            "name": backup.name,
-            "size_bytes": stat.st_size,
-            "size_mb": round(stat.st_size / (1024 * 1024), 2),
-            "created_at": datetime.fromtimestamp(stat.st_mtime).isoformat()
-        })
+        backup_list.append(
+            {
+                "name": backup.name,
+                "size_bytes": stat.st_size,
+                "size_mb": round(stat.st_size / (1024 * 1024), 2),
+                "created_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+            }
+        )
 
     return {
         "backups": backup_list,
         "total": len(backup_list),
-        "backup_dir": str(backup_dir)
+        "backup_dir": str(backup_dir),
     }
 
 
@@ -377,7 +395,7 @@ async def restore_backup(backup_name: str) -> ActionResult:
         ActionResult indicating success or failure
     """
     # Validate backup name format to prevent path traversal
-    if not re.match(r'^elf_backup_\d{8}_\d{6}\.db$', backup_name):
+    if not re.match(r"^elf_backup_\d{8}_\d{6}\.db$", backup_name):
         return ActionResult(success=False, message="Invalid backup name format")
 
     backup_dir = _get_backup_dir()
@@ -414,7 +432,7 @@ async def restore_backup(backup_name: str) -> ActionResult:
         logger.info(f"Database restored from: {backup_name}")
         return ActionResult(
             success=True,
-            message=f"Database restored from {backup_name}. Safety backup: {safety_backup.name}"
+            message=f"Database restored from {backup_name}. Safety backup: {safety_backup.name}",
         )
 
     except sqlite3.Error as e:

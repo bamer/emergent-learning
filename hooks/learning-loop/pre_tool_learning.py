@@ -31,7 +31,7 @@ def _resolve_base_path() -> Path:
     except ImportError:
         sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
         from elf_paths import get_base_path
-    return get_base_path(Path(__file__))
+    return get_base_path()
 
 
 EMERGENT_LEARNING_PATH = _resolve_base_path()

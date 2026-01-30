@@ -21,9 +21,9 @@
     }
   },
   "watcher_cycles": {
-    "total": 23,
-    "last_cycle": "2026-01-30T01:14:26.172092",
-    "escalations": 13
+    "total": 1483,
+    "last_cycle": "2026-01-30T14:25:26.387492",
+    "escalations": 1337
   },
-  "last_update": "2026-01-30T01:14:26.186500"
+  "last_update": "2026-01-30T14:25:26.403964"
 }
