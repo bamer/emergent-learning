@@ -116,25 +116,19 @@ def escape_like(s: str) -> str:
     )
 
 
-class ConnectionPool:
-    """SQLite connection pool for managing concurrent database access."""
+class SimpleConnectionManager:
+    """
+    Simple connection manager that opens/closes connections per request.
+    This prevents long-running connections from locking the database in WAL mode.
+    """
 
-    def __init__(self, db_path: Path, max_connections: int = 20, timeout: float = 30.0):
+    def __init__(self, db_path: Path, timeout: float = 30.0):
         self.db_path = db_path
-        self.max_connections = max_connections
         self.timeout = timeout
-        self.pool: Queue[sqlite3.Connection] = Queue(maxsize=max_connections)
-        self.active_connections = 0
-        self.lock = threading.Lock()
+        self._local = threading.local()
 
         # Ensure database directory exists
         db_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Initialize pool with a few connections
-        for _ in range(min(5, max_connections)):
-            conn = self._create_connection()
-            self.pool.put(conn)
-            self.active_connections += 1
 
     def _create_connection(self) -> sqlite3.Connection:
         """Create a new SQLite connection with optimal settings for concurrency."""
@@ -152,88 +146,48 @@ class ConnectionPool:
         cursor.execute("PRAGMA synchronous=NORMAL")
         cursor.execute("PRAGMA cache_size=10000")
         cursor.execute("PRAGMA temp_store=memory")
+        cursor.execute("PRAGMA busy_timeout=5000")  # 5 second busy timeout
         cursor.close()
 
         return conn
 
     def get_connection(self) -> sqlite3.Connection:
-        """Get a connection from the pool, creating one if needed."""
-        try:
-            # Try to get existing connection from pool
-            conn = self.pool.get(timeout=1.0)
-
-            # Verify connection is still alive
-            try:
-                conn.execute("SELECT 1")
-                return conn
-            except sqlite3.Error:
-                # Connection is dead, create a new one
-                return self._create_connection()
-
-        except Empty:
-            # Pool is empty, try to create new connection if under limit
-            with self.lock:
-                if self.active_connections < self.max_connections:
-                    conn = self._create_connection()
-                    self.active_connections += 1
-                    return conn
-                else:
-                    # Wait for a connection to become available
-                    return self.pool.get(timeout=self.timeout)
+        """Create a fresh connection for each request."""
+        return self._create_connection()
 
     def return_connection(self, conn: sqlite3.Connection):
-        """Return a connection to the pool."""
+        """Close the connection immediately after use."""
         try:
-            # Reset connection state
-            try:
-                conn.rollback()  # Ensure no pending transaction
-                conn.execute("SELECT 1")  # Verify connection is still good
-            except sqlite3.Error:
-                # Connection is bad, don't return to pool
-                with self.lock:
-                    self.active_connections -= 1
-                conn.close()
-                return
-
-            self.pool.put(conn, timeout=1.0)
-        except:
-            # Pool is full or other error, close connection
-            with self.lock:
-                self.active_connections -= 1
             conn.close()
+        except:
+            pass
 
     def close_all(self):
-        """Close all connections in the pool."""
-        while not self.pool.empty():
-            try:
-                conn = self.pool.get_nowait()
-                conn.close()
-            except Empty:
-                break
-        with self.lock:
-            self.active_connections = 0
+        """No-op since connections are not pooled."""
+        pass
 
 
-# Global connection pools
-_pools: Dict[str, ConnectionPool] = {}
+# Keep ConnectionPool for backward compatibility but use SimpleConnectionManager internally
+ConnectionPool = SimpleConnectionManager
+
+# Global connection managers
+_pools: Dict[str, SimpleConnectionManager] = {}
 _pools_lock = threading.Lock()
 
 
-def get_pool(db_path: Path) -> ConnectionPool:
-    """Get or create a connection pool for the given database path."""
+def get_pool(db_path: Path) -> SimpleConnectionManager:
+    """Get or create a connection manager for the given database path."""
     db_key = str(db_path.resolve())
 
     with _pools_lock:
         if db_key not in _pools:
-            _pools[db_key] = ConnectionPool(db_path)
+            _pools[db_key] = SimpleConnectionManager(db_path)
         return _pools[db_key]
 
 
 def close_all_pools():
-    """Close all connection pools (for shutdown)."""
+    """Close all connection managers (for shutdown)."""
     with _pools_lock:
-        for pool in _pools.values():
-            pool.close_all()
         _pools.clear()
 
 
