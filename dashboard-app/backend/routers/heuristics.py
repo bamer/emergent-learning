@@ -3,14 +3,43 @@ Heuristics Router - CRUD, graph visualization, promote/demote.
 """
 
 import re
+import sqlite3
+import time
+import logging
 from collections import defaultdict
 from datetime import datetime
-from typing import Optional
+from functools import wraps
+from typing import Optional, Callable, TypeVar, Any
 
 from fastapi import APIRouter, HTTPException
 
 from models import HeuristicUpdate, ActionResult
 from utils import get_db, dict_from_row
+
+logger = logging.getLogger(__name__)
+T = TypeVar('T')
+
+
+def retry_on_locked(max_retries: int = 3, base_delay: float = 0.1):
+    """Decorator to retry database operations on lock errors with exponential backoff."""
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @wraps(func)
+        async def wrapper(*args, **kwargs) -> T:
+            last_error = None
+            for attempt in range(max_retries):
+                try:
+                    return await func(*args, **kwargs)
+                except sqlite3.OperationalError as e:
+                    if "database is locked" in str(e):
+                        last_error = e
+                        delay = base_delay * (2 ** attempt)
+                        logger.warning(f"DB locked, retry {attempt + 1}/{max_retries} in {delay:.2f}s")
+                        time.sleep(delay)
+                    else:
+                        raise
+            raise last_error
+        return wrapper
+    return decorator
 
 router = APIRouter(prefix="/api/v1", tags=["heuristics"])
 
@@ -295,6 +324,7 @@ async def get_heuristic_graph():
 
 
 @router.post("/heuristics/{heuristic_id}/promote")
+@retry_on_locked(max_retries=3, base_delay=0.2)
 async def promote_to_golden(heuristic_id: int) -> ActionResult:
     """Promote a heuristic to golden rule."""
     with get_db() as conn:
@@ -339,6 +369,7 @@ async def promote_to_golden(heuristic_id: int) -> ActionResult:
 
 
 @router.post("/heuristics/{heuristic_id}/demote")
+@retry_on_locked(max_retries=3, base_delay=0.2)
 async def demote_from_golden(heuristic_id: int) -> ActionResult:
     """Demote a golden rule back to regular heuristic."""
     with get_db() as conn:
@@ -369,6 +400,7 @@ async def demote_from_golden(heuristic_id: int) -> ActionResult:
 
 
 @router.put("/heuristics/{heuristic_id}")
+@retry_on_locked(max_retries=3, base_delay=0.2)
 async def update_heuristic(heuristic_id: int, update: HeuristicUpdate) -> ActionResult:
     """Update a heuristic."""
     with get_db() as conn:
@@ -425,6 +457,7 @@ async def update_heuristic(heuristic_id: int, update: HeuristicUpdate) -> Action
 
 
 @router.delete("/heuristics/{heuristic_id}")
+@retry_on_locked(max_retries=3, base_delay=0.2)
 async def delete_heuristic(heuristic_id: int) -> ActionResult:
     """Delete a heuristic."""
     with get_db() as conn:

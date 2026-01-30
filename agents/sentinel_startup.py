@@ -19,10 +19,44 @@ Standard ELF Integration:
 import sys
 import logging
 import argparse
+import atexit
+import os
+import fcntl
 from pathlib import Path
 
 # Setup path
 sys.path.insert(0, str(Path(__file__).parent))
+
+LOCK_FILE = Path.home() / ".opencode" / ".sentinel.lock"
+_lock_fd = None
+
+
+def acquire_lock() -> bool:
+    """Acquire exclusive lock to prevent duplicate sentinel processes."""
+    global _lock_fd
+    try:
+        LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+        _lock_fd = open(LOCK_FILE, 'w')
+        fcntl.flock(_lock_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _lock_fd.write(str(os.getpid()))
+        _lock_fd.flush()
+        return True
+    except (IOError, OSError):
+        if _lock_fd:
+            _lock_fd.close()
+        return False
+
+
+def release_lock():
+    """Release the lock file."""
+    global _lock_fd
+    if _lock_fd:
+        try:
+            fcntl.flock(_lock_fd.fileno(), fcntl.LOCK_UN)
+            _lock_fd.close()
+            LOCK_FILE.unlink(missing_ok=True)
+        except Exception:
+            pass
 
 from dashboard_sentinel import AISentinel
 
@@ -43,6 +77,11 @@ def setup_logging(log_level: str = "INFO"):
 
 def main():
     """Main entry point."""
+    if not acquire_lock():
+        print("❌ Another Sentinel instance is already running. Exiting.")
+        sys.exit(1)
+    atexit.register(release_lock)
+
     parser = argparse.ArgumentParser(
         description="Start Dashboard Sentinel in continuous monitoring mode"
     )

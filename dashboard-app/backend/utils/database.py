@@ -136,7 +136,7 @@ class SimpleConnectionManager:
             str(self.db_path),
             timeout=self.timeout,
             check_same_thread=False,
-            isolation_level=None,  # Autocommit mode for better concurrency
+            isolation_level="DEFERRED",  # Explicit transactions for better lock control
         )
         conn.row_factory = sqlite3.Row
 
@@ -146,7 +146,7 @@ class SimpleConnectionManager:
         cursor.execute("PRAGMA synchronous=NORMAL")
         cursor.execute("PRAGMA cache_size=10000")
         cursor.execute("PRAGMA temp_store=memory")
-        cursor.execute("PRAGMA busy_timeout=5000")  # 5 second busy timeout
+        cursor.execute("PRAGMA busy_timeout=30000")  # 30 second busy timeout
         cursor.close()
 
         return conn
