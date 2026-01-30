@@ -1,1043 +1,557 @@
-2026-01-30 12:11:38,735 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x73c3178561e0>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-30 12:11:38,736 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-30 12:11:43,507 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7d5f09513740>: Failed to establish a new connection: [Errno 111] Connection refused'))
-2026-01-30 12:11:43,507 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-30 12:42:42,385 - INFO - ======================================================================
-2026-01-30 12:42:42,385 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 12:42:42,385 - INFO - ======================================================================
-2026-01-30 12:42:42,385 - INFO - Interval: 30s
-2026-01-30 12:42:42,385 - INFO - Log level: INFO
-2026-01-30 12:42:42,385 - INFO - Standard ELF Integration: Enabled
-2026-01-30 12:42:42,385 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 12:42:42,385 - INFO - ======================================================================
-2026-01-30 12:42:42,385 - INFO - ✓ Sentinel initialized
-2026-01-30 12:42:42,385 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 12:42:42,385 - INFO - 
-2026-01-30 12:42:42,385 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 12:42:42,385 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:42:42,394 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
-2026-01-30 12:42:52,924 - INFO - ======================================================================
-2026-01-30 12:42:52,924 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 12:42:52,924 - INFO - ======================================================================
-2026-01-30 12:42:52,924 - INFO - Interval: 30s
-2026-01-30 12:42:52,924 - INFO - Log level: INFO
-2026-01-30 12:42:52,924 - INFO - Standard ELF Integration: Enabled
-2026-01-30 12:42:52,924 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 12:42:52,924 - INFO - ======================================================================
-2026-01-30 12:42:52,925 - INFO - ✓ Sentinel initialized
-2026-01-30 12:42:52,925 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 12:42:52,925 - INFO - 
-2026-01-30 12:42:52,925 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 12:42:52,925 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:42:52,936 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
-2026-01-30 12:43:12,395 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:43:12,403 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
-2026-01-30 12:43:22,936 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:43:22,946 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
-2026-01-30 12:43:42,404 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:43:42,412 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
-2026-01-30 12:43:52,946 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:43:52,956 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
-2026-01-30 12:44:22,956 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:44:22,972 - ERROR - Failed to record event to chronicle: no such table: event_chronicle
-2026-01-30 12:44:52,972 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:44:52,978 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:45:22,980 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:45:22,987 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:45:39,884 - INFO - ======================================================================
-2026-01-30 12:45:39,884 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 12:45:39,884 - INFO - ======================================================================
-2026-01-30 12:45:39,884 - INFO - Interval: 30s
-2026-01-30 12:45:39,884 - INFO - Log level: INFO
-2026-01-30 12:45:39,884 - INFO - Standard ELF Integration: Enabled
-2026-01-30 12:45:39,884 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 12:45:39,884 - INFO - ======================================================================
-2026-01-30 12:45:39,884 - INFO - ✓ Sentinel initialized
-2026-01-30 12:45:39,884 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 12:45:39,884 - INFO - 
-2026-01-30 12:45:39,884 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 12:45:39,884 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:45:52,990 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:45:53,000 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:46:09,895 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:46:23,004 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:46:23,010 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:46:39,906 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:46:53,013 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:46:53,035 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:47:09,921 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:47:23,039 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:47:23,046 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:47:39,930 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:47:39,941 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:47:53,049 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:47:53,063 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:48:09,945 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:48:09,953 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:48:23,068 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:48:23,081 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:48:39,956 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:48:39,963 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:48:53,086 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:48:53,098 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:49:09,966 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:49:09,974 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:49:23,102 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:49:23,115 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:49:39,977 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:49:39,986 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:49:53,119 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:49:53,133 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:50:09,990 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:50:09,998 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:50:23,137 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:50:23,144 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:50:40,050 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:50:40,061 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:50:53,146 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:50:53,162 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:51:10,065 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:51:10,075 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:51:23,167 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:51:23,175 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:51:40,079 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:51:40,087 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:51:53,179 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:51:53,185 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:52:10,091 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:52:23,188 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:52:23,199 - INFO - 🔍 Patterns detected: Cyclical pattern detected: Activity cycle of 10 intervals detected
-2026-01-30 12:52:28,206 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 12:52:40,099 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:52:58,206 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:52:58,212 - INFO - 🔍 Patterns detected: Cyclical pattern detected: Activity cycle of 10 intervals detected
-2026-01-30 12:53:10,109 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:53:28,215 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:53:40,121 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:53:58,225 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:54:10,132 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:54:10,142 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:54:28,239 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:54:28,247 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 12:56:44,136 - INFO - ======================================================================
-2026-01-30 12:56:44,136 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 12:56:44,136 - INFO - ======================================================================
-2026-01-30 12:56:44,136 - INFO - Interval: 30s
-2026-01-30 12:56:44,136 - INFO - Log level: INFO
-2026-01-30 12:56:44,136 - INFO - Standard ELF Integration: Enabled
-2026-01-30 12:56:44,136 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 12:56:44,136 - INFO - ======================================================================
-2026-01-30 12:56:44,136 - INFO - ✓ Sentinel initialized
-2026-01-30 12:56:44,136 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 12:56:44,136 - INFO - 
-2026-01-30 12:56:44,136 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 12:56:44,136 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:57:00,438 - INFO - ======================================================================
-2026-01-30 12:57:00,438 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 12:57:00,438 - INFO - ======================================================================
-2026-01-30 12:57:00,438 - INFO - Interval: 30s
-2026-01-30 12:57:00,438 - INFO - Log level: INFO
-2026-01-30 12:57:00,438 - INFO - Standard ELF Integration: Enabled
-2026-01-30 12:57:00,438 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 12:57:00,438 - INFO - ======================================================================
-2026-01-30 12:57:00,438 - INFO - ✓ Sentinel initialized
-2026-01-30 12:57:00,438 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 12:57:00,438 - INFO - 
-2026-01-30 12:57:00,438 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 12:57:00,438 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:57:14,146 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:57:19,859 - INFO - ======================================================================
-2026-01-30 12:57:19,859 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 12:57:19,859 - INFO - ======================================================================
-2026-01-30 12:57:19,859 - INFO - Interval: 30s
-2026-01-30 12:57:19,859 - INFO - Log level: INFO
-2026-01-30 12:57:19,859 - INFO - Standard ELF Integration: Enabled
-2026-01-30 12:57:19,859 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 12:57:19,859 - INFO - ======================================================================
-2026-01-30 12:57:19,859 - INFO - ✓ Sentinel initialized
-2026-01-30 12:57:19,859 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 12:57:19,859 - INFO - 
-2026-01-30 12:57:19,859 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 12:57:19,859 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:57:49,048 - INFO - ======================================================================
-2026-01-30 12:57:49,048 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 12:57:49,048 - INFO - ======================================================================
-2026-01-30 12:57:49,048 - INFO - Interval: 30s
-2026-01-30 12:57:49,048 - INFO - Log level: INFO
-2026-01-30 12:57:49,049 - INFO - Standard ELF Integration: Enabled
-2026-01-30 12:57:49,049 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 12:57:49,049 - INFO - ======================================================================
-2026-01-30 12:57:49,049 - INFO - ✓ Sentinel initialized
-2026-01-30 12:57:49,049 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 12:57:49,049 - INFO - 
-2026-01-30 12:57:49,049 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 12:57:49,049 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:58:19,060 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:58:26,610 - INFO - ======================================================================
-2026-01-30 12:58:26,610 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 12:58:26,610 - INFO - ======================================================================
-2026-01-30 12:58:26,610 - INFO - Interval: 30s
-2026-01-30 12:58:26,610 - INFO - Log level: INFO
-2026-01-30 12:58:26,610 - INFO - Standard ELF Integration: Enabled
-2026-01-30 12:58:26,610 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 12:58:26,610 - INFO - ======================================================================
-2026-01-30 12:58:26,610 - INFO - ✓ Sentinel initialized
-2026-01-30 12:58:26,610 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 12:58:26,610 - INFO - 
-2026-01-30 12:58:26,610 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 12:58:26,610 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:58:56,621 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:59:10,134 - INFO - ======================================================================
-2026-01-30 12:59:10,135 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 12:59:10,135 - INFO - ======================================================================
-2026-01-30 12:59:10,135 - INFO - Interval: 30s
-2026-01-30 12:59:10,135 - INFO - Log level: INFO
-2026-01-30 12:59:10,135 - INFO - Standard ELF Integration: Enabled
-2026-01-30 12:59:10,135 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 12:59:10,135 - INFO - ======================================================================
-2026-01-30 12:59:10,135 - INFO - ✓ Sentinel initialized
-2026-01-30 12:59:10,135 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 12:59:10,135 - INFO - 
-2026-01-30 12:59:10,135 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 12:59:10,135 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 12:59:40,147 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:00:10,159 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:00:40,175 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:01:10,190 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:01:10,205 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:01:40,209 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:01:40,221 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:02:10,226 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:02:10,232 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:02:40,236 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:02:40,244 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:03:20,277 - INFO - ======================================================================
-2026-01-30 13:03:20,277 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 13:03:20,277 - INFO - ======================================================================
-2026-01-30 13:03:20,277 - INFO - Interval: 30s
-2026-01-30 13:03:20,278 - INFO - Log level: INFO
-2026-01-30 13:03:20,278 - INFO - Standard ELF Integration: Enabled
-2026-01-30 13:03:20,278 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 13:03:20,278 - INFO - ======================================================================
-2026-01-30 13:03:20,278 - INFO - ✓ Sentinel initialized
-2026-01-30 13:03:20,278 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 13:03:20,278 - INFO - 
-2026-01-30 13:03:20,278 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 13:03:20,278 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:03:50,291 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:04:20,304 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:04:50,321 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:05:20,339 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:05:20,348 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:05:50,351 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:05:50,359 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:06:20,362 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:06:20,370 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:06:50,372 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:06:50,378 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:07:20,380 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:07:20,390 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:07:50,394 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:07:50,402 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:08:20,405 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:08:20,413 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:08:50,417 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:08:50,423 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:09:20,426 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:09:20,434 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:09:50,437 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:09:50,446 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:10:20,450 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:10:20,460 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:10:50,464 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:10:50,470 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:11:20,473 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:11:20,486 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:11:50,490 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:11:50,498 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:14:30,217 - INFO - ======================================================================
-2026-01-30 13:14:30,217 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 13:14:30,218 - INFO - ======================================================================
-2026-01-30 13:14:30,218 - INFO - Interval: 30s
-2026-01-30 13:14:30,218 - INFO - Log level: INFO
-2026-01-30 13:14:30,218 - INFO - Standard ELF Integration: Enabled
-2026-01-30 13:14:30,218 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 13:14:30,218 - INFO - ======================================================================
-2026-01-30 13:14:31,027 - INFO - ✓ Sentinel initialized
-2026-01-30 13:14:31,027 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 13:14:31,027 - INFO - 
-2026-01-30 13:14:31,027 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 13:14:31,027 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:15:01,038 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:15:31,053 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:16:01,074 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:16:31,090 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:16:31,098 - INFO - 
+2026-01-30 17:06:54,702 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:07:54,732 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:08:54,823 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:08:54,836 - INFO - 
 ======================================================================
-2026-01-30 13:16:31,098 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 13:16:31,098 - INFO - ======================================================================
-2026-01-30 13:16:31,098 - INFO - 
+2026-01-30 17:08:54,836 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 17:08:54,836 - INFO - ======================================================================
+2026-01-30 17:08:54,836 - INFO - 
 📍 Processing pattern: Declining activity trend detected
-2026-01-30 13:16:31,098 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 13:16:31,099 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
-2026-01-30 13:16:31,099 - INFO - 📞 Should call agent: researcher
-2026-01-30 13:16:31,099 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 13:16:31,099 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 13:16:31,099 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 13:16:31,099 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 13:16:36,108 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 13:16:36,108 - INFO - ✅ Determined agent: researcher
-2026-01-30 13:16:36,108 - INFO - 📞 Calling researcher agent...
-2026-01-30 13:16:36,108 - INFO - 
+2026-01-30 17:08:54,837 - INFO - 🔍 Handling pattern: Declining activity trend detected
+2026-01-30 17:08:54,839 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
+2026-01-30 17:08:54,839 - INFO - 📞 Should call agent: researcher
+2026-01-30 17:08:54,839 - INFO - 💡 Recommendation: Investigate root cause of activity decline
+2026-01-30 17:08:54,840 - INFO - 💡 Recommendation: Check if users are disengaged
+2026-01-30 17:08:54,840 - INFO - 💡 Recommendation: Review recent system changes
+2026-01-30 17:08:54,840 - INFO - 💡 Recommendation: Consider running user survey or analysis
+2026-01-30 17:08:59,849 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 17:08:59,849 - INFO - ✅ Determined agent: researcher
+2026-01-30 17:08:59,849 - INFO - 📞 Calling researcher agent...
+2026-01-30 17:08:59,849 - INFO - 
 ======================================================================
-2026-01-30 13:16:36,108 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 13:16:36,108 - INFO - ======================================================================
-2026-01-30 13:16:36,109 - INFO - 
+2026-01-30 17:08:59,849 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
+2026-01-30 17:08:59,849 - INFO - ======================================================================
+2026-01-30 17:08:59,849 - INFO - 
 [1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 13:17:36,194 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 13:17:36,194 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 13:17:36,194 - ERROR -    Status: agent_failed
-2026-01-30 13:17:36,194 - INFO - 
+2026-01-30 17:10:51,018 - INFO - ======================================================================
+2026-01-30 17:10:51,018 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 17:10:51,018 - INFO - ======================================================================
+2026-01-30 17:10:51,018 - INFO - Interval: 60s
+2026-01-30 17:10:51,018 - INFO - Log level: INFO
+2026-01-30 17:10:51,018 - INFO - Standard ELF Integration: Enabled
+2026-01-30 17:10:51,018 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 17:10:51,018 - INFO - ======================================================================
+2026-01-30 17:10:51,021 - INFO - ✓ Sentinel initialized
+2026-01-30 17:10:51,021 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 17:10:51,021 - INFO - 
+2026-01-30 17:10:51,021 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 60s)
+2026-01-30 17:10:51,021 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:11:51,036 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:12:51,054 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:13:51,079 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:14:51,103 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:14:51,118 - INFO - 
 ======================================================================
-2026-01-30 13:17:36,194 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 13:17:36,194 - INFO -    Patterns processed: 1
-2026-01-30 13:17:36,194 - INFO -    Successful workflows: 0
-2026-01-30 13:17:36,194 - INFO - ======================================================================
-
-2026-01-30 13:17:36,195 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:17:41,209 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 13:18:11,209 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:18:11,217 - INFO - 
-======================================================================
-2026-01-30 13:18:11,218 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 13:18:11,218 - INFO - ======================================================================
-2026-01-30 13:18:11,218 - INFO - 
+2026-01-30 17:14:51,118 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 17:14:51,118 - INFO - ======================================================================
+2026-01-30 17:14:51,118 - INFO - 
 📍 Processing pattern: Declining activity trend detected
-2026-01-30 13:18:11,218 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 13:18:16,226 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 13:18:16,226 - INFO - 📞 Should call agent: researcher
-2026-01-30 13:18:16,226 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 13:18:16,226 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 13:18:16,226 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 13:18:16,226 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 13:18:21,241 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 13:18:21,242 - INFO - ✅ Determined agent: researcher
-2026-01-30 13:18:21,243 - INFO - 📞 Calling researcher agent...
-2026-01-30 13:18:21,243 - INFO - 
+2026-01-30 17:14:51,118 - INFO - 🔍 Handling pattern: Declining activity trend detected
+2026-01-30 17:14:51,121 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
+2026-01-30 17:14:51,122 - INFO - 📞 Should call agent: researcher
+2026-01-30 17:14:51,122 - INFO - 💡 Recommendation: Investigate root cause of activity decline
+2026-01-30 17:14:51,122 - INFO - 💡 Recommendation: Check if users are disengaged
+2026-01-30 17:14:51,122 - INFO - 💡 Recommendation: Review recent system changes
+2026-01-30 17:14:51,122 - INFO - 💡 Recommendation: Consider running user survey or analysis
+2026-01-30 17:14:56,136 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 17:14:56,137 - INFO - ✅ Determined agent: researcher
+2026-01-30 17:14:56,137 - INFO - 📞 Calling researcher agent...
+2026-01-30 17:14:56,137 - INFO - 
 ======================================================================
-2026-01-30 13:18:21,243 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 13:18:21,244 - INFO - ======================================================================
-2026-01-30 13:18:21,244 - INFO - 
+2026-01-30 17:14:56,137 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
+2026-01-30 17:14:56,137 - INFO - ======================================================================
+2026-01-30 17:14:56,137 - INFO - 
 [1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 13:19:21,339 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 13:19:21,340 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 13:19:21,340 - ERROR -    Status: agent_failed
-2026-01-30 13:19:21,340 - INFO - 
+2026-01-30 17:15:56,189 - ERROR - ❌ Agent researcher failed to respond
+2026-01-30 17:15:56,189 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
+2026-01-30 17:15:56,190 - ERROR -    Status: agent_failed
+2026-01-30 17:15:56,190 - INFO - 
 ======================================================================
-2026-01-30 13:19:21,340 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 13:19:21,341 - INFO -    Patterns processed: 1
-2026-01-30 13:19:21,341 - INFO -    Successful workflows: 0
-2026-01-30 13:19:21,341 - INFO - ======================================================================
+2026-01-30 17:15:56,190 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 17:15:56,190 - INFO -    Patterns processed: 1
+2026-01-30 17:15:56,190 - INFO -    Successful workflows: 0
+2026-01-30 17:15:56,190 - INFO - ======================================================================
 
-2026-01-30 13:19:21,341 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:19:26,353 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 13:19:56,353 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:19:56,363 - INFO - 
+2026-01-30 17:15:56,190 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 17:16:25,299 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 17:17:25,300 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:17:48,118 - INFO - ======================================================================
+2026-01-30 17:17:48,118 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 17:17:48,118 - INFO - ======================================================================
+2026-01-30 17:17:48,118 - INFO - Interval: 60s
+2026-01-30 17:17:48,118 - INFO - Log level: INFO
+2026-01-30 17:17:48,118 - INFO - Standard ELF Integration: Enabled
+2026-01-30 17:17:48,118 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 17:17:48,118 - INFO - ======================================================================
+2026-01-30 17:17:48,122 - INFO - ✓ Sentinel initialized
+2026-01-30 17:17:48,122 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 17:17:48,122 - INFO - 
+2026-01-30 17:17:48,122 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 60s)
+2026-01-30 17:17:48,122 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:18:48,134 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:19:48,150 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:20:48,172 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:21:48,193 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:21:48,206 - INFO - 
 ======================================================================
-2026-01-30 13:19:56,363 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 13:19:56,363 - INFO - ======================================================================
-2026-01-30 13:19:56,363 - INFO - 
+2026-01-30 17:21:48,206 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 17:21:48,206 - INFO - ======================================================================
+2026-01-30 17:21:48,206 - INFO - 
 📍 Processing pattern: Declining activity trend detected
-2026-01-30 13:19:56,363 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 13:20:01,374 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 13:20:01,374 - INFO - 📞 Should call agent: researcher
-2026-01-30 13:20:01,374 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 13:20:01,374 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 13:20:01,375 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 13:20:01,375 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 13:20:06,385 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 13:20:06,385 - INFO - ✅ Determined agent: researcher
-2026-01-30 13:20:06,386 - INFO - 📞 Calling researcher agent...
-2026-01-30 13:20:06,386 - INFO - 
+2026-01-30 17:21:48,206 - INFO - 🔍 Handling pattern: Declining activity trend detected
+2026-01-30 17:21:48,212 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
+2026-01-30 17:21:48,212 - INFO - 📞 Should call agent: researcher
+2026-01-30 17:21:48,213 - INFO - 💡 Recommendation: Investigate root cause of activity decline
+2026-01-30 17:21:48,213 - INFO - 💡 Recommendation: Check if users are disengaged
+2026-01-30 17:21:48,213 - INFO - 💡 Recommendation: Review recent system changes
+2026-01-30 17:21:48,213 - INFO - 💡 Recommendation: Consider running user survey or analysis
+2026-01-30 17:21:53,225 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 17:21:53,226 - INFO - ✅ Determined agent: researcher
+2026-01-30 17:21:53,226 - INFO - 📞 Calling researcher agent...
+2026-01-30 17:21:53,226 - INFO - 
 ======================================================================
-2026-01-30 13:20:06,386 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 13:20:06,386 - INFO - ======================================================================
-2026-01-30 13:20:06,386 - INFO - 
+2026-01-30 17:21:53,226 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
+2026-01-30 17:21:53,226 - INFO - ======================================================================
+2026-01-30 17:21:53,226 - INFO - 
 [1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 13:21:06,469 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 13:21:06,470 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 13:21:06,470 - ERROR -    Status: agent_failed
-2026-01-30 13:21:06,470 - INFO - 
-======================================================================
-2026-01-30 13:21:06,470 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 13:21:06,470 - INFO -    Patterns processed: 1
-2026-01-30 13:21:06,470 - INFO -    Successful workflows: 0
-2026-01-30 13:21:06,470 - INFO - ======================================================================
-
-2026-01-30 13:21:06,470 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:21:11,482 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 13:21:41,483 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:21:41,493 - INFO - 
-======================================================================
-2026-01-30 13:21:41,493 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 13:21:41,493 - INFO - ======================================================================
-2026-01-30 13:21:41,493 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 13:21:41,493 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 13:21:46,504 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 13:21:46,504 - INFO - 📞 Should call agent: researcher
-2026-01-30 13:21:46,504 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 13:21:46,504 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 13:21:46,504 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 13:21:46,504 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 13:21:51,515 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 13:21:51,515 - INFO - ✅ Determined agent: researcher
-2026-01-30 13:21:51,516 - INFO - 📞 Calling researcher agent...
-2026-01-30 13:21:51,516 - INFO - 
-======================================================================
-2026-01-30 13:21:51,516 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 13:21:51,516 - INFO - ======================================================================
-2026-01-30 13:21:51,516 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 13:22:51,580 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 13:22:51,580 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 13:22:51,580 - ERROR -    Status: agent_failed
-2026-01-30 13:22:51,580 - INFO - 
-======================================================================
-2026-01-30 13:22:51,580 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 13:22:51,580 - INFO -    Patterns processed: 1
-2026-01-30 13:22:51,580 - INFO -    Successful workflows: 0
-2026-01-30 13:22:51,580 - INFO - ======================================================================
-
-2026-01-30 13:22:51,581 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:22:56,592 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 13:23:26,593 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:23:26,600 - INFO - 
-======================================================================
-2026-01-30 13:23:26,600 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 13:23:26,600 - INFO - ======================================================================
-2026-01-30 13:23:26,600 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 13:23:26,600 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 13:23:31,609 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 13:23:31,611 - INFO - 📞 Should call agent: researcher
-2026-01-30 13:23:31,612 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 13:23:31,612 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 13:23:31,612 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 13:23:31,612 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 13:23:36,623 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 13:23:36,623 - INFO - ✅ Determined agent: researcher
-2026-01-30 13:23:36,624 - INFO - 📞 Calling researcher agent...
-2026-01-30 13:23:36,624 - INFO - 
-======================================================================
-2026-01-30 13:23:36,624 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 13:23:36,624 - INFO - ======================================================================
-2026-01-30 13:23:36,624 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 13:24:36,713 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 13:24:36,713 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 13:24:36,713 - ERROR -    Status: agent_failed
-2026-01-30 13:24:36,713 - INFO - 
-======================================================================
-2026-01-30 13:24:36,713 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 13:24:36,714 - INFO -    Patterns processed: 1
-2026-01-30 13:24:36,714 - INFO -    Successful workflows: 0
-2026-01-30 13:24:36,714 - INFO - ======================================================================
-
-2026-01-30 13:24:36,714 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:24:41,723 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 13:25:11,724 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 13:25:11,735 - INFO - 
-======================================================================
-2026-01-30 13:25:11,736 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 13:25:11,736 - INFO - ======================================================================
-2026-01-30 13:25:11,736 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 13:25:11,736 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 13:25:16,749 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 13:25:16,749 - INFO - 📞 Should call agent: researcher
-2026-01-30 13:25:16,749 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 13:25:16,749 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 13:25:16,749 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 13:25:16,749 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 13:25:21,757 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 13:25:21,757 - INFO - ✅ Determined agent: researcher
-2026-01-30 13:25:21,757 - INFO - 📞 Calling researcher agent...
-2026-01-30 13:25:21,757 - INFO - 
-======================================================================
-2026-01-30 13:25:21,758 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 13:25:21,758 - INFO - ======================================================================
-2026-01-30 13:25:21,758 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 13:26:21,845 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 13:26:21,846 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 13:26:21,846 - ERROR -    Status: agent_failed
-2026-01-30 13:26:21,846 - INFO - 
-======================================================================
-2026-01-30 13:26:21,846 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 13:26:21,846 - INFO -    Patterns processed: 1
-2026-01-30 13:26:21,846 - INFO -    Successful workflows: 0
-2026-01-30 13:26:21,846 - INFO - ======================================================================
-
-2026-01-30 13:26:21,847 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 13:26:26,857 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 16:14:43,692 - INFO - ======================================================================
-2026-01-30 16:14:43,692 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 16:14:43,692 - INFO - ======================================================================
-2026-01-30 16:14:43,692 - INFO - Interval: 30s
-2026-01-30 16:14:43,692 - INFO - Log level: INFO
-2026-01-30 16:14:43,692 - INFO - Standard ELF Integration: Enabled
-2026-01-30 16:14:43,692 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 16:14:43,692 - INFO - ======================================================================
-2026-01-30 16:14:44,492 - INFO - ✓ Sentinel initialized
-2026-01-30 16:14:44,492 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 16:14:44,492 - INFO - 
-2026-01-30 16:14:44,492 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 16:14:44,492 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:16:32,582 - INFO - ======================================================================
-2026-01-30 16:16:32,583 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 16:16:32,583 - INFO - ======================================================================
-2026-01-30 16:16:32,583 - INFO - Interval: 30s
-2026-01-30 16:16:32,583 - INFO - Log level: INFO
-2026-01-30 16:16:32,583 - INFO - Standard ELF Integration: Enabled
-2026-01-30 16:16:32,583 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 16:16:32,583 - INFO - ======================================================================
-2026-01-30 16:16:33,512 - INFO - ✓ Sentinel initialized
-2026-01-30 16:16:33,512 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 16:16:33,512 - INFO - 
-2026-01-30 16:16:33,512 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 16:16:33,513 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:17:03,526 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:17:33,543 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:18:03,752 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:18:33,767 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:18:33,778 - INFO - 
-======================================================================
-2026-01-30 16:18:33,778 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:18:33,778 - INFO - ======================================================================
-2026-01-30 16:18:33,779 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:18:33,779 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:18:33,782 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
-2026-01-30 16:18:33,782 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:18:33,782 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:18:33,782 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:18:33,782 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:18:33,782 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:18:38,791 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:18:38,791 - INFO - ✅ Determined agent: researcher
-2026-01-30 16:18:38,791 - INFO - 📞 Calling researcher agent...
-2026-01-30 16:18:38,791 - INFO - 
-======================================================================
-2026-01-30 16:18:38,791 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 16:18:38,791 - INFO - ======================================================================
-2026-01-30 16:18:38,791 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 16:19:38,868 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 16:19:38,868 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 16:19:38,868 - ERROR -    Status: agent_failed
-2026-01-30 16:19:38,868 - INFO - 
-======================================================================
-2026-01-30 16:19:38,868 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:19:38,868 - INFO -    Patterns processed: 1
-2026-01-30 16:19:38,869 - INFO -    Successful workflows: 0
-2026-01-30 16:19:38,869 - INFO - ======================================================================
-
-2026-01-30 16:19:38,869 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 16:19:43,877 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 16:20:13,878 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:20:13,891 - INFO - 
-======================================================================
-2026-01-30 16:20:13,891 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:20:13,891 - INFO - ======================================================================
-2026-01-30 16:20:13,891 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:20:13,892 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:20:18,901 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 16:20:18,902 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:20:18,902 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:20:18,902 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:20:18,902 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:20:18,902 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:20:23,913 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:20:23,914 - INFO - ✅ Determined agent: researcher
-2026-01-30 16:20:23,914 - INFO - 📞 Calling researcher agent...
-2026-01-30 16:20:23,914 - INFO - 
-======================================================================
-2026-01-30 16:20:23,914 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 16:20:23,914 - INFO - ======================================================================
-2026-01-30 16:20:23,914 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 16:21:23,975 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 16:21:23,976 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 16:21:23,976 - ERROR -    Status: agent_failed
-2026-01-30 16:21:23,976 - INFO - 
-======================================================================
-2026-01-30 16:21:23,976 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:21:23,976 - INFO -    Patterns processed: 1
-2026-01-30 16:21:23,976 - INFO -    Successful workflows: 0
-2026-01-30 16:21:23,976 - INFO - ======================================================================
-
-2026-01-30 16:21:23,976 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 16:21:28,984 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 16:21:58,984 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:21:58,992 - INFO - 
-======================================================================
-2026-01-30 16:21:58,992 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:21:58,992 - INFO - ======================================================================
-2026-01-30 16:21:58,992 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:21:58,992 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:22:04,000 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 16:22:04,000 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:22:04,000 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:22:04,001 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:22:04,001 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:22:04,001 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:22:09,009 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:22:09,010 - INFO - ✅ Determined agent: researcher
-2026-01-30 16:22:09,010 - INFO - 📞 Calling researcher agent...
-2026-01-30 16:22:09,010 - INFO - 
-======================================================================
-2026-01-30 16:22:09,010 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 16:22:09,010 - INFO - ======================================================================
-2026-01-30 16:22:09,011 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 16:23:09,074 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 16:23:09,074 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 16:23:09,075 - ERROR -    Status: agent_failed
-2026-01-30 16:23:09,075 - INFO - 
-======================================================================
-2026-01-30 16:23:09,075 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:23:09,075 - INFO -    Patterns processed: 1
-2026-01-30 16:23:09,076 - INFO -    Successful workflows: 0
-2026-01-30 16:23:09,076 - INFO - ======================================================================
-
-2026-01-30 16:23:09,077 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 16:23:14,084 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 16:23:44,084 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:23:44,094 - INFO - 
-======================================================================
-2026-01-30 16:23:44,094 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:23:44,094 - INFO - ======================================================================
-2026-01-30 16:23:44,094 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:23:44,094 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:23:49,102 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 16:23:49,102 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:23:49,102 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:23:49,102 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:23:49,102 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:23:49,102 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:23:54,110 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:23:54,111 - INFO - ✅ Determined agent: researcher
-2026-01-30 16:23:54,111 - INFO - 📞 Calling researcher agent...
-2026-01-30 16:23:54,111 - INFO - 
-======================================================================
-2026-01-30 16:23:54,111 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 16:23:54,111 - INFO - ======================================================================
-2026-01-30 16:23:54,111 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 16:24:54,188 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 16:24:54,189 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 16:24:54,189 - ERROR -    Status: agent_failed
-2026-01-30 16:24:54,189 - INFO - 
-======================================================================
-2026-01-30 16:24:54,189 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:24:54,189 - INFO -    Patterns processed: 1
-2026-01-30 16:24:54,189 - INFO -    Successful workflows: 0
-2026-01-30 16:24:54,189 - INFO - ======================================================================
-
-2026-01-30 16:24:54,189 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 16:24:59,196 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 16:25:29,197 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:25:29,206 - INFO - 
-======================================================================
-2026-01-30 16:25:29,207 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:25:29,207 - INFO - ======================================================================
-2026-01-30 16:25:29,207 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:25:29,207 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:25:34,218 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 16:25:34,218 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:25:34,255 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:25:34,255 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:25:34,255 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:25:34,255 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:25:39,265 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:25:39,266 - INFO - ✅ Determined agent: researcher
-2026-01-30 16:25:39,266 - INFO - 📞 Calling researcher agent...
-2026-01-30 16:25:39,267 - INFO - 
-======================================================================
-2026-01-30 16:25:39,267 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 16:25:39,268 - INFO - ======================================================================
-2026-01-30 16:25:39,268 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 16:26:39,352 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 16:26:39,353 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 16:26:39,353 - ERROR -    Status: agent_failed
-2026-01-30 16:26:39,353 - INFO - 
-======================================================================
-2026-01-30 16:26:39,353 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:26:39,353 - INFO -    Patterns processed: 1
-2026-01-30 16:26:39,353 - INFO -    Successful workflows: 0
-2026-01-30 16:26:39,353 - INFO - ======================================================================
-
-2026-01-30 16:26:39,353 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 16:26:44,363 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 16:27:14,363 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:27:14,370 - INFO - 
-======================================================================
-2026-01-30 16:27:14,370 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:27:14,370 - INFO - ======================================================================
-2026-01-30 16:27:14,370 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:27:14,370 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:27:19,378 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 16:27:19,378 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:27:19,378 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:27:19,378 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:27:19,378 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:27:19,378 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:27:24,387 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:27:24,387 - INFO - ✅ Determined agent: researcher
-2026-01-30 16:27:24,388 - INFO - 📞 Calling researcher agent...
-2026-01-30 16:27:24,388 - INFO - 
-======================================================================
-2026-01-30 16:27:24,388 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 16:27:24,388 - INFO - ======================================================================
-2026-01-30 16:27:24,388 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 16:28:24,468 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 16:28:24,469 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 16:28:24,469 - ERROR -    Status: agent_failed
-2026-01-30 16:28:24,469 - INFO - 
-======================================================================
-2026-01-30 16:28:24,469 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:28:24,469 - INFO -    Patterns processed: 1
-2026-01-30 16:28:24,469 - INFO -    Successful workflows: 0
-2026-01-30 16:28:24,469 - INFO - ======================================================================
-
-2026-01-30 16:28:24,470 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 16:28:29,480 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 16:28:59,481 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:28:59,494 - INFO - 
-======================================================================
-2026-01-30 16:28:59,494 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:28:59,495 - INFO - ======================================================================
-2026-01-30 16:28:59,495 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:28:59,495 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:29:04,506 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 16:29:04,506 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:29:04,506 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:29:04,506 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:29:04,506 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:29:04,507 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:29:09,519 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:29:09,519 - INFO - ✅ Determined agent: researcher
-2026-01-30 16:29:09,519 - INFO - 📞 Calling researcher agent...
-2026-01-30 16:29:09,519 - INFO - 
-======================================================================
-2026-01-30 16:29:09,519 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 16:29:09,519 - INFO - ======================================================================
-2026-01-30 16:29:09,519 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 16:30:09,624 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 16:30:09,624 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 16:30:09,624 - ERROR -    Status: agent_failed
-2026-01-30 16:30:09,624 - INFO - 
-======================================================================
-2026-01-30 16:30:09,624 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:30:09,624 - INFO -    Patterns processed: 1
-2026-01-30 16:30:09,624 - INFO -    Successful workflows: 0
-2026-01-30 16:30:09,624 - INFO - ======================================================================
-
-2026-01-30 16:30:09,625 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 16:30:14,638 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 16:30:44,638 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:30:44,652 - INFO - 
-======================================================================
-2026-01-30 16:30:44,652 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:30:44,652 - INFO - ======================================================================
-2026-01-30 16:30:44,652 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:30:44,653 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:30:49,664 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 16:30:49,664 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:30:49,664 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:30:49,664 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:30:49,664 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:30:49,664 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:30:54,672 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:30:54,672 - INFO - ✅ Determined agent: researcher
-2026-01-30 16:30:54,672 - INFO - 📞 Calling researcher agent...
-2026-01-30 16:30:54,672 - INFO - 
-======================================================================
-2026-01-30 16:30:54,672 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 16:30:54,672 - INFO - ======================================================================
-2026-01-30 16:30:54,672 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 16:31:54,726 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 16:31:54,726 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 16:31:54,726 - ERROR -    Status: agent_failed
-2026-01-30 16:31:54,726 - INFO - 
-======================================================================
-2026-01-30 16:31:54,726 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:31:54,726 - INFO -    Patterns processed: 1
-2026-01-30 16:31:54,727 - INFO -    Successful workflows: 0
-2026-01-30 16:31:54,727 - INFO - ======================================================================
-
-2026-01-30 16:31:54,727 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 16:31:59,737 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 16:32:29,737 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:32:29,797 - INFO - 
-======================================================================
-2026-01-30 16:32:29,798 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:32:29,798 - INFO - ======================================================================
-2026-01-30 16:32:29,798 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:32:29,798 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:32:29,800 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
-2026-01-30 16:32:29,800 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:32:29,800 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:32:29,800 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:32:29,801 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:32:29,801 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:32:34,808 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:32:34,808 - INFO - ✅ Determined agent: researcher
-2026-01-30 16:32:34,808 - INFO - 📞 Calling researcher agent...
-2026-01-30 16:32:34,808 - INFO - 
-======================================================================
-2026-01-30 16:32:34,808 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 16:32:34,809 - INFO - ======================================================================
-2026-01-30 16:32:34,809 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 16:33:34,877 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 16:33:34,877 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 16:33:34,877 - ERROR -    Status: agent_failed
-2026-01-30 16:33:34,878 - INFO - 
-======================================================================
-2026-01-30 16:33:34,878 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:33:34,878 - INFO -    Patterns processed: 1
-2026-01-30 16:33:34,878 - INFO -    Successful workflows: 0
-2026-01-30 16:33:34,878 - INFO - ======================================================================
-
-2026-01-30 16:33:34,878 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 16:33:39,886 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 16:34:09,887 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:34:09,896 - INFO - 
-======================================================================
-2026-01-30 16:34:09,896 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:34:09,896 - INFO - ======================================================================
-2026-01-30 16:34:09,896 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:34:09,896 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:34:14,910 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 16:34:14,910 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:34:14,910 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:34:14,910 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:34:14,910 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:34:14,910 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:34:19,919 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:34:19,919 - INFO - ✅ Determined agent: researcher
-2026-01-30 16:34:19,919 - INFO - 📞 Calling researcher agent...
-2026-01-30 16:34:19,919 - INFO - 
-======================================================================
-2026-01-30 16:34:19,919 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 16:34:19,919 - INFO - ======================================================================
-2026-01-30 16:34:19,919 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 16:35:19,991 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 16:35:19,992 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 16:35:19,992 - ERROR -    Status: agent_failed
-2026-01-30 16:35:19,992 - INFO - 
-======================================================================
-2026-01-30 16:35:19,992 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:35:19,992 - INFO -    Patterns processed: 1
-2026-01-30 16:35:19,992 - INFO -    Successful workflows: 0
-2026-01-30 16:35:19,992 - INFO - ======================================================================
-
-2026-01-30 16:35:19,992 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 16:35:25,002 - ERROR - Failed to record event to chronicle: database is locked
-2026-01-30 16:41:50,966 - INFO - ======================================================================
-2026-01-30 16:41:50,966 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 16:41:50,966 - INFO - ======================================================================
-2026-01-30 16:41:50,966 - INFO - Interval: 30s
-2026-01-30 16:41:50,966 - INFO - Log level: INFO
-2026-01-30 16:41:50,966 - INFO - Standard ELF Integration: Enabled
-2026-01-30 16:41:50,966 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 16:41:50,966 - INFO - ======================================================================
-2026-01-30 16:41:50,968 - INFO - ✓ Sentinel initialized
-2026-01-30 16:41:50,969 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 16:41:50,969 - INFO - 
-2026-01-30 16:41:50,969 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
-2026-01-30 16:41:50,969 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:42:20,982 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:42:50,996 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:43:21,016 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:43:26,901 - INFO - ======================================================================
-2026-01-30 16:43:26,901 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 16:43:26,901 - INFO - ======================================================================
-2026-01-30 16:43:26,901 - INFO - Interval: 60s
-2026-01-30 16:43:26,901 - INFO - Log level: INFO
-2026-01-30 16:43:26,901 - INFO - Standard ELF Integration: Enabled
-2026-01-30 16:43:26,901 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 16:43:26,901 - INFO - ======================================================================
-2026-01-30 16:43:26,904 - INFO - ✓ Sentinel initialized
-2026-01-30 16:43:26,904 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 16:43:26,904 - INFO - 
-2026-01-30 16:43:26,904 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 60s)
-2026-01-30 16:43:26,904 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:43:51,033 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:43:51,046 - INFO - 
-======================================================================
-2026-01-30 16:43:51,046 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:43:51,046 - INFO - ======================================================================
-2026-01-30 16:43:51,046 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:43:51,046 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:43:51,048 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
-2026-01-30 16:43:51,048 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:43:51,048 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:43:51,048 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:43:51,048 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:43:51,048 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:43:56,056 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:43:56,056 - INFO - ✅ Determined agent: researcher
-2026-01-30 16:43:56,056 - INFO - 📞 Calling researcher agent...
-2026-01-30 16:43:56,056 - INFO - 
-======================================================================
-2026-01-30 16:43:56,056 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 16:43:56,056 - INFO - ======================================================================
-2026-01-30 16:43:56,056 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 16:44:26,918 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:44:56,282 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 16:44:56,282 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 16:44:56,283 - ERROR -    Status: agent_failed
-2026-01-30 16:44:56,283 - INFO - 
-======================================================================
-2026-01-30 16:44:56,283 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:44:56,283 - INFO -    Patterns processed: 1
-2026-01-30 16:44:56,283 - INFO -    Successful workflows: 0
-2026-01-30 16:44:56,283 - INFO - ======================================================================
-
-2026-01-30 16:44:56,284 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 16:45:26,293 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:45:26,305 - INFO - 
-======================================================================
-2026-01-30 16:45:26,305 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:45:26,305 - INFO - ======================================================================
-2026-01-30 16:45:26,305 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:45:26,305 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:45:26,306 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
-2026-01-30 16:45:26,307 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:45:26,307 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:45:26,307 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:45:26,307 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:45:26,307 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:45:26,936 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:46:28,185 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:47:28,202 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:47:28,216 - INFO - 
-======================================================================
-2026-01-30 16:47:28,216 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:47:28,216 - INFO - ======================================================================
-2026-01-30 16:47:28,216 - INFO - 
-📍 Processing pattern: Declining activity trend detected
-2026-01-30 16:47:28,216 - INFO - 🔍 Handling pattern: Declining activity trend detected
-2026-01-30 16:47:28,218 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
-2026-01-30 16:47:28,219 - INFO - 📞 Should call agent: researcher
-2026-01-30 16:47:28,219 - INFO - 💡 Recommendation: Investigate root cause of activity decline
-2026-01-30 16:47:28,219 - INFO - 💡 Recommendation: Check if users are disengaged
-2026-01-30 16:47:28,219 - INFO - 💡 Recommendation: Review recent system changes
-2026-01-30 16:47:28,219 - INFO - 💡 Recommendation: Consider running user survey or analysis
-2026-01-30 16:47:33,230 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:47:33,230 - INFO - ✅ Determined agent: researcher
-2026-01-30 16:47:33,230 - INFO - 📞 Calling researcher agent...
-2026-01-30 16:47:33,230 - INFO - 
-======================================================================
-2026-01-30 16:47:33,230 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
-2026-01-30 16:47:33,230 - INFO - ======================================================================
-2026-01-30 16:47:33,230 - INFO - 
-[1️⃣ AGENT CALL] Calling researcher agent...
-2026-01-30 16:48:33,298 - ERROR - ❌ Agent researcher failed to respond
-2026-01-30 16:48:33,298 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
-2026-01-30 16:48:33,298 - ERROR -    Status: agent_failed
-2026-01-30 16:48:33,298 - INFO - 
-======================================================================
-2026-01-30 16:48:33,298 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:48:33,298 - INFO -    Patterns processed: 1
-2026-01-30 16:48:33,298 - INFO -    Successful workflows: 0
-2026-01-30 16:48:33,298 - INFO - ======================================================================
-
-2026-01-30 16:48:33,298 - INFO - 🔍 Patterns detected: Declining activity trend detected
-2026-01-30 16:49:02,415 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
-2026-01-30 16:50:02,415 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:50:05,427 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Read timed out. (read timeout=3)
-2026-01-30 16:50:05,427 - INFO - 
-======================================================================
-2026-01-30 16:50:05,428 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
-2026-01-30 16:50:05,428 - INFO - ======================================================================
-2026-01-30 16:50:05,428 - INFO - 
-📍 Processing pattern: Service instability detected
-2026-01-30 16:50:05,428 - INFO - 🔍 Handling pattern: Service instability detected
-2026-01-30 16:50:10,438 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
-2026-01-30 16:50:10,438 - INFO - 📞 Should call agent: architect
-2026-01-30 16:50:10,438 - INFO - 💡 Recommendation: Implement stability improvements
-2026-01-30 16:50:10,438 - INFO - 💡 Recommendation: Add monitoring and alerting
-2026-01-30 16:50:10,438 - INFO - 💡 Recommendation: Consider redundancy/failover
-2026-01-30 16:50:10,438 - INFO - 💡 Recommendation: Review infrastructure capacity
-2026-01-30 16:50:15,446 - ERROR - ❌ Failed to record to chronicle: database is locked
-2026-01-30 16:50:15,447 - INFO - ✅ Determined agent: architect
-2026-01-30 16:50:15,447 - INFO - 📞 Calling architect agent...
-2026-01-30 16:50:15,447 - INFO - 
-======================================================================
-2026-01-30 16:50:15,447 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Service instability detected
-2026-01-30 16:50:15,447 - INFO - ======================================================================
-2026-01-30 16:50:15,447 - INFO - 
-[1️⃣ AGENT CALL] Calling architect agent...
-2026-01-30 16:50:34,638 - INFO - ✅ Agent analysis received (3605 chars)
-2026-01-30 16:50:34,638 - WARNING - 🚨 CRITICAL ISSUE DETECTED - Escalating to CEO
-2026-01-30 16:50:34,638 - INFO - 
+2026-01-30 17:22:28,055 - INFO - ✅ Agent analysis received (2386 chars)
+2026-01-30 17:22:28,056 - WARNING - 🚨 CRITICAL ISSUE DETECTED - Escalating to CEO
+2026-01-30 17:22:28,056 - INFO - 
 [2️⃣ CEO ESCALATION] Sending to CEO for decision...
-2026-01-30 16:52:04,733 - ERROR - ❌ CEO failed to respond
-2026-01-30 16:52:04,733 - ERROR - ❌ Workflow failed for pattern: Service instability detected
-2026-01-30 16:52:04,734 - ERROR -    Status: ceo_failed
-2026-01-30 16:52:04,734 - INFO - 
-======================================================================
-2026-01-30 16:52:04,734 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
-2026-01-30 16:52:04,734 - INFO -    Patterns processed: 1
-2026-01-30 16:52:04,734 - INFO -    Successful workflows: 0
-2026-01-30 16:52:04,734 - INFO - ======================================================================
+2026-01-30 17:23:11,435 - INFO - ✅ CEO made decision: Based on my analysis of the building's current state, I can now make an informed CEO decision:
 
-2026-01-30 16:52:04,734 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
-2026-01-30 16:52:04,734 - INFO - 🔍 Patterns detected: Service instability detected
-2026-01-30 16:52:04,734 - INFO - 🎯 Priority action: Fix monitoring system
-2026-01-30 16:53:04,743 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:54:04,763 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:55:04,780 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:56:04,795 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:57:04,814 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:58:04,830 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 16:59:04,844 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 17:00:04,877 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 17:01:04,902 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 17:02:04,920 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 17:03:04,938 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 17:04:04,958 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
-2026-01-30 17:04:54,666 - INFO - ======================================================================
-2026-01-30 17:04:54,666 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
-2026-01-30 17:04:54,666 - INFO - ======================================================================
-2026-01-30 17:04:54,666 - INFO - Interval: 60s
-2026-01-30 17:04:54,666 - INFO - Log level: INFO
-2026-01-30 17:04:54,666 - INFO - Standard ELF Integration: Enabled
-2026-01-30 17:04:54,666 - INFO - Event Chronicle Recording: Enabled
-2026-01-30 17:04:54,666 - INFO - ======================================================================
-2026-01-30 17:04:54,668 - INFO - ✓ Sentinel initialized
-2026-01-30 17:04:54,669 - INFO - ✓ Starting continuous monitoring loop...
-2026-01-30 17:04:54,669 - INFO - 
-2026-01-30 17:04:54,669 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 60s)
-2026-01-30 17:04:54,669 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+---
+...
+2026-01-30 17:23:11,435 - INFO - 
+[3️⃣ ACTION EXTRACTION] Extracting actions from decision...
+2026-01-30 17:23:11,435 - INFO -   1. 14 files modified in last 24 hours indicates ACTIVE usage, not decline
+2026-01-30 17:23:11,435 - INFO -   2. Recent migration completion (ACTIVATION_COMPLETE.md shows Jan 29 16:51)
+2026-01-30 17:23:11,435 - INFO -   3. System is in stabilization phase after major infrastructure changes
+2026-01-30 17:23:11,435 - INFO -   4. Agent reports of "decline" are misinterpreting stabilization as inactivity
+2026-01-30 17:23:11,435 - INFO -   5. High confidence heuristics (0.907 avg) indicate SUCCESSFUL knowledge transfer, not stagnation
+2026-01-30 17:23:11,435 - INFO - 
+✅ WORKFLOW COMPLETED
+2026-01-30 17:23:11,435 - INFO - ======================================================================
+
+2026-01-30 17:23:11,436 - INFO - ✅ Workflow completed for pattern: Declining activity trend detected
+2026-01-30 17:23:11,436 - INFO -    Agent analysis: Now I'll provide researcher analysis of the declining activity pattern:
+
+## Researcher Analysis: Dec...
+2026-01-30 17:23:11,436 - INFO -    Is critical: True
+2026-01-30 17:23:11,436 - INFO -    CEO decision: Based on my analysis of the building's current state, I can now make an informed CEO decision:
+
+---
+...
+2026-01-30 17:23:11,436 - INFO -    Actions to execute: 5 items
+2026-01-30 17:23:11,436 - INFO -      1. 14 files modified in last 24 hours indicates ACTIVE usage, not decline
+2026-01-30 17:23:11,436 - INFO -      2. Recent migration completion (ACTIVATION_COMPLETE.md shows Jan 29 16:51)
+2026-01-30 17:23:11,436 - INFO -      3. System is in stabilization phase after major infrastructure changes
+2026-01-30 17:23:11,436 - INFO -      4. Agent reports of "decline" are misinterpreting stabilization as inactivity
+2026-01-30 17:23:11,436 - INFO -      5. High confidence heuristics (0.907 avg) indicate SUCCESSFUL knowledge transfer, not stagnation
+2026-01-30 17:23:11,436 - INFO - 
+======================================================================
+2026-01-30 17:23:11,436 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 17:23:11,436 - INFO -    Patterns processed: 1
+2026-01-30 17:23:11,436 - INFO -    Successful workflows: 1
+2026-01-30 17:23:11,436 - INFO - ======================================================================
+
+2026-01-30 17:23:11,436 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 17:24:11,442 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:25:11,467 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:26:11,492 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:27:11,516 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:28:11,533 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:29:11,552 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:30:11,566 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:31:11,582 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:32:11,594 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:33:11,612 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:34:11,623 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:35:11,639 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:36:11,653 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:37:11,670 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:38:11,688 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:38:11,702 - INFO - 
+======================================================================
+2026-01-30 17:38:11,702 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 17:38:11,702 - INFO - ======================================================================
+2026-01-30 17:38:11,702 - INFO - 
+📍 Processing pattern: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 17:38:11,702 - INFO - 🔍 Handling pattern: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 17:38:11,705 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
+2026-01-30 17:38:11,705 - INFO - 📞 Should call agent: researcher
+2026-01-30 17:38:11,705 - INFO - 💡 Recommendation: Confirm cyclical pattern continues
+2026-01-30 17:38:11,705 - INFO - 💡 Recommendation: Plan resources around cycle
+2026-01-30 17:38:11,705 - INFO - 💡 Recommendation: Optimize for peak times
+2026-01-30 17:38:11,705 - INFO - 💡 Recommendation: Automate cycle-based actions
+2026-01-30 17:38:16,715 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 17:38:16,715 - INFO - ✅ Determined agent: researcher
+2026-01-30 17:38:16,715 - INFO - 📞 Calling researcher agent...
+2026-01-30 17:38:16,715 - INFO - 
+======================================================================
+2026-01-30 17:38:16,715 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 17:38:16,715 - INFO - ======================================================================
+2026-01-30 17:38:16,715 - INFO - 
+[1️⃣ AGENT CALL] Calling researcher agent...
+2026-01-30 17:38:41,812 - INFO - ✅ Agent analysis received (1806 chars)
+2026-01-30 17:38:41,813 - WARNING - 🚨 CRITICAL ISSUE DETECTED - Escalating to CEO
+2026-01-30 17:38:41,813 - INFO - 
+[2️⃣ CEO ESCALATION] Sending to CEO for decision...
+2026-01-30 17:39:14,911 - INFO - ✅ CEO made decision: DECISION: Validate and Optimize the 10-Interval Cycle
+
+RATIONALE: The cyclical pattern represents ei...
+2026-01-30 17:39:14,911 - INFO - 
+[3️⃣ ACTION EXTRACTION] Extracting actions from decision...
+2026-01-30 17:39:14,911 - INFO -   1. Deploy cycle monitoring to track 3-5 more intervals and confirm pattern persistence
+2026-01-30 17:39:14,911 - INFO -   2. Conduct knowledge base audit during current trough - identify what's captured during peaks vs troughs
+2026-01-30 17:39:14,911 - INFO -   3. Implement "cycle-aware" resource allocation - schedule heavy work during predicted peaks, optimization during troughs
+2026-01-30 17:39:14,911 - INFO -   4. Create cycle dashboard for real-time pattern visibility across all agents
+2026-01-30 17:39:14,911 - INFO -   5. Monitoring deployment: Immediate (next interval)
+2026-01-30 17:39:14,911 - INFO -   6. Knowledge audit: Complete within 2 intervals
+2026-01-30 17:39:14,911 - INFO -   7. Resource optimization: Implement within 3 intervals
+2026-01-30 17:39:14,911 - INFO -   8. Dashboard: Deploy within 4 intervals
+2026-01-30 17:39:14,911 - INFO - 
+✅ WORKFLOW COMPLETED
+2026-01-30 17:39:14,911 - INFO - ======================================================================
+
+2026-01-30 17:39:14,912 - INFO - ✅ Workflow completed for pattern: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 17:39:14,912 - INFO -    Agent analysis: ## Cyclical Activity Pattern Analysis
+
+### 1. Root Cause Analysis
+
+**Primary Hypothesis:** The 10-in...
+2026-01-30 17:39:14,912 - INFO -    Is critical: True
+2026-01-30 17:39:14,912 - INFO -    CEO decision: DECISION: Validate and Optimize the 10-Interval Cycle
+
+RATIONALE: The cyclical pattern represents ei...
+2026-01-30 17:39:14,912 - INFO -    Actions to execute: 8 items
+2026-01-30 17:39:14,912 - INFO -      1. Deploy cycle monitoring to track 3-5 more intervals and confirm pattern persistence
+2026-01-30 17:39:14,912 - INFO -      2. Conduct knowledge base audit during current trough - identify what's captured during peaks vs troughs
+2026-01-30 17:39:14,912 - INFO -      3. Implement "cycle-aware" resource allocation - schedule heavy work during predicted peaks, optimization during troughs
+2026-01-30 17:39:14,912 - INFO -      4. Create cycle dashboard for real-time pattern visibility across all agents
+2026-01-30 17:39:14,912 - INFO -      5. Monitoring deployment: Immediate (next interval)
+2026-01-30 17:39:14,912 - INFO -      6. Knowledge audit: Complete within 2 intervals
+2026-01-30 17:39:14,912 - INFO -      7. Resource optimization: Implement within 3 intervals
+2026-01-30 17:39:14,912 - INFO -      8. Dashboard: Deploy within 4 intervals
+2026-01-30 17:39:14,912 - INFO - 
+======================================================================
+2026-01-30 17:39:14,912 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 17:39:14,912 - INFO -    Patterns processed: 1
+2026-01-30 17:39:14,912 - INFO -    Successful workflows: 1
+2026-01-30 17:39:14,912 - INFO - ======================================================================
+
+2026-01-30 17:39:14,912 - INFO - 🔍 Patterns detected: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 17:39:44,029 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 17:40:44,029 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:40:44,035 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ea246887290>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 17:40:44,035 - INFO - 
+======================================================================
+2026-01-30 17:40:44,035 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 17:40:44,035 - INFO - ======================================================================
+2026-01-30 17:40:44,035 - INFO - 
+📍 Processing pattern: Service instability detected
+2026-01-30 17:40:44,035 - INFO - 🔍 Handling pattern: Service instability detected
+2026-01-30 17:40:49,043 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
+2026-01-30 17:40:49,043 - INFO - 📞 Should call agent: architect
+2026-01-30 17:40:49,043 - INFO - 💡 Recommendation: Implement stability improvements
+2026-01-30 17:40:49,044 - INFO - 💡 Recommendation: Add monitoring and alerting
+2026-01-30 17:40:49,044 - INFO - 💡 Recommendation: Consider redundancy/failover
+2026-01-30 17:40:49,044 - INFO - 💡 Recommendation: Review infrastructure capacity
+2026-01-30 17:40:54,056 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 17:40:54,056 - INFO - ✅ Determined agent: architect
+2026-01-30 17:40:54,056 - INFO - 📞 Calling architect agent...
+2026-01-30 17:40:54,056 - INFO - 
+======================================================================
+2026-01-30 17:40:54,056 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Service instability detected
+2026-01-30 17:40:54,056 - INFO - ======================================================================
+2026-01-30 17:40:54,056 - INFO - 
+[1️⃣ AGENT CALL] Calling architect agent...
+2026-01-30 17:45:54,162 - ERROR - ❌ Agent architect failed to respond
+2026-01-30 17:45:54,163 - ERROR - ❌ Workflow failed for pattern: Service instability detected
+2026-01-30 17:45:54,163 - ERROR -    Status: agent_failed
+2026-01-30 17:45:54,164 - INFO - 
+======================================================================
+2026-01-30 17:45:54,164 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 17:45:54,164 - INFO -    Patterns processed: 1
+2026-01-30 17:45:54,164 - INFO -    Successful workflows: 0
+2026-01-30 17:45:54,164 - INFO - ======================================================================
+
+2026-01-30 17:45:54,164 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 17:45:54,165 - INFO - 🔍 Patterns detected: Service instability detected
+2026-01-30 17:45:54,165 - INFO - 🎯 Priority action: Fix monitoring system
+2026-01-30 17:46:23,269 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 17:47:23,270 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:47:23,277 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ea246885dc0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 17:47:23,277 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 17:47:23,277 - INFO - 🎯 Priority action: Fix monitoring system
+2026-01-30 17:48:23,284 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:48:23,289 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ea246887e60>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 17:48:23,290 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 17:48:23,290 - INFO - 🎯 Priority action: Fix monitoring system
+2026-01-30 17:49:23,295 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:49:23,300 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ea246886210>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 17:49:23,300 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 17:49:23,300 - INFO - 🎯 Priority action: Fix monitoring system
+2026-01-30 17:50:23,306 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:50:23,311 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ea246886f60>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 17:50:23,311 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 17:50:23,311 - INFO - 🎯 Priority action: Fix monitoring system
+2026-01-30 17:51:23,318 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:51:23,324 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ea2468a0b30>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 17:51:23,324 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 17:51:23,324 - INFO - 🎯 Priority action: Fix monitoring system
+2026-01-30 17:52:23,332 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:52:23,338 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ea246887470>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 17:52:23,338 - INFO - 
+======================================================================
+2026-01-30 17:52:23,338 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 17:52:23,338 - INFO - ======================================================================
+2026-01-30 17:52:23,338 - INFO - 
+📍 Processing pattern: Declining activity trend detected
+2026-01-30 17:52:23,338 - INFO - 🔍 Handling pattern: Declining activity trend detected
+2026-01-30 17:52:23,339 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
+2026-01-30 17:52:23,339 - INFO - 📞 Should call agent: researcher
+2026-01-30 17:52:23,339 - INFO - 💡 Recommendation: Investigate root cause of activity decline
+2026-01-30 17:52:23,340 - INFO - 💡 Recommendation: Check if users are disengaged
+2026-01-30 17:52:23,340 - INFO - 💡 Recommendation: Review recent system changes
+2026-01-30 17:52:23,340 - INFO - 💡 Recommendation: Consider running user survey or analysis
+2026-01-30 17:52:28,349 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 17:52:28,349 - INFO - ✅ Determined agent: researcher
+2026-01-30 17:52:28,349 - INFO - 📞 Calling researcher agent...
+2026-01-30 17:52:28,349 - INFO - 
+======================================================================
+2026-01-30 17:52:28,349 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
+2026-01-30 17:52:28,349 - INFO - ======================================================================
+2026-01-30 17:52:28,349 - INFO - 
+[1️⃣ AGENT CALL] Calling researcher agent...
+2026-01-30 17:57:28,453 - ERROR - ❌ Agent researcher failed to respond
+2026-01-30 17:57:28,453 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
+2026-01-30 17:57:28,453 - ERROR -    Status: agent_failed
+2026-01-30 17:57:28,453 - INFO - 
+======================================================================
+2026-01-30 17:57:28,453 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 17:57:28,453 - INFO -    Patterns processed: 1
+2026-01-30 17:57:28,453 - INFO -    Successful workflows: 0
+2026-01-30 17:57:28,453 - INFO - ======================================================================
+
+2026-01-30 17:57:28,453 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 17:57:28,454 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 17:57:28,454 - INFO - 🎯 Priority action: Fix monitoring system
+2026-01-30 17:57:57,573 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 17:58:57,574 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 17:58:57,579 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ea2468a0dd0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 17:58:57,579 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 17:58:57,579 - INFO - 🎯 Priority action: Fix monitoring system
+2026-01-30 17:59:26,687 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:00:26,687 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:00:26,695 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ea246885d90>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 18:00:26,695 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 18:00:26,695 - INFO - 🎯 Priority action: Fix monitoring system
+2026-01-30 18:01:26,701 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:01:26,708 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ea246887b90>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 18:01:26,708 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 18:01:26,708 - INFO - 🎯 Priority action: Fix monitoring system
+2026-01-30 18:02:26,713 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:02:26,718 - ERROR - Metrics collection failed: HTTPConnectionPool(host='localhost', port=8888): Max retries exceeded with url: /docs (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x7ea246884770>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-01-30 18:02:26,719 - CRITICAL - 🚨 CRITICAL: Service health issues detected!
+2026-01-30 18:02:26,719 - INFO - 🎯 Priority action: Fix monitoring system
+2026-01-30 18:03:26,727 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:03:40,848 - INFO - ======================================================================
+2026-01-30 18:03:40,848 - INFO - 🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode
+2026-01-30 18:03:40,848 - INFO - ======================================================================
+2026-01-30 18:03:40,848 - INFO - Interval: 30s
+2026-01-30 18:03:40,848 - INFO - Log level: INFO
+2026-01-30 18:03:40,849 - INFO - Standard ELF Integration: Enabled
+2026-01-30 18:03:40,849 - INFO - Event Chronicle Recording: Enabled
+2026-01-30 18:03:40,849 - INFO - ======================================================================
+2026-01-30 18:03:40,853 - INFO - ✓ Sentinel initialized
+2026-01-30 18:03:40,853 - INFO - ✓ Starting continuous monitoring loop...
+2026-01-30 18:03:40,853 - INFO - 
+2026-01-30 18:03:40,853 - INFO - 🚀 Dashboard Sentinel - ELF Standard starting continuous monitoring (interval: 30s)
+2026-01-30 18:03:40,853 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:04:10,867 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:04:26,747 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:04:40,880 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:05:10,896 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:05:26,761 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:05:40,913 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:05:40,923 - INFO - 
+======================================================================
+2026-01-30 18:05:40,923 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 18:05:40,923 - INFO - ======================================================================
+2026-01-30 18:05:40,923 - INFO - 
+📍 Processing pattern: Declining activity trend detected
+2026-01-30 18:05:40,923 - INFO - 🔍 Handling pattern: Declining activity trend detected
+2026-01-30 18:05:40,924 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
+2026-01-30 18:05:40,924 - INFO - 📞 Should call agent: researcher
+2026-01-30 18:05:40,925 - INFO - 💡 Recommendation: Investigate root cause of activity decline
+2026-01-30 18:05:40,925 - INFO - 💡 Recommendation: Check if users are disengaged
+2026-01-30 18:05:40,925 - INFO - 💡 Recommendation: Review recent system changes
+2026-01-30 18:05:40,925 - INFO - 💡 Recommendation: Consider running user survey or analysis
+2026-01-30 18:05:45,931 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 18:05:45,931 - INFO - ✅ Determined agent: researcher
+2026-01-30 18:05:45,931 - INFO - 📞 Calling researcher agent...
+2026-01-30 18:05:45,932 - INFO - 
+======================================================================
+2026-01-30 18:05:45,932 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
+2026-01-30 18:05:45,932 - INFO - ======================================================================
+2026-01-30 18:05:45,932 - INFO - 
+[1️⃣ AGENT CALL] Calling researcher agent...
+2026-01-30 18:06:26,780 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:06:55,906 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:07:55,906 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:08:25,018 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:09:25,019 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:09:25,029 - INFO - 
+======================================================================
+2026-01-30 18:09:25,029 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 18:09:25,029 - INFO - ======================================================================
+2026-01-30 18:09:25,029 - INFO - 
+📍 Processing pattern: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 18:09:25,029 - INFO - 🔍 Handling pattern: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 18:09:30,037 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
+2026-01-30 18:09:30,038 - INFO - 📞 Should call agent: researcher
+2026-01-30 18:09:30,038 - INFO - 💡 Recommendation: Confirm cyclical pattern continues
+2026-01-30 18:09:30,038 - INFO - 💡 Recommendation: Plan resources around cycle
+2026-01-30 18:09:30,038 - INFO - 💡 Recommendation: Optimize for peak times
+2026-01-30 18:09:30,038 - INFO - 💡 Recommendation: Automate cycle-based actions
+2026-01-30 18:09:35,048 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 18:09:35,048 - INFO - ✅ Determined agent: researcher
+2026-01-30 18:09:35,048 - INFO - 📞 Calling researcher agent...
+2026-01-30 18:09:35,048 - INFO - 
+======================================================================
+2026-01-30 18:09:35,048 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 18:09:35,049 - INFO - ======================================================================
+2026-01-30 18:09:35,049 - INFO - 
+[1️⃣ AGENT CALL] Calling researcher agent...
+2026-01-30 18:10:45,942 - ERROR - ❌ Agent researcher failed to respond
+2026-01-30 18:10:45,943 - ERROR - ❌ Workflow failed for pattern: Declining activity trend detected
+2026-01-30 18:10:45,943 - ERROR -    Status: agent_failed
+2026-01-30 18:10:45,943 - INFO - 
+======================================================================
+2026-01-30 18:10:45,943 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 18:10:45,943 - INFO -    Patterns processed: 1
+2026-01-30 18:10:45,943 - INFO -    Successful workflows: 0
+2026-01-30 18:10:45,943 - INFO - ======================================================================
+
+2026-01-30 18:10:45,943 - INFO - 🔍 Patterns detected: Declining activity trend detected
+2026-01-30 18:11:15,061 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:11:45,061 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:12:14,171 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:12:44,171 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:13:13,290 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:13:43,290 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:14:12,413 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:14:35,157 - ERROR - ❌ Agent researcher failed to respond
+2026-01-30 18:14:35,157 - ERROR - ❌ Workflow failed for pattern: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 18:14:35,158 - ERROR -    Status: agent_failed
+2026-01-30 18:14:35,158 - INFO - 
+======================================================================
+2026-01-30 18:14:35,158 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 18:14:35,158 - INFO -    Patterns processed: 1
+2026-01-30 18:14:35,158 - INFO -    Successful workflows: 0
+2026-01-30 18:14:35,158 - INFO - ======================================================================
+
+2026-01-30 18:14:35,158 - INFO - 🔍 Patterns detected: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 18:14:42,414 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:15:12,431 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:15:42,449 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:15:42,509 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:15:42,524 - INFO - 
+======================================================================
+2026-01-30 18:15:42,525 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 18:15:42,525 - INFO - ======================================================================
+2026-01-30 18:15:42,525 - INFO - 
+📍 Processing pattern: Service instability detected
+2026-01-30 18:15:42,526 - INFO - 🔍 Handling pattern: Service instability detected
+2026-01-30 18:15:42,529 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
+2026-01-30 18:15:42,529 - INFO - 📞 Should call agent: architect
+2026-01-30 18:15:42,529 - INFO - 💡 Recommendation: Implement stability improvements
+2026-01-30 18:15:42,530 - INFO - 💡 Recommendation: Add monitoring and alerting
+2026-01-30 18:15:42,530 - INFO - 💡 Recommendation: Consider redundancy/failover
+2026-01-30 18:15:42,530 - INFO - 💡 Recommendation: Review infrastructure capacity
+2026-01-30 18:15:47,539 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 18:15:47,539 - INFO - ✅ Determined agent: architect
+2026-01-30 18:15:47,539 - INFO - 📞 Calling architect agent...
+2026-01-30 18:15:47,539 - INFO - 
+======================================================================
+2026-01-30 18:15:47,539 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Service instability detected
+2026-01-30 18:15:47,539 - INFO - ======================================================================
+2026-01-30 18:15:47,539 - INFO - 
+[1️⃣ AGENT CALL] Calling architect agent...
+2026-01-30 18:16:12,458 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:16:41,565 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:17:11,567 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:17:40,674 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:18:10,674 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:18:39,791 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:19:09,791 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:19:38,902 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:20:08,902 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:20:38,019 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:20:47,649 - ERROR - ❌ Agent architect failed to respond
+2026-01-30 18:20:47,649 - ERROR - ❌ Workflow failed for pattern: Service instability detected
+2026-01-30 18:20:47,649 - ERROR -    Status: agent_failed
+2026-01-30 18:20:47,649 - INFO - 
+======================================================================
+2026-01-30 18:20:47,649 - INFO - ✅ AGENT WORKFLOWS EXECUTION COMPLETE
+2026-01-30 18:20:47,649 - INFO -    Patterns processed: 1
+2026-01-30 18:20:47,649 - INFO -    Successful workflows: 0
+2026-01-30 18:20:47,649 - INFO - ======================================================================
+
+2026-01-30 18:20:47,649 - INFO - 🔍 Patterns detected: Service instability detected
+2026-01-30 18:21:08,019 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:21:16,758 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:21:37,145 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:22:07,146 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:22:16,758 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:22:36,269 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:22:45,871 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:23:06,269 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:23:35,391 - WARNING - Event chronicle temporarily unavailable (database busy), event queued for later: sentinel_cycle
+2026-01-30 18:23:45,871 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:23:45,878 - INFO - 
+======================================================================
+2026-01-30 18:23:45,879 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 18:23:45,879 - INFO - ======================================================================
+2026-01-30 18:23:45,879 - INFO - 
+📍 Processing pattern: Declining activity trend detected
+2026-01-30 18:23:45,879 - INFO - 🔍 Handling pattern: Declining activity trend detected
+2026-01-30 18:23:50,887 - ERROR - ❌ Failed to record pattern as heuristic: database is locked
+2026-01-30 18:23:50,887 - INFO - 📞 Should call agent: researcher
+2026-01-30 18:23:50,887 - INFO - 💡 Recommendation: Investigate root cause of activity decline
+2026-01-30 18:23:50,887 - INFO - 💡 Recommendation: Check if users are disengaged
+2026-01-30 18:23:50,887 - INFO - 💡 Recommendation: Review recent system changes
+2026-01-30 18:23:50,887 - INFO - 💡 Recommendation: Consider running user survey or analysis
+2026-01-30 18:23:55,895 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 18:23:55,895 - INFO - ✅ Determined agent: researcher
+2026-01-30 18:23:55,895 - INFO - 📞 Calling researcher agent...
+2026-01-30 18:23:55,895 - INFO - 
+======================================================================
+2026-01-30 18:23:55,895 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Declining activity trend detected
+2026-01-30 18:23:55,895 - INFO - ======================================================================
+2026-01-30 18:23:55,895 - INFO - 
+[1️⃣ AGENT CALL] Calling researcher agent...
+2026-01-30 18:24:05,391 - INFO - 🤖 Dashboard Sentinel - ELF Standard - Starting monitoring cycle...
+2026-01-30 18:24:05,418 - INFO - 
+======================================================================
+2026-01-30 18:24:05,419 - INFO - 🚀 EXECUTING AGENT WORKFLOWS FOR 1 PATTERNS
+2026-01-30 18:24:05,419 - INFO - ======================================================================
+2026-01-30 18:24:05,419 - INFO - 
+📍 Processing pattern: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 18:24:05,419 - INFO - 🔍 Handling pattern: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 18:24:05,422 - ERROR - ❌ Failed to record pattern as heuristic: UNIQUE constraint failed: heuristics.domain, heuristics.rule
+2026-01-30 18:24:05,422 - INFO - 📞 Should call agent: researcher
+2026-01-30 18:24:05,422 - INFO - 💡 Recommendation: Confirm cyclical pattern continues
+2026-01-30 18:24:05,422 - INFO - 💡 Recommendation: Plan resources around cycle
+2026-01-30 18:24:05,423 - INFO - 💡 Recommendation: Optimize for peak times
+2026-01-30 18:24:05,423 - INFO - 💡 Recommendation: Automate cycle-based actions
+2026-01-30 18:24:10,431 - ERROR - ❌ Failed to record to chronicle: database is locked
+2026-01-30 18:24:10,432 - INFO - ✅ Determined agent: researcher
+2026-01-30 18:24:10,432 - INFO - 📞 Calling researcher agent...
+2026-01-30 18:24:10,432 - INFO - 
+======================================================================
+2026-01-30 18:24:10,432 - INFO - 🚀 EXECUTING WORKFLOW FOR PATTERN: Cyclical pattern detected: Activity cycle of 10 intervals detected
+2026-01-30 18:24:10,432 - INFO - ======================================================================
+2026-01-30 18:24:10,432 - INFO - 
+[1️⃣ AGENT CALL] Calling researcher agent...

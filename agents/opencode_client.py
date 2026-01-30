@@ -64,14 +64,14 @@ class OpenCodeClient:
         return False
 
     def call(
-        self, prompt: str, timeout: int = 120, agent: Optional[str] = None
+        self, prompt: str, timeout: int = 300, agent: Optional[str] = None
     ) -> Optional[str]:
         """
         Call OpenCode with a prompt via API or CLI.
 
         Args:
             prompt: The prompt to send to the AI
-            timeout: Request timeout in seconds
+            timeout: Request timeout in seconds (default: 300s = 5 minutes)
             agent: Optional agent profile (researcher, architect, skeptic, creative, ceo, learning-extractor)
 
         Returns:

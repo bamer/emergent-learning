@@ -28,20 +28,22 @@ from .auth import router as auth_router
 from .game import router as game_router
 from .setup import router as setup_router
 from .live import router as live_router
+from .semantic import router as semantic_router
 
 __all__ = [
-    'analytics_router',
-    'heuristics_router',
-    'runs_router',
-    'knowledge_router',
-    'queries_router',
-    'sessions_router',
-    'admin_router',
-    'fraud_router',
-    'workflows_router',
-    'context_router',
-    'auth_router',
-    'game_router',
-    'setup_router',
-    'live_router',
+    "analytics_router",
+    "heuristics_router",
+    "runs_router",
+    "knowledge_router",
+    "queries_router",
+    "sessions_router",
+    "admin_router",
+    "fraud_router",
+    "workflows_router",
+    "context_router",
+    "auth_router",
+    "game_router",
+    "setup_router",
+    "live_router",
+    "semantic_router",
 ]
