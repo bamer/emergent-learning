@@ -9,8 +9,8 @@ import asyncio
 import sys
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent / 'src' / 'query'))
+# Add parent directory to path
+sys.path.insert(0, str(Path(__file__).parent))
 
 
 def test_ollama_embedder():
@@ -20,7 +20,7 @@ def test_ollama_embedder():
     print("=" * 60)
 
     try:
-        from ollama_embedder import OllamaEmbedder, ollama_available
+        from query.ollama_embedder import OllamaEmbedder, ollama_available
 
         print("\n1. Checking Ollama availability...")
         available = ollama_available()
@@ -34,7 +34,7 @@ def test_ollama_embedder():
         print("\n2. Testing synchronous embedding...")
         embedder = OllamaEmbedder()
         embedding = embedder.embed_sync("Test embedding for semantic search")
-        if embedding:
+        if embedding is not None:
             print(f"   Embedding dimension: {len(embedding)}")
             print(f"   Expected dimension: {embedder.embedding_dim}")
             assert len(embedding) == embedder.embedding_dim, \
@@ -50,7 +50,7 @@ def test_ollama_embedder():
             return result
 
         async_embedding = asyncio.run(test_async())
-        if async_embedding:
+        if async_embedding is not None:
             print(f"   Async embedding dimension: {len(async_embedding)}")
             print("   Asynchronous embedding works")
         else:
@@ -90,7 +90,7 @@ async def test_semantic_search():
         import importlib.util
         spec = importlib.util.spec_from_file_location(
             "semantic_search_test",
-            Path(__file__).parent / 'src' / 'query' / 'semantic_search.py'
+            Path(__file__).parent / 'query' / 'semantic_search.py'
         )
 
         # We need to test components that don't require database
@@ -98,7 +98,7 @@ async def test_semantic_search():
         import numpy as np
 
         # Test CACHE_VERSION and extract_keywords by reading the file
-        semantic_search_path = Path(__file__).parent / 'src' / 'query' / 'semantic_search.py'
+        semantic_search_path = Path(__file__).parent / 'query' / 'semantic_search.py'
         with open(semantic_search_path) as f:
             content = f.read()
 
@@ -118,9 +118,8 @@ async def test_semantic_search():
         print("   Embedding dimension correct")
 
         # Verify Ollama embedder is imported
-        assert 'from ollama_embedder import OllamaEmbedder' in content or \
-               'from query.ollama_embedder import OllamaEmbedder' in content, \
-               "Should import OllamaEmbedder"
+        assert 'from query.ollama_embedder import OllamaEmbedder' in content, \
+               "Should import OllamaEmbedder from query.ollama_embedder"
         print("\n4. OllamaEmbedder is imported")
         print("   Import correct")
 
@@ -222,7 +221,7 @@ def test_fallback_chain():
     print("=" * 60)
 
     try:
-        from ollama_embedder import ollama_available
+        from query.ollama_embedder import ollama_available
 
         print("\n1. Checking current backend availability...")
         ollama_up = ollama_available()
@@ -275,6 +274,6 @@ if __name__ == '__main__':
     print("=" * 60)
 
     print("\nTo test with actual database heuristics:")
-    print("  python src/query/query.py --semantic 'Your task here'")
+    print("  python query/query.py --semantic 'Your task here'")
 
     sys.exit(0 if all_passed else 1)

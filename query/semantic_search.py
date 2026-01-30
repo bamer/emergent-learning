@@ -1,8 +1,8 @@
 """
-Semantic search utilities for embedding-based heuristic retrieval (Option B).
+Semantic search utilities for embedding-based heuristic retrieval.
 
-Uses lightweight local embeddings (sentence-transformers or similar) to enable
-semantic matching between task descriptions and heuristics.
+Uses Ollama's nomic-embed-text model for local semantic matching between
+task descriptions and heuristics. Provides fallback to OpenAI or keyword matching.
 
 Usage:
     from semantic_search import SemanticSearcher
@@ -24,10 +24,10 @@ import numpy as np
 
 # Try to import embedding libraries
 try:
-    from sentence_transformers import SentenceTransformer
-    SENTENCE_TRANSFORMERS_AVAILABLE = True
+    from query.ollama_embedder import OllamaEmbedder, ollama_available
+    OLLAMA_AVAILABLE = True
 except ImportError:
-    SENTENCE_TRANSFORMERS_AVAILABLE = False
+    OLLAMA_AVAILABLE = False
 
 try:
     import openai
@@ -49,18 +49,19 @@ class SemanticSearcher:
     Semantic search for heuristics using embeddings.
     
     Supports multiple embedding backends:
-    - sentence-transformers (local, fast, no API calls)
+    - Ollama (nomic-embed-text, local, 768-dimensional)
     - OpenAI embeddings (if API key available)
     - Simple keyword fallback (if no embeddings available)
     
     Embeddings are cached to avoid recomputation.
     """
     
-    # Default model - small, fast, good for semantic similarity
-    DEFAULT_MODEL = 'all-MiniLM-L6-v2'
+    # Default model
+    DEFAULT_MODEL = 'nomic-embed-text'
     
-    # Embedding cache directory
+    # Embedding cache directory and version (for breaking changes)
     CACHE_DIR = '.embedding_cache'
+    CACHE_VERSION = 2
     
     def __init__(self, base_path: Optional[Path] = None, model_name: Optional[str] = None):
         """
@@ -72,8 +73,8 @@ class SemanticSearcher:
         """
         self.base_path = base_path or Path.home() / '.opencode' / 'emergent-learning'
         self.model_name = model_name or self.DEFAULT_MODEL
-        self.model = None
-        self.embedding_dim = 384  # Default for all-MiniLM-L6-v2
+        self.embedder = None
+        self.embedding_dim = 768  # Default for nomic-embed-text
         self._use_openai = False
         
         # Cache setup
@@ -111,14 +112,14 @@ class SemanticSearcher:
             self._use_openai = True
             return
         
-        # Try sentence-transformers
-        if SENTENCE_TRANSFORMERS_AVAILABLE:
+        # Try Ollama first (primary backend)
+        if OLLAMA_AVAILABLE and ollama_available():
             try:
-                self.model = SentenceTransformer(self.model_name)
-                self.embedding_dim = self.model.get_sentence_embedding_dimension()
+                self.embedder = OllamaEmbedder(model=self.model_name)
+                self.embedding_dim = self.embedder.embedding_dim
                 return
             except Exception as e:
-                print(f"Warning: Failed to load sentence-transformers model: {e}")
+                print(f"Warning: Failed to initialize Ollama embedder: {e}")
         
         # Fallback: use OpenAI if available
         if OPENAI_AVAILABLE and os.environ.get('OPENAI_API_KEY'):
@@ -130,7 +131,7 @@ class SemanticSearcher:
     
     async def _load_heuristic_embeddings(self):
         """Load cached heuristic embeddings from disk."""
-        cache_file = self.cache_path / 'heuristic_embeddings.json'
+        cache_file = self.cache_path / f'heuristic_embeddings_v{self.CACHE_VERSION}.json'
         if cache_file.exists():
             try:
                 with open(cache_file, 'r') as f:
@@ -142,7 +143,7 @@ class SemanticSearcher:
     
     async def _save_heuristic_embeddings(self):
         """Save heuristic embeddings to disk cache."""
-        cache_file = self.cache_path / 'heuristic_embeddings.json'
+        cache_file = self.cache_path / f'heuristic_embeddings_v{self.CACHE_VERSION}.json'
         try:
             data = {k: v.tolist() for k, v in self._cache.items()}
             with open(cache_file, 'w') as f:
@@ -172,8 +173,10 @@ class SemanticSearcher:
         # Generate embedding
         if self._use_openai:
             embedding = await self._embed_openai(text)
-        elif self.model is not None:
-            embedding = self.model.encode(text, convert_to_numpy=True)
+        elif self.embedder is not None:
+            embedding = await self.embedder.embed_async(text)
+            if embedding is None:
+                embedding = self._keyword_fallback(text)
         else:
             # Fallback: simple keyword vector
             embedding = self._keyword_fallback(text)

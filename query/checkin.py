@@ -285,8 +285,9 @@ class CheckinOrchestrator:
     def prompt_launch_opencode(self) -> bool:
         """Ask if user wants to launch OpenCode services."""
         if not self.interactive:
-            print("[Prompt] Would you like to launch OpenCode services? (y/n)")
-            return False
+            # En mode non-interactif : lancer automatiquement
+            print("\n🚀 Launch OpenCode services now? (y/n) [default: n]: y")
+            return True
 
         response = (
             input("\n🚀 Launch OpenCode services now? (y/n) [default: n]: ")
@@ -296,34 +297,44 @@ class CheckinOrchestrator:
         return response in ["y", "yes"]
 
     def launch_opencode_services(self):
-        """Launch OpenCode server and agents."""
+        """Launch OpenCode server and agents in independent terminal windows."""
         print("\n[OpenCode] 🚀 Démarrage des services...\n")
-        
+
         try:
-            # Use unified services script
-            services_script = Path.home() / ".opencode" / "scripts" / "start-services.sh"
-            
+            # Use unified services script that launches in terminal windows
+            services_script = (
+                Path.home() / ".opencode" / "scripts" / "start-services.sh"
+            )
+
             if not services_script.exists():
                 print(f"[OpenCode] ❌ Script not found: {services_script}")
                 return False
-            
-            # Launch in background
+
+            # Launch the script which will open independent terminal windows
+            # The script handles gnome-terminal/xterm detection automatically
+            # Use start_new_session to detach completely from parent process
             subprocess.Popen(
                 ["bash", str(services_script)],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
             )
-            
+
+            # Give it a moment to start opening terminals
+            time.sleep(1)
+
             print("[OpenCode] ✅ Services lancés!")
             print("[OpenCode] 📍 Serveur: http://localhost:4096")
             print("[OpenCode] 📚 API Docs: http://localhost:4096/doc")
-            print("[OpenCode] 🤖 Agents: En cours de démarrage...\n")
-            
+            print("[OpenCode] 🤖 Agents: En cours de démarrage...")
+            print("[OpenCode] 📱 Fenêtres de terminal ouvertes (mode interactif)\n")
+
             return True
-        
+
         except Exception as e:
             print(f"[OpenCode] ❌ Erreur: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -369,7 +380,7 @@ def main():
         "--non-interactive",
         "-n",
         action="store_true",
-        help="Run in non-interactive mode (output prompts as JSON hints)",
+        help="Run in non-interactive mode (auto-launch services)",
     )
     args = parser.parse_args()
 

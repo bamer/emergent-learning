@@ -40,7 +40,7 @@ def check_opencode_status():
         return False
 
 
-def prompt_opencode_launch():
+def prompt_opencode_launch(interactive=True):
     """Prompt and handle OpenCode launch."""
     print("\n🚀 OpenCode Services")
 
@@ -50,6 +50,10 @@ def prompt_opencode_launch():
 
     print("OpenCode provides agent orchestration for ELF.")
     print("Launch now to enable multi-agent workflows?")
+
+    if not interactive:
+        print("⚠️  Non-interactive mode - skipping launch prompt")
+        return
 
     try:
         response = (
@@ -131,7 +135,7 @@ def main():
         print("  ✅ OpenCode: Running on http://localhost:4096")
     else:
         print("  ⚠️  OpenCode: Not running")
-        prompt_opencode_launch()
+        prompt_opencode_launch(interactive=True)
 
     print("\n📚 Golden Rules: Available via query system")
     print("   Use: python query/query.py --context")
