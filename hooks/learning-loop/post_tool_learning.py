@@ -591,10 +591,14 @@ def extract_and_record_learnings(tool_output: dict, domains: List[str]):
                               ["always", "never", "should", "must", "don't", "avoid", "prefer"])
 
             if is_heuristic:
-                # Record as heuristic
+                # Record as heuristic (UPSERT: reinforce if exists)
                 cursor.execute("""
                     INSERT INTO heuristics (domain, rule, explanation, confidence, source_type, created_at)
                     VALUES (?, ?, 'Auto-extracted from task output', 0.5, 'auto', ?)
+                    ON CONFLICT(domain, rule) DO UPDATE SET
+                        times_validated = times_validated + 1,
+                        confidence = MIN(1.0, confidence + 0.05),
+                        updated_at = CURRENT_TIMESTAMP
                 """, (domain, learning.strip(), datetime.now().isoformat()))
 
                 sys.stderr.write(f"AUTO-EXTRACTED HEURISTIC: {learning[:50]}...\n")

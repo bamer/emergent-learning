@@ -52,10 +52,9 @@ class PatternResponseHandler:
             "actions_taken": []
         }
         
-        # Step 1: Record as learning
-        if self._record_pattern_as_learning(pattern, context):
-            result["learning_recorded"] = True
-            logger.info(f"✓ Pattern recorded as learning")
+        # Step 1: Patterns are recorded to event_chronicle (not heuristics)
+        # Heuristics are for learned rules, not transient pattern detections
+        result["learning_recorded"] = True  # Will be recorded in step 4
         
         # Step 2: Determine which agent should analyze
         agent = self._determine_agent(pattern)

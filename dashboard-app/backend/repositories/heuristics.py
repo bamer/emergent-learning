@@ -89,14 +89,18 @@ class HeuristicsRepository(IHeuristicsRepository):
             return dict(row) if row else None
 
     async def create(self, heuristic_data: Dict[str, Any]) -> int:
-        """Create new heuristic and return ID."""
+        """Create new heuristic and return ID (UPSERT: reinforce if exists)."""
 
         query = """
             INSERT INTO heuristics (
                 domain, rule, explanation, confidence,
                 times_validated, times_violated, is_golden,
                 source_type, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(domain, rule) DO UPDATE SET
+                times_validated = times_validated + 1,
+                confidence = MIN(1.0, confidence + 0.05),
+                updated_at = excluded.updated_at
         """
 
         params = (

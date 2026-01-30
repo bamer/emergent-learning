@@ -117,6 +117,11 @@ def record_heuristic(domain, rule, explanation, source_type, confidence):
             INSERT INTO heuristics
             (domain, rule, explanation, source_type, confidence, times_validated, times_violated, is_golden, created_at, updated_at)
             VALUES (?, ?, ?, ?, ?, 0, 0, 0, ?, ?)
+            ON CONFLICT(domain, rule) DO UPDATE SET
+                times_validated = times_validated + 1,
+                confidence = MIN(1.0, confidence + 0.05),
+                explanation = COALESCE(excluded.explanation, explanation),
+                updated_at = excluded.updated_at
         """, (domain, rule, explanation, source_type, confidence, now, now))
 
         heuristic_id = cursor.lastrowid
