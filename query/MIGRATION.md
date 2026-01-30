@@ -15,7 +15,8 @@ pip install peewee-aio[aiosqlite] aiofiles
 ```
 
 Or if using requirements.txt, ensure these are present:
-```
+
+```text
 peewee-aio[aiosqlite]>=1.0.0
 aiofiles>=23.0.0
 ```
@@ -23,6 +24,7 @@ aiofiles>=23.0.0
 ### 2. Update your code
 
 **Before (v1.x):**
+
 ```python
 from query import QuerySystem
 
@@ -33,6 +35,7 @@ stats = qs.get_statistics()
 ```
 
 **After (v0.2.0):**
+
 ```python
 import asyncio
 from query import QuerySystem
@@ -55,6 +58,7 @@ asyncio.run(main())
 ### 3. CLI unchanged
 
 The command-line interface works exactly the same:
+
 ```bash
 python query/query.py --context
 python query/query.py --domain debugging --limit 5
@@ -67,7 +71,7 @@ python query/query.py --validate
 ### Initialization
 
 | v0.1.x | v0.2.0 |
-|------|--------|
+| ---- | ------ |
 | `qs = QuerySystem()` | `qs = await QuerySystem.create()` |
 | `qs = QuerySystem(base_path="/path")` | `qs = await QuerySystem.create(base_path="/path")` |
 
@@ -76,7 +80,7 @@ python query/query.py --validate
 Every query method now requires `await`:
 
 | Method | v0.1.x | v0.2.0 |
-|--------|------|--------|
+| ------ | ---- | ------ |
 | Build context | `qs.build_context(...)` | `await qs.build_context(...)` |
 | Get golden rules | `qs.get_golden_rules()` | `await qs.get_golden_rules()` |
 | Query by domain | `qs.query_by_domain(...)` | `await qs.query_by_domain(...)` |
@@ -106,6 +110,7 @@ async def main():
 ```
 
 Or use a context manager pattern:
+
 ```python
 async def main():
     qs = await QuerySystem.create()
@@ -121,6 +126,7 @@ async def main():
 ### Pattern 1: Simple script
 
 **Before:**
+
 ```python
 from query import QuerySystem
 
@@ -132,6 +138,7 @@ print(get_context())
 ```
 
 **After:**
+
 ```python
 import asyncio
 from query import QuerySystem
@@ -149,6 +156,7 @@ print(asyncio.run(get_context()))
 ### Pattern 2: Multiple queries
 
 **Before:**
+
 ```python
 from query import QuerySystem
 
@@ -159,6 +167,7 @@ decisions = qs.get_decisions(domain="api")
 ```
 
 **After:**
+
 ```python
 import asyncio
 from query import QuerySystem
@@ -179,6 +188,7 @@ context, stats, decisions = asyncio.run(main())
 ### Pattern 3: Integration with existing async code
 
 If you already have async code:
+
 ```python
 async def my_existing_async_function():
     # Create QuerySystem in your async context
@@ -193,6 +203,7 @@ async def my_existing_async_function():
 ### Pattern 4: Concurrent queries
 
 New in v0.2.0 - run multiple queries concurrently:
+
 ```python
 import asyncio
 from query import QuerySystem
@@ -223,7 +234,7 @@ async def main():
 Error codes remain unchanged from v0.1.x:
 
 | Code | Description |
-|------|-------------|
+| ---- | ----------- |
 | QS000 | General query system error |
 | QS001 | Validation error (invalid input) |
 | QS002 | Database error (connection/query failed) |
@@ -235,6 +246,7 @@ Error codes remain unchanged from v0.1.x:
 ### "coroutine was never awaited" warning
 
 You forgot to `await` a query method:
+
 ```python
 # Wrong
 context = qs.build_context("task")  # Returns coroutine, not result
@@ -246,6 +258,7 @@ context = await qs.build_context("task")
 ### "RuntimeError: no running event loop"
 
 You're calling async code outside an async context:
+
 ```python
 # Wrong - calling from sync code
 async def get_context():
@@ -261,6 +274,7 @@ result = asyncio.run(get_context())
 ### "Event loop is already running"
 
 You're calling `asyncio.run()` from within an async context (like Jupyter):
+
 ```python
 # In Jupyter, use await directly instead of asyncio.run()
 qs = await QuerySystem.create()
@@ -271,6 +285,7 @@ await qs.cleanup()
 ## Version Check
 
 To verify you're on v0.2.0:
+
 ```python
 from query import __version__
 print(__version__)  # Should print '0.2.0'

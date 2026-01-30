@@ -3,6 +3,7 @@ import { Activity, RefreshCw, Wifi, WifiOff } from 'lucide-react'
 import { TaskKanban, Task, TaskSessions } from './TaskKanban'
 import { TrailFeed, Trail } from './TrailFeed'
 import { SignalInput } from './SignalInput'
+import { AgentsPanel } from './AgentsPanel'
 
 interface LivePanelProps {
   apiBaseUrl?: string
@@ -17,6 +18,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
   const [taskConnected, setTaskConnected] = useState(false)
   const [trailConnected, setTrailConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'agents' | 'tasks'>('agents')
 
   const taskEventSourceRef = useRef<EventSource | null>(null)
   const trailEventSourceRef = useRef<EventSource | null>(null)
@@ -157,76 +159,112 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Activity className="w-5 h-5 text-violet-400" />
-            <h2 className="text-lg font-semibold text-slate-200">Live Agents</h2>
+            <h2 className="text-lg font-semibold text-slate-200">Live System</h2>
           </div>
 
-          {/* Connection status */}
-          <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
+          {/* View Mode Toggle */}
+          <div className="flex bg-slate-800/50 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('agents')}
+              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                viewMode === 'agents'
+                  ? 'bg-violet-600 text-white'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              ELF Agents
+            </button>
+            <button
+              onClick={() => setViewMode('tasks')}
+              className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+                viewMode === 'tasks'
+                  ? 'bg-violet-600 text-white'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Tasks & Trails
+            </button>
+          </div>
+        </div>
+
+        {/* Connection status */}
+        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${
+          viewMode === 'agents' ? 'hidden' : (
             isConnected
               ? 'bg-emerald-500/10 text-emerald-400'
               : 'bg-red-500/10 text-red-400'
-          }`}>
-            {isConnected ? (
-              <>
-                <Wifi className="w-3 h-3" />
-                <span>Connected</span>
-              </>
-            ) : (
-              <>
-                <WifiOff className="w-3 h-3" />
-                <span>Reconnecting...</span>
-              </>
-            )}
-          </div>
+          )
+        }`}>
+          {isConnected ? (
+            <>
+              <Wifi className="w-3 h-3" />
+              <span>Connected</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="w-3 h-3" />
+              <span>Reconnecting...</span>
+            </>
+          )}
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5">
-            <span className="text-slate-500">Sessions:</span>
-            <span className="text-violet-400 font-semibold">{activeSessions}</span>
+        {/* Stats for tasks view */}
+        {viewMode === 'tasks' && (
+          <div className="flex items-center gap-4 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-500">Sessions:</span>
+              <span className="text-violet-400 font-semibold">{activeSessions}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-500">Tasks:</span>
+              <span className="text-cyan-400 font-semibold">{totalTasks}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-500">Active:</span>
+              <span className="text-emerald-400 font-semibold">{inProgressTasks}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-slate-500">Tasks:</span>
-            <span className="text-cyan-400 font-semibold">{totalTasks}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-slate-500">Active:</span>
-            <span className="text-emerald-400 font-semibold">{inProgressTasks}</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: Task Kanban */}
-        <div className="flex-1 p-4 overflow-hidden">
-          <TaskKanban
-            sessions={taskSessions}
-            selectedSession={selectedSession}
-            onSessionSelect={setSelectedSession}
-            onTaskSelect={setSelectedTask}
-            selectedTask={selectedTask}
-          />
-        </div>
+      <div className="flex-1 overflow-hidden">
+        {viewMode === 'agents' ? (
+          <AgentsPanel />
+        ) : (
+          <div className="flex h-full">
+            {/* Left: Task Kanban */}
+            <div className="flex-1 p-4 overflow-hidden">
+              <TaskKanban
+                sessions={taskSessions}
+                selectedSession={selectedSession}
+                onSessionSelect={setSelectedSession}
+                onTaskSelect={setSelectedTask}
+                selectedTask={selectedTask}
+              />
+            </div>
 
-        {/* Right: Trail Feed */}
-        <div className="w-80 border-l border-slate-700/50 flex flex-col relative">
-          <TrailFeed
-            trails={trails}
-            autoScroll={autoScroll}
-            onAutoScrollChange={setAutoScroll}
-          />
-        </div>
+            {/* Right: Trail Feed */}
+            <div className="w-80 border-l border-slate-700/50 flex flex-col relative">
+              <TrailFeed
+                trails={trails}
+                autoScroll={autoScroll}
+                onAutoScrollChange={setAutoScroll}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Bottom: Signal Input */}
-      <SignalInput
-        sessions={taskSessions}
-        selectedTask={selectedTask}
-        onSendNote={handleSendNote}
-        onChangeStatus={handleChangeStatus}
-      />
+      {/* Bottom: Signal Input (only for tasks view) */}
+      {viewMode === 'tasks' && (
+        <SignalInput
+          sessions={taskSessions}
+          selectedTask={selectedTask}
+          onSendNote={handleSendNote}
+          onChangeStatus={handleChangeStatus}
+        />
+      )}
 
       {/* Error Toast */}
       {error && (

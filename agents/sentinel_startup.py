@@ -22,6 +22,7 @@ import argparse
 import atexit
 import os
 import fcntl
+import time
 from pathlib import Path
 
 # Setup path
@@ -36,7 +37,7 @@ def acquire_lock() -> bool:
     global _lock_fd
     try:
         LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
-        _lock_fd = open(LOCK_FILE, 'w')
+        _lock_fd = open(LOCK_FILE, "w")
         fcntl.flock(_lock_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         _lock_fd.write(str(os.getpid()))
         _lock_fd.flush()
@@ -58,78 +59,99 @@ def release_lock():
         except Exception:
             pass
 
-from dashboard_sentinel import AISentinel
+
+from orchestrator import AgentOrchestrator
 
 
 def setup_logging(log_level: str = "INFO"):
     """Setup logging configuration."""
     logging.basicConfig(
         level=getattr(logging, log_level),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.FileHandler(
-                Path.home() / ".opencode" / "emergent-learning" / "logs" / "sentinel-startup.log"
+                Path.home()
+                / ".opencode"
+                / "emergent-learning"
+                / "logs"
+                / "sentinel-startup.log"
             ),
             logging.StreamHandler(),
-        ]
+        ],
     )
 
 
 def main():
-    """Main entry point."""
+    """Main entry point - Start ELF Orchestrator with proper agent roles."""
     if not acquire_lock():
-        print("❌ Another Sentinel instance is already running. Exiting.")
+        print("❌ Another ELF instance is already running. Exiting.")
         sys.exit(1)
     atexit.register(release_lock)
 
     parser = argparse.ArgumentParser(
-        description="Start Dashboard Sentinel in continuous monitoring mode"
+        description="Start ELF Agent Orchestrator - Central Coordination System"
     )
     parser.add_argument(
         "--interval",
         type=int,
         default=30,
-        help="Monitoring interval in seconds (default: 30)"
+        help="Monitoring interval in seconds (default: 30)",
     )
     parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        help="Logging level (default: INFO)"
+        help="Logging level (default: INFO)",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Setup logging
     setup_logging(args.log_level)
     logger = logging.getLogger(__name__)
-    
+
     logger.info("=" * 70)
-    logger.info("🚀 PHASE 2: Starting Dashboard Sentinel - Continuous Monitoring Mode")
+    logger.info("🚀 ELF Agent Orchestrator - Starting Central Coordination")
     logger.info("=" * 70)
-    logger.info(f"Interval: {args.interval}s")
+    logger.info(f"Monitoring interval: {args.interval}s")
     logger.info(f"Log level: {args.log_level}")
-    logger.info("Standard ELF Integration: Enabled")
-    logger.info("Event Chronicle Recording: Enabled")
+    logger.info("✅ Orchestrator: 🎯 Central coordination")
+    logger.info("✅ Sentinel: 🔍 Monitoring (not CEO)")
+    logger.info("✅ CEO: 👑 Executive decisions (on-demand)")
+    logger.info("✅ Other agents: Available on-demand")
     logger.info("=" * 70)
-    
+
     try:
-        # Create Sentinel instance
-        sentinel = AISentinel(
-            name="Dashboard Sentinel - ELF Standard",
-            model="haiku"
-        )
-        
-        logger.info("✓ Sentinel initialized")
-        logger.info("✓ Starting continuous monitoring loop...")
+        # Create Orchestrator instance (replaces Sentinel-only approach)
+        orchestrator = AgentOrchestrator()
+
+        logger.info("✓ Orchestrator initialized")
+        logger.info("✓ Starting agent coordination system...")
         logger.info("")
-        
-        # Start continuous monitoring
-        sentinel.start_continuous_monitoring(interval=args.interval)
-        
+
+        # Start orchestrator (will auto-start Sentinel and other agents)
+        orchestrator.start_orchestrator()
+
+        # Keep running with monitoring
+        while True:
+            time.sleep(args.interval)
+
+            # Show status every 10 cycles
+            if hasattr(orchestrator, "_status_counter"):
+                orchestrator._status_counter += 1
+            else:
+                orchestrator._status_counter = 1
+
+            if orchestrator._status_counter % 10 == 0:
+                status = orchestrator.get_agent_status()
+                active_agents = len(
+                    [a for a in status["agents"].values() if a["status"] == "running"]
+                )
+                logger.info(f"📊 Status: {active_agents} agents active")
+
     except KeyboardInterrupt:
         logger.info("\n" + "=" * 70)
-        logger.info("⏹️  Sentinel stopped by user")
+        logger.info("⏹️  ELF Orchestrator stopped by user")
         logger.info("=" * 70)
         sys.exit(0)
     except Exception as e:
