@@ -279,6 +279,119 @@ def get_db_connection():
     return conn
 
 
+def auto_detect_domains(tool_output: dict, task_description: str) -> List[str]:
+    """Auto-detect domains from tool output and task description when no domains were consulted."""
+    content = ""
+    if isinstance(tool_output, dict):
+        content = str(tool_output.get("content", ""))
+    elif isinstance(tool_output, str):
+        content = tool_output
+
+    # Combine with task description for better detection
+    full_text = (content + " " + task_description).lower()
+
+    # Domain detection patterns
+    domain_patterns = {
+        "security": [
+            "security",
+            "vulnerability",
+            "attack",
+            "encrypt",
+            "password",
+            "auth",
+            "permission",
+            "validate",
+            "sanitize",
+            "injection",
+            "xss",
+            "csrf",
+        ],
+        "performance": [
+            "performance",
+            "speed",
+            "slow",
+            "fast",
+            "cache",
+            "optimize",
+            "memory",
+            "cpu",
+            "database",
+            "query",
+            "async",
+            "batch",
+        ],
+        "testing": [
+            "test",
+            "testing",
+            "pytest",
+            "unittest",
+            "mock",
+            "assert",
+            "coverage",
+            "validation",
+        ],
+        "api": [
+            "api",
+            "endpoint",
+            "request",
+            "response",
+            "http",
+            "rest",
+            "json",
+            "payload",
+        ],
+        "database": [
+            "database",
+            "sql",
+            "sqlite",
+            "postgres",
+            "mysql",
+            "table",
+            "query",
+            "migration",
+        ],
+        "frontend": [
+            "frontend",
+            "ui",
+            "html",
+            "css",
+            "javascript",
+            "react",
+            "component",
+            "dom",
+        ],
+        "deployment": [
+            "deploy",
+            "docker",
+            "kubernetes",
+            "k8s",
+            "ci/cd",
+            "pipeline",
+            "build",
+            "release",
+        ],
+        "general": [
+            "code",
+            "function",
+            "class",
+            "module",
+            "import",
+            "error",
+            "exception",
+            "fix",
+            "bug",
+        ],
+    }
+
+    detected_domains = []
+    for domain, keywords in domain_patterns.items():
+        if any(keyword in full_text for keyword in keywords):
+            detected_domains.append(domain)
+
+    # Return at least "general" if nothing detected
+    return detected_domains if detected_domains else ["general"]
+
+
 def determine_outcome(tool_output: dict) -> Tuple[str, str]:
     """Determine if the task succeeded or failed.
 
@@ -805,8 +918,14 @@ def extract_and_record_learnings(
     tool_output: dict, domains: List[str], task_description: str = ""
 ):
     """Extract learnings from successful task output and record them."""
+    # Debug
+    with open("/tmp/elf_hook_debug.log", "a") as f:
+        f.write(f"    -> extract_and_record_learnings called\n")
+
     conn = get_db_connection()
     if not conn:
+        with open("/tmp/elf_hook_debug.log", "a") as f:
+            f.write(f"    -> No DB connection\n")
         return
 
     # Get content
@@ -827,7 +946,15 @@ def extract_and_record_learnings(
         "success", domains, task_description, output_content
     )
 
+    # Debug
+    with open("/tmp/elf_hook_debug.log", "a") as f:
+        f.write(f"    -> Extracted {len(learnings)} learnings\n")
+        for l in learnings:
+            f.write(f"       - {l['rule'][:50]}...\n")
+
     if not learnings:
+        with open("/tmp/elf_hook_debug.log", "a") as f:
+            f.write(f"    -> No learnings found, returning\n")
         return
 
     try:
@@ -914,15 +1041,21 @@ def main():
     """Main hook logic."""
     hook_input = get_hook_input()
 
+    # Debug: Log hook invocation to file (flush immediately)
+    debug_file = "/tmp/elf_hook_debug.log"
+    with open(debug_file, "a") as f:
+        f.write(
+            f"[{datetime.now().isoformat()}] Hook called with: {json.dumps(hook_input)[:200]}...\n"
+        )
+        f.flush()
+
     tool_name = hook_input.get("tool_name", hook_input.get("tool"))
     tool_input = hook_input.get("tool_input", hook_input.get("input", {}))
     tool_output = hook_input.get("tool_output", hook_input.get("output", {}))
 
-    # Debug: Log all hook invocations
-    sys.stderr.write(f"[HOOK] post_tool_learning.py called for tool: {tool_name}\n")
-
     if not tool_name:
-        sys.stderr.write("[HOOK] No tool_name found, returning early\n")
+        with open(debug_file, "a") as f:
+            f.write(f"  -> No tool_name, returning early\n")
         output_result({})
         return
 
@@ -981,11 +1114,7 @@ def main():
 
     # Track file operations (Read/Edit/Write/Glob/Grep) for hotspot trails
     file_operation_tools = {"Read", "Edit", "Write", "Glob", "Grep"}
-    sys.stderr.write(
-        f"[HOOK] Checking if {tool_name} is in file_operation_tools: {tool_name in file_operation_tools}\n"
-    )
     if tool_name in file_operation_tools:
-        sys.stderr.write(f"[HOOK] Processing file operation: {tool_name}\n")
         try:
             file_path = tool_input.get("file_path") or tool_input.get("path", "")
             if file_path:
@@ -1044,13 +1173,8 @@ def main():
                 f"[TRAIL_ERROR] Failed to record file operation trail: {e}\n"
             )
 
-        output_result({})
-        return
-
-    # Only process Task tool (subagent completions) for learning loop
-    if tool_name != "Task":
-        output_result({})
-        return
+        # NOTE: Don't return early here - continue to learning extraction below
+        # so that Edit/Write/Read operations can also generate learnings
 
     # Load session state
     state = load_session_state()
@@ -1135,43 +1259,22 @@ def main():
 
     # Lay trails for files mentioned in output
     try:
-        sys.stderr.write("[TRAIL_DEBUG] Starting trail extraction from tool output\n")
         output_content = ""
         if isinstance(tool_output, dict):
             output_content = str(tool_output.get("content", ""))
         elif isinstance(tool_output, str):
             output_content = tool_output
 
-        sys.stderr.write(
-            f"[TRAIL_DEBUG] Output content length: {len(output_content)}\n"
-        )
-
         file_paths = extract_file_paths(output_content)
-        sys.stderr.write(
-            f"[TRAIL_DEBUG] Extracted {len(file_paths)} file paths: {file_paths}\n"
-        )
 
         if file_paths:
             description = tool_input.get("description", "")
             agent_type = tool_input.get("subagent_type", "unknown")
-            sys.stderr.write(
-                f"[TRAIL_DEBUG] Calling lay_trails with agent_type={agent_type}, description={description[:50]}\n"
-            )
-            trails_count = lay_trails(
+            lay_trails(
                 file_paths, outcome, agent_id=agent_type, description=description
             )
-            sys.stderr.write(f"[TRAIL_DEBUG] lay_trails returned: {trails_count}\n")
-        else:
-            sys.stderr.write(
-                "[TRAIL_DEBUG] No file paths extracted, skipping trail laying\n"
-            )
-    except Exception as e:
-        sys.stderr.write(
-            f"[TRAIL_ERROR] Exception in trail laying section: {type(e).__name__}: {e}\n"
-        )
-        import traceback
-
-        sys.stderr.write(f"[TRAIL_ERROR] Traceback: {traceback.format_exc()}\n")
+    except Exception:
+        pass  # Silent fail for trails
 
     # Validate heuristics based on outcome
     if heuristics_consulted:
@@ -1188,9 +1291,24 @@ def main():
         auto_record_failure(tool_input, tool_output, reason, domains_queried)
 
     # Extract any explicit learnings from output
-    if outcome == "success":
+    # Extract for both 'success' and 'unknown' outcomes (not failure)
+    # This ensures Read/Edit/Write tools can also generate learnings
+    if outcome in ("success", "unknown"):
         task_description = tool_input.get("description", "")
+
+        # Auto-detect domains if none were consulted (e.g., for simple tools like Read/Edit)
+        if not domains_queried:
+            domains_queried = auto_detect_domains(tool_output, task_description)
+
+        # Debug
+        with open("/tmp/elf_hook_debug.log", "a") as f:
+            f.write(f"  -> Extracting learnings for domains: {domains_queried} (outcome={outcome})\n")
+
         extract_and_record_learnings(tool_output, domains_queried, task_description)
+
+        # Debug
+        with open("/tmp/elf_hook_debug.log", "a") as f:
+            f.write(f"  -> Done extracting\n")
 
     # Clear consulted heuristics for next task
     state["heuristics_consulted"] = []

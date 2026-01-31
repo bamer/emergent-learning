@@ -174,8 +174,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
                         {/* Fallback for other tabs in cosmic mode - render them in a container */}
                         {activeTab !== 'overview' && activeTab !== 'graph' && activeTab !== 'analytics' && (
-                            <div className="relative z-10 container mx-auto px-4 py-8 pt-24 h-full overflow-y-auto custom-scrollbar">
-                                <div className="glass-panel p-6 rounded-xl min-h-[calc(100vh-150px)]">
+                            <div className="relative z-10 container mx-auto px-4 py-8 pt-24 h-screen max-h-screen overflow-y-auto custom-scrollbar cursor-default pb-24">
+                                <div className="glass-panel p-6 rounded-xl">
                                     {children}
                                 </div>
                             </div>

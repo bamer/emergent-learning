@@ -1,0 +1,36 @@
+{
+  "mission_id": "mission-1769820988",
+  "created_at": "2026-01-31T07:56:28.430166",
+  "status": "launching",
+  "config": {
+    "mission_name": "critical-analysis",
+    "objective": "Analyze ELF codebase and identify 5 critical issues with detailed fix plan",
+    "agents": [
+      {
+        "id": "researcher-1",
+        "type": "researcher",
+        "role": "Code Analyzer",
+        "task": "Search for critical bugs, security issues, and architectural problems in the ELF codebase. Focus on: 1) Security vulnerabilities 2) Performance bottlenecks 3) Data loss risks 4) System failures 5) Integration issues"
+      },
+      {
+        "id": "architect-1",
+        "type": "architect",
+        "role": "System Designer",
+        "task": "Analyze the architecture and design flaws. Look for: 1) Circular dependencies 2) Missing error handling 3) Race conditions 4) Scalability issues 5) Technical debt"
+      },
+      {
+        "id": "skeptic-1",
+        "type": "skeptic",
+        "role": "Quality Reviewer",
+        "task": "Review the findings and validate the critical issues. Challenge assumptions and verify that proposed fixes are correct and complete."
+      }
+    ]
+  },
+  "coordination": {
+    "heartbeat_interval": 30,
+    "max_stale_time": 120,
+    "communication_protocol": "blackboard",
+    "failure_recovery": "automatic"
+  },
+  "launched_at": "2026-01-31T07:56:34.836458"
+}
