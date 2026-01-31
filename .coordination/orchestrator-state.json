@@ -1,8 +1,8 @@
 {
   "orchestrator": {
     "running": true,
-    "start_time": "2026-01-31T19:14:52.387310",
-    "uptime_seconds": 570
+    "start_time": "2026-01-31T20:00:02.445088",
+    "uptime_seconds": 490
   },
   "agents": {
     "orchestrator": {
@@ -13,17 +13,17 @@
       "error_count": 0,
       "restart_count": 0,
       "last_activity": null,
-      "start_time": "2026-01-31T19:14:52.387312"
+      "start_time": "2026-01-31T20:00:02.445093"
     },
     "sentinel": {
       "name": "Sentinel",
       "status": "running",
       "icon": "\ud83d\udd0d",
-      "session_id": "ses_3ec05c41affeq5N6HxjtHMLy8O",
+      "session_id": "ses_3ebdc69f0ffe5wWQm16r1aKiMU",
       "error_count": 0,
       "restart_count": 0,
-      "last_activity": "2026-01-31T19:14:52.390527",
-      "start_time": "2026-01-31T19:14:52.390530"
+      "last_activity": "2026-01-31T20:00:02.448501",
+      "start_time": "2026-01-31T20:00:02.448504"
     },
     "watcher": {
       "name": "Watcher",
@@ -32,28 +32,28 @@
       "session_id": null,
       "error_count": 0,
       "restart_count": 0,
-      "last_activity": "2026-01-31T19:14:52.392732",
-      "start_time": "2026-01-31T19:14:52.392736"
+      "last_activity": "2026-01-31T20:00:02.450694",
+      "start_time": "2026-01-31T20:00:02.450697"
     },
     "researcher": {
       "name": "Researcher",
-      "status": "stopped",
+      "status": "running",
       "icon": "\ud83d\udd2c",
-      "session_id": null,
+      "session_id": "ses_3ebdbe114ffeo0pTu6tTHnjMdd",
       "error_count": 0,
       "restart_count": 0,
-      "last_activity": null,
-      "start_time": null
+      "last_activity": "2026-01-31T20:00:37.484719",
+      "start_time": "2026-01-31T20:00:37.484722"
     },
     "architect": {
       "name": "Architect",
-      "status": "stopped",
+      "status": "running",
       "icon": "\ud83c\udfd7\ufe0f",
-      "session_id": null,
+      "session_id": "ses_3ebd9134affeZnRahEK7VuRhmw",
       "error_count": 0,
       "restart_count": 0,
-      "last_activity": null,
-      "start_time": null
+      "last_activity": "2026-01-31T20:03:41.238725",
+      "start_time": "2026-01-31T20:03:41.238730"
     },
     "skeptic": {
       "name": "Skeptic",
@@ -87,7 +87,7 @@
     }
   },
   "stats": {
-    "agents_started": 2,
+    "agents_started": 4,
     "agents_stopped": 1,
     "agents_crashed": 0,
     "errors_handled": 0,
@@ -95,5 +95,5 @@
     "uptime_seconds": 0
   },
   "escalations": 0,
-  "_last_updated": "2026-01-31T19:24:22.451049"
+  "_last_updated": "2026-01-31T20:08:12.506940"
 }

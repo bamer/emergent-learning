@@ -16,6 +16,8 @@ import json
 import logging
 import subprocess
 import sys
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -31,12 +33,57 @@ if str(AGENTS_DIR) not in sys.path:
 
 from elf_logging import get_logger, LOGS_DIR
 
+# Import orchestrator components
+from unified_orchestrator import UnifiedOrchestrator, AgentType
+from orchestrator_state import get_state
+
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
 logger = get_logger("dashboard_agents")
 
-# Path to unified orchestrator
-UNIFIED_ORCHESTRATOR = AGENTS_DIR / "unified_orchestrator.py"
-PYTHON_CMD = "python3"
+# Global orchestrator instance (singleton)
+_orchestrator_instance: Optional[UnifiedOrchestrator] = None
+_orchestrator_lock = threading.Lock()
+_orchestrator_thread: Optional[threading.Thread] = None
+
+
+def get_orchestrator() -> UnifiedOrchestrator:
+    """Get or create the global orchestrator instance."""
+    global _orchestrator_instance, _orchestrator_thread
+
+    with _orchestrator_lock:
+        if _orchestrator_instance is None:
+            logger.info("Initializing global orchestrator instance")
+            _orchestrator_instance = UnifiedOrchestrator()
+
+            # Start orchestrator in background thread
+            def run_orchestrator():
+                try:
+                    _orchestrator_instance.start()
+                    while _orchestrator_instance.running:
+                        time.sleep(1)
+                except Exception as e:
+                    logger.error(f"Orchestrator thread error: {e}")
+
+            _orchestrator_thread = threading.Thread(
+                target=run_orchestrator, daemon=True
+            )
+            _orchestrator_thread.start()
+
+            # Wait for orchestrator to be ready
+            timeout = 10
+            start_time = time.time()
+            while (
+                not _orchestrator_instance.running
+                and time.time() - start_time < timeout
+            ):
+                time.sleep(0.5)
+
+            if not _orchestrator_instance.running:
+                logger.error("Orchestrator failed to start within timeout")
+            else:
+                logger.info("Global orchestrator started successfully")
+
+        return _orchestrator_instance
 
 
 class SpawnRequest(BaseModel):
@@ -57,101 +104,42 @@ class TestRequest(BaseModel):
     """Request to test an agent."""
 
     agent_type: str
+    prompt: Optional[str] = None
+    dry_run: bool = False
 
 
 def _get_orchestrator_status() -> Dict[str, Any]:
     """Get current status from unified orchestrator."""
     try:
-        result = subprocess.run(
-            [PYTHON_CMD, str(UNIFIED_ORCHESTRATOR), "status"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-        )
-        if result.returncode == 0:
-            # Filter out log lines that start with timestamps (keep only JSON)
-            lines = result.stdout.strip().split("\n")
-            json_lines = []
-            for line in lines:
-                # Skip log lines (they start with dates like "2026-01-31")
-                if line.strip() and not line[0:4].isdigit():
-                    json_lines.append(line)
-            json_str = "\n".join(json_lines)
-            return json.loads(json_str)
-        else:
-            logger.error(f"Failed to get status: {result.stderr}")
-            return {"error": "Failed to get status", "details": result.stderr}
+        # Try to get from running orchestrator first
+        orchestrator = get_orchestrator()
+        if orchestrator.running:
+            return orchestrator.get_agent_status()
     except Exception as e:
-        logger.error(f"Exception getting status: {e}")
-        return {"error": str(e)}
+        logger.error(f"Failed to get status from running orchestrator: {e}")
 
-
-def _spawn_agent(agent_type: str) -> bool:
-    """Spawn an agent using the unified orchestrator."""
+    # Fallback to persisted state
     try:
-        result = subprocess.run(
-            [PYTHON_CMD, str(UNIFIED_ORCHESTRATOR), "spawn", "--agent", agent_type],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        success = result.returncode == 0
-        if not success:
-            logger.error(f"Failed to spawn {agent_type}: {result.stderr}")
-        return success
+        state_manager = get_state()
+        persisted_state = state_manager.load_state()
+        if persisted_state:
+            return persisted_state
     except Exception as e:
-        logger.error(f"Exception spawning {agent_type}: {e}")
-        return False
+        logger.error(f"Failed to load persisted state: {e}")
 
-
-def _kill_agent(agent_type: str, force: bool = False) -> bool:
-    """Kill an agent using the unified orchestrator."""
-    try:
-        cmd = [PYTHON_CMD, str(UNIFIED_ORCHESTRATOR), "kill", "--agent", agent_type]
-        if force:
-            cmd.append("--force")
-
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-        success = result.returncode == 0
-        if not success:
-            logger.error(f"Failed to kill {agent_type}: {result.stderr}")
-        return success
-    except Exception as e:
-        logger.error(f"Exception killing {agent_type}: {e}")
-        return False
-
-
-def _test_agent(agent_type: str) -> Dict[str, Any]:
-    """Test an agent by spawning and immediately killing it."""
-    logger.info(f"Testing agent: {agent_type}")
-
-    # Try to spawn
-    spawn_success = _spawn_agent(agent_type)
-    if not spawn_success:
-        return {
-            "agent_type": agent_type,
-            "status": "failed",
-            "spawn": False,
-            "kill": None,
-            "message": "Failed to spawn agent",
-        }
-
-    # Wait a moment
-    import time
-
-    time.sleep(2)
-
-    # Try to kill
-    kill_success = _kill_agent(agent_type)
-
+    # Ultimate fallback - return empty status
     return {
-        "agent_type": agent_type,
-        "status": "passed" if kill_success else "partial",
-        "spawn": True,
-        "kill": kill_success,
-        "message": "Agent test completed"
-        if kill_success
-        else "Spawned but failed to kill cleanly",
+        "orchestrator": {"running": False, "start_time": None, "uptime_seconds": 0},
+        "agents": [],
+        "stats": {
+            "agents_started": 0,
+            "agents_stopped": 0,
+            "agents_crashed": 0,
+            "errors_handled": 0,
+            "escalations": 0,
+            "uptime_seconds": 0,
+        },
+        "escalations": 0,
     }
 
 
@@ -203,18 +191,35 @@ async def spawn_agent(request: SpawnRequest):
             detail=f"Invalid agent type. Must be one of: {', '.join(valid_agents)}",
         )
 
-    success = _spawn_agent(request.agent_type)
+    try:
+        orchestrator = get_orchestrator()
+        agent_type = AgentType(request.agent_type)
 
-    if success:
-        logger.info(f"Agent {request.agent_type} spawned via dashboard")
-        return {
-            "status": "ok",
-            "agent": request.agent_type,
-            "message": f"Agent {request.agent_type} spawned successfully",
-        }
-    else:
+        if not orchestrator.running:
+            raise HTTPException(
+                status_code=503,
+                detail="Orchestrator is not running. Please start it first.",
+            )
+
+        success = orchestrator.spawn_agent(agent_type)
+
+        if success:
+            logger.info(f"Agent {request.agent_type} spawned via dashboard")
+            return {
+                "status": "ok",
+                "agent": request.agent_type,
+                "message": f"Agent {request.agent_type} spawned successfully",
+            }
+        else:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to spawn agent {request.agent_type}"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Exception spawning agent: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Failed to spawn agent {request.agent_type}"
+            status_code=500, detail=f"Exception while spawning agent: {str(e)}"
         )
 
 
@@ -245,36 +250,149 @@ async def kill_agent(request: KillRequest):
             detail=f"Invalid agent type. Must be one of: {', '.join(valid_agents)}",
         )
 
-    success = _kill_agent(request.agent_type, request.force)
+    try:
+        orchestrator = get_orchestrator()
+        agent_type = AgentType(request.agent_type)
 
-    if success:
-        logger.info(
-            f"Agent {request.agent_type} killed via dashboard (force={request.force})"
-        )
-        return {
-            "status": "ok",
-            "agent": request.agent_type,
-            "force": request.force,
-            "message": f"Agent {request.agent_type} stopped successfully",
-        }
-    else:
+        if not orchestrator.running:
+            raise HTTPException(status_code=503, detail="Orchestrator is not running.")
+
+        success = orchestrator.kill_agent(agent_type, request.force)
+
+        if success:
+            logger.info(
+                f"Agent {request.agent_type} killed via dashboard (force={request.force})"
+            )
+            return {
+                "status": "ok",
+                "agent": request.agent_type,
+                "force": request.force,
+                "message": f"Agent {request.agent_type} stopped successfully",
+            }
+        else:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to stop agent {request.agent_type}"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Exception killing agent: {e}")
         raise HTTPException(
-            status_code=500, detail=f"Failed to stop agent {request.agent_type}"
+            status_code=500, detail=f"Exception while stopping agent: {str(e)}"
         )
+
+
+def _test_agent(
+    agent_type: str, prompt: Optional[str] = None, dry_run: bool = False
+) -> Dict[str, Any]:
+    """Test an agent by spawning and immediately killing it."""
+    logger.info(f"Testing agent: {agent_type} (dry_run={dry_run})")
+
+    if dry_run:
+        # In dry-run mode, just check if the agent configuration is valid
+        valid_agents = [
+            "researcher",
+            "architect",
+            "skeptic",
+            "creative",
+            "ceo",
+            "sentinel",
+            "watcher",
+        ]
+        if agent_type not in valid_agents:
+            return {
+                "agent_type": agent_type,
+                "status": "failed",
+                "dry_run": True,
+                "message": f"Invalid agent type. Must be one of: {', '.join(valid_agents)}",
+            }
+
+        # Check if orchestrator is running
+        try:
+            orchestrator = get_orchestrator()
+            if not orchestrator.running:
+                return {
+                    "agent_type": agent_type,
+                    "status": "warning",
+                    "dry_run": True,
+                    "message": "Orchestrator is not running. Agent can be started but won't be monitored.",
+                }
+        except Exception:
+            return {
+                "agent_type": agent_type,
+                "status": "warning",
+                "dry_run": True,
+                "message": "Orchestrator is not accessible. Agent may not start properly.",
+            }
+
+        return {
+            "agent_type": agent_type,
+            "status": "ready",
+            "dry_run": True,
+            "message": f"Agent {agent_type} is ready to start. Configuration valid.",
+        }
+
+    # Real test - try to spawn and kill
+    try:
+        orchestrator = get_orchestrator()
+        agent_type_enum = AgentType(agent_type)
+
+        # Try to spawn
+        spawn_success = orchestrator.spawn_agent(agent_type_enum)
+        if not spawn_success:
+            return {
+                "agent_type": agent_type,
+                "status": "failed",
+                "spawn": False,
+                "kill": None,
+                "message": "Failed to spawn agent",
+            }
+
+        # Wait a moment
+        time.sleep(2)
+
+        # Try to kill
+        kill_success = orchestrator.kill_agent(agent_type_enum)
+
+        return {
+            "agent_type": agent_type,
+            "status": "passed" if kill_success else "partial",
+            "spawn": True,
+            "kill": kill_success,
+            "message": "Agent test completed"
+            if kill_success
+            else "Spawned but failed to kill cleanly",
+        }
+    except Exception as e:
+        logger.error(f"Exception testing agent: {e}")
+        return {
+            "agent_type": agent_type,
+            "status": "failed",
+            "error": str(e),
+            "message": f"Test failed with error: {str(e)}",
+        }
 
 
 @router.post("/test")
 async def test_agent(request: TestRequest):
     """
-    Test an agent by spawning and killing it.
+    Test an agent by spawning and killing it (or dry-run check).
 
     Args:
-        request: TestRequest with agent_type
+        request: TestRequest with agent_type, optional prompt, and dry_run flag
 
     Returns:
-        Test results with spawn/kill status
+        Test results with spawn/kill status or dry-run validation
     """
-    valid_agents = ["researcher", "architect", "skeptic", "creative", "ceo"]
+    valid_agents = [
+        "researcher",
+        "architect",
+        "skeptic",
+        "creative",
+        "ceo",
+        "sentinel",
+        "watcher",
+    ]
 
     if request.agent_type not in valid_agents:
         raise HTTPException(
@@ -282,8 +400,10 @@ async def test_agent(request: TestRequest):
             detail=f"Invalid agent type. Must be one of: {', '.join(valid_agents)}",
         )
 
-    result = _test_agent(request.agent_type)
-    logger.info(f"Agent {request.agent_type} test completed: {result['status']}")
+    result = _test_agent(request.agent_type, request.prompt, request.dry_run)
+    logger.info(
+        f"Agent {request.agent_type} test completed: {result['status']} (dry_run={request.dry_run})"
+    )
     return result
 
 
@@ -466,9 +586,6 @@ async def list_opencode_agents():
         List of OpenCode agents with their descriptions
     """
     try:
-        import sys
-
-        sys.path.insert(0, str(AGENTS_DIR))
         from opencode_swarm import OpenCodeSwarmManager, OPENCODE_AGENTS_DIR
 
         manager = OpenCodeSwarmManager()
@@ -498,9 +615,6 @@ async def run_opencode_swarm(request: SwarmRequest):
         Swarm execution results
     """
     try:
-        import sys
-
-        sys.path.insert(0, str(AGENTS_DIR))
         from opencode_swarm import OpenCodeSwarmManager, SwarmMode
 
         manager = OpenCodeSwarmManager()
@@ -536,9 +650,6 @@ async def list_swarm_modes():
         Dictionary of modes with their agent sequences
     """
     try:
-        import sys
-
-        sys.path.insert(0, str(AGENTS_DIR))
         from opencode_swarm import SWARM_SEQUENCES, SwarmMode
 
         modes = {}
