@@ -6,6 +6,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+
 def _resolve_base_path() -> Path:
     try:
         from elf_paths import get_base_path
@@ -22,44 +23,75 @@ def extract_file_paths(content):
     """Extract file paths mentioned in task output."""
     import sys
 
-    sys.stderr.write(f"[TRAIL_DEBUG] extract_file_paths: content length = {len(content)}\n")
+    sys.stderr.write(
+        f"[TRAIL_DEBUG] extract_file_paths: content length = {len(content)}\n"
+    )
     file_paths = set()
 
     # Patterns for various file path formats
     # Order matters: more specific patterns first
     patterns = [
         # Backtick-quoted paths (highest priority - explicit)
-        (r'`([^\s`]+\.\w{1,10})`', 'backtick'),
+        (r"`([^\s`]+\.\w{1,10})`", "backtick"),
         # Explicit file references with quotes
-        (r'["\']([^"\']+\.\w{1,10})["\']', 'quoted'),
+        (r'["\']([^"\']+\.\w{1,10})["\']', "quoted"),
         # file_path parameter
-        (r'file_path["\']?\s*[:=]\s*[`"\']?([^\s`"\']+\.\w{1,10})[`"\']?', 'file_path_param'),
+        (
+            r'file_path["\']?\s*[:=]\s*[`"\']?([^\s`"\']+\.\w{1,10})[`"\']?',
+            "file_path_param",
+        ),
         # Windows absolute paths (capture full relative path from common dirs)
-        (r'[A-Za-z]:\\(?:[^\\]+\\)*?\.opencode\\emergent-learning\\([^\s`"\'\\]+(?:\\[^\s`"\'\\]+)*\.\w{1,10})', 'win_emergent'),
-        (r'[A-Za-z]:\\(?:[^\\]+\\)*?(dashboard-app[^\s`"\'\\]+(?:\\[^\s`"\'\\]+)*\.\w{1,10})', 'win_dashboard'),
-        (r'[A-Za-z]:\\(?:[^\\]+\\)*?((?:src|lib|app|components|hooks|memory|frontend|backend)[^\s`"\'\\]+(?:\\[^\s`"\'\\]+)*\.\w{1,10})', 'win_common'),
+        (
+            r'[A-Za-z]:\\(?:[^\\]+\\)*?\.opencode\\emergent-learning\\([^\s`"\'\\]+(?:\\[^\s`"\'\\]+)*\.\w{1,10})',
+            "win_emergent",
+        ),
+        (
+            r'[A-Za-z]:\\(?:[^\\]+\\)*?(dashboard-app[^\s`"\'\\]+(?:\\[^\s`"\'\\]+)*\.\w{1,10})',
+            "win_dashboard",
+        ),
+        (
+            r'[A-Za-z]:\\(?:[^\\]+\\)*?((?:src|lib|app|components|hooks|memory|frontend|backend)[^\s`"\'\\]+(?:\\[^\s`"\'\\]+)*\.\w{1,10})',
+            "win_common",
+        ),
         # Unix absolute paths (capture relative path from common dirs)
-        (r'/(?:[^/]+/)*?\.opencode/emergent-learning/([^\s`"\'/]+(?:/[^\s`"\'/]+)*\.\w{1,10})', 'unix_emergent'),
-        (r'/(?:[^/]+/)*?(dashboard-app[^\s`"\'/]+(?:/[^\s`"\'/]+)*\.\w{1,10})', 'unix_dashboard'),
-        (r'/(?:[^/]+/)*?((?:src|lib|app|components|hooks|memory|frontend|backend)[^\s`"\'/]+(?:/[^\s`"\'/]+)*\.\w{1,10})', 'unix_common'),
+        (
+            r'/(?:[^/]+/)*?\.opencode/emergent-learning/([^\s`"\'/]+(?:/[^\s`"\'/]+)*\.\w{1,10})',
+            "unix_emergent",
+        ),
+        (
+            r'/(?:[^/]+/)*?(dashboard-app[^\s`"\'/]+(?:/[^\s`"\'/]+)*\.\w{1,10})',
+            "unix_dashboard",
+        ),
+        (
+            r'/(?:[^/]+/)*?((?:src|lib|app|components|hooks|memory|frontend|backend)[^\s`"\'/]+(?:/[^\s`"\'/]+)*\.\w{1,10})',
+            "unix_common",
+        ),
         # Relative paths with common prefixes (capture full path)
-        (r'\b((?:src|lib|app|components|dashboard-app|hooks|memory|frontend|backend)/[^\s`"\']+\.\w{1,10})\b', 'relative'),
+        (
+            r'\b((?:src|lib|app|components|dashboard-app|hooks|memory|frontend|backend)/[^\s`"\']+\.\w{1,10})\b',
+            "relative",
+        ),
         # Action-based patterns (last resort - can be noisy)
-        (r'(?:created|modified|edited|wrote|updated|reading|writing|editing)\s+(?:the\s+)?(?:file\s+)?[`"\']?([^\s`"\']+\.\w{1,10})[`"\']?', 'action'),
+        (
+            r'(?:created|modified|edited|wrote|updated|reading|writing|editing)\s+(?:the\s+)?(?:file\s+)?[`"\']?([^\s`"\']+\.\w{1,10})[`"\']?',
+            "action",
+        ),
         # File: prefix
-        (r'File:\s*[`"\']?([^\s`"\']+\.\w{1,10})[`"\']?', 'file_prefix'),
+        (r'File:\s*[`"\']?([^\s`"\']+\.\w{1,10})[`"\']?', "file_prefix"),
     ]
 
     for i, (pattern, pattern_name) in enumerate(patterns):
         try:
             matches = re.findall(pattern, content, re.IGNORECASE)
             if matches:
-                sys.stderr.write(f"[TRAIL_DEBUG] Pattern {i} ({pattern_name}) matched {len(matches)} paths\n")
+                sys.stderr.write(
+                    f"[TRAIL_DEBUG] Pattern {i} ({pattern_name}) matched {len(matches)} paths\n"
+                )
             for match in matches:
-                path = match.strip('`"\'')
+                path = match.strip("`\"'")
                 # Clean up Windows paths
-                path = path.replace('\\', '/')
-                if len(path) > 3 and not path.startswith('http'):
+                path = path.replace("\\", "/")
+                if len(path) > 3 and not path.startswith("http"):
                     # Check if this is a substring of an already-found path or vice versa
                     # Keep the longer one
                     is_duplicate = False
@@ -80,11 +112,17 @@ def extract_file_paths(content):
                         file_paths.add(path)
                         sys.stderr.write(f"[TRAIL_DEBUG] Added path: {path}\n")
                     else:
-                        sys.stderr.write(f"[TRAIL_DEBUG] Skipped duplicate substring: {path}\n")
+                        sys.stderr.write(
+                            f"[TRAIL_DEBUG] Skipped duplicate substring: {path}\n"
+                        )
         except Exception as e:
-            sys.stderr.write(f"[TRAIL_DEBUG] Pattern {i} ({pattern_name}) failed: {e}\n")
+            sys.stderr.write(
+                f"[TRAIL_DEBUG] Pattern {i} ({pattern_name}) failed: {e}\n"
+            )
 
-    sys.stderr.write(f"[TRAIL_DEBUG] extract_file_paths: returning {len(file_paths)} paths\n")
+    sys.stderr.write(
+        f"[TRAIL_DEBUG] extract_file_paths: returning {len(file_paths)} paths\n"
+    )
     return list(file_paths)
 
 
@@ -93,10 +131,14 @@ def lay_trails(file_paths, outcome, agent_id=None, description=None):
     import sys
 
     # Debug: Log entry
-    sys.stderr.write(f"[TRAIL_DEBUG] lay_trails called with {len(file_paths) if file_paths else 0} paths\n")
+    sys.stderr.write(
+        f"[TRAIL_DEBUG] lay_trails called with {len(file_paths) if file_paths else 0} paths\n"
+    )
 
     if not file_paths:
-        sys.stderr.write("[TRAIL_DEBUG] No file paths provided, skipping trail laying\n")
+        sys.stderr.write(
+            "[TRAIL_DEBUG] No file paths provided, skipping trail laying\n"
+        )
         return 0
 
     if not DB_PATH.exists():
@@ -108,25 +150,46 @@ def lay_trails(file_paths, outcome, agent_id=None, description=None):
         conn = sqlite3.connect(str(DB_PATH), timeout=5.0)
         cursor = conn.cursor()
 
-        scent = "discovery" if outcome == "success" else "warning" if outcome == "failure" else "hot"
+        scent = (
+            "discovery"
+            if outcome == "success"
+            else "warning"
+            if outcome == "failure"
+            else "hot"
+        )
         strength = 1.0 if outcome == "success" else 0.8
 
-        sys.stderr.write(f"[TRAIL_DEBUG] Outcome={outcome}, scent={scent}, strength={strength}\n")
+        sys.stderr.write(
+            f"[TRAIL_DEBUG] Outcome={outcome}, scent={scent}, strength={strength}\n"
+        )
 
         for file_path in file_paths:
-            message = (description[:50] if description else "Touched by Task agent")
+            message = description[:50] if description else "Touched by Task agent"
             sys.stderr.write(f"[TRAIL_DEBUG] Recording trail: {file_path}\n")
             cursor.execute(
-                "INSERT INTO trails (run_id, location, scent, strength, agent_id, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (None, file_path, scent, strength, agent_id, message, datetime.now().isoformat())
+                "INSERT INTO trails (location, location_type, scent, strength, agent_id, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    file_path,
+                    "file",
+                    scent,
+                    strength,
+                    agent_id,
+                    message,
+                    datetime.now().isoformat(),
+                ),
             )
 
         conn.commit()
         conn.close()
-        sys.stderr.write(f"[TRAIL_DEBUG] Successfully recorded {len(file_paths)} trails\n")
+        sys.stderr.write(
+            f"[TRAIL_DEBUG] Successfully recorded {len(file_paths)} trails\n"
+        )
         return len(file_paths)
     except Exception as e:
-        sys.stderr.write(f"[TRAIL_ERROR] Failed to lay trails: {type(e).__name__}: {e}\n")
+        sys.stderr.write(
+            f"[TRAIL_ERROR] Failed to lay trails: {type(e).__name__}: {e}\n"
+        )
         import traceback
+
         sys.stderr.write(f"[TRAIL_ERROR] Traceback: {traceback.format_exc()}\n")
         return 0

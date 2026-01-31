@@ -1,0 +1,24 @@
+{
+  "mission_id": "mission-1769819694",
+  "created_at": "2026-01-31T07:34:54.205087",
+  "status": "launching",
+  "config": {
+    "mission_name": "real-spawn-test",
+    "objective": "Test actual agent spawning via orchestrator",
+    "agents": [
+      {
+        "id": "real-researcher",
+        "type": "researcher",
+        "role": "Researcher",
+        "task": "Verify real spawn"
+      }
+    ]
+  },
+  "coordination": {
+    "heartbeat_interval": 30,
+    "max_stale_time": 120,
+    "communication_protocol": "blackboard",
+    "failure_recovery": "automatic"
+  },
+  "launched_at": "2026-01-31T07:34:57.509710"
+}

@@ -202,12 +202,26 @@ class ELFCoordinator:
         blackboard["swarm_status"] = "launching"
         blackboard["agents"] = {}
 
-        # Initialize agents
+        # Initialize agents and spawn real OpenCode sessions via orchestrator
         agents = config.get("agents", [])
+
+        # Import orchestrator for real agent spawning
+        try:
+            sys.path.insert(0, str(self.base_path / "agents"))
+            from orchestrator import AgentOrchestrator, AgentType
+
+            orch = AgentOrchestrator()
+            orchestrator_available = True
+        except Exception as e:
+            self._log_event("ORCHESTRATOR_IMPORT_FAILED", {"error": str(e)})
+            orchestrator_available = False
+
         for agent_config in agents:
             agent_id = agent_config["id"]
+            agent_type_str = agent_config.get("type", "researcher")
+
             agent_data = {
-                "type": agent_config.get("type", "researcher"),
+                "type": agent_type_str,
                 "role": agent_config.get("role", "Agent"),
                 "task": agent_config.get("task", "No task specified"),
                 "status": "launching",  # ELF lifecycle: launching → active → completing → completed/failed
@@ -216,7 +230,44 @@ class ELFCoordinator:
                 "error": None,
                 "heartbeat_interval": self.HEARTBEAT_INTERVAL,
                 "created_at": datetime.now().isoformat(),
+                "session_id": None,  # Will be populated if orchestrator spawns successfully
             }
+
+            # Try to spawn real agent via orchestrator
+            if orchestrator_available:
+                try:
+                    # Map agent type string to AgentType enum
+                    agent_type_map = {
+                        "researcher": AgentType.RESEARCHER,
+                        "architect": AgentType.ARCHITECT,
+                        "skeptic": AgentType.SKEPTIC,
+                        "creative": AgentType.CREATIVE,
+                        "ceo": AgentType.CEO,
+                        "sentinel": AgentType.SENTINEL,
+                    }
+                    agent_type = agent_type_map.get(agent_type_str.lower())
+
+                    if agent_type:
+                        success = orch.start_agent(agent_type)
+                        if success:
+                            agent_info = orch.agents.get(agent_type)
+                            if agent_info:
+                                agent_data["session_id"] = agent_info.session_id
+                                agent_data["status"] = "active"
+                                self._log_event(
+                                    "AGENT_SPAWNED",
+                                    {
+                                        "agent_id": agent_id,
+                                        "agent_type": agent_type_str,
+                                        "session_id": agent_info.session_id,
+                                    },
+                                )
+                except Exception as e:
+                    self._log_event(
+                        "AGENT_SPAWN_FAILED",
+                        {"agent_id": agent_id, "error": str(e)},
+                    )
+
             blackboard["agents"][agent_id] = agent_data
 
         # Update mission status

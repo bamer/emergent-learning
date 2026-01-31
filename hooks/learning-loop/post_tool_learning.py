@@ -153,11 +153,22 @@ class AdvisoryVerifier:
 
 
 def get_hook_input() -> dict:
-    """Read hook input from stdin."""
+    """Read hook input from stdin or command-line argument."""
+    # Try stdin first
     try:
-        return json.load(sys.stdin)
+        if not sys.stdin.isatty():
+            return json.load(sys.stdin)
     except (json.JSONDecodeError, IOError, ValueError):
-        return {}
+        pass
+
+    # Fallback: check command-line arguments (for plugin compatibility)
+    if len(sys.argv) > 1:
+        try:
+            return json.loads(sys.argv[1])
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    return {}
 
 
 def output_result(result: dict):
@@ -166,24 +177,97 @@ def output_result(result: dict):
 
 
 def load_session_state() -> dict:
-    """Load current session state."""
-    if STATE_FILE.exists():
-        try:
-            return json.loads(STATE_FILE.read_text())
-        except (json.JSONDecodeError, IOError, ValueError):
-            pass
-    return {
-        "session_start": datetime.now().isoformat(),
+    """Load current session state with validation and TTL-based recovery.
+
+    Uses TTL-based session detection (4 hours) instead of date-based.
+    This handles cross-midnight work sessions more accurately.
+    """
+    # Session TTL: 4 hours in seconds
+    SESSION_TTL = 4 * 60 * 60  # 14400 seconds
+    current_time = datetime.now()
+
+    default_state = {
+        "session_start": current_time.isoformat(),
         "heuristics_consulted": [],
         "domains_queried": [],
         "task_context": None,
+        "last_updated": current_time.isoformat(),
+        "version": 1,  # Schema version for future migrations
     }
+
+    if STATE_FILE.exists():
+        try:
+            state = json.loads(STATE_FILE.read_text())
+
+            # Validate required fields
+            required_fields = [
+                "session_start",
+                "heuristics_consulted",
+                "domains_queried",
+            ]
+            if not all(field in state for field in required_fields):
+                sys.stderr.write(
+                    "[SESSION] Invalid state file - missing required fields, creating new session\n"
+                )
+                return default_state
+
+            # Check if state has expired based on TTL
+            last_updated = state.get("last_updated", state.get("session_start", ""))
+            if last_updated:
+                try:
+                    last_time = datetime.fromisoformat(last_updated)
+                    time_since_last = (current_time - last_time).total_seconds()
+
+                    if time_since_last > SESSION_TTL:
+                        sys.stderr.write(
+                            f"[SESSION] Session expired ({time_since_last / 3600:.1f}h > {SESSION_TTL / 3600}h TTL), creating new session\n"
+                        )
+                        return default_state
+                except (ValueError, KeyError):
+                    sys.stderr.write(
+                        "[SESSION] Invalid timestamp in state, creating new session\n"
+                    )
+                    return default_state
+
+            # Ensure arrays are initialized
+            if not isinstance(state.get("heuristics_consulted"), list):
+                state["heuristics_consulted"] = []
+            if not isinstance(state.get("domains_queried"), list):
+                state["domains_queried"] = []
+
+            # Update last_updated timestamp
+            state["last_updated"] = current_time.isoformat()
+
+            return state
+
+        except (json.JSONDecodeError, IOError, ValueError) as e:
+            sys.stderr.write(
+                f"[SESSION] Failed to load state file: {e}, creating new session\n"
+            )
+            return default_state
+
+    return default_state
 
 
 def save_session_state(state: dict):
-    """Save session state."""
+    """Save session state with timestamp and atomic write."""
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(json.dumps(state, indent=2))
+
+    # Update timestamp before saving
+    state["last_updated"] = datetime.now().isoformat()
+
+    # Atomic write: write to temp file then rename
+    temp_file = STATE_FILE.with_suffix(".tmp")
+    try:
+        temp_file.write_text(json.dumps(state, indent=2))
+        temp_file.replace(STATE_FILE)  # Atomic rename
+    except Exception as e:
+        sys.stderr.write(f"[SESSION] Failed to save state: {e}\n")
+        # Fallback: try direct write
+        try:
+            STATE_FILE.write_text(json.dumps(state, indent=2))
+        except Exception as e2:
+            sys.stderr.write(f"[SESSION] Fallback save also failed: {e2}\n")
 
 
 def get_db_connection():
@@ -333,17 +417,27 @@ def determine_outcome(tool_output: dict) -> Tuple[str, str]:
 
 
 def validate_heuristics(heuristic_ids: List[int], outcome: str):
-    """Update heuristic validation counts based on outcome."""
-    conn = get_db_connection()
-    if not conn or not heuristic_ids:
+    """Update heuristic validation counts based on outcome.
+
+    FAIL-STOP: If validation fails, the error is propagated to prevent silent failures
+    in the reinforcement learning loop.
+    """
+    if not heuristic_ids:
         return
+
+    conn = get_db_connection()
+    if not conn:
+        error_msg = "[VALIDATION FAILED] Database connection unavailable - cannot validate heuristics"
+        sys.stderr.write(f"{error_msg}\n")
+        raise RuntimeError(error_msg)
 
     try:
         cursor = conn.cursor()
+        timestamp = datetime.now().isoformat()
+        placeholders = ",".join("?" * len(heuristic_ids))
 
         if outcome == "success":
-            # Increment times_validated for consulted heuristics
-            placeholders = ",".join("?" * len(heuristic_ids))
+            # Batch UPDATE: Increment times_validated for all consulted heuristics
             cursor.execute(
                 f"""
                 UPDATE heuristics
@@ -352,22 +446,35 @@ def validate_heuristics(heuristic_ids: List[int], outcome: str):
                     updated_at = ?
                 WHERE id IN ({placeholders})
             """,
-                (datetime.now().isoformat(), *heuristic_ids),
+                (timestamp, *heuristic_ids),
             )
 
-            # Log the validation
-            for hid in heuristic_ids:
-                cursor.execute(
-                    """
-                    INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context)
-                    VALUES ('heuristic_validated', 'validation', 1, ?, ?)
-                """,
-                    (f"heuristic_id:{hid}", "success"),
+            # Batch INSERT: Log all validations in single operation
+            validation_records = [
+                (
+                    "heuristic_validated",
+                    "validation",
+                    1,
+                    f"heuristic_id:{hid}",
+                    "success",
+                    timestamp,
                 )
+                for hid in heuristic_ids
+            ]
+            cursor.executemany(
+                """
+                INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """,
+                validation_records,
+            )
+
+            sys.stderr.write(
+                f"[VALIDATION] Validated {len(heuristic_ids)} heuristics (success)\n"
+            )
 
         elif outcome == "failure":
-            # Increment times_violated - heuristic might not be reliable
-            placeholders = ",".join("?" * len(heuristic_ids))
+            # Batch UPDATE: Increment times_violated
             cursor.execute(
                 f"""
                 UPDATE heuristics
@@ -376,76 +483,81 @@ def validate_heuristics(heuristic_ids: List[int], outcome: str):
                     updated_at = ?
                 WHERE id IN ({placeholders})
             """,
-                (datetime.now().isoformat(), *heuristic_ids),
+                (timestamp, *heuristic_ids),
             )
 
-            # Log the violation
-            for hid in heuristic_ids:
-                cursor.execute(
-                    """
-                    INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context)
-                    VALUES ('heuristic_violated', 'violation', 1, ?, ?)
-                """,
-                    (f"heuristic_id:{hid}", "failure"),
+            # Batch INSERT: Log all violations
+            violation_records = [
+                (
+                    "heuristic_violated",
+                    "violation",
+                    1,
+                    f"heuristic_id:{hid}",
+                    "failure",
+                    timestamp,
                 )
+                for hid in heuristic_ids
+            ]
+            cursor.executemany(
+                """
+                INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """,
+                violation_records,
+            )
+
+            sys.stderr.write(
+                f"[VALIDATION] Recorded {len(heuristic_ids)} heuristic violations\n"
+            )
 
         elif outcome == "unknown":
-            # Record unknown outcome with light validation
-            # Unknown outcomes indicate ambiguous situations that may need investigation
-            # but shouldn't heavily impact confidence without more evidence
-            placeholders = ",".join("?" * len(heuristic_ids))
-
-            # Light penalty for unknown outcomes - slight confidence adjustment
+            # Batch UPDATE: Record unknown outcomes
             cursor.execute(
                 f"""
                 UPDATE heuristics
                 SET times_consulted = COALESCE(times_consulted, 0) + 1,
                     times_unknown = COALESCE(times_unknown, 0) + 1,
-                    confidence = MAX(0.0, confidence - 0.005),  # Very small penalty
+                    confidence = MAX(0.0, confidence - 0.005),
                     updated_at = ?
                 WHERE id IN ({placeholders})
             """,
-                (datetime.now().isoformat(), *heuristic_ids),
+                (timestamp, *heuristic_ids),
             )
 
-            # Log the unknown outcome consultation
-            for hid in heuristic_ids:
-                cursor.execute(
-                    """
-                    INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context)
-                    VALUES ('heuristic_consulted', 'unknown_outcome', 1, ?, ?)
-                """,
-                    (f"heuristic_id:{hid}", "unknown"),
+            # Batch INSERT: Log consultations
+            consultation_records = [
+                (
+                    "heuristic_consulted",
+                    "unknown_outcome",
+                    1,
+                    f"heuristic_id:{hid}",
+                    "unknown",
+                    timestamp,
                 )
-
-                # Log if this heuristic has many unknown outcomes
-                cursor.execute(
-                    """
-                    SELECT times_unknown FROM heuristics WHERE id = ?
-                """,
-                    (hid,),
-                )
-                result = cursor.fetchone()
-                if (
-                    result
-                    and result["times_unknown"]
-                    and result["times_unknown"] % 5 == 0
-                ):
-                    cursor.execute(
-                        """
-                        INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context)
-                        VALUES ('heuristic_warning', 'frequent_unknown_outcomes', 1, ?, ?)
-                    """,
-                        (
-                            f"heuristic_id:{hid}",
-                            f"Unknown outcomes threshold reached: {result['times_unknown']}",
-                        ),
-                    )
+                for hid in heuristic_ids
+            ]
+            cursor.executemany(
+                """
+                INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """,
+                consultation_records,
+            )
 
         conn.commit()
+        sys.stderr.write(
+            f"[VALIDATION] Batch validation completed for {len(heuristic_ids)} heuristics (outcome: {outcome})\n"
+        )
 
     except Exception as e:
-        sys.stderr.write(f"Warning: Failed to validate heuristics: {e}\n")
+        conn.rollback()
+        error_msg = f"[VALIDATION FAILED] Heuristic validation error: {e}"
+        sys.stderr.write(f"{error_msg}\n")
+        import traceback
+
+        sys.stderr.write(f"[VALIDATION FAILED] Traceback: {traceback.format_exc()}\n")
+        # FAIL-STOP: Re-raise the exception to prevent silent failures
+        raise RuntimeError(error_msg) from e
     finally:
         conn.close()
 
@@ -634,31 +746,117 @@ def log_advisory_warning(file_path: str, advisory_result: Dict):
         conn.close()
 
 
-def extract_and_record_learnings(tool_output: dict, domains: List[str]):
+def extract_implicit_learnings(
+    outcome: str, domains: List[str], task_description: str, output_content: str
+) -> List[Dict]:
+    """Extract learnings from outcomes even without explicit [LEARNED:] markers."""
+    learnings = []
+    content = (output_content + " " + task_description).lower()
+
+    # Common patterns that indicate learnings
+    heuristic_indicators = [
+        "should",
+        "always",
+        "never",
+        "must",
+        "don't",
+        "avoid",
+        "prefer",
+        "recommend",
+        "best practice",
+        "rule of thumb",
+        "lesson",
+        "insight",
+        "key takeaway",
+        "critical to",
+        "important to",
+        "never forget",
+        "remember to",
+    ]
+
+    # Extract sentences containing heuristic indicators
+    sentences = re.split(r"[.!?]", output_content)
+    for sentence in sentences:
+        sentence = sentence.strip()
+        if not sentence or len(sentence) < 10:
+            continue
+
+        # Check if sentence contains learning indicators
+        if any(indicator in sentence.lower() for indicator in heuristic_indicators):
+            # Clean up the sentence
+            clean_sentence = re.sub(r"^[^a-zA-Z]*", "", sentence).strip()
+            clean_sentence = re.sub(r"\s+", " ", clean_sentence)
+
+            if clean_sentence:
+                learnings.append(
+                    {
+                        "type": "heuristic",
+                        "domain": domains[0] if domains else "general",
+                        "rule": clean_sentence,
+                        "confidence": 0.7,
+                        "source": "auto-extracted",
+                    }
+                )
+
+    return learnings
+
+
+def extract_and_record_learnings(
+    tool_output: dict, domains: List[str], task_description: str = ""
+):
     """Extract learnings from successful task output and record them."""
     conn = get_db_connection()
     if not conn:
         return
 
     # Get content
-    content = ""
+    output_content = ""
     if isinstance(tool_output, dict):
-        content = tool_output.get("content", "")
-        if isinstance(content, list):
-            content = "\n".join(
-                item.get("text", "") for item in content if isinstance(item, dict)
+        output_content = tool_output.get("content", "")
+        if isinstance(output_content, list):
+            output_content = "\n".join(
+                item.get("text", "")
+                for item in output_content
+                if isinstance(item, dict)
             )
+    elif isinstance(tool_output, str):
+        output_content = tool_output
 
-    # Look for explicit learning markers
-    # Format: [LEARNED:domain] description
-    learning_pattern = r"\[LEARN(?:ED|ING)?:?([^\]]*)\]\s*([^\n]+)"
-    matches = re.findall(learning_pattern, content, re.IGNORECASE)
+    # Extract implicit learnings (auto-detection without markers)
+    learnings = extract_implicit_learnings(
+        "success", domains, task_description, output_content
+    )
 
-    if not matches:
+    if not learnings:
         return
 
     try:
         cursor = conn.cursor()
+        recorded_count = 0
+
+        # Process implicit learnings (auto-extracted)
+        for learning_data in learnings:
+            domain = learning_data["domain"]
+            rule = learning_data["rule"]
+
+            # Record as heuristic with UPSERT
+            cursor.execute(
+                """
+                INSERT INTO heuristics (domain, rule, explanation, confidence, source_type, created_at)
+                VALUES (?, ?, 'Auto-extracted from task output', ?, 'auto', ?)
+                ON CONFLICT(domain, rule) DO UPDATE SET
+                    times_validated = times_validated + 1,
+                    confidence = MIN(1.0, confidence + 0.05),
+                    updated_at = CURRENT_TIMESTAMP
+            """,
+                (domain, rule, learning_data["confidence"], datetime.now().isoformat()),
+            )
+            recorded_count += 1
+            sys.stderr.write(f"AUTO-EXTRACTED HEURISTIC: {rule[:50]}...\n")
+
+        # Also check for explicit [LEARNED:] markers as backup
+        learning_pattern = r"\[LEARN(?:ED|ING)?:?([^\]]*)\]\s*([^\n]+)"
+        matches = re.findall(learning_pattern, output_content, re.IGNORECASE)
 
         for domain_hint, learning in matches:
             domain = (
@@ -667,7 +865,7 @@ def extract_and_record_learnings(tool_output: dict, domains: List[str]):
                 else (domains[0] if domains else "general")
             )
 
-            # Check if this might be a heuristic (contains "always", "never", "should", etc.)
+            # Check if this might be a heuristic
             is_heuristic = any(
                 word in learning.lower()
                 for word in [
@@ -682,7 +880,6 @@ def extract_and_record_learnings(tool_output: dict, domains: List[str]):
             )
 
             if is_heuristic:
-                # Record as heuristic (UPSERT: reinforce if exists)
                 cursor.execute(
                     """
                     INSERT INTO heuristics (domain, rule, explanation, confidence, source_type, created_at)
@@ -694,29 +891,21 @@ def extract_and_record_learnings(tool_output: dict, domains: List[str]):
                 """,
                     (domain, learning.strip(), datetime.now().isoformat()),
                 )
-
-                sys.stderr.write(f"AUTO-EXTRACTED HEURISTIC: {learning[:50]}...\n")
-            else:
-                # Record as observation
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                cursor.execute(
-                    """
-                    INSERT INTO learnings (type, filepath, title, summary, domain, severity, created_at)
-                    VALUES ('observation', ?, ?, ?, ?, 3, ?)
-                """,
-                    (
-                        f"auto-observations/obs_{timestamp}.md",
-                        learning[:100],
-                        learning,
-                        domain,
-                        datetime.now().isoformat(),
-                    ),
-                )
+                recorded_count += 1
+                sys.stderr.write(f"MARKER-EXTRACTED HEURISTIC: {learning[:50]}...\n")
 
         conn.commit()
 
+        if recorded_count > 0:
+            sys.stderr.write(
+                f"[LEARNING] Recorded {recorded_count} learnings from task output\n"
+            )
+
     except Exception as e:
-        sys.stderr.write(f"Warning: Failed to record learnings: {e}\n")
+        sys.stderr.write(f"[LEARNING ERROR] Failed to record learnings: {e}\n")
+        import traceback
+
+        sys.stderr.write(f"[LEARNING ERROR] Traceback: {traceback.format_exc()}\n")
     finally:
         conn.close()
 
@@ -729,7 +918,11 @@ def main():
     tool_input = hook_input.get("tool_input", hook_input.get("input", {}))
     tool_output = hook_input.get("tool_output", hook_input.get("output", {}))
 
+    # Debug: Log all hook invocations
+    sys.stderr.write(f"[HOOK] post_tool_learning.py called for tool: {tool_name}\n")
+
     if not tool_name:
+        sys.stderr.write("[HOOK] No tool_name found, returning early\n")
         output_result({})
         return
 
@@ -788,7 +981,11 @@ def main():
 
     # Track file operations (Read/Edit/Write/Glob/Grep) for hotspot trails
     file_operation_tools = {"Read", "Edit", "Write", "Glob", "Grep"}
+    sys.stderr.write(
+        f"[HOOK] Checking if {tool_name} is in file_operation_tools: {tool_name in file_operation_tools}\n"
+    )
     if tool_name in file_operation_tools:
+        sys.stderr.write(f"[HOOK] Processing file operation: {tool_name}\n")
         try:
             file_path = tool_input.get("file_path") or tool_input.get("path", "")
             if file_path:
@@ -814,22 +1011,34 @@ def main():
                 # Record trail
                 conn = get_db_connection()
                 if conn:
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        "INSERT INTO trails (run_id, location, scent, strength, agent_id, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                        (
-                            None,
-                            file_path,
-                            scent,
-                            strength,
-                            "claude-main",
-                            f"{tool_name} operation",
-                            datetime.now().isoformat(),
-                        ),
-                    )
-                    conn.commit()
-                    conn.close()
-                    sys.stderr.write(f"[TRAIL] Recorded {tool_name} on {file_path}\n")
+                    try:
+                        cursor = conn.cursor()
+                        # Use correct column name 'location' (not 'run_id' which doesn't exist in schema)
+                        cursor.execute(
+                            "INSERT INTO trails (location, location_type, scent, strength, agent_id, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (
+                                file_path,
+                                "file",
+                                scent,
+                                strength,
+                                "claude-main",
+                                f"{tool_name} operation",
+                                datetime.now().isoformat(),
+                            ),
+                        )
+                        conn.commit()
+                        sys.stderr.write(
+                            f"[TRAIL] Recorded {tool_name} on {file_path}\n"
+                        )
+                    except Exception as e:
+                        sys.stderr.write(f"[TRAIL_ERROR] Database error: {e}\n")
+                        import traceback
+
+                        sys.stderr.write(
+                            f"[TRAIL_ERROR] Traceback: {traceback.format_exc()}\n"
+                        )
+                    finally:
+                        conn.close()
         except Exception as e:
             sys.stderr.write(
                 f"[TRAIL_ERROR] Failed to record file operation trail: {e}\n"
@@ -980,7 +1189,8 @@ def main():
 
     # Extract any explicit learnings from output
     if outcome == "success":
-        extract_and_record_learnings(tool_output, domains_queried)
+        task_description = tool_input.get("description", "")
+        extract_and_record_learnings(tool_output, domains_queried, task_description)
 
     # Clear consulted heuristics for next task
     state["heuristics_consulted"] = []

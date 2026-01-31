@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-01-31T07:22:17.369514",
+  "registered_agents": {},
+  "available_personas": [
+    "researcher",
+    "architect",
+    "creative",
+    "skeptic"
+  ],
+  "agent_templates": {
+    "researcher": {
+      "role": "Deep investigation and analysis",
+      "capabilities": [
+        "analysis",
+        "research",
+        "documentation"
+      ]
+    },
+    "architect": {
+      "role": "System design and planning",
+      "capabilities": [
+        "design",
+        "planning",
+        "architecture"
+      ]
+    },
+    "creative": {
+      "role": "Novel solutions and ideation",
+      "capabilities": [
+        "ideation",
+        "innovation",
+        "problem_solving"
+      ]
+    },
+    "skeptic": {
+      "role": "Quality assurance and testing",
+      "capabilities": [
+        "testing",
+        "qa",
+        "critical_analysis"
+      ]
+    }
+  }
+}

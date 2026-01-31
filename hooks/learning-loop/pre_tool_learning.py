@@ -24,6 +24,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional
 
+
 # Paths - resolve from repo/root detection or explicit ELF_BASE_PATH
 def _resolve_base_path() -> Path:
     try:
@@ -36,15 +37,28 @@ def _resolve_base_path() -> Path:
 
 EMERGENT_LEARNING_PATH = _resolve_base_path()
 DB_PATH = EMERGENT_LEARNING_PATH / "memory" / "index.db"
-STATE_FILE = Path.home() / ".opencode" / "hooks" / "learning-loop" / "session-state.json"
+STATE_FILE = (
+    Path.home() / ".opencode" / "hooks" / "learning-loop" / "session-state.json"
+)
 
 
 def get_hook_input() -> dict:
-    """Read hook input from stdin."""
+    """Read hook input from stdin or command-line argument."""
+    # Try stdin first
     try:
-        return json.load(sys.stdin)
+        if not sys.stdin.isatty():
+            return json.load(sys.stdin)
     except (json.JSONDecodeError, IOError, ValueError):
-        return {}
+        pass
+
+    # Fallback: check command-line arguments (for plugin compatibility)
+    if len(sys.argv) > 1:
+        try:
+            return json.loads(sys.argv[1])
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    return {}
 
 
 def output_result(result: dict):
@@ -69,7 +83,9 @@ def load_session_state() -> dict:
             if state.get("session_start", ""):
                 try:
                     last_session = datetime.fromisoformat(state["session_start"])
-                    time_since_last_session = (current_time - last_session).total_seconds()
+                    time_since_last_session = (
+                        current_time - last_session
+                    ).total_seconds()
 
                     if time_since_last_session > SESSION_TTL:
                         # Session expired - clear state
@@ -77,7 +93,7 @@ def load_session_state() -> dict:
                             "session_start": current_time.isoformat(),
                             "heuristics_consulted": [],
                             "domains_queried": [],
-                            "task_context": None
+                            "task_context": None,
                         }
                 except (ValueError, KeyError):
                     pass
@@ -88,7 +104,7 @@ def load_session_state() -> dict:
         "session_start": current_time.isoformat(),
         "heuristics_consulted": [],
         "domains_queried": [],
-        "task_context": None
+        "task_context": None,
     }
 
 
@@ -111,15 +127,32 @@ class ComplexityScorer:
     """Scores task complexity and risk level."""
 
     HIGH_RISK_PATTERNS = {
-        'files': [r'auth', r'crypto', r'security', r'password', r'token', r'secret', r'\.env'],
-        'domains': ['authentication', 'security', 'database-migration', 'production'],
-        'keywords': ['delete', 'drop', 'truncate', 'force', 'sudo', 'rm -rf', 'password', 'credential']
+        "files": [
+            r"auth",
+            r"crypto",
+            r"security",
+            r"password",
+            r"token",
+            r"secret",
+            r"\.env",
+        ],
+        "domains": ["authentication", "security", "database-migration", "production"],
+        "keywords": [
+            "delete",
+            "drop",
+            "truncate",
+            "force",
+            "sudo",
+            "rm -rf",
+            "password",
+            "credential",
+        ],
     }
 
     MEDIUM_RISK_PATTERNS = {
-        'files': [r'api', r'config', r'schema', r'migration', r'database'],
-        'domains': ['api', 'configuration', 'database'],
-        'keywords': ['update', 'modify', 'change', 'refactor', 'migrate']
+        "files": [r"api", r"config", r"schema", r"migration", r"database"],
+        "domains": ["api", "configuration", "database"],
+        "keywords": ["update", "modify", "change", "refactor", "migrate"],
     }
 
     # Risk threshold constants (extracted from magic numbers)
@@ -153,93 +186,139 @@ class ComplexityScorer:
         file_paths = ""
 
         if tool_name == "Task":
-            text = tool_input.get("prompt", "") + " " + tool_input.get("description", "")
+            text = (
+                tool_input.get("prompt", "") + " " + tool_input.get("description", "")
+            )
         elif tool_name == "Bash":
             text = tool_input.get("command", "")
         elif tool_name in ("Grep", "Read", "Glob", "Edit", "Write"):
-            text = tool_input.get("pattern", "") + " " + tool_input.get("old_string", "") + " " + tool_input.get("new_string", "")
-            file_paths = tool_input.get("file_path", "") + " " + tool_input.get("path", "")
+            text = (
+                tool_input.get("pattern", "")
+                + " "
+                + tool_input.get("old_string", "")
+                + " "
+                + tool_input.get("new_string", "")
+            )
+            file_paths = (
+                tool_input.get("file_path", "") + " " + tool_input.get("path", "")
+            )
 
         text_lower = text.lower()
         file_paths_lower = file_paths.lower()
 
         # Check HIGH risk patterns
-        for pattern in cls.HIGH_RISK_PATTERNS['files']:
+        for pattern in cls.HIGH_RISK_PATTERNS["files"]:
             # Check both file paths and text (task prompts might mention files)
             if re.search(pattern, file_paths_lower) or re.search(pattern, text_lower):
                 high_score += cls.HIGH_RISK_PATTERN_POINTS
                 reasons.append(f"High-risk file pattern: {pattern}")
 
-        for keyword in cls.HIGH_RISK_PATTERNS['keywords']:
+        for keyword in cls.HIGH_RISK_PATTERNS["keywords"]:
             if keyword in text_lower:
                 high_score += cls.HIGH_RISK_PATTERN_POINTS
                 reasons.append(f"High-risk keyword: {keyword}")
 
-        for domain in cls.HIGH_RISK_PATTERNS['domains']:
+        for domain in cls.HIGH_RISK_PATTERNS["domains"]:
             if domain in domains:
                 high_score += cls.HIGH_RISK_DOMAIN_POINTS
                 reasons.append(f"High-risk domain: {domain}")
 
         # Check MEDIUM risk patterns
-        for pattern in cls.MEDIUM_RISK_PATTERNS['files']:
+        for pattern in cls.MEDIUM_RISK_PATTERNS["files"]:
             # Check both file paths and text (task prompts might mention files)
             if re.search(pattern, file_paths_lower) or re.search(pattern, text_lower):
                 medium_score += cls.MEDIUM_RISK_PATTERN_POINTS
                 reasons.append(f"Medium-risk file pattern: {pattern}")
 
-        for keyword in cls.MEDIUM_RISK_PATTERNS['keywords']:
+        for keyword in cls.MEDIUM_RISK_PATTERNS["keywords"]:
             if keyword in text_lower:
                 medium_score += cls.MEDIUM_RISK_PATTERN_POINTS
                 reasons.append(f"Medium-risk keyword: {keyword}")
 
-        for domain in cls.MEDIUM_RISK_PATTERNS['domains']:
+        for domain in cls.MEDIUM_RISK_PATTERNS["domains"]:
             if domain in domains:
                 medium_score += cls.MEDIUM_RISK_DOMAIN_POINTS
                 reasons.append(f"Medium-risk domain: {domain}")
 
         # Determine level and recommendation
         if high_score >= cls.HIGH_RISK_THRESHOLD:
-            level = 'HIGH'
+            level = "HIGH"
             recommendation = "Extra scrutiny recommended. Consider CEO escalation if uncertain. Verify changes carefully before applying."
         elif high_score >= 1 or medium_score >= cls.MEDIUM_RISK_THRESHOLD:
-            level = 'MEDIUM'
-            recommendation = "Moderate care required. Review changes and test thoroughly."
+            level = "MEDIUM"
+            recommendation = (
+                "Moderate care required. Review changes and test thoroughly."
+            )
         elif medium_score >= 1:
-            level = 'LOW-MEDIUM'
+            level = "LOW-MEDIUM"
             recommendation = "Standard care. Review as normal."
         else:
-            level = 'LOW'
+            level = "LOW"
             recommendation = "Routine task. Proceed normally."
 
-        return {
-            'level': level,
-            'reasons': reasons,
-            'recommendation': recommendation
-        }
+        return {"level": level, "reasons": reasons, "recommendation": recommendation}
 
 
 DOMAIN_ALIASES = {
     # Critical domains - map extraction keywords to actual DB domain names
-    "architecture": ["architecture", "software-architecture", "design-patterns", "system-design", "architectural"],
+    "architecture": [
+        "architecture",
+        "software-architecture",
+        "design-patterns",
+        "system-design",
+        "architectural",
+    ],
     "debugging": ["debugging", "troubleshooting", "error-analysis", "debug"],
     "typescript": ["typescript", "javascript", "type-safety", "ts"],
     "api-design": ["api-design", "api-design-patterns", "endpoint-design"],
-    "api-integration": ["api-integration", "webhook", "api-consumption", "third-party-integration"],
-    "ui": ["ui", "frontend", "user-interface", "ui-architecture", "ui-interaction", "ui-layout", "react", "vue", "jsx", "tsx"],
-    "software-architecture": ["software-architecture", "system-architecture", "architectural-design"],
+    "api-integration": [
+        "api-integration",
+        "webhook",
+        "api-consumption",
+        "third-party-integration",
+    ],
+    "ui": [
+        "ui",
+        "frontend",
+        "user-interface",
+        "ui-architecture",
+        "ui-interaction",
+        "ui-layout",
+        "react",
+        "vue",
+        "jsx",
+        "tsx",
+    ],
+    "software-architecture": [
+        "software-architecture",
+        "system-architecture",
+        "architectural-design",
+    ],
     "code-quality": ["code-quality", "clean-code", "refactoring", "technical-debt"],
     "communication": ["communication", "messaging", "notifications"],
     "feature-planning": ["feature-planning", "feature-design", "requirements-analysis"],
     "problem-solving": ["problem-solving", "troubleshooting", "solution-strategy"],
     "requirements": ["requirements", "specifications", "acceptance-criteria"],
-    "llm-output-processing": ["llm-output-processing", "response-parsing", "output-extraction"],
+    "llm-output-processing": [
+        "llm-output-processing",
+        "response-parsing",
+        "output-extraction",
+    ],
     "user-experience": ["user-experience", "ux", "usability", "user-flow"],
     "ai-models": ["ai-models", "ml-models", "machine-learning", "model-inference"],
     # Existing mappings - updated to match DB domains
     "frontend": ["ui"],  # Maps to ui domain in DB
     "javascript": ["ui", "typescript"],  # Maps to ui/typescript domains
-    "database": ["database-operations", "database-optimization", "database-maintenance"],
-    "api": ["api-design", "api-integration", "api-polling"],  # Maps to api-design/api-integration
+    "database": [
+        "database-operations",
+        "database-optimization",
+        "database-maintenance",
+    ],
+    "api": [
+        "api-design",
+        "api-integration",
+        "api-polling",
+    ],  # Maps to api-design/api-integration
     "testing": ["integration-test", "visual-testing", "mcp-testing"],
     "git": ["git-workflow"],
     "python": ["pyqt"],
@@ -249,7 +328,13 @@ DOMAIN_ALIASES = {
     "performance": ["caching", "react-performance"],
     "authentication": ["security"],
     "production": ["devops", "infrastructure"],
-    "agent": ["agent-behavior", "agent-architecture", "agent-coordination", "multi-agent", "multi-agent-coordination"],
+    "agent": [
+        "agent-behavior",
+        "agent-architecture",
+        "agent-coordination",
+        "multi-agent",
+        "multi-agent-coordination",
+    ],
     "workflow": ["workflow-design", "development-workflow"],
     "windows": ["windows-compatibility", "windows-gotchas", "cross-platform"],
     "hooks": ["learning"],
@@ -280,13 +365,33 @@ def extract_domain_from_context(tool_name: str, tool_input: dict) -> List[str]:
     elif tool_name == "Bash":
         text = tool_input.get("command", "")
     elif tool_name in ("Grep", "Read", "Glob"):
-        text = tool_input.get("pattern", "") + " " + tool_input.get("file_path", "") + " " + tool_input.get("path", "")
+        text = (
+            tool_input.get("pattern", "")
+            + " "
+            + tool_input.get("file_path", "")
+            + " "
+            + tool_input.get("path", "")
+        )
     elif tool_name in ("Edit", "Write"):
         # Include file path and content for Edit/Write operations
-        text = tool_input.get("file_path", "") + " " + tool_input.get("old_string", "") + " " + tool_input.get("new_string", "") + " " + tool_input.get("content", "")
+        text = (
+            tool_input.get("file_path", "")
+            + " "
+            + tool_input.get("old_string", "")
+            + " "
+            + tool_input.get("new_string", "")
+            + " "
+            + tool_input.get("content", "")
+        )
     elif tool_name in ("TaskCreate", "TaskUpdate"):
         # Include subject, description, and metadata for task management
-        text = tool_input.get("subject", "") + " " + tool_input.get("description", "") + " " + tool_input.get("activeForm", "")
+        text = (
+            tool_input.get("subject", "")
+            + " "
+            + tool_input.get("description", "")
+            + " "
+            + tool_input.get("activeForm", "")
+        )
     elif tool_name in ("TaskList", "TaskGet"):
         # Task listing/getting - minimal context, mainly for workflow domain
         text = "task management workflow"
@@ -298,37 +403,173 @@ def extract_domain_from_context(tool_name: str, tool_input: dict) -> List[str]:
         text = tool_input.get("query", "")
     elif tool_name.startswith("mcp__"):
         # MCP tools - extract from tool name and any text parameters
-        text = tool_name + " " + " ".join(str(v) for v in tool_input.values() if isinstance(v, str))
+        text = (
+            tool_name
+            + " "
+            + " ".join(str(v) for v in tool_input.values() if isinstance(v, str))
+        )
 
     text = text.lower()
 
     domain_keywords = {
         # Critical domains missing from original mapping
-        "architecture": ["architecture", "design pattern", "system design", "pattern", "structural", "layer", "component architecture"],
-        "debugging": ["debug", "troubleshoot", "fix bug", "issue", "breakpoint", "inspect", "diagnose"],
-        "typescript": ["typescript", "ts", "type", "typing", "interface", "type annotation", ".ts", ".tsx"],
-        "api-design": ["api design", "endpoint design", "rest design", "api contract", "api specification"],
-        "api-integration": ["api integration", "api call", "fetch api", "consume api", "webhook", "third-party api"],
-        "ui": ["ui", "user interface", "react", "vue", "component", "jsx", "tsx", "dom", "css", "style", "frontend"],
-        "software-architecture": ["software architecture", "system architecture", "architectural", "design principle"],
-        "code-quality": ["code quality", "clean code", "refactor", "code smell", "technical debt", "lint"],
-        "communication": ["communicate", "message", "notify", "alert", "notification", "broadcast"],
-        "feature-planning": ["feature", "planning", "plan", "requirement", "user story", "feature request"],
+        "architecture": [
+            "architecture",
+            "design pattern",
+            "system design",
+            "pattern",
+            "structural",
+            "layer",
+            "component architecture",
+        ],
+        "debugging": [
+            "debug",
+            "troubleshoot",
+            "fix bug",
+            "issue",
+            "breakpoint",
+            "inspect",
+            "diagnose",
+        ],
+        "typescript": [
+            "typescript",
+            "ts",
+            "type",
+            "typing",
+            "interface",
+            "type annotation",
+            ".ts",
+            ".tsx",
+        ],
+        "api-design": [
+            "api design",
+            "endpoint design",
+            "rest design",
+            "api contract",
+            "api specification",
+        ],
+        "api-integration": [
+            "api integration",
+            "api call",
+            "fetch api",
+            "consume api",
+            "webhook",
+            "third-party api",
+        ],
+        "ui": [
+            "ui",
+            "user interface",
+            "react",
+            "vue",
+            "component",
+            "jsx",
+            "tsx",
+            "dom",
+            "css",
+            "style",
+            "frontend",
+        ],
+        "software-architecture": [
+            "software architecture",
+            "system architecture",
+            "architectural",
+            "design principle",
+        ],
+        "code-quality": [
+            "code quality",
+            "clean code",
+            "refactor",
+            "code smell",
+            "technical debt",
+            "lint",
+        ],
+        "communication": [
+            "communicate",
+            "message",
+            "notify",
+            "alert",
+            "notification",
+            "broadcast",
+        ],
+        "feature-planning": [
+            "feature",
+            "planning",
+            "plan",
+            "requirement",
+            "user story",
+            "feature request",
+        ],
         "problem-solving": ["solve", "problem", "solution", "approach", "strategy"],
         "requirements": ["requirement", "spec", "specification", "acceptance criteria"],
-        "llm-output-processing": ["llm output", "parse output", "process response", "extract from response"],
-        "user-experience": ["ux", "user experience", "usability", "user flow", "interaction"],
-        "ai-models": ["ai model", "ml model", "machine learning", "model", "inference", "training"],
+        "llm-output-processing": [
+            "llm output",
+            "parse output",
+            "process response",
+            "extract from response",
+        ],
+        "user-experience": [
+            "ux",
+            "user experience",
+            "usability",
+            "user flow",
+            "interaction",
+        ],
+        "ai-models": [
+            "ai model",
+            "ml model",
+            "machine learning",
+            "model",
+            "inference",
+            "training",
+        ],
         # Original domains that map to DB domains
-        "authentication": ["auth", "login", "session", "jwt", "token", "oauth", "password"],
-        "database": ["sql", "query", "schema", "migration", "db", "database", "sqlite", "postgres"],
+        "authentication": [
+            "auth",
+            "login",
+            "session",
+            "jwt",
+            "token",
+            "oauth",
+            "password",
+        ],
+        "database": [
+            "sql",
+            "query",
+            "schema",
+            "migration",
+            "db",
+            "database",
+            "sqlite",
+            "postgres",
+        ],
         "database-migration": ["migration", "migrate", "schema change", "alter table"],
         "api": ["api", "endpoint", "rest", "graphql", "route", "controller"],
-        "security": ["security", "vulnerability", "injection", "xss", "csrf", "sanitiz"],
+        "security": [
+            "security",
+            "vulnerability",
+            "injection",
+            "xss",
+            "csrf",
+            "sanitiz",
+        ],
         "testing": ["test", "spec", "coverage", "mock", "fixture", "assert"],
         "react": ["react", "usestate", "useeffect", "react component"],
-        "performance": ["performance", "cache", "optimize", "memory", "speed", "optimization"],
-        "error-handling": ["error", "exception", "catch", "throw", "try", "error handling"],
+        "performance": [
+            "performance",
+            "cache",
+            "optimize",
+            "memory",
+            "speed",
+            "optimization",
+        ],
+        "error-handling": [
+            "error",
+            "exception",
+            "catch",
+            "throw",
+            "try",
+            "error handling",
+        ],
         "configuration": ["config", "env", "setting", "option"],
         "production": ["production", "prod", "deploy", "release"],
         "git": ["git", "commit", "branch", "merge", "rebase"],
@@ -341,11 +582,34 @@ def extract_domain_from_context(tool_name: str, tool_input: dict) -> List[str]:
         "cli": ["cli", "command", "terminal", "shell"],
         "coordination": ["coordination", "handoff", "blackboard"],
         "documentation": ["document", "readme", "claude.md"],
-        "task-management": ["task", "todo", "tracking", "progress", "checklist", "milestone", "backlog", "sprint"],
+        "task-management": [
+            "task",
+            "todo",
+            "tracking",
+            "progress",
+            "checklist",
+            "milestone",
+            "backlog",
+            "sprint",
+        ],
         "web": ["web", "http", "url", "fetch", "scrape", "crawl", "html", "website"],
-        "api-integration": ["api", "endpoint", "rest", "graphql", "webhook", "integration"],
+        "api-integration": [
+            "api",
+            "endpoint",
+            "rest",
+            "graphql",
+            "webhook",
+            "integration",
+        ],
         "mcp": ["mcp", "model context protocol", "tool server", "context7"],
-        "documentation": ["docs", "documentation", "readme", "guide", "tutorial", "reference"],
+        "documentation": [
+            "docs",
+            "documentation",
+            "readme",
+            "guide",
+            "tutorial",
+            "reference",
+        ],
         "general": ["general", "misc"],
     }
 
@@ -382,8 +646,26 @@ def validate_domains(domain_list: List[str], cursor: sqlite3.Cursor) -> List[str
     return [d for d in domain_list if d in valid_domains]
 
 
+# Simple in-memory cache for heuristics
+_heuristics_cache = {
+    "golden_rules": None,
+    "cache_time": 0,
+    "ttl": 300,  # 5 minutes TTL
+}
+
+
 def get_relevant_heuristics(domains: List[str], limit: int = 5) -> List[Dict]:
-    """Get heuristics relevant to the given domains."""
+    """Get heuristics relevant to the given domains with caching."""
+    import time
+
+    current_time = time.time()
+
+    # Check if we can use cached golden rules (when no domains specified)
+    if not domains and _heuristics_cache["golden_rules"] is not None:
+        if current_time - _heuristics_cache["cache_time"] < _heuristics_cache["ttl"]:
+            sys.stderr.write("[CACHE] Using cached golden rules\n")
+            return _heuristics_cache["golden_rules"][:limit]
+
     conn = get_db_connection()
     if not conn:
         return []
@@ -397,35 +679,52 @@ def get_relevant_heuristics(domains: List[str], limit: int = 5) -> List[Dict]:
 
             if not valid_domains:
                 # No valid domains, fall back to golden rules only
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT id, domain, rule, explanation, confidence, times_validated, is_golden
                     FROM heuristics
                     WHERE is_golden = 1
                     ORDER BY confidence DESC, times_validated DESC
                     LIMIT ?
-                """, (limit,))
+                """,
+                    (limit,),
+                )
             else:
                 # Use validated domains in SQL query
                 placeholders = ",".join("?" * len(valid_domains))
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     SELECT id, domain, rule, explanation, confidence, times_validated, is_golden
                     FROM heuristics
                     WHERE domain IN ({placeholders})
                        OR is_golden = 1
                     ORDER BY is_golden DESC, confidence DESC, times_validated DESC
                     LIMIT ?
-                """, (*valid_domains, limit))
+                """,
+                    (*valid_domains, limit),
+                )
         else:
             # Just get golden rules and top heuristics
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, domain, rule, explanation, confidence, times_validated, is_golden
                 FROM heuristics
                 WHERE is_golden = 1 OR confidence > 0.7
                 ORDER BY is_golden DESC, confidence DESC
                 LIMIT ?
-            """, (limit,))
+            """,
+                (limit,),
+            )
 
-        return [dict(row) for row in cursor.fetchall()]
+        results = [dict(row) for row in cursor.fetchall()]
+
+        # Cache golden rules for future calls
+        if not domains:
+            _heuristics_cache["golden_rules"] = results
+            _heuristics_cache["cache_time"] = current_time
+            sys.stderr.write(f"[CACHE] Cached {len(results)} golden rules\n")
+
+        return results
     except Exception as e:
         sys.stderr.write(f"Warning: Failed to query heuristics: {e}\n")
         return []
@@ -452,22 +751,28 @@ def get_recent_failures(domains: List[str], limit: int = 3) -> List[Dict]:
             else:
                 # Use validated domains in SQL query
                 placeholders = ",".join("?" * len(valid_domains))
-                cursor.execute(f"""
+                cursor.execute(
+                    f"""
                     SELECT id, title, summary, domain
                     FROM learnings
                     WHERE type = 'failure'
                       AND domain IN ({placeholders})
                     ORDER BY created_at DESC
                     LIMIT ?
-                """, (*valid_domains, limit))
+                """,
+                    (*valid_domains, limit),
+                )
         else:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, title, summary, domain
                 FROM learnings
                 WHERE type = 'failure'
                 ORDER BY created_at DESC
                 LIMIT ?
-            """, (limit,))
+            """,
+                (limit,),
+            )
 
         return [dict(row) for row in cursor.fetchall()]
     except Exception as e:
@@ -486,12 +791,12 @@ def check_ceo_decisions() -> dict:
         - 'pending_count': int - number of pending decisions
         - 'pending_items': list - list of pending decision names
     """
-    ceo_inbox = EMERGENT_LEARNING_PATH / 'ceo-inbox'
+    ceo_inbox = EMERGENT_LEARNING_PATH / "ceo-inbox"
 
     if not ceo_inbox.exists():
         return {"blocked": False, "pending_count": 0, "pending_items": []}
 
-    pending = list(ceo_inbox.glob('*.md'))
+    pending = list(ceo_inbox.glob("*.md"))
     if pending:
         # Extract decision names
         pending_names = [decision.stem for decision in pending]
@@ -513,15 +818,17 @@ def check_ceo_decisions() -> dict:
         if len(pending_names) > 5:
             warning_lines.append(f"  ... and {len(pending_names) - 5} more")
 
-        warning_lines.extend([
-            "",
-            "ACTION REQUIRED:",
-            "  1. Review pending decisions in: " + str(ceo_inbox),
-            "  2. Resolve or explicitly override decisions",
-            "  3. Retry operation",
-            "=" * 70,
-            "",
-        ])
+        warning_lines.extend(
+            [
+                "",
+                "ACTION REQUIRED:",
+                "  1. Review pending decisions in: " + str(ceo_inbox),
+                "  2. Resolve or explicitly override decisions",
+                "  3. Retry operation",
+                "=" * 70,
+                "",
+            ]
+        )
 
         # Write to stderr for terminal visibility
         sys.stderr.write("\n".join(warning_lines) + "\n")
@@ -531,7 +838,7 @@ def check_ceo_decisions() -> dict:
         return {
             "blocked": True,
             "pending_count": len(pending),
-            "pending_items": pending_names
+            "pending_items": pending_names,
         }
 
     return {"blocked": False, "pending_count": 0, "pending_items": []}
@@ -548,10 +855,13 @@ def record_heuristics_consulted(heuristic_ids: List[int]):
 
         # Record in a consultation log for later validation
         for hid in heuristic_ids:
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context)
                 VALUES ('heuristic_consulted', 'consultation', ?, ?, ?)
-            """, (hid, f"heuristic_id:{hid}", datetime.now().isoformat()))
+            """,
+                (hid, f"heuristic_id:{hid}", datetime.now().isoformat()),
+            )
 
         conn.commit()
     except Exception as e:
@@ -560,22 +870,22 @@ def record_heuristics_consulted(heuristic_ids: List[int]):
         conn.close()
 
 
-def format_learning_context(heuristics: List[Dict], failures: List[Dict], domains: List[str], complexity: Optional[Dict] = None) -> str:
+def format_learning_context(
+    heuristics: List[Dict],
+    failures: List[Dict],
+    domains: List[str],
+    complexity: Optional[Dict] = None,
+) -> str:
     """Format the learning context for injection."""
-    lines = [
-        "",
-        "---",
-        "## Building Knowledge (Auto-Injected)",
-        ""
-    ]
+    lines = ["", "---", "## Building Knowledge (Auto-Injected)", ""]
 
     # Complexity warning (if applicable)
-    if complexity and complexity['level'] in ('HIGH', 'MEDIUM'):
-        warning_symbol = "⚠️" if complexity['level'] == 'HIGH' else "⚡"
+    if complexity and complexity["level"] in ("HIGH", "MEDIUM"):
+        warning_symbol = "⚠️" if complexity["level"] == "HIGH" else "⚡"
         lines.append(f"### Task Complexity: {complexity['level']} {warning_symbol}")
-        if complexity['reasons']:
+        if complexity["reasons"]:
             lines.append("**Reasons:**")
-            for reason in complexity['reasons']:
+            for reason in complexity["reasons"]:
                 lines.append(f"- {reason}")
         lines.append(f"**Recommendation:** {complexity['recommendation']}")
         lines.append("")
@@ -591,24 +901,27 @@ def format_learning_context(heuristics: List[Dict], failures: List[Dict], domain
     # Domain-specific heuristics
     domain_h = [h for h in heuristics if not h.get("is_golden")]
     if domain_h:
-        lines.append(f"### Relevant Heuristics ({', '.join(domains) if domains else 'general'})")
+        lines.append(
+            f"### Relevant Heuristics ({', '.join(domains) if domains else 'general'})"
+        )
         for h in domain_h:
-            conf = h.get('confidence', 0) * 100
-            validated = h.get('times_validated', 0)
-            lines.append(f"- [{h['domain']}] {h['rule']} ({conf:.0f}% confidence, {validated}x validated)")
+            conf = h.get("confidence", 0) * 100
+            validated = h.get("times_validated", 0)
+            lines.append(
+                f"- [{h['domain']}] {h['rule']} ({conf:.0f}% confidence, {validated}x validated)"
+            )
         lines.append("")
 
     # Recent failures to avoid
     if failures:
         lines.append("### Recent Failures (Avoid These)")
         for f in failures:
-            lines.append(f"- [{f['domain']}] {f['title']}: {(f.get('summary') or '')[:100]}")
+            lines.append(
+                f"- [{f['domain']}] {f['title']}: {(f.get('summary') or '')[:100]}"
+            )
         lines.append("")
 
-    lines.extend([
-        "---",
-        ""
-    ])
+    lines.extend(["---", ""])
 
     return "\n".join(lines)
 
@@ -627,23 +940,37 @@ def main():
     # Enforce CEO decisions - block if there are pending decisions
     ceo_status = check_ceo_decisions()
     if ceo_status["blocked"]:
-        output_result({
-            "decision": "reject",
-            "reason": "Operation blocked by pending CEO decisions. Please resolve pending decisions before proceeding.",
-            "ceo_blocker": {
-                "pending_count": ceo_status["pending_count"],
-                "pending_items": ceo_status["pending_items"]
+        output_result(
+            {
+                "decision": "reject",
+                "reason": "Operation blocked by pending CEO decisions. Please resolve pending decisions before proceeding.",
+                "ceo_blocker": {
+                    "pending_count": ceo_status["pending_count"],
+                    "pending_items": ceo_status["pending_items"],
+                },
             }
-        })
+        )
         return
 
     # Learning loop processes investigation, modification, task management, and web/MCP tools
     # This enables learning from Grep, Read, Glob, Edit, Write, Bash operations
     # Also includes task management tools (TaskCreate, TaskUpdate, TaskList, TaskGet)
     # And web/MCP tools (WebFetch, WebSearch, mcp__* tools)
-    INVESTIGATION_TOOLS = {"Task", "Bash", "Grep", "Read", "Glob", "Edit", "Write",
-                           "TaskCreate", "TaskUpdate", "TaskList", "TaskGet",
-                           "WebFetch", "WebSearch"}
+    INVESTIGATION_TOOLS = {
+        "Task",
+        "Bash",
+        "Grep",
+        "Read",
+        "Glob",
+        "Edit",
+        "Write",
+        "TaskCreate",
+        "TaskUpdate",
+        "TaskList",
+        "TaskGet",
+        "WebFetch",
+        "WebSearch",
+    }
     # Check if tool is in set OR is an MCP tool (mcp__* prefix)
     is_mcp_tool = tool_name.startswith("mcp__")
     if tool_name not in INVESTIGATION_TOOLS and not is_mcp_tool:
@@ -680,8 +1007,10 @@ def main():
     save_session_state(state)
 
     # If we have learning context or complexity warning, inject it
-    if heuristics or failures or complexity['level'] != 'LOW':
-        learning_context = format_learning_context(heuristics, failures, domains, complexity)
+    if heuristics or failures or complexity["level"] != "LOW":
+        learning_context = format_learning_context(
+            heuristics, failures, domains, complexity
+        )
 
         # Modify the prompt to include learning context
         original_prompt = tool_input.get("prompt", "")
@@ -690,10 +1019,7 @@ def main():
         modified_input = tool_input.copy()
         modified_input["prompt"] = modified_prompt
 
-        output_result({
-            "decision": "approve",
-            "tool_input": modified_input
-        })
+        output_result({"decision": "approve", "tool_input": modified_input})
     else:
         output_result({"decision": "approve"})
 
