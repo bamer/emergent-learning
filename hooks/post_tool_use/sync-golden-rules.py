@@ -78,9 +78,26 @@ def sync_golden_rules():
         return updates > 0
     except Exception as e:
         print(f"[WARN] Golden rules sync failed: {e}")
+        try:
+            from sgr_logger import log_error
+            log_error(f"Golden rules sync failed: {e}")
+        except:
+            pass
         return False
 
 def run():
+    # Debug log
+    from datetime import datetime
+    from pathlib import Path
+    LOG_DIR = Path.home() / ".opencode" / "emergent-learning" / "logs"
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    with open(LOG_DIR / f"{datetime.now().strftime("%Y%m%d")}.log", "a") as f:
+        f.write(f"[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [DEBUG] sync-golden-rules START\n")
+    try:
+        from sgr_logger import log_start, log_success, log_error, log_info
+        log_start()
+    except:
+        pass
     """Check if sync is needed and run it."""
     state = load_state()
     current_hash = get_file_hash(MARKDOWN_FILE)
@@ -89,6 +106,11 @@ def run():
     # If markdown changed, sync to database
     if current_hash and current_hash != last_hash:
         if sync_golden_rules():
+            try:
+                from sgr_logger import log_success
+                log_success("Synced golden-rules.md to database")
+            except:
+                pass
             state['golden_rules_hash'] = current_hash
             state['golden_rules_last_sync'] = datetime.now().isoformat()
             save_state(state)
@@ -99,4 +121,9 @@ def run():
 if __name__ == '__main__':
     result = run()
     if result:
+        try:
+            from sgr_logger import log_info
+            log_info(result)
+        except:
+            pass
         print(f"[SYNC] {result}")

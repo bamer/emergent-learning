@@ -6,94 +6,115 @@
  * - no UI calls
  * - async fire-and-forget only
  */
+import { $ } from "bun";
+import { spawn } from "bun";
 
-const ELF_DIR = "/home/bamer/.opencode/emergent-learning";
-const HOOKS_DIR = "/home/bamer/.opencode/emergent-learning/hooks";
-const LEARNING_LOOP_DIR = `${HOOKS_DIR}/learning-loop`;
+const PYTHON = "/home/bamer/.opencode/emergent-learning/.venv/bin/python";
+
+function firePython(script, data) {
+  const args = [ PYTHON, script ];
+
+  if (data !== undefined) {
+    args.push(JSON.stringify(data));
+  }
+
+  spawn(args, {
+    stdin: "ignore",
+    stdout: "ignore",
+    stderr: "ignore",
+  });
+}
 
 export default async (plugin) => {
-  const $ = plugin?.$;
-
+  
   console.log("[ELF] 🧠 Superpowers plugin loaded");
 
+  const ELF_DIR = "/home/bamer/.opencode/emergent-learning";
+  const HOOKS_DIR = "/home/bamer/.opencode/emergent-learning/hooks";
+  const LEARNING_LOOP_DIR = `${HOOKS_DIR}/learning-loop`;
 
   return {
     /**
      * Pre-tool learning hook
      */
+
     "tool.execute.before": async (input, output) => {
-      const toolName = input?.tool || "unknown";
-      console.log(`[ELF] pre-learning → ${toolName}`);
+      const toolName = input?.tool ?? "unknown";
+      console.log("[ELF] tool.execute.before hook fired for tool:", toolName );
 
-      const script = `${LEARNING_LOOP_DIR}/pre_tool_learning.py`;
-      const data = { input, output, tool_name: toolName };
+      firePython(
+        "/home/bamer/.opencode/emergent-learning/hooks/learning-loop/pre_tool_learning.py",
+        { input, output, tool_name: toolName }
+      );
 
-      try {
-        $`python3 ${script} '${JSON.stringify(data)}'`;
-      } catch (error) {
-        console.error(`[ELF] Error in pre-tool hook: ${error.message}`);
-      }
-
+      firePython(
+        "/home/bamer/.opencode/emergent-learning/hooks/PreToolUse/semantic-memory.py",
+        { input, output, tool_name: toolName }
+      );
     },
 
     /**
      * Post-tool learning hook
      */
     "tool.execute.after": async (input, output) => {
-      const toolName = input?.tool || "unknown";
-      console.log(`[ELF] post-learning → ${toolName}`);
+      const toolName = input?.tool ?? "unknown";
+      const payload = { input, output, tool_name: toolName };
+      console.log("[ELF] tool.execute.after hook fired for tool:", toolName );
 
-      const data = { input, output, tool_name: toolName };
+      firePython(
+        "/home/bamer/.opencode/emergent-learning/hooks/learning-loop/post_tool_learning.py",
+        payload
+      );
 
-      try {
-        $`python3 ${LEARNING_LOOP_DIR}/post_tool_learning.py '${JSON.stringify(data)}'`;
-        $`python3 ${LEARNING_LOOP_DIR}/record_pheromone.py '${JSON.stringify(data)}'`;
-        $`python3 ${HOOKS_DIR}/post_tool_use/sync-golden-rules.py '${JSON.stringify(data)}'`;
-      } catch (error) {
-        console.error(`[ELF] Error in post-tool hook: ${error.message}`);
-      }
+      firePython(
+        "/home/bamer/.opencode/emergent-learning/hooks/learning-loop/record_pheromone.py",
+        payload
+      );
+
+      firePython(
+        "/home/bamer/.opencode/emergent-learning/hooks/post_tool_use/sync-golden-rules.py",
+        payload
+      );
     },
 
-    /**
-     * Session created
-     */
-    "session.created": async (data) => {
+    /* ================================
+     * SESSION CREATED
+     * ================================ */
+    "session.created": async (input, output) => {
       console.log("[ELF] session check-in");
+      
+      firePython(
+        "/home/bamer/.opencode/emergent-learning/query/checkin.py",
+        { input, output, event: "session.created" }
+      );
 
-      try {
-        $`python3 ${ELF_DIR}/query/checkin.py '${JSON.stringify(data)}'`;
-      } catch (error) {
-        console.error(`[ELF] Error in session check-in: ${error.message}`);
-      }
     },
 
-    /**
-     * Session deleted
-     */
-    "session.deleted": async (data) => {
+    /* ================================
+     * SESSION DELETED
+     * ================================ */
+    "session.deleted": async (input, output) => {
       console.log("[ELF] session checkout");
-
-      try {
-        $`python3 ${ELF_DIR}/query/checkout.py '${JSON.stringify(data)}'`;
-      } catch (error) {
-        console.error(`[ELF] Error in session check-out: ${error.message}`);
-      }
-
+      firePython(
+        "/home/bamer/.opencode/emergent-learning/query/checkout.py",
+        { input, output, event: "session.deleted" }
+      );
     },
 
-    /**
-     * Session compacting
-     */
+    /* ================================
+     * SESSION COMPACTING
+     * ================================ */
     "experimental.session.compacting": async (input, output) => {
       console.log("[ELF] session compacting");
 
-      const data = { input, output, event: "session_compacting" };
-
-      try {
-        $`python3 ${HOOKS_DIR}/pre_tool_learning.py '${JSON.stringify(data)}'`;
-      } catch (error) {
-        console.error(`[ELF] Error in session compacting: ${error.message}`);
-      }
+      firePython(
+        "/home/bamer/.opencode/emergent-learning/hooks/PreToolUse/semantic-memory.py",
+        {
+          input,
+          output,
+          event: "session.compacting",
+        }
+      );
     }
   };
 };

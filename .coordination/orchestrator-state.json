@@ -1,0 +1,99 @@
+{
+  "orchestrator": {
+    "running": true,
+    "start_time": "2026-01-31T19:14:52.387310",
+    "uptime_seconds": 570
+  },
+  "agents": {
+    "orchestrator": {
+      "name": "Orchestrateur Unifi\u00e9",
+      "status": "running",
+      "icon": "\ud83c\udfaf",
+      "session_id": null,
+      "error_count": 0,
+      "restart_count": 0,
+      "last_activity": null,
+      "start_time": "2026-01-31T19:14:52.387312"
+    },
+    "sentinel": {
+      "name": "Sentinel",
+      "status": "running",
+      "icon": "\ud83d\udd0d",
+      "session_id": "ses_3ec05c41affeq5N6HxjtHMLy8O",
+      "error_count": 0,
+      "restart_count": 0,
+      "last_activity": "2026-01-31T19:14:52.390527",
+      "start_time": "2026-01-31T19:14:52.390530"
+    },
+    "watcher": {
+      "name": "Watcher",
+      "status": "stopped",
+      "icon": "\ud83d\udc41\ufe0f",
+      "session_id": null,
+      "error_count": 0,
+      "restart_count": 0,
+      "last_activity": "2026-01-31T19:14:52.392732",
+      "start_time": "2026-01-31T19:14:52.392736"
+    },
+    "researcher": {
+      "name": "Researcher",
+      "status": "stopped",
+      "icon": "\ud83d\udd2c",
+      "session_id": null,
+      "error_count": 0,
+      "restart_count": 0,
+      "last_activity": null,
+      "start_time": null
+    },
+    "architect": {
+      "name": "Architect",
+      "status": "stopped",
+      "icon": "\ud83c\udfd7\ufe0f",
+      "session_id": null,
+      "error_count": 0,
+      "restart_count": 0,
+      "last_activity": null,
+      "start_time": null
+    },
+    "skeptic": {
+      "name": "Skeptic",
+      "status": "stopped",
+      "icon": "\u2753",
+      "session_id": null,
+      "error_count": 0,
+      "restart_count": 0,
+      "last_activity": null,
+      "start_time": null
+    },
+    "creative": {
+      "name": "Creative",
+      "status": "stopped",
+      "icon": "\ud83d\udca1",
+      "session_id": null,
+      "error_count": 0,
+      "restart_count": 0,
+      "last_activity": null,
+      "start_time": null
+    },
+    "ceo": {
+      "name": "CEO",
+      "status": "stopped",
+      "icon": "\ud83d\udc51",
+      "session_id": null,
+      "error_count": 0,
+      "restart_count": 0,
+      "last_activity": null,
+      "start_time": null
+    }
+  },
+  "stats": {
+    "agents_started": 2,
+    "agents_stopped": 1,
+    "agents_crashed": 0,
+    "errors_handled": 0,
+    "escalations": 0,
+    "uptime_seconds": 0
+  },
+  "escalations": 0,
+  "_last_updated": "2026-01-31T19:24:22.451049"
+}

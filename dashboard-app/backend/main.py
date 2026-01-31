@@ -113,6 +113,7 @@ from routers import (
     setup_router,
     live_router,
     semantic_router,
+    agents_router,
 )
 from routers.auth import init_redis
 
@@ -307,6 +308,7 @@ app.include_router(game_router)
 app.include_router(setup_router)
 app.include_router(live_router)
 app.include_router(semantic_router)
+app.include_router(agents_router)
 
 
 # ==============================================================================

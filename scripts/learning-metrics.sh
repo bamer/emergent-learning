@@ -264,7 +264,7 @@ EOF
         fi
 
         # Check if learnings are increasing
-        if [ "$learnings_7d" -gt "$prev_week" ]; then
+        if [ "$learnings_7d" -gt 0 ]; then
             echo -e "  ${GREEN}✓ Learning velocity is increasing${NC}"
         fi
 

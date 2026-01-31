@@ -64,7 +64,7 @@ const STATUS_COLORS = {
   stopping: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
 }
 
-export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPanelProps) {
+export function AgentsPanel({ apiBaseUrl = 'http://localhost:8888' }: AgentsPanelProps) {
   const [agentStatus, setAgentStatus] = useState<AgentStatusResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

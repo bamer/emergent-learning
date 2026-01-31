@@ -1,13 +1,13 @@
 #!/bin/bash
 #
-# Start the Tiered Watcher System
+# Start the OpenCode Watcher using big-pickle model
 #
 # Usage:
 #   ./start-watcher.sh              # Start normally
 #   ./start-watcher.sh --daemon     # Start in background
 #
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ELF_DIR="$(dirname "$SCRIPT_DIR")"
@@ -30,10 +30,11 @@ if [ ! -f "$LAUNCHER_SCRIPT" ]; then
     exit 1
 fi
 
-# Check for ANTHROPIC_API_KEY
-if [ -z "$ANTHROPIC_API_KEY" ]; then
-    echo "Error: ANTHROPIC_API_KEY environment variable is not set"
-    echo "Please set it with: export ANTHROPIC_API_KEY='your-key-here'"
+# Check if opencode CLI is available
+if ! command -v opencode &> /dev/null; then
+    echo "Error: opencode CLI not found"
+    echo "Install with: npm install -g opencode"
+    echo "Or: npx opencode (to run directly)"
     exit 1
 fi
 
@@ -46,15 +47,21 @@ if [ "$1" = "--daemon" ] || [ "$1" = "-d" ]; then
     DAEMON=true
 fi
 
+# Set default model if not specified
+export OPENCODE_WATCHER_MODEL="${OPENCODE_WATCHER_MODEL:-opencode/big-pickle}"
+
 # Start launcher
 if [ "$DAEMON" = true ]; then
-    echo "Starting watcher in daemon mode..."
-    nohup $PYTHON_CMD "$LAUNCHER_SCRIPT" > /dev/null 2>&1 &
+    echo "Starting OpenCode watcher (daemon mode)..."
+    echo "Model: $OPENCODE_WATCHER_MODEL"
+    nohup $PYTHON_CMD "$LAUNCHER_SCRIPT" > /tmp/elf-watcher.log 2>&1 &
     PID=$!
     echo "Watcher started with PID: $PID"
-    echo "Monitor logs at: $ELF_DIR/.coordination/launcher.log"
+    echo "Monitor logs at: /tmp/elf-watcher.log"
     echo "Stop with: kill $PID"
 else
-    echo "Starting watcher (Ctrl+C to stop)..."
+    echo "Starting OpenCode watcher..."
+    echo "Model: $OPENCODE_WATCHER_MODEL"
+    echo "Press Ctrl+C to stop"
     $PYTHON_CMD "$LAUNCHER_SCRIPT"
 fi

@@ -40,18 +40,24 @@ except ImportError as e:
     AgentExecutionEngine = None
     PatternResponseHandler = None
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(
-            "/home/bamer/.opencode/emergent-learning/logs/sentinel.log"
-        ),
-        logging.StreamHandler(),
-    ],
-)
-logger = logging.getLogger(__name__)
+# Use centralized logging
+try:
+    from logger import setup_logger, log_critical_error
+
+    logger = setup_logger("sentinel")
+except ImportError:
+    # Fallback to basic logging if logger module not available yet
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        handlers=[
+            logging.FileHandler(
+                "/home/bamer/.opencode/emergent-learning/logs/sentinel.log"
+            ),
+            logging.StreamHandler(),
+        ],
+    )
+    logger = logging.getLogger(__name__)
 
 
 class AISentinel:
@@ -505,7 +511,11 @@ Respond with JSON format:
         return actions_taken
 
     def record_to_event_chronicle(
-        self, event_type: str, status: str, summary: str, data: Optional[Dict[str, Any]] = None
+        self,
+        event_type: str,
+        status: str,
+        summary: str,
+        data: Optional[Dict[str, Any]] = None,
     ):
         """Record event to event_chronicle table for dashboard visibility.
 

@@ -5,42 +5,53 @@ import { Activity, RefreshCw, Wifi, WifiOff, Play, Square, Crown, Search, Lightb
 
 interface AgentInfo {
   type: string;
-  name: string; // Ajouté en supposant qu'il est présent dans les données
-  display_name: string;
-  description: string;
-  icon: string; // Ajouté en supposant qu'il est présent dans les données
-  role: string;
-  is_primary: boolean;
+  name: string;
+  display_name?: string; // Made optional - falls back to name
+  description?: string; // Made optional
+  icon: string;
+  role?: string; // Made optional
+  is_primary?: boolean; // Made optional
   status: string;
-  priority: number;
+  priority?: number; // Made optional
   session_id: string | null;
   last_activity: string | null;
   start_time: string | null;
   error_count: number;
-  auto_start: boolean;
-  status_display: {
+  auto_start?: boolean; // Made optional
+  status_display?: {
     text: string;
-    color: string; // Ajouté en supposant qu'il est utilisé
-    emoji: string; // Ajouté en supposant qu'il est utilisé
+    color: string;
+    emoji: string;
   };
-  system?: string; // Ajouté car utilisé dans le rendu
+  system?: string;
+  restart_count?: number;
 }
 
 interface AgentStatusResponse {
-  timestamp: string;
+  timestamp?: string;
   orchestrator: {
     running: boolean;
+    start_time: string | null;
     uptime_seconds: number;
-    stats: {
-      total_sessions_created: number;
-      total_messages_sent: number;
-      agents_started: number;
-      agents_stopped: number;
-      errors_handled: number;
-      uptime_seconds: number; // Redondant ici, peut-être à clarifier
+    stats?: {
+      total_sessions_created?: number;
+      total_messages_sent?: number;
+      agents_started?: number;
+      agents_stopped?: number;
+      errors_handled?: number;
+      uptime_seconds?: number;
     };
   };
   agents: AgentInfo[];
+  stats?: {
+    agents_started: number;
+    agents_stopped: number;
+    agents_crashed: number;
+    errors_handled: number;
+    escalations: number;
+    uptime_seconds: number;
+  };
+  escalations?: number;
 }
 
 interface AgentsPanelProps {
@@ -66,7 +77,7 @@ const STATUS_COLORS: Record<string, string> = {
   stopping: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
 };
 
-export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPanelProps) {
+export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
   const [agentStatus, setAgentStatus] = useState<AgentStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +88,7 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
 
   const fetchAgentStatus = useCallback(async () => {
     try {
-      const response = await fetch(`${apiBaseUrl}/agents/status`);
+      const response = await fetch(`${apiBaseUrl}/api/v1/agents/status`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -102,7 +113,7 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
 
   const handleStartAgent = async (agentType: string) => {
     try {
-      const response = await fetch(`${apiBaseUrl}/agents/start/${agentType}`, {
+      const response = await fetch(`${apiBaseUrl}/api/v1/agents/start/${agentType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -118,7 +129,7 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
 
   const handleStopAgent = async (agentType: string) => {
     try {
-      const response = await fetch(`${apiBaseUrl}/agents/stop/${agentType}`, {
+      const response = await fetch(`${apiBaseUrl}/api/v1/agents/stop/${agentType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -146,7 +157,7 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
         orchestrator: "Report on the overall system coordination status.",
       };
 
-      const response = await fetch(`${apiBaseUrl}/agents/call/${agentType}`, {
+      const response = await fetch(`${apiBaseUrl}/api/v1/agents/call/${agentType}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -230,7 +241,7 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
             <div className="flex items-center gap-1.5">
               <span className="text-slate-500">Uptime:</span>
               <span className="text-cyan-400 font-semibold">
-                {formatDuration(agentStatus.orchestrator.uptime_seconds)}
+                {formatDuration(agentStatus.orchestrator?.uptime_seconds || 0)}
               </span>
             </div>
           </div>
@@ -266,11 +277,16 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-4">
             {agentStatus.agents.map((agent) => {
               const IconComponent = AGENT_ICONS[agent.type as keyof typeof AGENT_ICONS] || Activity;
-              // Corrige l'orthographe de STATUS_COLORS
               const statusClass = STATUS_COLORS[agent.status as keyof typeof STATUS_COLORS] || STATUS_COLORS.stopped;
+              // Derive display fields from API data
+              const displayName = agent.display_name || agent.name;
+              const isPrimary = agent.is_primary || agent.type === 'ceo' || agent.type === 'orchestrator';
+              const role = agent.role || agent.type.charAt(0).toUpperCase() + agent.type.slice(1);
+              const system = agent.system || 'elf';
+              const statusText = agent.status_display?.text || agent.status;
 
               return (
-                <div key={`${agent.type}-${agent.system || 'elf'}`} className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4">
+                <div key={`${agent.type}-${system}`} className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4">
                   {/* Agent Header */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -279,30 +295,32 @@ export function AgentsPanel({ apiBaseUrl = 'http://localhost:8889' }: AgentsPane
                       </div>
                       <div>
                         <h3 className="font-semibold text-slate-200 flex items-center gap-2">
-                          {agent.display_name}
-                          {agent.is_primary && <Crown className="w-3 h-3 text-yellow-400" />}
-                          {agent.system === 'opencode' && (
+                          {displayName}
+                          {isPrimary && <Crown className="w-3 h-3 text-yellow-400" />}
+                          {system === 'opencode' && (
                             <span className="text-xs px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded">
                               OC
                             </span>
                           )}
-                          {agent.system === 'elf' && (
+                          {system === 'elf' && (
                             <span className="text-xs px-1.5 py-0.5 bg-violet-500/20 text-violet-400 rounded">
                               ELF
                             </span>
                           )}
                         </h3>
-                        <p className="text-xs text-slate-400">{agent.role}</p>
+                        <p className="text-xs text-slate-400">{role}</p>
                       </div>
                     </div>
                     <span className={statusClass + ' text-xs px-2 py-1 rounded-full border'}>
-                      {agent.status_display.text}
+                      {statusText}
                     </span>
                   </div>
 
                   {/* Agent Info */}
                   <div className="space-y-2 mb-3">
-                    <p className="text-sm text-slate-300">{agent.description}</p>
+                    {agent.description && (
+                      <p className="text-sm text-slate-300">{agent.description}</p>
+                    )}
 
                     {agent.status === 'running' && agent.start_time && (
                       <div className="text-xs text-slate-400">

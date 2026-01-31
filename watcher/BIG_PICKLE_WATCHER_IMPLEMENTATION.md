@@ -11,15 +11,15 @@
 
 Successfully adapted the tiered watcher pattern to use OpenCode's big-pickle model for both Tier 1 (detection) and Tier 2 (decision-making).
 
-The workflow remains identical to the original Haiku/Opus design, with big-pickle replacing both Claude models.
+The workflow remains identical to the original Haiku/Opus design, with big-pickle replacing both Opencode models.
 
 ## Architecture Changes
 
-### From Haiku/Opus
+### From opencode/big-pickle
 ```
-Haiku (Claude) → Detects issues → Escalates
+Haiku (Opencode) → Detects issues → Escalates
                                       ↓
-                         Opus (Claude) → Makes decisions
+                         Opus (Opencode) → Makes decisions
 ```
 
 ### To big-pickle (OpenCode)
@@ -46,7 +46,7 @@ big-pickle → Detects issues → Escalates
    - Includes coordination state from blackboard.json
 
 2. **Calls big-pickle**
-   - Via CLI: `claude --print --model opencode/big-pickle`
+   - Via CLI: `Opencode --print --model opencode/big-pickle`
    - Sends prompt to model
    - Receives analysis response
 
@@ -103,7 +103,7 @@ Edit `watcher/run_with_bigpickle.py`:
 # CLI command to invoke big-pickle (line ~35)
 def call_bigpickle(prompt: str) -> Tuple[str, bool]:
     result = subprocess.run(
-        ["claude", "--print", "--model", "opencode/big-pickle"],
+        ["Opencode", "--print", "--model", "opencode/big-pickle"],
         ...
     )
 
@@ -180,9 +180,9 @@ python run_with_bigpickle.py --loop 60
 ## Advantages over Haiku/Opus
 
 | Feature | Haiku/Opus | big-pickle |
-|---------|-----------|-----------|
+| ------- | ---------- | ---------- |
 | Cost | $3.88/day | $0/day |
-| Model | External API (Claude) | Local (OpenCode) |
+| Model | External API (Opencode) | Local (OpenCode) |
 | Latency | Network dependent | Local, instant |
 | Tier 1 Speed | Fast | Instant (local) |
 | Tier 2 Speed | Varies | Instant (local) |

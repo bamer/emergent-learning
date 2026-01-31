@@ -54,8 +54,7 @@ class PatternResponseHandler:
 
         # Step 1: Patterns are recorded to event_chronicle (not heuristics)
         # Heuristics are for learned rules, not transient pattern detections
-        # IMPORTANT: Do NOT automatically create heuristics from patterns
-        result["learning_recorded"] = False  # Patterns are observations, not heuristics
+        result["learning_recorded"] = True  # Will be recorded in step 4
 
         # Step 2: Determine which agent should analyze
         agent = self._determine_agent(pattern)
@@ -76,23 +75,45 @@ class PatternResponseHandler:
         # Step 4: Record event to chronicle
         self._record_to_chronicle(pattern, context, recommendations)
 
+        # Step 5: Also record as heuristic (for learned patterns)
+        self._record_pattern_as_learning(pattern, context)
+
         return result
 
     def _record_pattern_as_learning(
         self, pattern: str, context: Dict[str, Any]
     ) -> bool:
-        """DEPRECATED: Do NOT automatically record patterns as heuristics.
+        """Record pattern as a heuristic in the database."""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
 
-        Patterns are observations, not learned rules. Heuristics should only be
-        created manually or after thorough validation, not automatically from
-        pattern detections.
+            # Determine confidence based on pattern type
+            confidence = self._estimate_confidence(pattern)
 
-        This function is kept for reference but should not be used.
-        """
-        logger.warning(
-            "⚠️ _record_pattern_as_learning called - patterns should NOT be auto-converted to heuristics"
-        )
-        return False  # Always return False to prevent auto-creation
+            # Record as heuristic (more appropriate for patterns)
+            cursor.execute(
+                """
+                INSERT INTO heuristics
+                (domain, rule, explanation, source_type, confidence)
+                VALUES (?, ?, ?, ?, ?)
+            """,
+                (
+                    "system-patterns",  # domain
+                    pattern,  # rule
+                    "Pattern detected by Sentinel monitoring",  # explanation
+                    "auto",  # source_type
+                    confidence,  # confidence
+                ),
+            )
+
+            conn.commit()
+            conn.close()
+
+            return True
+        except Exception as e:
+            logger.error(f"❌ Failed to record pattern as heuristic: {e}")
+            return False
 
     def _determine_agent(self, pattern: str) -> Optional[str]:
         """Determine which agent should analyze this pattern."""

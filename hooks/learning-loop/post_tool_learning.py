@@ -1038,6 +1038,14 @@ def extract_and_record_learnings(
 
 
 def main():
+    # Debug log
+    import sys
+    from datetime import datetime
+    from pathlib import Path
+    LOG_DIR = Path.home() / ".opencode" / "emergent-learning" / "logs"
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    with open(LOG_DIR / f"{datetime.now().strftime("%Y%m%d")}.log", "a") as f:
+        f.write(f"[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [DEBUG] post_tool_learning START\n")
     """Main hook logic."""
     hook_input = get_hook_input()
 

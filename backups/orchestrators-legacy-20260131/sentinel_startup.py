@@ -144,10 +144,14 @@ def main():
 
             if orchestrator._status_counter % 10 == 0:
                 status = orchestrator.get_agent_status()
-                active_agents = len(
-                    [a for a in status["agents"].values() if a["status"] == "running"]
+                active_agents = [
+                    a for a in status["agents"].values() if a["status"] == "running"
+                ]
+                active_count = len(active_agents)
+                active_names = [agent["name"] for agent in active_agents]
+                logger.info(
+                    f"📊 Status: {active_count} agents active ({', '.join(active_names)})"
                 )
-                logger.info(f"📊 Status: {active_agents} agents active")
 
     except KeyboardInterrupt:
         logger.info("\n" + "=" * 70)
