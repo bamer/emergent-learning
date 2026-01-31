@@ -12,6 +12,7 @@
 The ComplexityScorer core logic is functional but contains a critical bug in scoring weights. Keyword and file pattern detection work correctly, but domain-based detection is underweighted, causing some HIGH-risk operations to be classified as MEDIUM risk.
 
 **Test Results:**
+
 - Core functionality: PASS (6/7 tests)
 - Edge cases: BLOCKER (2 issues found)
 - Recommended action: Fix domain weighting (line 132)
@@ -21,9 +22,11 @@ The ComplexityScorer core logic is functional but contains a critical bug in sco
 ## Test Results: Core Tests (7 Total)
 
 ### Test 1: Auth Keyword + Domain
+
 **Status:** PASS
 
 **Input:**
+
 ```python
 score('Task', {'prompt': 'Update authentication system'}, ['authentication'])
 ```
@@ -35,9 +38,11 @@ score('Task', {'prompt': 'Update authentication system'}, ['authentication'])
 ---
 
 ### Test 2: Password Keyword Detection
+
 **Status:** PASS
 
 **Input:**
+
 ```python
 score('Task', {'prompt': 'Handle password reset'}, [])
 ```
@@ -49,9 +54,11 @@ score('Task', {'prompt': 'Handle password reset'}, [])
 ---
 
 ### Test 3: Crypto File Pattern
+
 **Status:** PASS
 
 **Input:**
+
 ```python
 score('Read', {'file_path': '/crypto.py'}, [])
 ```
@@ -63,9 +70,11 @@ score('Read', {'file_path': '/crypto.py'}, [])
 ---
 
 ### Test 4: API Domain (MEDIUM Risk)
+
 **Status:** PASS
 
 **Input:**
+
 ```python
 score('Task', {'prompt': 'Update endpoint'}, ['api'])
 ```
@@ -77,9 +86,11 @@ score('Task', {'prompt': 'Update endpoint'}, ['api'])
 ---
 
 ### Test 5: README Documentation (LOW Risk)
+
 **Status:** PASS
 
 **Input:**
+
 ```python
 score('Read', {'file_path': 'README.md'}, [])
 ```
@@ -91,9 +102,11 @@ score('Read', {'file_path': 'README.md'}, [])
 ---
 
 ### Test 6: Reasons Field Population
+
 **Status:** PASS
 
 **Input:**
+
 ```python
 score('Task', {'prompt': 'Delete user credentials', 'description': 'security'}, ['security'])
 ```
@@ -104,6 +117,7 @@ score('Task', {'prompt': 'Delete user credentials', 'description': 'security'}, 
 ---
 
 ### Test 7: Recommendation Field
+
 **Status:** PASS
 
 **Input:** Any HIGH/MEDIUM risk task
@@ -121,6 +135,7 @@ score('Task', {'prompt': 'Delete user credentials', 'description': 'security'}, 
 **Line:** 132
 
 **Issue:**
+
 ```python
 # Current code (WRONG):
 for domain in cls.HIGH_RISK_PATTERNS['domains']:
@@ -131,13 +146,15 @@ for domain in cls.HIGH_RISK_PATTERNS['domains']:
 Production is marked as HIGH-risk domain but only scores +1 point. The threshold for HIGH level is `>= 2`, so domain-only detection fails.
 
 **Evidence:**
-```
+
+```markdown
 Input: score('Task', {'prompt': 'Deploy'}, ['production'])
 Expected: HIGH
 Got: MEDIUM (score = 1, needs 2 for HIGH)
 ```
 
 **Fix:**
+
 ```python
 high_score += 2  # Match file/keyword weighting
 ```
@@ -150,7 +167,8 @@ high_score += 2  # Match file/keyword weighting
 **Root Cause:** Same as Blocker 1
 
 **Evidence:**
-```
+
+```markdown
 Input: score('Task', {'prompt': 'Run migrations'}, ['database-migration'])
 Expected: HIGH
 Got: MEDIUM
@@ -163,11 +181,13 @@ Got: MEDIUM
 ### Finding 1: Asymmetric Risk Weighting
 
 **Problem:**
+
 - Files: +2 points per match
 - Keywords: +2 points per match
 - Domains: +1 point per match (**INCONSISTENT**)
 
 **Impact:**
+
 - Explicit keywords/files are twice as valuable as domain detection
 - Domain-only detection cannot reach HIGH level independently
 - Deployment to production requires additional risk factor
@@ -175,7 +195,8 @@ Got: MEDIUM
 ### Finding 2: Score Accumulation Without Bounds
 
 **Observation:**
-```
+
+```markdown
 Input: "rm -rf /auth/crypto/token.py --force" with ['security', 'authentication']
 Result: 7 reasons detected, score > 10 points
 ```
@@ -187,7 +208,8 @@ Result: 7 reasons detected, score > 10 points
 **Problem:** MEDIUM-risk keywords include 'change' and 'update', which are extremely common.
 
 **Example:**
-```
+
+```markdown
 "Deploy changes" -> MEDIUM risk just from 'change' keyword
 "Update config" -> MEDIUM risk just from 'update' keyword
 ```
@@ -199,23 +221,29 @@ Result: 7 reasons detected, score > 10 points
 ### HIGH-Risk Patterns
 
 **Files:** auth, crypto, security, password, token, secret, .env
+
 - Each match: +2 points
 
 **Keywords:** delete, drop, truncate, force, sudo, rm -rf, password, credential
+
 - Each match: +2 points
 
 **Domains:** authentication, security, database-migration, production
+
 - Each match: +1 point (SHOULD BE +2)
 
 ### MEDIUM-Risk Patterns
 
 **Files:** api, config, schema, migration, database
+
 - Each match: +1 point
 
 **Keywords:** update, modify, change, refactor, migrate
+
 - Each match: +1 point
 
 **Domains:** api, configuration, database
+
 - Each match: +1 point
 
 ### Risk Level Thresholds
@@ -236,6 +264,7 @@ else:
 ## Test Coverage Assessment
 
 ### Covered
+
 - Keyword detection (password, crypto, etc.)
 - Domain detection (authentication, api, security)
 - File path patterns (.env, secret, token)
@@ -245,6 +274,7 @@ else:
 - Case insensitivity
 
 ### Not Covered (Opportunities)
+
 - Score accumulation limits
 - Multiple domain combinations
 - Tool-specific input parsing (Bash, Edit, Write, etc.)
@@ -257,17 +287,22 @@ else:
 ## Recommendations (Priority Order)
 
 ### Priority 1: Fix Domain Weighting (CRITICAL)
+
 Change line 132 from `+1` to `+2` to match file/keyword weighting.
 
 ### Priority 2: Review MEDIUM-Risk Keywords
+
 Consider moving 'update' and 'change' to a neutral category or requiring 2+ medium factors instead of 1.
 
 ### Priority 3: Add Score Capping
+
 Prevent accumulation beyond meaningful distinction. Suggest:
+
 - Cap HIGH score at 5 (don't accumulate beyond HIGH level)
 - Or introduce CRITICAL level for 5+ factors
 
 ### Priority 4: Expand Test Coverage
+
 - Test all tool types (Bash, Edit, Write, Grep, Read, Glob)
 - Test score boundary conditions
 - Test performance with large inputs

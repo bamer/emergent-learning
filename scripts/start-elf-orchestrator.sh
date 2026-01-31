@@ -10,9 +10,9 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ELF_DIR="$(dirname "$SCRIPT_DIR")"
-AGENT_DIR="$ELF_DIR/agents"
-ORCHESTRATOR_SCRIPT="$AGENT_DIR/unified_orchestrator.py"
-LOGS_DIR="$ELF_DIR/logs"
+ORCHESTRATOR_DIR="$ELF_DIR/Open_ELF/orchestrator"
+ORCHESTRATOR_SCRIPT="$ORCHESTRATOR_DIR/orchestrator.py"
+LOGS_DIR="$ELF_DIR/Open_ELF/logs"
 
 # Colors for output
 RED='\033[0;31m'
@@ -106,7 +106,7 @@ fi
 cd "$ELF_DIR"
 
 # Check if orchestrator is already running
-if pgrep -f "unified_orchestrator.py" > /dev/null; then
+if pgrep -f "orchestrator.py" > /dev/null; then
     log_warning "Orchestrator is already running"
     log "Use './stop-elf-orchestrator.sh' to stop it first"
     exit 1

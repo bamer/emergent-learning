@@ -1268,6 +1268,7 @@ def main():
     # Lay trails for files mentioned in output
     try:
         output_content = ""
+        
         if isinstance(tool_output, dict):
             output_content = str(tool_output.get("content", ""))
         elif isinstance(tool_output, str):
@@ -1290,6 +1291,7 @@ def main():
 
     # Check for golden rule promotions
     conn = get_db_connection()
+    tool_output = hook_input.get("tool_output", hook_input.get("output", {}))
     if conn:
         check_golden_rule_promotion(conn)
         conn.close()

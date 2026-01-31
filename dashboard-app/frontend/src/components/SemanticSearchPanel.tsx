@@ -6,11 +6,12 @@ interface SearchResult {
   source_id: string
   source_type: string
   similarity: number
-  text: string
+  text?: string
   metadata?: {
     path?: string
     size?: number
     indexed_at?: string
+    text?: string
   }
   created_at?: string
 }
@@ -102,6 +103,23 @@ export function SemanticSearchPanel() {
     return 'text-slate-400'
   }
 
+  const getResultContent = (result: SearchResult): string => {
+    if (result.text && typeof result.text === 'string') {
+      return result.text
+    }
+    if (result.metadata?.text && typeof result.metadata.text === 'string') {
+      return result.metadata.text
+    }
+    if (result.metadata) {
+      try {
+        return JSON.stringify(result.metadata, null, 2)
+      } catch {
+        return 'No content available'
+      }
+    }
+    return 'No content available'
+  }
+
   return (
     <div className="space-y-6">
       {/* Search Header */}
@@ -169,11 +187,11 @@ export function SemanticSearchPanel() {
               <input
                 type="range"
                 min="0"
-                max="0.8"
-                step="0.05"
+                max="1.0"
+                step="0.01"
                 value={minSimilarity}
                 onChange={(e) => setMinSimilarity(parseFloat(e.target.value))}
-                className="w-20 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                className="w-32 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500"
               />
               <span className="text-sm text-cyan-400 font-mono w-12">{(minSimilarity * 100).toFixed(0)}%</span>
             </div>
@@ -211,9 +229,9 @@ export function SemanticSearchPanel() {
           </div>
 
           <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-            {results.map((result) => (
+            {results.map((result, index) => (
               <div
-                key={result.id}
+                key={result.id || `result-${index}`}
                 className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-lg p-4 hover:border-cyan-500/30 transition-colors"
               >
                 {/* Header */}
@@ -221,15 +239,15 @@ export function SemanticSearchPanel() {
                   <div className="flex items-center gap-3">
                     <FileCode className="w-4 h-4 text-slate-400" />
                     <span className="text-sm font-medium text-white">
-                      {result.source_id}
+                      {result.source_id || 'Unknown'}
                     </span>
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${getSourceTypeColor(result.source_type)}`}>
-                      {result.source_type}
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${getSourceTypeColor(result.source_type || 'unknown')}`}>
+                      {result.source_type || 'unknown'}
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`text-sm font-mono ${getSimilarityColor(result.similarity)}`}>
-                      {(result.similarity * 100).toFixed(1)}% match
+                    <span className={`text-sm font-mono ${getSimilarityColor(result.similarity || 0)}`}>
+                      {((result.similarity || 0) * 100).toFixed(1)}% match
                     </span>
                     {result.metadata?.path && (
                       <button
@@ -248,7 +266,10 @@ export function SemanticSearchPanel() {
 
                 {/* Content Preview */}
                 <pre className="text-sm text-slate-300 bg-slate-900/50 rounded-lg p-3 overflow-x-auto max-h-48 overflow-y-auto">
-                  <code>{result.text.slice(0, 500)}{result.text.length > 500 ? '...' : ''}</code>
+                  <code>{(() => {
+                    const content = getResultContent(result)
+                    return content.slice(0, 500) + (content.length > 500 ? '...' : '')
+                  })()}</code>
                 </pre>
 
                 {/* Metadata */}

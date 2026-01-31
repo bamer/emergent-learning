@@ -55,7 +55,7 @@ done
 log "Stopping ELF Unified Orchestrator..."
 
 # Look for running orchestrator processes
-ORCHESTRATOR_PIDS=$(pgrep -f "unified_orchestrator.py" || true)
+ORCHESTRATOR_PIDS=$(pgrep -f "orchestrator.py" || true)
 
 if [ -n "$ORCHESTRATOR_PIDS" ]; then
     log "Found orchestrator processes: $ORCHESTRATOR_PIDS"

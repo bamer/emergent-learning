@@ -1,8 +1,8 @@
 {
   "orchestrator": {
     "running": true,
-    "start_time": "2026-01-31T20:00:02.445088",
-    "uptime_seconds": 490
+    "start_time": "2026-01-31T22:12:38.097121",
+    "uptime_seconds": 210
   },
   "agents": {
     "orchestrator": {
@@ -13,47 +13,47 @@
       "error_count": 0,
       "restart_count": 0,
       "last_activity": null,
-      "start_time": "2026-01-31T20:00:02.445093"
+      "start_time": "2026-01-31T22:12:38.097123"
     },
     "sentinel": {
       "name": "Sentinel",
       "status": "running",
       "icon": "\ud83d\udd0d",
-      "session_id": "ses_3ebdc69f0ffe5wWQm16r1aKiMU",
+      "session_id": "ses_3eb63052cffeQd5bo0rltOsPQK",
       "error_count": 0,
       "restart_count": 0,
-      "last_activity": "2026-01-31T20:00:02.448501",
-      "start_time": "2026-01-31T20:00:02.448504"
+      "last_activity": "2026-01-31T22:12:38.100366",
+      "start_time": "2026-01-31T22:12:38.100370"
     },
     "watcher": {
       "name": "Watcher",
-      "status": "stopped",
+      "status": "running",
       "icon": "\ud83d\udc41\ufe0f",
-      "session_id": null,
+      "session_id": "ses_3eb63052affecq8oC1QmKrs7Ww",
       "error_count": 0,
       "restart_count": 0,
-      "last_activity": "2026-01-31T20:00:02.450694",
-      "start_time": "2026-01-31T20:00:02.450697"
+      "last_activity": "2026-01-31T22:12:38.102759",
+      "start_time": "2026-01-31T22:12:38.102762"
     },
     "researcher": {
       "name": "Researcher",
-      "status": "running",
+      "status": "stopped",
       "icon": "\ud83d\udd2c",
-      "session_id": "ses_3ebdbe114ffeo0pTu6tTHnjMdd",
+      "session_id": null,
       "error_count": 0,
       "restart_count": 0,
-      "last_activity": "2026-01-31T20:00:37.484719",
-      "start_time": "2026-01-31T20:00:37.484722"
+      "last_activity": null,
+      "start_time": null
     },
     "architect": {
       "name": "Architect",
-      "status": "running",
+      "status": "stopped",
       "icon": "\ud83c\udfd7\ufe0f",
-      "session_id": "ses_3ebd9134affeZnRahEK7VuRhmw",
+      "session_id": null,
       "error_count": 0,
       "restart_count": 0,
-      "last_activity": "2026-01-31T20:03:41.238725",
-      "start_time": "2026-01-31T20:03:41.238730"
+      "last_activity": null,
+      "start_time": null
     },
     "skeptic": {
       "name": "Skeptic",
@@ -87,13 +87,13 @@
     }
   },
   "stats": {
-    "agents_started": 4,
-    "agents_stopped": 1,
+    "agents_started": 2,
+    "agents_stopped": 0,
     "agents_crashed": 0,
     "errors_handled": 0,
     "escalations": 0,
     "uptime_seconds": 0
   },
   "escalations": 0,
-  "_last_updated": "2026-01-31T20:08:12.506940"
+  "_last_updated": "2026-01-31T22:16:08.120754"
 }
