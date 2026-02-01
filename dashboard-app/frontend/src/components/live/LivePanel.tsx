@@ -230,7 +230,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
       {/* Main Content */}
       <div className="flex-1 overflow-y-scroll">
         {viewMode === 'agents' ? (
-          <AgentsPanel />
+          <AgentsPanel apiBaseUrl={apiBaseUrl} />
         ) : (
           <div className="flex h-full">
             {/* Left: Task Kanban */}

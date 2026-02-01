@@ -14,3 +14,13 @@ When schema migrations fail with missing column/table errors, the database struc
 
 ---
 
+## H-56: Not all tasks require complex analysis - simple requests should get direct responses without over-engineering This is a valuable heuristic about recognizing when to apply minimal vs. maximal effort, which is crucial for efficiency and avoiding unnecessary complexity.
+
+**Confidence**: 0.6
+**Source**: observation
+**Created**: 2026-02-01
+
+
+
+---
+

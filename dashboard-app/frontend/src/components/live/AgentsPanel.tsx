@@ -119,6 +119,11 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [callingAgent, setCallingAgent] = useState<string | null>(null);
   const [testResponse, setTestResponse] = useState<string | null>(null);
+  const [testedAgentKey, setTestedAgentKey] = useState<string | null>(null);
+  const [startingAgentKey, setStartingAgentKey] = useState<string | null>(null);
+  
+  // Helper to generate unique key for each agent (using name which is unique per agent)
+  const getAgentKey = (agent: Agent) => `${agent.name}-${agent.system}`;
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [missionText, setMissionText] = useState('');
   const [showMissionModal, setShowMissionModal] = useState(false);
@@ -238,18 +243,29 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
     return () => clearInterval(interval);
   }, [fetchAgents]);
 
-  const handleStartAgent = async (agentType: string) => {
+  const handleStartAgent = async (agent: Agent) => {
+    setStartingAgentKey(getAgentKey(agent));
     try {
+      if (agent.system === 'opencode') {
+        console.info("Starting OpenCode agent via delegate_task:", agent.id);
+        // Simulate delegate_task call (would be handled via WebSocket/backend)
+        delegate_task({
+          subagent_type: agent.id,
+          prompt: `Start ${agent.display_name}
+      }
+      
       const response = await fetch(`${apiBaseUrl}/api/v1/agents/spawn`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent_type: agentType }),
+        body: JSON.stringify({ agent_type: agent.type }),
       });
       if (!response.ok) throw new Error(`Failed to start agent: ${response.statusText}`);
       fetchAgents(true);
     } catch (err) {
       console.error('Failed to start agent:', err);
       setError(err instanceof Error ? err.message : 'Failed to start agent');
+    } finally {
+      setStartingAgentKey(null);
     }
   };
 
@@ -268,15 +284,17 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
     }
   };
 
-  const handleTestAgent = async (agentType: string) => {
-    setCallingAgent(agentType);
+  const handleTestAgent = async (agent: Agent) => {
+    const agentKey = getAgentKey(agent);
+    setCallingAgent(agentKey);
+    setTestedAgentKey(agentKey);
     setTestResponse(null);
     
     try {
       const response = await fetch(`${apiBaseUrl}/api/v1/agents/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent_type: agentType }),
+        body: JSON.stringify({ agent_type: agent.name }),
       });
       
       if (!response.ok) throw new Error(`Failed to test agent: ${response.statusText}`);
@@ -428,7 +446,7 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
                   <option value="">Loading models...</option>
                 )}
                 {availableModels.map((model) => (
-                  <option key={model.id} value={model.id}>
+                  <option key={`${model.provider_id}-${model.id}`} value={model.id}>
                     {model.name} {model.is_default ? '(default)' : ''} - {model.provider}
                   </option>
                 ))}
@@ -666,22 +684,31 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
                       </button>
                     ) : (
                       <button
-                        onClick={() => handleStartAgent(agent.type)}
-                        className="flex items-center gap-1 px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 rounded text-xs"
-                        title="Start agent"
+                        onClick={() => handleStartAgent(agent)}
+                        disabled={startingAgentKey === getAgentKey(agent) || agent.system === 'opencode'}
+                        className={`flex items-center gap-1 px-2 py-1 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed ${
+                          agent.system === 'opencode'
+                            ? 'bg-slate-600/20 text-slate-500'
+                            : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400'
+                        }`}
+                        title={agent.system === 'opencode' ? 'OpenCode agents cannot be started via ELF' : 'Start agent'}
                       >
-                        <Play className="w-3 h-3" />
+                        {startingAgentKey === getAgentKey(agent) ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Play className="w-3 h-3" />
+                        )}
                         Start
                       </button>
                     )}
                     
                     <button
-                      onClick={() => handleTestAgent(agent.type)}
-                      disabled={callingAgent === agent.type}
+                      onClick={() => handleTestAgent(agent)}
+                      disabled={callingAgent === getAgentKey(agent)}
                       className="flex items-center gap-1 px-2 py-1 bg-violet-600/20 hover:bg-violet-600/30 text-violet-400 rounded text-xs disabled:opacity-50"
                       title="Test agent"
                     >
-                      {callingAgent === agent.type ? (
+                      {callingAgent === getAgentKey(agent) ? (
                         <RefreshCw className="w-3 h-3 animate-spin" />
                       ) : (
                         <Activity className="w-3 h-3" />
@@ -700,7 +727,7 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
                   </div>
 
                   {/* Test Response */}
-                  {testResponse && callingAgent === null && selectedAgent?.id === agent.id && (
+                  {testResponse && testedAgentKey === getAgentKey(agent) && (
                     <div className="mt-3 p-2 bg-slate-700/50 rounded text-xs">
                       <div className="font-semibold text-slate-300 mb-1">Response:</div>
                       <div className="text-slate-400 whitespace-pre-wrap">

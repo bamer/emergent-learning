@@ -8,7 +8,7 @@ This hook implements mid-stream semantic memory injection:
 3. Pull relevant heuristics from vector DB
 4. Inject them synchronously before tool execution
 
-The result: Self-correcting Claude workflows that stay relevant as context drifts.
+The result: Self-correcting Opencode workflows that stay relevant as context drifts.
 """
 
 import json

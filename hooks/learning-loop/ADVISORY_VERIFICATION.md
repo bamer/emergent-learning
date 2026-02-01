@@ -6,7 +6,7 @@ The Advisory Verification system analyzes Edit and Write tool operations for ris
 
 ## Philosophy
 
-**Advisory Only, Human Decides**
+## Advisory Only, Human Decides
 
 - Warnings are surfaced to stderr and logged to the building
 - Operations always proceed (decision: "approve")
@@ -38,6 +38,7 @@ The system checks for risky patterns in **newly added lines only** (not existing
 Patterns are defined in `security_patterns.py` (not post_tool_learning.py).
 
 #### Code Risks (13 patterns)
+
 - `eval()` / `exec()` - code injection
 - `shell=True` in subprocess - command injection risk
 - Hardcoded passwords (3 formats: assignment, JSON, string literal)
@@ -47,29 +48,35 @@ Patterns are defined in `security_patterns.py` (not post_tool_learning.py).
 - SQL injection patterns (string concatenation in queries)
 
 #### File Operation Risks (3 patterns)
+
 - `rm -rf /` - dangerous recursive delete
 - `chmod 777` - overly permissive permissions
 - Writing to `/etc/` - system config modification
 
 #### Deserialization Risks (3 patterns)
+
 - `pickle.load/loads` - insecure deserialization
 - `yaml.load` without SafeLoader - code execution risk
 - `marshal.load/loads` - insecure deserialization
 
 #### Cryptography Risks (3 patterns)
+
 - `hashlib.md5()` - cryptographically weak
 - `hashlib.sha1()` - cryptographically weak for passwords
 - `random` module - not cryptographically secure (use `secrets`)
 
 #### Command Injection Risks (2 patterns)
+
 - `os.system()` - prefer subprocess with shell=False
 - `os.popen()` - command injection risk
 
 #### Path Traversal Risks (2 patterns)
+
 - `../../` or `..\..` - directory traversal
 - `open()` with user input concatenation
 
 #### Network Risks (2 patterns)
+
 - `verify=False` - SSL verification disabled
 - `ssl._create_unverified_context` - insecure SSL
 
@@ -78,17 +85,20 @@ Patterns are defined in `security_patterns.py` (not post_tool_learning.py).
 ### 3. Warning Levels
 
 **Single Warning:**
-```
+
+```markdown
 ⚠️ Review flagged items before proceeding
 ```
 
 **Multiple Warnings (3+):**
-```
+
+```markdown
 ⚠️ Multiple concerns - consider CEO escalation
 ```
 
 **No Warnings:**
-```
+
+```markdown
 No concerns detected.
 ```
 
@@ -96,14 +106,14 @@ No concerns detected.
 
 When a risky pattern is detected:
 
-```
+```markdown
 [ADVISORY] code: eval() detected - potential code injection risk
            Line: result = eval(user_input)
 ```
 
 For multiple warnings:
 
-```
+```markdown
 [ADVISORY] code: eval() detected - potential code injection risk
            Line: result = eval(user_input)
 [ADVISORY] code: Hardcoded password detected
@@ -123,6 +133,7 @@ VALUES ('advisory_warning', 'code', 1, 'file:/path/to/file.py', 'eval() detected
 ```
 
 This allows:
+
 - Dashboard visualization of risky operations
 - Pattern analysis over time
 - Hotspot identification (which files get frequent warnings)
@@ -177,6 +188,7 @@ python test_new_categories.py
 **Total: 81 tests across 4 test files**
 
 Tests verify:
+
 - Pattern detection works correctly
 - Only new lines are checked (not existing code)
 - Safe code doesn't trigger false positives

@@ -5,6 +5,7 @@
 **Status: ROBUST - No blockers found**
 
 ComplexityScorer handles edge cases gracefully and correctly. All 40+ test cases passed without crashes. The implementation demonstrates:
+
 - Proper defensive programming against malformed inputs
 - Correct pattern matching with regex
 - Deterministic scoring
@@ -55,6 +56,7 @@ ComplexityScorer handles edge cases gracefully and correctly. All 40+ test cases
 ### [fact] Pattern Matching Works Correctly
 
 High-risk patterns verified:
+
 ```python
 r'\.env'     -> Matches ".env", ".envrc", "my.env" (correct regex)
 r'auth'      -> Matches "auth", "authentication" (substring match)
@@ -67,6 +69,7 @@ r'rm -rf'    -> Multi-word keyword match (case-insensitive)
 ### [fact] Scoring Logic is Correct
 
 Score thresholds work as designed:
+
 ```
 HIGH ≥ 2 HIGH risk points  → "HIGH" level
 HIGH ≥ 1 OR MEDIUM ≥ 3     → "MEDIUM" level
@@ -75,6 +78,7 @@ Neither                    → "LOW" level
 ```
 
 Examples:
+
 - "delete password" (2 high keywords) → HIGH ✓
 - "update config schema" (3 medium keywords) → MEDIUM ✓
 - "add documentation" (no patterns) → LOW ✓
@@ -82,6 +86,7 @@ Examples:
 ### [fact] Return Structure Always Valid
 
 Every call returns:
+
 ```python
 {
     'level': str in ['HIGH', 'MEDIUM', 'LOW-MEDIUM', 'LOW'],
@@ -95,6 +100,7 @@ No missing fields, no malformed responses.
 ### [fact] Scoring is Deterministic
 
 Same input always produces same output:
+
 ```python
 scorer.score(...) → result1
 scorer.score(...) → result2
@@ -106,17 +112,20 @@ result1 == result2  # Always true
 **However, observe expected exception handling:**
 
 Non-dict `tool_input` → `AttributeError` (expected)
+
 ```python
 scorer.score('Task', "invalid", [])  # Raises AttributeError on .get()
 ```
 
 Non-list `domains` → May iterate unexpectedly, but **doesn't crash**
+
 ```python
 scorer.score('Task', {}, "string")  # Iterates over string characters (safe)
 scorer.score('Task', {}, {"a": 1})  # Iterates over dict keys (safe)
 ```
 
 These are NOT blockers because:
+
 1. Hook input validation should ensure proper types
 2. Exceptions are appropriate for invalid inputs
 3. No data loss or incorrect results occur
@@ -126,6 +135,7 @@ These are NOT blockers because:
 ## Edge Cases Tested
 
 ### 1. Empty/Minimal Inputs
+
 - [x] Empty prompt dict
 - [x] Empty prompt string
 - [x] Empty domains list
@@ -133,6 +143,7 @@ These are NOT blockers because:
 - [x] None values (expected TypeError)
 
 ### 2. Data Type Edge Cases
+
 - [x] Unicode (Chinese) in prompt
 - [x] Emoji characters in prompt
 - [x] Very long prompts (10,000+ chars)
@@ -140,6 +151,7 @@ These are NOT blockers because:
 - [x] Numeric domain strings
 
 ### 3. Pattern Matching
+
 - [x] Regex pattern `.env` (dot-escaped)
 - [x] Substring patterns like `auth`, `crypto`
 - [x] Multi-word keywords like `rm -rf`
@@ -147,6 +159,7 @@ These are NOT blockers because:
 - [x] Patterns in file paths vs task descriptions
 
 ### 4. Tool Variants
+
 - [x] Task tool
 - [x] Bash tool (with `rm -rf`)
 - [x] Grep tool (with `pattern` and `path`)
@@ -154,6 +167,7 @@ These are NOT blockers because:
 - [x] Write/Edit tools
 
 ### 5. Score Boundary Conditions
+
 - [x] 0 risk points → LOW
 - [x] 1 medium point → LOW-MEDIUM
 - [x] 2+ medium points → MEDIUM
@@ -161,6 +175,7 @@ These are NOT blockers because:
 - [x] 2+ high points → HIGH
 
 ### 6. Robustness
+
 - [x] None tool_input (raises AttributeError)
 - [x] String tool_input (raises AttributeError)
 - [x] Non-list domains (handles by iteration)
@@ -174,6 +189,7 @@ These are NOT blockers because:
 ### [hypothesis] Production Domain Doesn't Trigger HIGH Alone
 
 Domain `'production'` is marked as HIGH_RISK but only contributes 1 point.
+
 - `HIGH_RISK_PATTERNS['domains']` includes `'production'`
 - Score threshold for HIGH requires ≥ 2 points
 - Therefore: `production` domain alone → score 1 → does NOT trigger HIGH
@@ -183,6 +199,7 @@ This is **by design**, not a bug. Single domain mentions don't justify HIGH.
 ### [hypothesis] Case Handling is Consistent
 
 All keyword and pattern matching is done on lowercased text:
+
 ```python
 text_lower = text.lower()
 if keyword in text_lower:
@@ -215,6 +232,7 @@ If modifying ComplexityScorer, verify:
 **ComplexityScorer is production-ready for edge case handling.**
 
 No critical issues found. The implementation:
+
 1. Handles malformed input gracefully (or raises expected exceptions)
 2. Processes Unicode and long inputs without crashing
 3. Matches patterns correctly using regex

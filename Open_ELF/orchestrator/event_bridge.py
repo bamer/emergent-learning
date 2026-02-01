@@ -68,6 +68,17 @@ class HookManager:
                 # Préparer les données pour le hook
                 hook_input = json.dumps(event_data)
 
+                # Préparer l'environnement avec le chemin ELF
+                hook_env = dict(subprocess.os.environ)
+                hook_env["ELF_BASE_PATH"] = str(self.elf_dir)
+
+                # Ajouter le répertoire ELF au PYTHONPATH pour les imports
+                python_path = hook_env.get("PYTHONPATH", "")
+                if python_path:
+                    hook_env["PYTHONPATH"] = f"{self.elf_dir}:{python_path}"
+                else:
+                    hook_env["PYTHONPATH"] = str(self.elf_dir)
+
                 # Exécuter le hook avec les données en stdin
                 proc = subprocess.Popen(
                     [sys.executable, str(hook_file)],
@@ -75,10 +86,7 @@ class HookManager:
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     cwd=str(self.elf_dir),
-                    env={
-                        **dict(subprocess.os.environ),
-                        "ELF_BASE_PATH": str(self.elf_dir),
-                    },
+                    env=hook_env,
                 )
 
                 stdout, stderr = proc.communicate(input=hook_input.encode(), timeout=30)
@@ -141,6 +149,10 @@ class EventBridge:
         events_thread = threading.Thread(target=self._listen_events, daemon=True)
         events_thread.start()
 
+        # Démarrer le polling des sessions (pour capturer l'activité même sans SSE)
+        polling_thread = threading.Thread(target=self._poll_sessions, daemon=True)
+        polling_thread.start()
+
         # Démarrer le serveur HTTP pour le status
         self._start_status_server()
 
@@ -154,7 +166,7 @@ class EventBridge:
             try:
                 # Se connecter au stream SSE
                 response = requests.get(
-                    f"{self.base_url}/events",
+                    f"{self.base_url}/event",
                     stream=True,
                     headers={
                         "Accept": "text/event-stream",
@@ -188,6 +200,81 @@ class EventBridge:
                 logger.error(f"❌ Error listening to events: {e}")
                 time.sleep(5)
 
+    def _poll_sessions(self):
+        """Poll les sessions actives pour détecter les outils utilisés."""
+        logger.info("🔄 Starting session polling...")
+
+        # Tracker les messages déjà vus par session
+        seen_messages = {}
+
+        while self.running:
+            try:
+                # Récupérer toutes les sessions
+                response = requests.get(f"{self.base_url}/session", timeout=10)
+                if response.status_code != 200:
+                    time.sleep(30)
+                    continue
+
+                sessions = response.json()
+
+                for session in sessions:
+                    session_id = session.get("id")
+                    if not session_id:
+                        continue
+
+                    # Récupérer les messages de cette session
+                    msg_response = requests.get(
+                        f"{self.base_url}/session/{session_id}/message", timeout=10
+                    )
+
+                    if msg_response.status_code != 200:
+                        continue
+
+                    messages = msg_response.json()
+
+                    # Initialiser le tracker pour cette session
+                    if session_id not in seen_messages:
+                        seen_messages[session_id] = set()
+
+                    # Traiter les nouveaux messages
+                    for msg in messages:
+                        msg_id = msg.get("info", {}).get("id")
+                        if not msg_id or msg_id in seen_messages[session_id]:
+                            continue
+
+                        seen_messages[session_id].add(msg_id)
+
+                        # Vérifier si c'est un message avec des outils
+                        parts = msg.get("parts", [])
+                        for part in parts:
+                            if part.get("type") == "tool_use":
+                                tool_name = part.get("tool", "unknown")
+                                tool_input = part.get("input", {})
+
+                                logger.info(
+                                    f"🔧 Tool detected via polling: {tool_name}"
+                                )
+
+                                # Déclencher le hook
+                                hook_data = {
+                                    "event_type": "PostToolUse",
+                                    "tool_name": tool_name,
+                                    "tool_input": tool_input,
+                                    "tool_output": {},
+                                    "success": True,
+                                    "session_id": session_id,
+                                    "timestamp": datetime.now().isoformat(),
+                                }
+
+                                self.hook_manager.run_hook("PostToolUse", hook_data)
+
+                # Attendre avant le prochain poll
+                time.sleep(30)
+
+            except Exception as e:
+                logger.error(f"❌ Error polling sessions: {e}")
+                time.sleep(30)
+
     def _process_sse_line(self, line: str):
         """Traite une ligne SSE."""
         # Format SSE: data: {...}
@@ -215,6 +302,10 @@ class EventBridge:
             self._handle_message_event(event)
         elif event_type == "tool":
             self._handle_tool_event(event)
+        elif event_type == "error":
+            self._handle_error_event(event)
+        elif event_type == "failure":
+            self._handle_failure_event(event)
         elif event_type == "session.created":
             self._handle_session_created(event)
         elif event_type == "thinking":
@@ -299,6 +390,16 @@ class EventBridge:
 
         self.hook_manager.run_hook("PostToolUse", post_tool_data)
 
+        # Si échec, déclencher aussi le learning-loop pour enregistrer l'échec
+        if not success:
+            logger.warning(f"⚠️ Tool {tool_name} failed - triggering learning hooks")
+            failure_data = {
+                **post_tool_data,
+                "event_type": "ToolFailure",
+                "failure_reason": tool_output.get("error", "Tool execution failed"),
+            }
+            self.hook_manager.run_hook("learning-loop", failure_data)
+
     def _handle_session_created(self, event: Dict[str, Any]):
         """Gère la création d'une session."""
         props = event.get("properties", {})
@@ -330,8 +431,63 @@ class EventBridge:
 
         self.hook_manager.run_hook("PreToolUse", hook_data)
 
+    def _handle_error_event(self, event: Dict[str, Any]):
+        """Gère un event d'erreur - enregistre l'échec pour le learning."""
+        props = event.get("properties", {})
+        error_message = props.get("message", "Unknown error")
+        error_type = props.get("error_type", "error")
+        session_id = props.get("session_id")
+        tool_name = props.get("tool", "unknown")
+
+        logger.error(f"❌ Error detected: {error_type} - {error_message[:100]}")
+
+        # Hook pour enregistrer l'échec
+        hook_data = {
+            "event_type": "Error",
+            "error_type": error_type,
+            "error_message": error_message,
+            "tool_name": tool_name,
+            "session_id": session_id,
+            "timestamp": datetime.now().isoformat(),
+            "success": False,
+        }
+
+        # Déclencher PostToolUse avec l'échec
+        self.hook_manager.run_hook("PostToolUse", hook_data)
+
+        # Déclencher aussi un hook spécifique pour les erreurs
+        self.hook_manager.run_hook("learning-loop", hook_data)
+
+    def _handle_failure_event(self, event: Dict[str, Any]):
+        """Gère un event de failure - enregistre l'échec pour le learning."""
+        props = event.get("properties", {})
+        failure_reason = props.get("reason", "Unknown failure")
+        session_id = props.get("session_id")
+        tool_name = props.get("tool", "unknown")
+        tool_input = props.get("input", {})
+
+        logger.error(f"💥 Failure detected: {failure_reason[:100]}")
+
+        # Hook pour enregistrer l'échec
+        hook_data = {
+            "event_type": "Failure",
+            "failure_reason": failure_reason,
+            "tool_name": tool_name,
+            "tool_input": tool_input,
+            "session_id": session_id,
+            "timestamp": datetime.now().isoformat(),
+            "success": False,
+        }
+
+        # Déclencher PostToolUse avec l'échec
+        self.hook_manager.run_hook("PostToolUse", hook_data)
+
+        # Déclencher aussi un hook spécifique pour les échecs
+        self.hook_manager.run_hook("learning-loop", hook_data)
+
     def _start_status_server(self):
         """Démarre un serveur HTTP simple pour exposer le status."""
+        bridge = self  # Capture reference to EventBridge instance
 
         class StatusHandler(BaseHTTPRequestHandler):
             def do_GET(handler_self):
@@ -341,10 +497,10 @@ class EventBridge:
                     handler_self.end_headers()
 
                     status = {
-                        "running": self.running,
-                        "events_processed": self.event_count,
-                        "hooks_dir": str(self.hooks_dir),
-                        "opencode_server": self.base_url,
+                        "running": bridge.running,
+                        "events_processed": bridge.event_count,
+                        "hooks_dir": str(bridge.hook_manager.hooks_dir),
+                        "opencode_server": bridge.base_url,
                     }
                     handler_self.wfile.write(json.dumps(status).encode())
                 else:

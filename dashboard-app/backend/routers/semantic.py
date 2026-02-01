@@ -197,8 +197,8 @@ async def semantic_search(request: SemanticSearchRequest):
             # Cap at 1.0
             similarity = min(1.0, similarity)
 
-            # Filter by min_similarity (but always return at least top 3 results)
-            if similarity < request.min_similarity and len(results) >= 3:
+            # Filter by min_similarity
+            if similarity < request.min_similarity:
                 continue
 
             results.append(

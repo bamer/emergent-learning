@@ -7,6 +7,7 @@ Provides Server-Sent Events (SSE) for live dashboard updates.
 import asyncio
 import json
 import logging
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any, List
@@ -99,8 +100,16 @@ def _load_tasks_from_dir() -> Dict[str, List[Dict[str, Any]]]:
                 logger.warning(f"Failed to load task file {task_file}: {e}")
 
         if tasks:
-            # Sort by ID (numeric)
-            tasks.sort(key=lambda t: int(t.get("id", 0)))
+            # Sort by ID (extract numeric part if present)
+            def extract_numeric_id(task_id):
+                # Try to extract numeric part from IDs like "architect_m1769888197"
+                match = re.search(r"m(\d+)", str(task_id))
+                if match:
+                    return int(match.group(1))
+                # Fallback to string comparison
+                return str(task_id)
+
+            tasks.sort(key=lambda t: extract_numeric_id(t.get("id", "")))
             sessions[session_id] = tasks
 
     return sessions
