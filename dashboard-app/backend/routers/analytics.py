@@ -558,3 +558,34 @@ async def get_anomalies():
             )
 
     return anomalies
+
+
+@router.get("/pheromone-trails")
+async def get_pheromone_trails(days: int = 7, limit: int = 50):
+    """Get pheromone trails aggregated by file path."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT
+                file_path,
+                tool_name,
+                access_count,
+                total_weight,
+                first_access,
+                last_access
+            FROM pheromone_trails
+            WHERE last_access > datetime('now', ?)
+            ORDER BY total_weight DESC, last_access DESC
+            LIMIT ?
+        """,
+            (f"-{days} days", limit),
+        )
+
+        trails = []
+        for row in cursor.fetchall():
+            trail = dict_from_row(row)
+            trails.append(trail)
+
+        return trails

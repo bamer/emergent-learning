@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react'
-import { Copy, Check, ArrowDown, ArrowUp } from 'lucide-react'
+import { Copy, Check, ArrowDown, ArrowUp, PanelRightOpen, PanelRightClose } from 'lucide-react'
 
 export interface Trail {
   id: number
@@ -15,6 +15,8 @@ interface TrailFeedProps {
   trails: Trail[]
   autoScroll: boolean
   onAutoScrollChange: (enabled: boolean) => void
+  collapsed?: boolean
+  onToggleCollapse?: () => void
 }
 
 const SCENT_CONFIG: Record<string, { color: string; bgColor: string; emoji: string; label: string }> = {
@@ -162,9 +164,30 @@ function TrailCard({ trail }: { trail: Trail }) {
   )
 }
 
-export function TrailFeed({ trails, autoScroll, onAutoScrollChange }: TrailFeedProps) {
+export function TrailFeed({ trails, autoScroll, onAutoScrollChange, collapsed = false, onToggleCollapse }: TrailFeedProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isAtBottom, setIsAtBottom] = useState(true)
+
+  if (collapsed) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center justify-center px-2 py-2 border-b border-slate-700/50">
+          <button
+            onClick={onToggleCollapse}
+            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800 rounded transition-colors"
+            title="Expand trails panel"
+          >
+            <PanelRightOpen className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-xs text-slate-600 writing-mode-vertical rotate-180" style={{ writingMode: 'vertical-rl' }}>
+            {trails.length} trails
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Auto-scroll to top when new trails arrive (newest at top)
   useEffect(() => {
@@ -210,6 +233,13 @@ export function TrailFeed({ trails, autoScroll, onAutoScrollChange }: TrailFeedP
             title={autoScroll ? 'Auto-scroll on' : 'Auto-scroll off'}
           >
             <ArrowUp className="w-3 h-3" />
+          </button>
+          <button
+            onClick={onToggleCollapse}
+            className="p-1 text-slate-500 hover:text-slate-400 hover:bg-slate-800 rounded transition-colors"
+            title="Collapse trails panel"
+          >
+            <PanelRightClose className="w-3 h-3" />
           </button>
         </div>
       </div>

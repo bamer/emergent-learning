@@ -25,6 +25,9 @@ interface TaskKanbanProps {
   onTaskSelect: (task: Task | null) => void
   selectedTask: Task | null
   apiBaseUrl?: string
+  onStartTask?: (sessionId: string, taskId: string) => void
+  onStopTask?: (sessionId: string, taskId: string) => void
+  onRelaunchTask?: (sessionId: string, taskId: string) => void
 }
 
 const STATUS_CONFIG = {
@@ -78,9 +81,9 @@ function TaskCard({
   isSelected: boolean
   onClick: () => void
   allTasks: Task[]
-  onStartTask?: (task: Task) => void
-  onStopTask?: (task: Task) => void
-  onRelaunchTask?: (task: Task) => void
+  onStartTask?: (sessionId: string, taskId: string) => void
+  onStopTask?: (sessionId: string, taskId: string) => void
+  onRelaunchTask?: (sessionId: string, taskId: string) => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const config = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending
@@ -97,22 +100,19 @@ function TaskCard({
   // Handle task actions
   const handleStart = () => {
     if (onStartTask && task.session_id && task.id) {
-      const taskId = `${task.session_id.replace(/^elf_/, '')}_${task.id}`
-      onStartTask(taskId)
+      onStartTask(task.session_id, task.id)
     }
   }
   
   const handleStop = () => {
     if (onStopTask && task.session_id && task.id) {
-      const taskId = `${task.session_id.replace(/^elf_/, '')}_${task.id}`
-      onStopTask(taskId)
+      onStopTask(task.session_id, task.id)
     }
   }
   
   const handleRelaunch = () => {
     if (onRelaunchTask && task.session_id && task.id) {
-      const taskId = `${task.session_id.replace(/^elf_/, '')}_${task.id}`
-      onRelaunchTask(taskId)
+      onRelaunchTask(task.session_id, task.id)
     }
   }
   
@@ -219,6 +219,9 @@ function KanbanColumn({
   selectedTask,
   onTaskSelect,
   allTasks,
+  onStartTask,
+  onStopTask,
+  onRelaunchTask,
 }: {
   title: string
   tasks: Task[]
@@ -226,11 +229,14 @@ function KanbanColumn({
   selectedTask: Task | null
   onTaskSelect: (task: Task | null) => void
   allTasks: Task[]
+  onStartTask?: (sessionId: string, taskId: string) => void
+  onStopTask?: (sessionId: string, taskId: string) => void
+  onRelaunchTask?: (sessionId: string, taskId: string) => void
 }) {
   const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending
 
   return (
-    <div className="flex-1 min-w-[250px] flex flex-col">
+    <div className="flex-1 min-w-[250px] max-w-[400px] flex flex-col h-full">
       <div className={`flex items-center gap-2 px-3 py-2 rounded-t-lg ${config.bgColor} border-b ${config.borderColor}`}>
         <span className={`text-xs font-bold tracking-wider ${config.color}`}>
           {title}
@@ -239,7 +245,7 @@ function KanbanColumn({
           {tasks.length}
         </span>
       </div>
-      <div className="flex-1 p-2 space-y-2 bg-slate-900/50 rounded-b-lg border border-t-0 border-slate-700/50 overflow-y-auto max-h-[60vh]">
+      <div className="flex-1 p-2 space-y-2 bg-slate-900/50 rounded-b-lg border border-t-0 border-slate-700/50 overflow-y-auto min-h-0">
         {tasks.length === 0 ? (
           <div className="text-xs text-slate-600 text-center py-4">No tasks</div>
         ) : (
@@ -254,6 +260,9 @@ function KanbanColumn({
                   : task
               )}
               allTasks={allTasks}
+              onStartTask={onStartTask}
+              onStopTask={onStopTask}
+              onRelaunchTask={onRelaunchTask}
             />
           ))
         )}
@@ -268,6 +277,9 @@ export function TaskKanban({
   onSessionSelect,
   onTaskSelect,
   selectedTask,
+  onStartTask,
+  onStopTask,
+  onRelaunchTask,
 }: TaskKanbanProps) {
   // Get all tasks from selected session or all sessions
   const allTasks = selectedSession
@@ -315,6 +327,9 @@ export function TaskKanban({
           selectedTask={selectedTask}
           onTaskSelect={onTaskSelect}
           allTasks={allTasks}
+          onStartTask={onStartTask}
+          onStopTask={onStopTask}
+          onRelaunchTask={onRelaunchTask}
         />
         <KanbanColumn
           title="IN PROGRESS"
@@ -323,6 +338,9 @@ export function TaskKanban({
           selectedTask={selectedTask}
           onTaskSelect={onTaskSelect}
           allTasks={allTasks}
+          onStartTask={onStartTask}
+          onStopTask={onStopTask}
+          onRelaunchTask={onRelaunchTask}
         />
         <KanbanColumn
           title="COMPLETED"
@@ -331,6 +349,9 @@ export function TaskKanban({
           selectedTask={selectedTask}
           onTaskSelect={onTaskSelect}
           allTasks={allTasks}
+          onStartTask={onStartTask}
+          onStopTask={onStopTask}
+          onRelaunchTask={onRelaunchTask}
         />
       </div>
     </div>

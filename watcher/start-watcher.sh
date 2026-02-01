@@ -41,6 +41,9 @@ fi
 # Change to ELF directory
 cd "$ELF_DIR"
 
+# Set PYTHONPATH to include ELF directory for imports
+export PYTHONPATH="$ELF_DIR${PYTHONPATH:+:$PYTHONPATH}"
+
 # Parse arguments
 DAEMON=false
 if [ "$1" = "--daemon" ] || [ "$1" = "-d" ]; then

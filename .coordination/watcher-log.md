@@ -5519,3 +5519,50 @@ RECOMMENDATION: None required - swarm has completed its mission
 ```
 
 The
+2026-02-01T22:47:07.000000Z | STATUS: complete | NOTES: Swarm finished - mixed results (2 completed, 2 failed). Task completed 12+ hours ago.
+[TIER 1 WATCHER] ```
+== WATCHER SUMMARY ==
+STATUS: complete
+AGENTS_CHECKED: 4
+ISSUES_FOUND: 0
+ACTIONS_TAKEN: Cleaned up completed swarm with mixed results (2 completed, 2 failed agents)
+RECOMMENDATION: System is now i
+2026-02-01T22:48:38.322462841Z | STATUS: stopped | NOTES: Stop file exists, monitoring should end
+[TIER 1 WATCHER] ```
+== WATCHER SUMMARY ==
+STATUS: stopped
+AGENTS_CHECKED: 0
+ISSUES_FOUND: none
+ACTIONS_TAKEN: Confirmed stop file exists, logged final status
+RECOMMENDATION: None required - monitoring has been proper
+2026-02-01T22:50:42.000000 | STATUS: stopped | NOTES: Stop file detected - monitoring ended
+2026-02-02T05:51:01 | STATUS: complete | NOTES: Swarm finished - all agents stopped except orchestrator, sentinel, watcher
+[TIER 1 WATCHER] ## == WATCHER SUMMARY ==
+**STATUS:** complete
+**AGENTS_CHECKED:** 8 (orchestrator, sentinel, watcher, researcher, architect, skeptic, creative, ceo)
+**ISSUES_FOUND:** none
+**ACTIONS_TAKEN:** Created s
+2026-02-02 05:59:36 | STATUS: stale | NOTES: Orchestrator and sentinel agents haven't been updated since 2026-01-31 (over 24 hours ago). System appears to be in an abandoned state.
+[TIER 1 WATCHER] ```
+== WATCHER SUMMARY ==
+STATUS: stale
+AGENTS_CHECKED: 0 (no active agents found)
+ISSUES_FOUND: 2
+ACTIONS_TAKEN: 
+- Marked stale orchestrator state file
+- Logged stale status to watcher log
+RECOMMEND
+2026-02-02T05:59:36 | HANDLER: ABANDON | Cleared stale monitoring loop from abandoned swarm task - system is idle and healthy
+2026-02-02 06:02:42 | STATUS: stopped | NOTES: Stop file detected, swarm monitoring should end
+[TIER 1 WATCHER] ```
+== WATCHER SUMMARY ==
+STATUS: stopped
+AGENTS_CHECKED: 0 (no active agents found)
+ISSUES_FOUND: none
+ACTIONS_TAKEN: Logged final status, monitoring complete
+RECOMMENDATION: Monitoring can safely en
+2026-02-02 06:05:42 | STATUS: stopped | NOTES: Stop file exists, monitoring session ended cleanly
+[TIER 1 ERROR] Error: opencode returned error code 1
+
+[TIER 1 ERROR] Error: opencode returned error code 1
+

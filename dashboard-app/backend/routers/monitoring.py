@@ -10,6 +10,9 @@ Provides endpoints for:
 
 import json
 import sqlite3
+import subprocess
+import os
+import signal
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -391,7 +394,13 @@ async def get_watcher_status():
                 }
             )
 
-        # Get sentinel cycles as proxy for watcher activity
+        # Check if watcher process is actually running
+        result = subprocess.run(
+            ["pgrep", "-f", "watcher/launcher.py"], capture_output=True, text=True
+        )
+        is_running = result.returncode == 0
+
+        # Get sentinel cycles for additional context
         cursor.execute(
             """
             SELECT COUNT(*) as count,
@@ -404,7 +413,6 @@ async def get_watcher_status():
         )
 
         row = cursor.fetchone()
-        is_running = row["count"] > 0 if row else False
         last_check = row["last_check"] if row else None
         escalations = row["escalations"] if row else 0
 
@@ -480,15 +488,105 @@ async def control_watcher(request: WatcherControlRequest):
         # Log the control action
         logger.info(f"Watcher control action: {request.action}")
 
-        # In a real implementation, this would control the actual watcher process
-        # For now, we just log and return success
+        ELF_DIR = Path.home() / ".opencode" / "emergent-learning"
+        WATCHER_DIR = ELF_DIR / "watcher"
+        START_SCRIPT = WATCHER_DIR / "start-watcher.sh"
+        STOP_FILE = ELF_DIR / ".coordination" / "watcher-stop"
+        PID_FILE = Path("/tmp") / "elf-watcher.pid"
 
-        return {
-            "status": "ok",
-            "action": request.action,
-            "message": f"Watcher {request.action} command received",
-        }
+        if request.action == "start":
+            # Remove stop file if it exists
+            if STOP_FILE.exists():
+                STOP_FILE.unlink()
+                logger.info("Removed watcher stop file")
 
+            # Check if already running
+            result = subprocess.run(
+                ["pgrep", "-f", "watcher/launcher.py"], capture_output=True, text=True
+            )
+            if result.returncode == 0:
+                return {
+                    "status": "ok",
+                    "action": "start",
+                    "message": "Watcher is already running",
+                    "pid": result.stdout.strip(),
+                }
+
+            # Start the watcher
+            if START_SCRIPT.exists():
+                subprocess.Popen(
+                    [str(START_SCRIPT), "--daemon"],
+                    cwd=str(ELF_DIR),
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+                return {
+                    "status": "ok",
+                    "action": "start",
+                    "message": "Watcher started successfully",
+                }
+            else:
+                raise HTTPException(
+                    status_code=500, detail="Watcher start script not found"
+                )
+
+        elif request.action == "stop":
+            # Create stop file to signal watcher to stop
+            STOP_FILE.touch()
+            logger.info("Created watcher stop file")
+
+            # Also try to kill the process directly
+            result = subprocess.run(
+                ["pkill", "-f", "watcher/launcher.py"], capture_output=True, text=True
+            )
+
+            return {
+                "status": "ok",
+                "action": "stop",
+                "message": "Watcher stop signal sent",
+            }
+
+        elif request.action == "restart":
+            # Stop first
+            STOP_FILE.touch() if not STOP_FILE.exists() else None
+            subprocess.run(["pkill", "-f", "watcher/launcher.py"], capture_output=True)
+
+            # Wait a moment
+            import time
+
+            time.sleep(1)
+
+            # Remove stop file
+            if STOP_FILE.exists():
+                STOP_FILE.unlink()
+
+            # Start again
+            if START_SCRIPT.exists():
+                subprocess.Popen(
+                    [str(START_SCRIPT), "--daemon"],
+                    cwd=str(ELF_DIR),
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+                return {
+                    "status": "ok",
+                    "action": "restart",
+                    "message": "Watcher restarted successfully",
+                }
+            else:
+                raise HTTPException(
+                    status_code=500, detail="Watcher start script not found"
+                )
+
+        else:
+            raise HTTPException(
+                status_code=400, detail=f"Unknown action: {request.action}"
+            )
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error controlling watcher: {e}")
         raise HTTPException(status_code=500, detail=str(e))

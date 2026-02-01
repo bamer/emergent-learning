@@ -149,6 +149,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
   const activeSessions = Object.keys(taskSessions).length
   const totalTasks = Object.values(taskSessions).flat().length
   const inProgressTasks = Object.values(taskSessions).flat().filter(t => t.status === 'in_progress').length
+  const [trailFeedCollapsed, setTrailFeedCollapsed] = useState(false)
   
   // Task action handlers
   const handleTaskStart = useCallback(async (sessionId: string, taskId: string) => {
@@ -257,44 +258,49 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-scroll">
+      <div className="flex-1 overflow-hidden">
         {viewMode === 'agents' ? (
           <AgentsPanel apiBaseUrl={apiBaseUrl} />
         ) : (
-          <div className="flex h-full">
+          <div className="flex h-full overflow-hidden">
             {/* Left: Task Kanban with Signal Input at top */}
-            <div className="flex-1 flex flex-col min-h-0">
+            <div className="flex-[3] flex flex-col min-w-0 overflow-hidden">
               {/* Top: Signal Input for easy access to session/task selection */}
               <div className="flex-shrink-0 border-b border-slate-700/50">
                 <SignalInput
                   sessions={taskSessions}
                   selectedTask={selectedTask}
+                  totalTasks={totalTasks}
                   onSendNote={handleSendNote}
                   onChangeStatus={handleChangeStatus}
                 />
               </div>
 
-              {/* Bottom: Task Kanban - scrollable */}
-              <div className="flex-1 p-4 overflow-y-auto">
+              {/* Bottom: Task Kanban - fills remaining height */}
+              <div className="flex-1 p-4 overflow-hidden">
                 <TaskKanban
-          sessions={taskSessions}
-          selectedTask={selectedTask}
-          onSessionSelect={setSelectedSession}
-          onTaskSelect={setSelectedTask}
-          onStartTask={handleTaskStart}
-          onStopTask={handleTaskStop}
-          onRelaunchTask={handleTaskRelaunch}
-          selectedTask={selectedTask}
-        />
+                  sessions={taskSessions}
+                  selectedSession={selectedSession}
+                  onSessionSelect={setSelectedSession}
+                  onTaskSelect={setSelectedTask}
+                  selectedTask={selectedTask}
+                  onStartTask={handleTaskStart}
+                  onStopTask={handleTaskStop}
+                  onRelaunchTask={handleTaskRelaunch}
+                />
               </div>
             </div>
 
-            {/* Right: Trail Feed */}
-            <div className="w-80 border-l border-slate-700/50 flex flex-col relative">
+            {/* Right: Trail Feed - collapsible */}
+            <div className={`border-l border-slate-700/50 flex flex-col relative transition-all duration-300 ${
+              trailFeedCollapsed ? 'w-12' : 'flex-[1] min-w-[260px] max-w-[360px]'
+            }`}>
               <TrailFeed
                 trails={trails}
                 autoScroll={autoScroll}
                 onAutoScrollChange={setAutoScroll}
+                collapsed={trailFeedCollapsed}
+                onToggleCollapse={() => setTrailFeedCollapsed(!trailFeedCollapsed)}
               />
             </div>
           </div>

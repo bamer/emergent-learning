@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { Send, AlertTriangle, Star, XCircle } from 'lucide-react'
+import { Send, AlertTriangle, Star, XCircle, Sparkles, ClipboardList } from 'lucide-react'
 import type { Task, TaskSessions } from './TaskKanban'
 
 interface SignalInputProps {
   sessions: TaskSessions
   selectedTask: Task | null
+  totalTasks: number
   onSendNote: (sessionId: string, taskId: string, note: string) => Promise<void>
   onChangeStatus: (sessionId: string, taskId: string, status: string, reason?: string) => Promise<void>
 }
@@ -12,6 +13,7 @@ interface SignalInputProps {
 export function SignalInput({
   sessions,
   selectedTask,
+  totalTasks,
   onSendNote,
   onChangeStatus,
 }: SignalInputProps) {
@@ -115,8 +117,31 @@ export function SignalInput({
         </div>
       )}
 
-      {/* Hint when nothing selected */}
-      {!selectedTask && !manualSessionId && (
+      {/* Getting Started Panel - shown when no tasks exist */}
+      {totalTasks === 0 && (
+        <div className="mb-3 p-4 bg-gradient-to-br from-violet-500/10 to-cyan-500/10 border border-violet-500/20 rounded-lg">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-violet-500/20 rounded-lg">
+              <Sparkles className="w-5 h-5 text-violet-400" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-sm font-medium text-slate-200 mb-1">
+                Getting Started with Tasks
+              </h4>
+              <p className="text-xs text-slate-400 mb-2">
+                No active tasks found. Tasks appear here when ELF agents are running with task tracking enabled.
+              </p>
+              <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                <ClipboardList className="w-3 h-3" />
+                <span>Use <code className="bg-slate-800 px-1 rounded">/swarm</code> or <code className="bg-slate-800 px-1 rounded">delegate_task()</code> to create tracked tasks</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hint when tasks exist but nothing selected */}
+      {totalTasks > 0 && !selectedTask && !manualSessionId && (
         <div className="mb-2 px-2 py-1.5 bg-slate-800/30 border border-slate-700/30 rounded text-xs text-slate-500">
           💡 Click a task in the Kanban board above, or select a session and task from the dropdowns
         </div>
