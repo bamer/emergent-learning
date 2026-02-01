@@ -114,6 +114,7 @@ from routers import (
     live_router,
     semantic_router,
     agents_router,
+    monitoring_router,
 )
 from routers.auth import init_redis
 
@@ -309,6 +310,7 @@ app.include_router(setup_router)
 app.include_router(live_router)
 app.include_router(semantic_router)
 app.include_router(agents_router)
+app.include_router(monitoring_router)
 
 
 # ==============================================================================

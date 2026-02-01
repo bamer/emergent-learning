@@ -30,6 +30,7 @@ from .setup import router as setup_router
 from .live import router as live_router
 from .semantic import router as semantic_router
 from .agents import router as agents_router
+from .monitoring import router as monitoring_router
 
 __all__ = [
     "analytics_router",
@@ -48,4 +49,5 @@ __all__ = [
     "live_router",
     "semantic_router",
     "agents_router",
+    "monitoring_router",
 ]

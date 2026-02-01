@@ -17,7 +17,8 @@ import {
   SpikeReportsPanel,
   InvariantsPanel,
   FraudReviewPanel,
-  SemanticSearchPanel
+  SemanticSearchPanel,
+  MonitoringPanel
 } from './components'
 import { LivePanel } from './components/live'
 import { CosmicTimelineView, CosmicRunsView } from './components/cosmic-view'
@@ -67,7 +68,7 @@ class ErrorBoundary extends React.Component<
 }
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'heuristics' | 'runs' | 'timeline' | 'query' | 'analytics' | 'graph' | 'sessions' | 'assumptions' | 'spikes' | 'invariants' | 'fraud' | 'live' | 'semantic'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'heuristics' | 'runs' | 'timeline' | 'query' | 'analytics' | 'graph' | 'sessions' | 'assumptions' | 'spikes' | 'invariants' | 'fraud' | 'live' | 'semantic' | 'monitoring'>('overview')
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
@@ -311,6 +312,7 @@ function AppContent() {
     { id: 'fraud', label: 'Review Fraud Reports', category: 'Navigation', action: () => setActiveTab('fraud') },
     { id: 'live', label: 'View Live Agents', category: 'Navigation', action: () => setActiveTab('live') },
     { id: 'semantic', label: 'Semantic Search', category: 'Navigation', action: () => setActiveTab('semantic') },
+    { id: 'monitoring', label: 'System Monitoring', category: 'Navigation', action: () => setActiveTab('monitoring') },
     { id: 'query', label: 'Query the Building', shortcut: '⌘Q', category: 'Actions', action: () => setActiveTab('query') },
     { id: 'refresh', label: 'Refresh Data', shortcut: '⌘R', category: 'Actions', action: () => { loadStats(); reloadHeuristics() } },
     { id: 'clearDomain', label: 'Clear Domain Filter', category: 'Actions', action: () => setSelectedDomain(null) },
@@ -451,6 +453,8 @@ function AppContent() {
           {activeTab === 'query' && <QueryInterface />}
 
           {activeTab === 'semantic' && <SemanticSearchPanel />}
+
+          {activeTab === 'monitoring' && <MonitoringPanel />}
 
           {/* Analytics is handled by DashboardLayout for Cosmic mode, but we keep this for grid mode */}
           {activeTab === 'analytics' && <LearningVelocity days={30} />}

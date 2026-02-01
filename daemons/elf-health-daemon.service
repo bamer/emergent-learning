@@ -1,0 +1,25 @@
+[Unit]
+Description=Emergent Learning Framework Health Check Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=bamer
+Group=bamer
+WorkingDirectory=/home/bamer/.opencode/emergent-learning
+ExecStart=/usr/bin/python3 /home/bamer/.opencode/emergent-learning/daemons/health_daemon.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=elf-health-daemon
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/home/bamer/.opencode/emergent-learning
+
+[Install]
+WantedBy=multi-user.target

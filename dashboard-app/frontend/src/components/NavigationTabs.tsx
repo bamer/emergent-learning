@@ -1,6 +1,6 @@
-import { Globe, Brain, BarChart3, Clock, LineChart, Sparkles, Activity, Search } from 'lucide-react'
+import { Globe, Brain, BarChart3, Clock, LineChart, Sparkles, Activity, Search, Shield } from 'lucide-react'
 
-export type TabType = 'overview' | 'heuristics' | 'runs' | 'timeline' | 'analytics' | 'graph' | 'live' | 'semantic'
+export type TabType = 'overview' | 'heuristics' | 'runs' | 'timeline' | 'analytics' | 'graph' | 'live' | 'semantic' | 'monitoring'
 
 interface Tab {
   id: TabType
@@ -18,6 +18,7 @@ const tabs: Tab[] = [
   { id: 'analytics', label: 'ANALYTICS', icon: LineChart, color: '#fb923c', glowColor: 'rgba(251, 146, 60, 0.5)' },
   { id: 'live', label: 'LIVE', icon: Activity, color: '#8b5cf6', glowColor: 'rgba(139, 92, 246, 0.5)' },
   { id: 'semantic', label: 'SEMANTIC', icon: Search, color: '#06b6d4', glowColor: 'rgba(6, 182, 212, 0.5)' },
+  { id: 'monitoring', label: 'MONITORING', icon: Shield, color: '#10b981', glowColor: 'rgba(16, 185, 129, 0.5)' },
 ]
 
 interface NavigationTabsProps {

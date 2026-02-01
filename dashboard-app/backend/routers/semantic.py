@@ -97,41 +97,33 @@ async def semantic_search(request: SemanticSearchRequest):
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        # Simple keyword search in metadata
-        keywords = request.query.lower().split()
-
-        # Build query
-        if request.source_type:
-            cursor.execute(
-                """
-                SELECT id, source_id, source_type, metadata, created_at
-                FROM embeddings
-                WHERE source_type = ?
-                ORDER BY created_at DESC
-                LIMIT ?
-                """,
-                (request.source_type, request.top_k),
-            )
-        else:
-            cursor.execute(
-                """
-                SELECT id, source_id, source_type, metadata, created_at
-                FROM embeddings
-                ORDER BY created_at DESC
-                LIMIT ?
-                """,
-                (request.top_k,),
-            )
-
-        rows = cursor.fetchall()
-        conn.close()
-
-        # Calculate keyword-based similarity scores
+        # Parse search query
         query_lower = request.query.lower()
         query_words = set(query_lower.split())
 
+        # Fetch ALL embeddings (without LIMIT) to calculate similarity for all
+        where_clause = ""
+        params = []
+
+        if request.source_type:
+            where_clause = "WHERE source_type = ?"
+            params = [request.source_type]
+
+        # Fetch embeddings - ALL of them, not limited by created_at
+        sql = f"""
+            SELECT id, source_id, source_type, metadata, created_at
+            FROM embeddings
+            {where_clause}
+            ORDER BY created_at DESC
+        """
+
+        cursor.execute(sql, params)
+        all_rows = cursor.fetchall()
+        conn.close()
+
+        # Calculate keyword-based similarity scores for ALL results
         results = []
-        for row in rows:
+        for row in all_rows:
             metadata = row["metadata"]
             if isinstance(metadata, str):
                 try:
@@ -209,22 +201,21 @@ async def semantic_search(request: SemanticSearchRequest):
                     "metadata": metadata,
                     "created_at": row["created_at"],
                     "similarity": round(similarity, 3),
-                    "text": full_text[:1000]
-                    if full_text
-                    else None,  # Include preview text
+                    "text": full_text[:1000] if full_text else None,
                 }
             )
 
-        # Sort by similarity (highest first)
+        # Sort by similarity (highest first) - KEY FIX!
         results.sort(key=lambda x: x["similarity"], reverse=True)
 
-        # Limit to top_k
+        # Limit to top_k AFTER sorting by similarity
         results = results[: request.top_k]
 
         return {
             "query": request.query,
             "results": results,
             "count": len(results),
+            "total_matches": len(results),
             "note": "Keyword-based similarity search",
         }
 

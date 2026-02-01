@@ -382,10 +382,120 @@ async def add_task_signal(signal: SignalRequest):
         raise HTTPException(status_code=500, detail=f"Failed to update task file: {e}")
 
 
+@router.post("/task/{session_id}/{task_id}/start")
+async def start_task(session_id: str, task_id: str):
+    """Start a stopped/cancelled task."""
+    try:
+        task_file = TASKS_DIR / session_id / f"{task_id}.json"
+        if not task_file.exists():
+            raise HTTPException(
+                status_code=404, detail=f"Task file not found: {task_id}"
+            )
+
+        with open(task_file, "r") as f:
+            task_data = json.load(f)
+
+        task_data["status"] = "in_progress"
+        task_data["notes"].append(
+            {
+                "text": f"Task started at {datetime.now().isoformat()}",
+                "timestamp": datetime.now().isoformat(),
+                "source": "dashboard",
+            }
+        )
+
+        with open(task_file, "w") as f:
+            json.dump(task_data, f, indent=2)
+
+        logger.info(f"Started task {task_id}")
+
+        # Trigger SSE update
+        # Note: Live router will broadcast update automatically
+
+        return {"status": "ok", "task_id": task_id}
+    except Exception as e:
+        logger.error(f"Error starting task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/task/{session_id}/{task_id}/stop")
+async def stop_task(session_id: str, task_id: str):
+    """Stop a running task."""
+    try:
+        task_file = TASKS_DIR / session_id / f"{task_id}.json"
+        if not task_file.exists():
+            raise HTTPException(
+                status_code=404, detail=f"Task file not found: {task_id}"
+            )
+
+        with open(task_file, "r") as f:
+            task_data = json.load(f)
+
+        task_data["status"] = "stopped"
+        task_data["notes"].append(
+            {
+                "text": f"Task stopped at {datetime.now().isoformat()}",
+                "timestamp": datetime.now().isoformat(),
+                "source": "dashboard",
+            }
+        )
+
+        with open(task_file, "w") as f:
+            json.dump(task_data, f, indent=2)
+
+        logger.info(f"Stopped task {task_id}")
+
+        # Trigger SSE update
+        # Note: Live router will broadcast update automatically
+
+        return {"status": "ok", "task_id": task_id}
+    except Exception as e:
+        logger.error(f"Error stopping task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/task/{session_id}/{task_id}/relaunch")
+async def relaunch_task(session_id: str, task_id: str):
+    """Relaunch a completed/cancelled task."""
+    try:
+        task_file = TASKS_DIR / session_id / f"{task_id}.json"
+        if not task_file.exists():
+            raise HTTPException(
+                status_code=404, detail=f"Task file not found: {task_id}"
+            )
+
+        with open(task_file, "r") as f:
+            task_data = json.load(f)
+
+        task_data["status"] = "in_progress"
+        task_data["notes"].append(
+            {
+                "text": f"Task relaunched at {datetime.now().isoformat()}",
+                "timestamp": datetime.now().isoformat(),
+                "source": "dashboard",
+            }
+        )
+
+        with open(task_file, "w") as f:
+            json.dump(task_data, f, indent=2)
+
+        logger.info(f"Relaunched task {task_id}")
+
+        # Trigger SSE update
+        # Note: Live router will broadcast update automatically
+
+        return {"status": "ok", "task_id": task_id}
+    except Exception as e:
+        logger.error(f"Error relaunching task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/task/{session_id}/{task_id}/status")
 async def update_task_status(session_id: str, task_id: str, request: TaskStatusRequest):
     """
     Update a task's status.
+
+    This endpoint now also triggers SSE broadcast for live updates.
 
     Args:
         session_id: Session UUID

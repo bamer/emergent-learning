@@ -22,3 +22,10 @@ export { SettingsPanel } from './SettingsPanel'
 export { default as SpikeReportsPanel } from './SpikeReportsPanel'
 export { default as StatsBar } from './StatsBar'
 export { default as TimelineView } from './TimelineView'
+export {
+  SentinelMonitorPanel,
+  EventChronicleViewer,
+  SystemHealthPanel,
+  WatcherStatusPanel
+} from './monitoring'
+export { MonitoringPanel } from './MonitoringPanel'

@@ -1042,10 +1042,13 @@ def main():
     import sys
     from datetime import datetime
     from pathlib import Path
+
     LOG_DIR = Path.home() / ".opencode" / "emergent-learning" / "logs"
     LOG_DIR.mkdir(parents=True, exist_ok=True)
-    with open(LOG_DIR / f"{datetime.now().strftime("%Y%m%d")}.log", "a") as f:
-        f.write(f"[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [DEBUG] post_tool_learning START\n")
+    with open(LOG_DIR / f"{datetime.now().strftime('%Y%m%d')}.log", "a") as f:
+        f.write(
+            f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [DEBUG] post_tool_learning START\n"
+        )
     """Main hook logic."""
     hook_input = get_hook_input()
 
@@ -1265,25 +1268,27 @@ def main():
         # Don't fail the hook if conductor fails
         sys.stderr.write(f"Conductor integration error (non-fatal): {e}\n")
 
-    # Lay trails for files mentioned in output
-    try:
-        output_content = ""
-        
-        if isinstance(tool_output, dict):
-            output_content = str(tool_output.get("content", ""))
-        elif isinstance(tool_output, str):
-            output_content = tool_output
+    # Lay trails for files mentioned in output (for Task tool)
+    if tool_name == "Task":
+        try:
+            output_content = ""
 
-        file_paths = extract_file_paths(output_content)
+            if isinstance(tool_output, dict):
+                output_content = str(tool_output.get("content", ""))
+            elif isinstance(tool_output, str):
+                output_content = tool_output
 
-        if file_paths:
-            description = tool_input.get("description", "")
-            agent_type = tool_input.get("subagent_type", "unknown")
-            lay_trails(
-                file_paths, outcome, agent_id=agent_type, description=description
-            )
-    except Exception:
-        pass  # Silent fail for trails
+            file_paths = extract_file_paths(output_content)
+
+            if file_paths:
+                description = tool_input.get("description", "")
+                agent_type = tool_input.get("subagent_type", "unknown")
+                lay_trails(
+                    file_paths, outcome, agent_id=agent_type, description=description
+                )
+                sys.stderr.write(f"[TRAIL] Task tool laid {len(file_paths)} trails\n")
+        except Exception as e:
+            sys.stderr.write(f"[TRAIL_ERROR] Failed to lay trails for Task: {e}\n")
 
     # Validate heuristics based on outcome
     if heuristics_consulted:
@@ -1312,7 +1317,9 @@ def main():
 
         # Debug
         with open("/tmp/elf_hook_debug.log", "a") as f:
-            f.write(f"  -> Extracting learnings for domains: {domains_queried} (outcome={outcome})\n")
+            f.write(
+                f"  -> Extracting learnings for domains: {domains_queried} (outcome={outcome})\n"
+            )
 
         extract_and_record_learnings(tool_output, domains_queried, task_description)
 

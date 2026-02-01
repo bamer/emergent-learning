@@ -149,9 +149,38 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
   const activeSessions = Object.keys(taskSessions).length
   const totalTasks = Object.values(taskSessions).flat().length
   const inProgressTasks = Object.values(taskSessions).flat().filter(t => t.status === 'in_progress').length
-
+  
+  // Task action handlers
+  const handleTaskStart = useCallback(async (sessionId: string, taskId: string) => {
+    const response = await fetch(`${apiBaseUrl}/api/v1/live/tasks/${sessionId}/${taskId}/start`, {
+      method: 'POST',
+    })
+    if (response.ok) {
+      // Refresh will trigger auto-update via SSE
+      console.info(`Started task ${taskId} in session ${sessionId}`)
+    }
+  }, [apiBaseUrl])
+  
+  const handleTaskStop = useCallback(async (sessionId: string, taskId: string) => {
+    const response = await fetch(`${apiBaseUrl}/api/v1/live/tasks/${sessionId}/${taskId}/stop`, {
+      method: 'POST',
+    })
+    if (response.ok) {
+      console.info(`Stopped task ${taskId} in session ${sessionId}`)
+    }
+  }, [apiBaseUrl])
+  
+  const handleTaskRelaunch = useCallback(async (sessionId: string, taskId: string) => {
+    const response = await fetch(`${apiBaseUrl}/api/v1/live/tasks/${sessionId}/${taskId}/relaunch`, {
+      method: 'POST',
+    })
+    if (response.ok) {
+      console.info(`Relaunched task ${taskId} in session ${sessionId}`)
+    }
+  }, [apiBaseUrl])
+  
   const isConnected = taskConnected && trailConnected
-
+  
   return (
     <div className="h-full flex flex-col bg-slate-900/30 rounded-lg border border-slate-700/50">
       {/* Header */}
@@ -233,15 +262,31 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
           <AgentsPanel apiBaseUrl={apiBaseUrl} />
         ) : (
           <div className="flex h-full">
-            {/* Left: Task Kanban */}
-            <div className="flex-1 p-4 overflow-y-auto ]">
-              <TaskKanban
-                sessions={taskSessions}
-                selectedSession={selectedSession}
-                onSessionSelect={setSelectedSession}
-                onTaskSelect={setSelectedTask}
-                selectedTask={selectedTask}
-              />
+            {/* Left: Task Kanban with Signal Input at top */}
+            <div className="flex-1 flex flex-col min-h-0">
+              {/* Top: Signal Input for easy access to session/task selection */}
+              <div className="flex-shrink-0 border-b border-slate-700/50">
+                <SignalInput
+                  sessions={taskSessions}
+                  selectedTask={selectedTask}
+                  onSendNote={handleSendNote}
+                  onChangeStatus={handleChangeStatus}
+                />
+              </div>
+
+              {/* Bottom: Task Kanban - scrollable */}
+              <div className="flex-1 p-4 overflow-y-auto">
+                <TaskKanban
+          sessions={taskSessions}
+          selectedTask={selectedTask}
+          onSessionSelect={setSelectedSession}
+          onTaskSelect={setSelectedTask}
+          onStartTask={handleTaskStart}
+          onStopTask={handleTaskStop}
+          onRelaunchTask={handleTaskRelaunch}
+          selectedTask={selectedTask}
+        />
+              </div>
             </div>
 
             {/* Right: Trail Feed */}
@@ -255,16 +300,6 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
           </div>
         )}
       </div>
-
-      {/* Bottom: Signal Input (only for tasks view) */}
-      {viewMode === 'tasks' && (
-        <SignalInput
-          sessions={taskSessions}
-          selectedTask={selectedTask}
-          onSendNote={handleSendNote}
-          onChangeStatus={handleChangeStatus}
-        />
-      )}
 
       {/* Error Toast */}
       {error && (

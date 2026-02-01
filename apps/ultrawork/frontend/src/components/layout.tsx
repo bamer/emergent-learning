@@ -86,17 +86,10 @@ export const Layout: React.FC = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Task List and Selection Panel */}
+          {/* Left Column - Task Selection Panel and Task List */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Task List */}
-            <TaskList
-              tasks={tasks}
-              selectedTaskId={selectedTaskId}
-              onSelectTask={setSelectedTaskId}
-            />
-
-            {/* Task Selection Panel - Positioned below TaskList with sticky */}
-            <div className="sticky top-6">
+            {/* Task Selection Panel - Positioned at top with sticky for easy access */}
+            <div className="sticky top-6 z-10">
               <TaskSelectionPanel
                 tasks={tasks}
                 selectedTaskId={selectedTaskId}
@@ -105,6 +98,13 @@ export const Layout: React.FC = () => {
                 onFilterChange={setFilters}
               />
             </div>
+
+            {/* Task List */}
+            <TaskList
+              tasks={tasks}
+              selectedTaskId={selectedTaskId}
+              onSelectTask={setSelectedTaskId}
+            />
           </div>
 
           {/* Right Column - Task Actions */}

@@ -48,6 +48,31 @@ const SCENT_CONFIG: Record<string, { color: string; bgColor: string; emoji: stri
     emoji: '\uD83D\uDD35',
     label: 'Info',
   },
+  // File operation scents from backend
+  read: {
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/10',
+    emoji: '\uD83D\uDCD6',
+    label: 'Read',
+  },
+  write: {
+    color: 'text-violet-400',
+    bgColor: 'bg-violet-500/10',
+    emoji: '\u270D\uFE0F',
+    label: 'Write',
+  },
+  success: {
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/10',
+    emoji: '\u2705',
+    label: 'Success',
+  },
+  failure: {
+    color: 'text-rose-400',
+    bgColor: 'bg-rose-500/10',
+    emoji: '\u274C',
+    label: 'Failure',
+  },
 }
 
 function TrailCard({ trail }: { trail: Trail }) {

@@ -77,63 +77,14 @@ def record_trail(file_path: str, tool_name: str, timestamp: str) -> bool:
         # Only record files within ELF directory
         elf_home = home / ".opencode" / "emergent-learning"
 
-        # Debug: Log what we're trying to record
-        try:
-            relative_path = file_path_obj.relative_to(elf_home)
-            print(f"[DEBUG] Recording trail: {relative_path} ({tool_name})")
-        except:
-            pass
-
         try:
             file_path_obj.relative_to(elf_home)
         except ValueError:
             # File not in ELF directory, skip
-            try:
-                from rp_logger import log_info
-
-                log_info(f"SKIPPED (outside ELF): {file_path_obj}")
-            except:
-                pass
             return False
 
         # Connect to database
         db_path = elf_home / "memory" / "index.db"
-        if not db_path.exists():
-            return False
-
-        conn = sqlite3.connect(str(db_path))
-        cursor = conn.cursor()
-
-        # Insert or update trail
-        cursor.execute(
-            """
-            INSERT INTO pheromone_trails (file_path, tool_name, last_access)
-            VALUES (?, ?, ?)
-            ON CONFLICT(file_path) DO UPDATE SET
-                access_count = access_count + 1,
-                last_access = ?,
-                total_weight = total_weight + 1.0
-        """,
-            (str(file_path_obj), tool_name, timestamp, timestamp),
-        )
-
-        conn.commit()
-        conn.close()
-
-        return True
-
-    except Exception as e:
-        # Silently fail - pheromone trails are non-critical
-        try:
-            print(f"[ERROR] FAILED to record trail: {e}")
-        except:
-            pass
-        return False
-
-        # Connect to database
-        db_path = elf_home / "memory" / "index.db"
-        if not db_path.exists():
-            return False
 
         conn = sqlite3.connect(str(db_path))
         cursor = conn.cursor()
@@ -142,7 +93,7 @@ def record_trail(file_path: str, tool_name: str, timestamp: str) -> bool:
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS pheromone_trails (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                file_path TEXT NOT NULL,
+                file_path TEXT NOT NULL UNIQUE,
                 tool_name TEXT,
                 access_count INTEGER DEFAULT 1,
                 first_access TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

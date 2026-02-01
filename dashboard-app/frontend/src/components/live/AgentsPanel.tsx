@@ -247,11 +247,9 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
     setStartingAgentKey(getAgentKey(agent));
     try {
       if (agent.system === 'opencode') {
-        console.info("Starting OpenCode agent via delegate_task:", agent.id);
-        // Simulate delegate_task call (would be handled via WebSocket/backend)
-        delegate_task({
-          subagent_type: agent.id,
-          prompt: `Start ${agent.display_name}
+        // OpenCode agents are managed through a different interface
+        console.info("OpenCode agent start request ignored:", agent.id);
+        return;
       }
       
       const response = await fetch(`${apiBaseUrl}/api/v1/agents/spawn`, {

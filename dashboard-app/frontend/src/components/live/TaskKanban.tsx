@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ChevronDown, ChevronRight, Link2, AlertCircle, Clock, CheckCircle2, Circle, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Link2, AlertCircle, Clock, CheckCircle2, Circle, X, Play, Square, RefreshCw } from 'lucide-react'
 
 export interface Task {
   id: string
@@ -24,6 +24,7 @@ interface TaskKanbanProps {
   onSessionSelect: (sessionId: string | null) => void
   onTaskSelect: (task: Task | null) => void
   selectedTask: Task | null
+  apiBaseUrl?: string
 }
 
 const STATUS_CONFIG = {
@@ -69,11 +70,17 @@ function TaskCard({
   isSelected,
   onClick,
   allTasks,
+  onStartTask,
+  onStopTask,
+  onRelaunchTask,
 }: {
   task: Task
   isSelected: boolean
   onClick: () => void
   allTasks: Task[]
+  onStartTask?: (task: Task) => void
+  onStopTask?: (task: Task) => void
+  onRelaunchTask?: (task: Task) => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const config = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending
@@ -81,7 +88,34 @@ function TaskCard({
 
   const blockedByTasks = task.blockedBy?.map(id => allTasks.find(t => t.id === id)).filter(Boolean) || []
   const blocksTasks = task.blocks?.map(id => allTasks.find(t => t.id === id)).filter(Boolean) || []
-
+  
+  // Determine which action to show based on task status
+  const showStartButton = task.status === 'pending' || task.status === 'blocked'
+  const showStopButton = task.status === 'in_progress'
+  const showRelaunchButton = task.status === 'completed' || task.status === 'cancelled'
+  
+  // Handle task actions
+  const handleStart = () => {
+    if (onStartTask && task.session_id && task.id) {
+      const taskId = `${task.session_id.replace(/^elf_/, '')}_${task.id}`
+      onStartTask(taskId)
+    }
+  }
+  
+  const handleStop = () => {
+    if (onStopTask && task.session_id && task.id) {
+      const taskId = `${task.session_id.replace(/^elf_/, '')}_${task.id}`
+      onStopTask(taskId)
+    }
+  }
+  
+  const handleRelaunch = () => {
+    if (onRelaunchTask && task.session_id && task.id) {
+      const taskId = `${task.session_id.replace(/^elf_/, '')}_${task.id}`
+      onRelaunchTask(taskId)
+    }
+  }
+  
   return (
     <div
       className={`
@@ -98,31 +132,49 @@ function TaskCard({
             {task.subject}
           </div>
 
-          {task.status === 'in_progress' && task.activeForm && (
+           {(task.status === 'in_progress' && task.activeForm && (
             <div className="mt-1 text-xs text-cyan-400 flex items-center gap-1">
               <span className="animate-pulse">●</span>
               {task.activeForm}
-            </div>
-          )}
-
-          {(blockedByTasks.length > 0 || blocksTasks.length > 0) && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {blockedByTasks.length > 0 && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                  <Link2 className="w-3 h-3" />
-                  Blocked by {blockedByTasks.length}
-                </span>
-              )}
-              {blocksTasks.length > 0 && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-violet-500/20 text-violet-400 border border-violet-500/30">
-                  <Link2 className="w-3 h-3" />
-                  Blocks {blocksTasks.length}
-                </span>
-              )}
-            </div>
-          )}
-
-          {isSelected && task.description && (
+              </div>
+            ))}
+          
+          {/* Action Buttons */}
+          <div className="mt-2 flex gap-2">
+            {showStartButton && (
+              <button
+                onClick={handleStart}
+                className="flex items-center gap-1 px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 rounded text-xs"
+                title="Start task"
+              >
+                <Play className="w-3 h-3" />
+                Start
+              </button>
+            )}
+            
+            {showStopButton && (
+              <button
+                onClick={handleStop}
+                className="flex items-center gap-1 px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded text-xs"
+                title="Stop task"
+              >
+                <Square className="w-3 h-3" />
+                Stop
+              </button>
+            )}
+            
+            {showRelaunchButton && (
+              <button
+                onClick={handleRelaunch}
+                className="flex items-center gap-1 px-2 py-1 bg-violet-600/20 hover:bg-violet-600/30 text-violet-400 rounded text-xs"
+                title="Relaunch task"
+              >
+                <RefreshCw className="w-3 h-3" />
+                Relaunch
+              </button>
+            )}
+          </div>
+           {isSelected && task.description && (
             <div className="mt-2 pt-2 border-t border-slate-700">
               <button
                 className="text-xs text-slate-400 flex items-center gap-1 hover:text-slate-300"
