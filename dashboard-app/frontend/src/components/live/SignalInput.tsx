@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Send, AlertTriangle, Star, XCircle, Sparkles, ClipboardList } from 'lucide-react'
+import { Send, AlertTriangle, Star, XCircle, Sparkles, ClipboardList, Play, Square, RefreshCw } from 'lucide-react'
 import type { Task, TaskSessions } from './TaskKanban'
 
 interface SignalInputProps {
@@ -168,8 +168,45 @@ export function SignalInput({
 
       {/* Quick Actions */}
       {(currentSessionId && currentTaskId) && (
-        <div className="flex items-center gap-2 mt-3">
+        <div className="flex items-center gap-2 mt-3 flex-wrap">
           <span className="text-[10px] text-slate-600 uppercase tracking-wider">Quick:</span>
+          
+          {/* Start button - for pending/blocked tasks */}
+          {selectedTask?.status === 'pending' || selectedTask?.status === 'blocked' ? (
+            <button
+              onClick={() => handleQuickAction('in_progress')}
+              disabled={isSubmitting}
+              className="flex items-center gap-1 px-2 py-1 text-xs bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded border border-emerald-500/30 transition-colors disabled:opacity-50"
+            >
+              <Play className="w-3 h-3" />
+              Start
+            </button>
+          ) : null}
+          
+          {/* Stop button - for in_progress tasks */}
+          {selectedTask?.status === 'in_progress' ? (
+            <button
+              onClick={() => handleQuickAction('blocked')}
+              disabled={isSubmitting}
+              className="flex items-center gap-1 px-2 py-1 text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded border border-red-500/30 transition-colors disabled:opacity-50"
+            >
+              <Square className="w-3 h-3" />
+              Stop
+            </button>
+          ) : null}
+          
+          {/* Relaunch button - for completed/cancelled tasks */}
+          {selectedTask?.status === 'completed' || selectedTask?.status === 'cancelled' ? (
+            <button
+              onClick={() => handleQuickAction('in_progress')}
+              disabled={isSubmitting}
+              className="flex items-center gap-1 px-2 py-1 text-xs bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 rounded border border-violet-500/30 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className="w-3 h-3" />
+              Relaunch
+            </button>
+          ) : null}
+          
           <button
             onClick={() => handleQuickAction('blocked')}
             disabled={isSubmitting}
@@ -177,14 +214,6 @@ export function SignalInput({
           >
             <AlertTriangle className="w-3 h-3" />
             Mark Blocked
-          </button>
-          <button
-            onClick={() => handleQuickAction('in_progress')}
-            disabled={isSubmitting}
-            className="flex items-center gap-1 px-2 py-1 text-xs bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 rounded border border-cyan-500/30 transition-colors disabled:opacity-50"
-          >
-            <Star className="w-3 h-3" />
-            Prioritize
           </button>
           <button
             onClick={() => handleQuickAction('cancelled')}

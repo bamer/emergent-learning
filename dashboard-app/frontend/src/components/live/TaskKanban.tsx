@@ -10,6 +10,8 @@ export interface Task {
   blocks?: string[]
   blockedBy?: string[]
   notes?: Array<{ text: string; timestamp: string; source: string }>
+  output?: string
+  result?: string
   session_id: string
   session_name?: string
 }
@@ -97,20 +99,23 @@ function TaskCard({
   const showStopButton = task.status === 'in_progress'
   const showRelaunchButton = task.status === 'completed' || task.status === 'cancelled'
   
-  // Handle task actions
-  const handleStart = () => {
+  // Handle task actions with stopPropagation to prevent card selection
+  const handleStart = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (onStartTask && task.session_id && task.id) {
       onStartTask(task.session_id, task.id)
     }
   }
   
-  const handleStop = () => {
+  const handleStop = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (onStopTask && task.session_id && task.id) {
       onStopTask(task.session_id, task.id)
     }
   }
   
-  const handleRelaunch = () => {
+  const handleRelaunch = (e: React.MouseEvent) => {
+    e.stopPropagation()
     if (onRelaunchTask && task.session_id && task.id) {
       onRelaunchTask(task.session_id, task.id)
     }
@@ -139,12 +144,12 @@ function TaskCard({
               </div>
             ))}
           
-          {/* Action Buttons */}
+          {/* Action Buttons - Always visible, not just when selected */}
           <div className="mt-2 flex gap-2">
             {showStartButton && (
               <button
                 onClick={handleStart}
-                className="flex items-center gap-1 px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 rounded text-xs"
+                className="flex items-center gap-1 px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 rounded text-xs font-medium border border-emerald-500/30"
                 title="Start task"
               >
                 <Play className="w-3 h-3" />
@@ -155,7 +160,7 @@ function TaskCard({
             {showStopButton && (
               <button
                 onClick={handleStop}
-                className="flex items-center gap-1 px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded text-xs"
+                className="flex items-center gap-1 px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded text-xs font-medium border border-red-500/30"
                 title="Stop task"
               >
                 <Square className="w-3 h-3" />
@@ -166,7 +171,7 @@ function TaskCard({
             {showRelaunchButton && (
               <button
                 onClick={handleRelaunch}
-                className="flex items-center gap-1 px-2 py-1 bg-violet-600/20 hover:bg-violet-600/30 text-violet-400 rounded text-xs"
+                className="flex items-center gap-1 px-2 py-1 bg-violet-600/20 hover:bg-violet-600/30 text-violet-400 rounded text-xs font-medium border border-violet-500/30"
                 title="Relaunch task"
               >
                 <RefreshCw className="w-3 h-3" />
@@ -203,6 +208,16 @@ function TaskCard({
                     {note.text}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Task Output - shown for completed tasks with output */}
+          {isSelected && (task.output || task.result) && (
+            <div className="mt-2 pt-2 border-t border-slate-700">
+              <div className="text-xs text-emerald-500 mb-1 font-medium">Output</div>
+              <div className="text-xs text-slate-300 bg-slate-800/50 rounded px-2 py-1.5 max-h-32 overflow-y-auto whitespace-pre-wrap font-mono">
+                {task.output || task.result}
               </div>
             </div>
           )}
