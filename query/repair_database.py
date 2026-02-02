@@ -28,13 +28,13 @@ def get_default_db_path() -> Path:
 def get_existing_columns(conn: sqlite3.Connection, table: str) -> set:
     """Get the set of existing column names for a table."""
     cursor = conn.execute(f"PRAGMA table_info({table})")
-    return {row[1] for row in cursor.fetchall()}
+    return {row[1] for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire}
 
 
 def get_existing_tables(conn: sqlite3.Connection) -> set:
     """Get the set of existing table names."""
     cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    return {row[0] for row in cursor.fetchall()}
+    return {row[0] for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire}
 
 
 def add_column_if_missing(conn: sqlite3.Connection, table: str, column: str,

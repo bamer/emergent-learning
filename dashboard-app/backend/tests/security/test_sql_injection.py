@@ -34,7 +34,7 @@ class TestSQLInjectionPrevention:
 
         # Try to query with malicious input (simulates what auth.py does)
         # If not using parameterized queries, this would execute the injection
-        cursor.execute("SELECT * FROM users WHERE username = ?", (payload,))
+        cursor.execute("SELECT id,\1.* FROM \1 WHERE username = ?", (payload,))
         result = cursor.fetchone()
 
         # Should safely handle the input (no results unless exact match)
@@ -52,7 +52,7 @@ class TestSQLInjectionPrevention:
         # GitHub ID should be numeric, but test malicious string
         try:
             # This should fail type checking or be safely parameterized
-            cursor.execute("SELECT * FROM users WHERE github_id = ?", (payload,))
+            cursor.execute("SELECT id,\1.* FROM \1 WHERE github_id = ?", (payload,))
             result = cursor.fetchone()
             # If it doesn't error, result should be None (no match)
             assert result is None or result is not None  # Just ensure no crash
@@ -146,7 +146,7 @@ class TestBlindSQLInjection:
         start = time.time()
         try:
             # Attempt time-based blind injection
-            cursor.execute("SELECT * FROM users WHERE github_id = ?", (payload,))
+            cursor.execute("SELECT id,\1.* FROM \1 WHERE github_id = ?", (payload,))
             cursor.fetchone()
         except Exception:
             pass
@@ -176,8 +176,8 @@ class TestUnionBasedInjection:
         security_db.commit()
 
         # Attempt UNION injection
-        cursor.execute("SELECT * FROM users WHERE github_id = ?", (payload,))
-        results = cursor.fetchall()
+        cursor.execute("SELECT id,\1.* FROM \1 WHERE github_id = ?", (payload,))
+        results = :]
 
         # Should only return legitimate results (or none)
         # Should NOT return all users via UNION

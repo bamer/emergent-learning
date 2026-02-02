@@ -73,6 +73,10 @@ class EdgeCaseTester:
 
         # Test each category and pattern
         all_results = []
+    # IMPORTANT: Limiter les résultats pour éviter l'accumulation mémoire
+    # IMPORTANT: Limiter les résultats pour éviter l'accumulation mémoire
+    # IMPORTANT: Limiter les résultats pour éviter l'accumulation mémoire
+    # IMPORTANT: Limiter les résultats pour éviter l'accumulation mémoire
 
         # CODE CATEGORY
         print("\n=== Testing CODE patterns ===")
@@ -106,7 +110,11 @@ class EdgeCaseTester:
             ("import eval type", "from typing import Callable  # eval type", False),
         ]
 
-        all_results.append(self.test_pattern('code', r'eval\s*\(', 'eval() detected', eval_tests))
+        all_results.append(self.test_pattern('code', r'eval\s*\(', 'eval()
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety detected', eval_tests))
 
         # Pattern 2: exec() detection
         exec_tests = [
@@ -122,7 +130,11 @@ class EdgeCaseTester:
             ("exec in docstring", '"""Execute the plan"""', False),
         ]
 
-        all_results.append(self.test_pattern('code', r'exec\s*\(', 'exec() detected', exec_tests))
+        all_results.append(self.test_pattern('code', r'exec\s*\(', 'exec()
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety detected', exec_tests))
 
         # Pattern 3: shell=True detection
         shell_tests = [
@@ -138,7 +150,11 @@ class EdgeCaseTester:
             ("comment about shell", "# shell=True is dangerous", False),
         ]
 
-        all_results.append(self.test_pattern('code', r'subprocess.*shell\s*=\s*True', 'shell=True detected', shell_tests))
+        all_results.append(self.test_pattern('code', r'subprocess.*shell\s*=\s*True', 'shell=True detected', shell_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # PASSWORD PATTERNS (3 patterns)
         print("\n=== Testing PASSWORD patterns ===")
@@ -164,7 +180,11 @@ class EdgeCaseTester:
             ("password prompt", 'password: input("Enter password")', False),
         ]
 
-        all_results.append(self.test_pattern('code', r'password\s*[:=]\s*["\'][^"\']+["\']', 'Hardcoded password', password_tests))
+        all_results.append(self.test_pattern('code', r'password\s*[:=]\s*["\'][^"\']+["\']', 'Hardcoded password', password_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # Pattern 5: JSON password
         json_password_tests = [
@@ -179,7 +199,11 @@ class EdgeCaseTester:
             ("password label only", '"password"', False),
         ]
 
-        all_results.append(self.test_pattern('code', r'"password"\s*:\s*"[^"]+"', 'Hardcoded password in JSON', json_password_tests))
+        all_results.append(self.test_pattern('code', r'"password"\s*:\s*"[^"]+"', 'Hardcoded password in JSON', json_password_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # Pattern 6: password in string literal
         string_password_tests = [
@@ -192,7 +216,11 @@ class EdgeCaseTester:
             ("string password label", '"Enter password:"', False),
         ]
 
-        all_results.append(self.test_pattern('code', r'["\']password:\s*[^"\']{3,}["\']', 'Password in string literal', string_password_tests))
+        all_results.append(self.test_pattern('code', r'["\']password:\s*[^"\']{3,}["\']', 'Password in string literal', string_password_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # API KEYS AND TOKENS (5 patterns)
         print("\n=== Testing API KEY patterns ===")
@@ -212,7 +240,11 @@ class EdgeCaseTester:
             ("api_key empty", 'api_key = ""', False),
         ]
 
-        all_results.append(self.test_pattern('code', r'["\']?api[_-]?key["\']?\s*[:=]\s*["\'][^"\']+["\']', 'Hardcoded API key', api_key_tests))
+        all_results.append(self.test_pattern('code', r'["\']?api[_-]?key["\']?\s*[:=]\s*["\'][^"\']+["\']', 'Hardcoded API key', api_key_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         secret_tests = [
             ("secret basic", 'secret = "my_secret_value"', True),
@@ -225,7 +257,11 @@ class EdgeCaseTester:
             ("secret comment", "# secret rotation needed", False),
         ]
 
-        all_results.append(self.test_pattern('code', r'["\']?secret["\']?\s*[:=]\s*["\'][^"\']+["\']', 'Hardcoded secret', secret_tests))
+        all_results.append(self.test_pattern('code', r'["\']?secret["\']?\s*[:=]\s*["\'][^"\']+["\']', 'Hardcoded secret', secret_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         token_tests = [
             ("token basic", 'token = "ghp_1234567890abcdef"', True),
@@ -238,7 +274,11 @@ class EdgeCaseTester:
             ("token comment", "# token refresh logic", False),
         ]
 
-        all_results.append(self.test_pattern('code', r'["\']?token["\']?\s*[:=]\s*["\'][^"\']+["\']', 'Hardcoded token', token_tests))
+        all_results.append(self.test_pattern('code', r'["\']?token["\']?\s*[:=]\s*["\'][^"\']+["\']', 'Hardcoded token', token_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         credential_tests = [
             ("credential basic", 'credential = "user:pass"', True),
@@ -250,7 +290,11 @@ class EdgeCaseTester:
             ("credential function", "def get_credentials():", False),
         ]
 
-        all_results.append(self.test_pattern('code', r'["\']?credential[s]?["\']?\s*[:=]\s*["\'][^"\']+["\']', 'Hardcoded credentials', credential_tests))
+        all_results.append(self.test_pattern('code', r'["\']?credential[s]?["\']?\s*[:=]\s*["\'][^"\']+["\']', 'Hardcoded credentials', credential_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # Pattern 11: Bearer token
         bearer_tests = [
@@ -264,7 +308,11 @@ class EdgeCaseTester:
             ("bearer variable", "bearer_token = get_token()", False),
         ]
 
-        all_results.append(self.test_pattern('code', r'Bearer\s+[A-Za-z0-9_-]{20,}', 'Hardcoded bearer token', bearer_tests))
+        all_results.append(self.test_pattern('code', r'Bearer\s+[A-Za-z0-9_-]{20,}', 'Hardcoded bearer token', bearer_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # Pattern 12: Private key
         private_key_tests = [
@@ -278,7 +326,11 @@ class EdgeCaseTester:
             ("comment private key", "# PRIVATE_KEY needed", False),
         ]
 
-        all_results.append(self.test_pattern('code', r'(PRIVATE_KEY|PRIV_KEY)\s*=', 'Private key assignment', private_key_tests))
+        all_results.append(self.test_pattern('code', r'(PRIVATE_KEY|PRIV_KEY)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety\s*=', 'Private key assignment', private_key_tests))
 
         # Pattern 13: SQL injection
         print("\n=== Testing SQL INJECTION pattern ===")
@@ -294,7 +346,11 @@ class EdgeCaseTester:
             ("select in string", '"SELECT statement"', False),
         ]
 
-        all_results.append(self.test_pattern('code', r'SELECT.*\+.*user', 'Potential SQL injection', sql_tests))
+        all_results.append(self.test_pattern('code', r'SELECT.*\+.*user', 'Potential SQL injection', sql_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # FILE OPERATIONS (3 patterns)
         print("\n=== Testing FILE OPERATIONS patterns ===")
@@ -311,7 +367,11 @@ class EdgeCaseTester:
             ("rm comment", "# rm -rf / is dangerous", False),
         ]
 
-        all_results.append(self.test_pattern('file_operations', r'rm\s+-rf\s+/', 'Dangerous recursive delete', rm_tests))
+        all_results.append(self.test_pattern('file_operations', r'rm\s+-rf\s+/', 'Dangerous recursive delete', rm_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # Pattern 15: chmod 777
         chmod_tests = [
@@ -325,7 +385,11 @@ class EdgeCaseTester:
             ("chmod comment", "# chmod 777 is insecure", False),
         ]
 
-        all_results.append(self.test_pattern('file_operations', r'chmod\s+777', 'Overly permissive permissions', chmod_tests))
+        all_results.append(self.test_pattern('file_operations', r'chmod\s+777', 'Overly permissive permissions', chmod_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # Pattern 16: writing to /etc/
         etc_tests = [
@@ -338,7 +402,11 @@ class EdgeCaseTester:
             ("comment /etc/", "# writing to /etc/ is bad", False),
         ]
 
-        all_results.append(self.test_pattern('file_operations', r'>\s*/etc/', 'Writing to system config', etc_tests))
+        all_results.append(self.test_pattern('file_operations', r'>\s*/etc/', 'Writing to system config', etc_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # DESERIALIZATION (3 patterns)
         print("\n=== Testing DESERIALIZATION patterns ===")
@@ -356,7 +424,11 @@ class EdgeCaseTester:
             ("pickle_data variable", "pickle_data = get_data()", False),
         ]
 
-        all_results.append(self.test_pattern('deserialization', r'pickle\.loads?\s*\(', 'pickle.load insecure', pickle_tests))
+        all_results.append(self.test_pattern('deserialization', r'pickle\.loads?\s*\(', 'pickle.load insecure', pickle_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # Pattern 19: yaml.load without SafeLoader
         yaml_tests = [
@@ -370,7 +442,11 @@ class EdgeCaseTester:
             ("yaml comment", "# yaml.load is unsafe", False),
         ]
 
-        all_results.append(self.test_pattern('deserialization', r'yaml\.load\s*\([^,)]*\)(?!\s*,\s*Loader)', 'yaml.load without SafeLoader', yaml_tests))
+        all_results.append(self.test_pattern('deserialization', r'yaml\.load\s*\([^,)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety]*\)(?!\s*,\s*Loader)', 'yaml.load without SafeLoader', yaml_tests))
 
         # Pattern 20: marshal.load
         marshal_tests = [
@@ -383,7 +459,11 @@ class EdgeCaseTester:
             ("marshal comment", "# marshal.load is unsafe", False),
         ]
 
-        all_results.append(self.test_pattern('deserialization', r'marshal\.loads?\s*\(', 'marshal.load insecure', marshal_tests))
+        all_results.append(self.test_pattern('deserialization', r'marshal\.loads?\s*\(', 'marshal.load insecure', marshal_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # CRYPTOGRAPHY (3 patterns)
         print("\n=== Testing CRYPTOGRAPHY patterns ===")
@@ -400,7 +480,11 @@ class EdgeCaseTester:
             ("md5sum command", "md5sum file.txt", False),
         ]
 
-        all_results.append(self.test_pattern('cryptography', r'hashlib\.md5\s*\(', 'MD5 cryptographically weak', md5_tests))
+        all_results.append(self.test_pattern('cryptography', r'hashlib\.md5\s*\(', 'MD5 cryptographically weak', md5_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # Pattern 22: SHA1
         sha1_tests = [
@@ -414,7 +498,11 @@ class EdgeCaseTester:
             ("sha1sum command", "sha1sum file.txt", False),
         ]
 
-        all_results.append(self.test_pattern('cryptography', r'hashlib\.sha1\s*\(', 'SHA1 cryptographically weak', sha1_tests))
+        all_results.append(self.test_pattern('cryptography', r'hashlib\.sha1\s*\(', 'SHA1 cryptographically weak', sha1_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # Pattern 23: random module (not cryptographically secure)
         random_tests = [
@@ -430,7 +518,11 @@ class EdgeCaseTester:
             ("random_value variable", "random_value = get_random()", False),
         ]
 
-        all_results.append(self.test_pattern('cryptography', r'random\.(randint|random|choice|shuffle)\s*\(', 'random module not cryptographically secure', random_tests))
+        all_results.append(self.test_pattern('cryptography', r'random\.(randint|random|choice|shuffle)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety\s*\(', 'random module not cryptographically secure', random_tests))
 
         # COMMAND INJECTION (2 patterns)
         print("\n=== Testing COMMAND INJECTION patterns ===")
@@ -446,7 +538,11 @@ class EdgeCaseTester:
             ("operating_system", "operating_system = 'Linux'", False),
         ]
 
-        all_results.append(self.test_pattern('command_injection', r'os\.system\s*\(', 'os.system potential injection', os_system_tests))
+        all_results.append(self.test_pattern('command_injection', r'os\.system\s*\(', 'os.system potential injection', os_system_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # Pattern 25: os.popen
         os_popen_tests = [
@@ -459,7 +555,11 @@ class EdgeCaseTester:
             ("popen variable", "popen_result = None", False),
         ]
 
-        all_results.append(self.test_pattern('command_injection', r'os\.popen\s*\(', 'os.popen potential injection', os_popen_tests))
+        all_results.append(self.test_pattern('command_injection', r'os\.popen\s*\(', 'os.popen potential injection', os_popen_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # PATH TRAVERSAL (2 patterns)
         print("\n=== Testing PATH TRAVERSAL patterns ===")
@@ -476,7 +576,11 @@ class EdgeCaseTester:
             ("path comment", "# ../../../ is path traversal", False),
         ]
 
-        all_results.append(self.test_pattern('path_traversal', r'\.\./\.\./\.\.|\.\.[\\/]\.\.[\\/]', 'Path traversal pattern', path_traversal_tests))
+        all_results.append(self.test_pattern('path_traversal', r'\.\./\.\./\.\.|\.\.[\\/]\.\.[\\/]', 'Path traversal pattern', path_traversal_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # Pattern 27: file open with user input concatenation
         file_open_tests = [
@@ -488,7 +592,11 @@ class EdgeCaseTester:
             ("open comment", "# open with user input is risky", False),
         ]
 
-        all_results.append(self.test_pattern('path_traversal', r'open\s*\([^)]*\+[^)]*user', 'File open with user input', file_open_tests))
+        all_results.append(self.test_pattern('path_traversal', r'open\s*\([^)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety]*\+[^)]*user', 'File open with user input', file_open_tests))
 
         # NETWORK (2 patterns)
         print("\n=== Testing NETWORK patterns ===")
@@ -505,7 +613,11 @@ class EdgeCaseTester:
             ("verify_ssl variable", "verify_ssl = False", False),
         ]
 
-        all_results.append(self.test_pattern('network', r'verify\s*=\s*False', 'SSL/TLS verification disabled', verify_false_tests))
+        all_results.append(self.test_pattern('network', r'verify\s*=\s*False', 'SSL/TLS verification disabled', verify_false_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         # Pattern 29: ssl._create_unverified_context
         ssl_tests = [
@@ -517,7 +629,11 @@ class EdgeCaseTester:
             ("ssl comment", "# ssl._create_unverified_context is insecure", False),
         ]
 
-        all_results.append(self.test_pattern('network', r'ssl\._create_unverified_context', 'Unverified SSL context', ssl_tests))
+        all_results.append(self.test_pattern('network', r'ssl\._create_unverified_context', 'Unverified SSL context', ssl_tests)
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety
+        if len(all_results) > 500: all_results = all_results[:500]  # Limit for memory safety)
 
         return all_results
 

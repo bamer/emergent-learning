@@ -37,7 +37,7 @@ class ExperimentManager:
             
             # Check columns exist
             cursor.execute("PRAGMA table_info(experiments)")
-            columns = {row[1] for row in cursor.fetchall()}
+            columns = {row[1] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire}
             
             required = {'id', 'name', 'hypothesis', 'status', 'folder_path', 'created_at'}
             if not required.issubset(columns):
@@ -79,7 +79,7 @@ class ExperimentManager:
                 WHERE status = 'active' 
                 ORDER BY created_at DESC
             """)
-            return [dict(row) for row in cursor.fetchall()]
+            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
         finally:
             conn.close()
     
@@ -93,7 +93,7 @@ class ExperimentManager:
                 WHERE status = ? 
                 ORDER BY created_at DESC
             """, (status,))
-            return [dict(row) for row in cursor.fetchall()]
+            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
         finally:
             conn.close()
     
@@ -147,7 +147,7 @@ class ExperimentManager:
                 ORDER BY completed_at ASC
             """, (cutoff.isoformat(),))
             
-            ids = [row['id'] for row in cursor.fetchall()]
+            ids = [row['id'] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
             
             # Archive them
             if ids:
@@ -233,7 +233,7 @@ class ExperimentManager:
                 FROM experiments
                 GROUP BY status
             """)
-            for row in cursor.fetchall():
+            for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
                 stats["by_status"][row['status'] or 'unknown'] = {
                     "count": row['count'],
                     "avg_cycles": round(row['avg_cycles'] or 0, 1)
@@ -281,7 +281,7 @@ class ExperimentManager:
                 ORDER BY created_at ASC
             """, (cutoff.isoformat(), cutoff.isoformat()))
             
-            return [dict(row) for row in cursor.fetchall()]
+            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
         finally:
             conn.close()
 

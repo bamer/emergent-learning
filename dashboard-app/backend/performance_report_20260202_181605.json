@@ -1,0 +1,220 @@
+{
+  "timestamp": "2026-02-02T18:16:05.608808",
+  "test_results": [
+    {
+      "test_name": "stats_endpoint",
+      "query": "\n            SELECT\n                (SELECT COUNT(*) FROM workflow_runs) as total_runs,\n                (SELECT COUNT(*) FROM heuristics) as total_heuristics,\n                (SELECT COUNT(*) FROM heuristics WHERE is_golden = 1) as golden_rules,\n                (SELECT COUNT(*) FROM learnings) as total_learnings,\n                (SELECT COUNT(*) FROM learnings WHERE type = 'failure') as failures,\n                (SELECT COUNT(*) FROM learnings WHERE type = 'success') as successes,\n                (SELECT AVG(confidence) FROM heuristics) as avg_confidence,\n                (SELECT SUM(times_validated) FROM heuristics) as total_validations\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "learning_velocity_endpoint",
+      "query": "\n            SELECT DATE(created_at) as date, COUNT(*) as count\n            FROM heuristics\n            WHERE created_at > datetime('now', '-30 days')\n            GROUP BY DATE(created_at)\n            ORDER BY date\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "heuristics_endpoint_optimized",
+      "query": "\n            SELECT id, domain, rule, explanation, confidence, times_validated, \n                   times_violated, is_golden, created_at, updated_at\n            FROM heuristics\n            ORDER BY confidence DESC\n            LIMIT 50 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "learnings_endpoint_optimized",
+      "query": "\n            SELECT id, type, title, summary, domain, created_at, updated_at\n            FROM learnings\n            ORDER BY created_at DESC\n            LIMIT 50 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "workflows_list_endpoint",
+      "query": "\n            SELECT w.id, w.name, w.description, w.created_at, w.updated_at\n            FROM workflows w\n            ORDER BY w.created_at DESC\n            LIMIT 100 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "stats_endpoint",
+      "query": "\n            SELECT\n                (SELECT COUNT(*) FROM workflow_runs) as total_runs,\n                (SELECT COUNT(*) FROM heuristics) as total_heuristics,\n                (SELECT COUNT(*) FROM heuristics WHERE is_golden = 1) as golden_rules,\n                (SELECT COUNT(*) FROM learnings) as total_learnings,\n                (SELECT COUNT(*) FROM learnings WHERE type = 'failure') as failures,\n                (SELECT COUNT(*) FROM learnings WHERE type = 'success') as successes,\n                (SELECT AVG(confidence) FROM heuristics) as avg_confidence,\n                (SELECT SUM(times_validated) FROM heuristics) as total_validations\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "learning_velocity_endpoint",
+      "query": "\n            SELECT DATE(created_at) as date, COUNT(*) as count\n            FROM heuristics\n            WHERE created_at > datetime('now', '-30 days')\n            GROUP BY DATE(created_at)\n            ORDER BY date\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "heuristics_endpoint_optimized",
+      "query": "\n            SELECT id, domain, rule, explanation, confidence, times_validated, \n                   times_violated, is_golden, created_at, updated_at\n            FROM heuristics\n            ORDER BY confidence DESC\n            LIMIT 50 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "learnings_endpoint_optimized",
+      "query": "\n            SELECT id, type, title, summary, domain, created_at, updated_at\n            FROM learnings\n            ORDER BY created_at DESC\n            LIMIT 50 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "workflows_list_endpoint",
+      "query": "\n            SELECT w.id, w.name, w.description, w.created_at, w.updated_at\n            FROM workflows w\n            ORDER BY w.created_at DESC\n            LIMIT 100 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "heuristics_endpoint_optimized",
+      "query": "\n            SELECT id, domain, rule, explanation, confidence, times_validated, \n                   times_violated, is_golden, created_at, updated_at\n            FROM heuristics\n            ORDER BY confidence DESC\n            LIMIT 50 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "heuristics_endpoint_unoptimized",
+      "query": "\n            SELECT *\n            FROM heuristics\n            ORDER BY confidence DESC\n            LIMIT 50 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "learnings_endpoint_optimized",
+      "query": "\n            SELECT id, type, title, summary, domain, created_at, updated_at\n            FROM learnings\n            ORDER BY created_at DESC\n            LIMIT 50 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "learnings_endpoint_unoptimized",
+      "query": "\n            SELECT *\n            FROM learnings\n            ORDER BY created_at DESC\n            LIMIT 50 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "heuristics_endpoint_optimized",
+      "query": "\n            SELECT id, domain, rule, explanation, confidence, times_validated, \n                   times_violated, is_golden, created_at, updated_at\n            FROM heuristics\n            ORDER BY confidence DESC\n            LIMIT 50 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "heuristics_endpoint_unoptimized",
+      "query": "\n            SELECT *\n            FROM heuristics\n            ORDER BY confidence DESC\n            LIMIT 50 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "learnings_endpoint_optimized",
+      "query": "\n            SELECT id, type, title, summary, domain, created_at, updated_at\n            FROM learnings\n            ORDER BY created_at DESC\n            LIMIT 50 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    },
+    {
+      "test_name": "learnings_endpoint_unoptimized",
+      "query": "\n            SELECT *\n            FROM learnings\n            ORDER BY created_at DESC\n            LIMIT 50 OFFSET 0\n        ",
+      "execution_time_ms": 0,
+      "memory_usage_mb": 0,
+      "rows_returned": 0,
+      "columns_returned": 0,
+      "data_size_kb": 0,
+      "error": "'PerformanceTester' object has no attribute '_last_measurement'"
+    }
+  ],
+  "mock_data_stats": {
+    "heuristics": 1000,
+    "learnings": 2000,
+    "workflow_runs": 5000,
+    "metrics": 10000,
+    "workflows": 500
+  },
+  "indexes_created": [
+    "idx_heuristics_confidence",
+    "idx_heuristics_domain",
+    "idx_heuristics_created",
+    "idx_learnings_type",
+    "idx_learnings_domain",
+    "idx_learnings_created",
+    "idx_workflow_runs_status",
+    "idx_workflow_runs_created",
+    "idx_metrics_type",
+    "idx_metrics_timestamp",
+    "idx_workflows_created"
+  ],
+  "recommendations": [
+    "\ud83d\udcca Use specific column selection instead of SELECT * to reduce data transfer",
+    "\ud83d\udcca Implement proper pagination with LIMIT and OFFSET for large datasets",
+    "\ud83d\udcca Consider adding covering indexes for frequently accessed columns",
+    "\ud83d\udcca Monitor query execution plans regularly for optimization opportunities",
+    "\ud83d\udcca Use parameterized queries to prevent SQL injection and improve cache performance",
+    "\ud83d\udcca Consider database connection pooling for high-traffic scenarios"
+  ],
+  "summary": {
+    "total_tests": 5,
+    "avg_time_before": 0.0,
+    "avg_time_after": 0.0,
+    "overall_improvement": 0,
+    "data_reduction_optimized": 0
+  }
+}

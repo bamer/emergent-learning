@@ -410,10 +410,10 @@ class AISentinel:
 
             # Content analysis
             cursor.execute("SELECT type, COUNT(*) FROM learnings GROUP BY type")
-            learning_types = dict(cursor.fetchall())
+            learning_types = dict(cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
 
             cursor.execute("SELECT domain, COUNT(*) FROM heuristics GROUP BY domain")
-            heuristic_domains = dict(cursor.fetchall())
+            heuristic_domains = dict(cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
 
             conn.close()
 

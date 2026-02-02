@@ -1,5 +1,18 @@
 """
 Knowledge Router - Decisions, Assumptions, Invariants, Spike Reports, Learnings.
+
+SQL Query Optimizations Applied:
+1. Replaced all SELECT * queries with specific columns to reduce data transfer
+2. Added pagination (skip parameter) to /learnings endpoint for better performance
+3. All queries use proper parameter binding to prevent SQL injection
+4. Reduced memory usage by fetching only necessary columns
+5. Added OFFSET to pagination for proper page navigation
+
+Performance Benefits:
+- Reduced network bandwidth by selecting only needed columns
+- Improved query performance by allowing better index utilization
+- Memory efficiency through proper pagination
+- Security through parameterized queries
 """
 
 from datetime import datetime
@@ -40,13 +53,28 @@ def set_manager(m):
 
 @router.get("/learnings")
 async def get_learnings(
-    type: Optional[str] = None, domain: Optional[str] = None, limit: int = 50
+    type: Optional[str] = None,
+    domain: Optional[str] = None,
+    skip: int = 0,  # Added pagination support
+    limit: int = 50,
 ):
-    """Get learnings (failures, successes, observations)."""
+    """Get learnings (failures, successes, observations) with pagination support.
+
+    Parameters:
+    - type: Optional filter by learning type (failure, success, observation)
+    - domain: Optional filter by domain
+    - skip: Number of records to skip (for pagination)
+    - limit: Maximum number of records to return
+    """
     with get_db() as conn:
         cursor = conn.cursor()
 
-        query = "SELECT * FROM learnings WHERE 1=1"
+        # Optimization: Select only specific columns instead of *
+        query = """
+            SELECT id, type, title, summary, domain, created_at, updated_at
+            FROM learnings
+            WHERE 1=1
+        """
         params = []
 
         if type:
@@ -57,8 +85,10 @@ async def get_learnings(
             query += " AND domain = ?"
             params.append(domain)
 
-        query += " ORDER BY created_at DESC LIMIT ?"
+        # Added OFFSET for proper pagination
+        query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
         params.append(limit)
+        params.append(skip)
 
         cursor.execute(query, params)
         return [dict_from_row(r) for r in cursor.fetchall()]
@@ -111,7 +141,17 @@ async def get_decision(decision_id: int):
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM decisions WHERE id = ?", (decision_id,))
+        # Optimization: Select only specific columns instead of *
+        cursor.execute(
+            """
+            SELECT id, title, context, options_considered, decision, rationale,
+                   domain, files_touched, tests_added, status, superseded_by,
+                   created_at, updated_at
+            FROM decisions
+            WHERE id = ?
+            """,
+            (decision_id,),
+        )
         decision = dict_from_row(cursor.fetchone())
 
         if not decision:
@@ -311,7 +351,17 @@ async def supersede_decision(
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM decisions WHERE id = ?", (decision_id,))
+        # Optimization: Select only specific columns instead of *
+        cursor.execute(
+            """
+            SELECT id, title, context, options_considered, decision, rationale,
+                   domain, files_touched, tests_added, status, superseded_by,
+                   created_at, updated_at
+            FROM decisions
+            WHERE id = ?
+            """,
+            (decision_id,),
+        )
         old_decision = dict_from_row(cursor.fetchone())
         if not old_decision:
             raise HTTPException(status_code=404, detail="Decision not found")
@@ -422,7 +472,17 @@ async def get_assumption(assumption_id: int):
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM assumptions WHERE id = ?", (assumption_id,))
+        # Optimization: Select only specific columns instead of *
+        cursor.execute(
+            """
+            SELECT id, assumption, context, source, confidence, status, domain,
+                   verified_count, challenged_count, last_verified_at,
+                   created_at, updated_at
+            FROM assumptions
+            WHERE id = ?
+            """,
+            (assumption_id,),
+        )
         assumption = dict_from_row(cursor.fetchone())
 
         if not assumption:
@@ -573,7 +633,17 @@ async def verify_assumption(assumption_id: int) -> ActionResult:
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM assumptions WHERE id = ?", (assumption_id,))
+        # Optimization: Select only specific columns instead of *
+        cursor.execute(
+            """
+            SELECT id, assumption, context, source, confidence, status, domain,
+                   verified_count, challenged_count, last_verified_at,
+                   created_at, updated_at
+            FROM assumptions
+            WHERE id = ?
+            """,
+            (assumption_id,),
+        )
         assumption = dict_from_row(cursor.fetchone())
         if not assumption:
             raise HTTPException(status_code=404, detail="Assumption not found")
@@ -633,7 +703,17 @@ async def challenge_assumption(assumption_id: int) -> ActionResult:
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM assumptions WHERE id = ?", (assumption_id,))
+        # Optimization: Select only specific columns instead of *
+        cursor.execute(
+            """
+            SELECT id, assumption, context, source, confidence, status, domain,
+                   verified_count, challenged_count, last_verified_at,
+                   created_at, updated_at
+            FROM assumptions
+            WHERE id = ?
+            """,
+            (assumption_id,),
+        )
         assumption = dict_from_row(cursor.fetchone())
         if not assumption:
             raise HTTPException(status_code=404, detail="Assumption not found")
@@ -773,7 +853,17 @@ async def get_invariant(invariant_id: int):
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM invariants WHERE id = ?", (invariant_id,))
+        # Optimization: Select only specific columns instead of *
+        cursor.execute(
+            """
+            SELECT id, statement, rationale, domain, scope, validation_type,
+                   validation_code, severity, status, violation_count,
+                   last_validated_at, last_violated_at, created_at, updated_at
+            FROM invariants
+            WHERE id = ?
+            """,
+            (invariant_id,),
+        )
         invariant = dict_from_row(cursor.fetchone())
 
         if not invariant:
@@ -1120,7 +1210,17 @@ async def get_spike_report(spike_id: int):
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM spike_reports WHERE id = ?", (spike_id,))
+        # Optimization: Select only specific columns instead of *
+        cursor.execute(
+            """
+            SELECT id, title, topic, question, findings, gotchas, resources,
+                   time_invested_minutes, domain, tags, usefulness_score,
+                   access_count, created_at, updated_at
+            FROM spike_reports
+            WHERE id = ?
+            """,
+            (spike_id,),
+        )
         spike = dict_from_row(cursor.fetchone())
 
         if not spike:

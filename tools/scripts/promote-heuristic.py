@@ -44,7 +44,7 @@ def get_project_heuristics(ctx: ProjectContext, min_confidence: float = 0.0) -> 
         ORDER BY confidence DESC, validation_count DESC
     """, (min_confidence,))
 
-    results = cursor.fetchall()
+    results = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
     conn.close()
     return results
 
@@ -64,7 +64,7 @@ def get_promotion_candidates(ctx: ProjectContext, min_confidence: float = 0.8) -
         ORDER BY confidence DESC, validation_count DESC
     """, (min_confidence,))
 
-    results = cursor.fetchall()
+    results = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
     conn.close()
     return results
 

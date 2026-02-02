@@ -44,41 +44,59 @@ async def get_run(run_id: int):
     with get_db() as conn:
         cursor = conn.cursor()
 
-        # Get run
-        cursor.execute("SELECT * FROM workflow_runs WHERE id = ?", (run_id,))
+        # Get run - OPTIMIZATION: Select specific columns only
+        cursor.execute(
+            """
+            SELECT id, workflow_id, workflow_name, status, phase, 
+                   total_nodes, completed_nodes, failed_nodes, 
+                   started_at, completed_at, created_at, updated_at
+            FROM workflow_runs
+            WHERE id = ?
+        """,
+            (run_id,),
+        )
         run = dict_from_row(cursor.fetchone())
 
         if not run:
             raise HTTPException(status_code=404, detail="Run not found")
 
-        # Get executions
+        # Get executions - OPTIMIZATION: Select specific columns only with pagination
         cursor.execute(
             """
-            SELECT * FROM node_executions
+            SELECT id, run_id, node_id, agent_id, status, 
+                   input_data, output_data, error_message,
+                   started_at, completed_at, created_at
+            FROM workflow_executions
             WHERE run_id = ?
             ORDER BY created_at
+            LIMIT 100
         """,
             (run_id,),
         )
         run["executions"] = [dict_from_row(r) for r in cursor.fetchall()]
 
-        # Get trails
+        # Get trails - OPTIMIZATION: Select specific columns only with pagination
         cursor.execute(
             """
-            SELECT * FROM trails
+            SELECT id, run_id, location, strength, metadata, created_at
+            FROM trails
             WHERE run_id = ?
             ORDER BY created_at
+            LIMIT 100
         """,
             (run_id,),
         )
         run["trails"] = [dict_from_row(r) for r in cursor.fetchall()]
 
-        # Get decisions
+        # Get decisions - OPTIMIZATION: Select specific columns only with pagination
         cursor.execute(
             """
-            SELECT * FROM conductor_decisions
+            SELECT id, run_id, node_id, decision_type, decision_data,
+                   rationale, confidence, created_at
+            FROM workflow_decisions
             WHERE run_id = ?
             ORDER BY created_at
+            LIMIT 100
         """,
             (run_id,),
         )
@@ -86,10 +104,13 @@ async def get_run(run_id: int):
 
         # Get workflow edges if available
         if run.get("workflow_id"):
+            # OPTIMIZATION: Select specific columns only with pagination
             cursor.execute(
                 """
-                SELECT * FROM workflow_edges
+                SELECT id, workflow_id, source_node, target_node, edge_type, condition
+                FROM workflow_edges
                 WHERE workflow_id = ?
+                LIMIT 100
             """,
                 (run["workflow_id"],),
             )
@@ -110,8 +131,15 @@ async def get_run_diff(run_id: int):
     with get_db() as conn:
         cursor = conn.cursor()
 
-        # Verify run exists
-        cursor.execute("SELECT * FROM workflow_runs WHERE id = ?", (run_id,))
+        # Verify run exists - OPTIMIZATION: Select specific columns only
+        cursor.execute(
+            """
+            SELECT id, workflow_id, workflow_name, status, phase
+            FROM workflow_runs
+            WHERE id = ?
+        """,
+            (run_id,),
+        )
         run = cursor.fetchone()
 
         if not run:
@@ -128,7 +156,6 @@ async def get_run_diff(run_id: int):
             (run_id,),
         )
         trails = cursor.fetchall()
-
         # Generate mock diffs based on trails
         diffs = []
         for trail in trails:
@@ -298,7 +325,6 @@ async def get_run_diff(run_id: int):
                 (run_id,),
             )
             executions = cursor.fetchall()
-
             if executions:
                 for execution in executions:
                     changes = [
@@ -344,7 +370,16 @@ async def retry_run(run_id: int) -> ActionResult:
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM workflow_runs WHERE id = ?", (run_id,))
+        # OPTIMIZATION: Select specific columns only
+        cursor.execute(
+            """
+            SELECT id, workflow_id, workflow_name, status, phase, 
+                   total_nodes, completed_nodes, failed_nodes
+            FROM workflow_runs
+            WHERE id = ?
+        """,
+            (run_id,),
+        )
         run = cursor.fetchone()
 
         if not run:

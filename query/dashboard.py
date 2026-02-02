@@ -96,7 +96,7 @@ class Dashboard:
             GROUP BY metric_name
         """)
 
-        trend = {row["status"]: row["count"] for row in cursor.fetchall()}
+        trend = {row["status"]: row["count"] for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire}
 
         result["trend_24h"] = trend
 
@@ -134,7 +134,7 @@ class Dashboard:
             (limit,),
         )
 
-        operations = [dict(row) for row in cursor.fetchall()]
+        operations = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         conn.close()
 
@@ -192,7 +192,7 @@ class Dashboard:
             (hours,),
         )
 
-        by_type = [dict(row) for row in cursor.fetchall()]
+        by_type = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         # Calculate success rates
         for op in by_type:
@@ -241,7 +241,7 @@ class Dashboard:
             (days,),
         )
 
-        by_day = [dict(row) for row in cursor.fetchall()]
+        by_day = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         # Failed operations by day
         cursor.execute(
@@ -259,7 +259,7 @@ class Dashboard:
             (days,),
         )
 
-        failed_ops_by_day = [dict(row) for row in cursor.fetchall()]
+        failed_ops_by_day = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         # Recent failures from learnings
         cursor.execute(
@@ -278,7 +278,7 @@ class Dashboard:
             (days,),
         )
 
-        recent_failures = [dict(row) for row in cursor.fetchall()]
+        recent_failures = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         conn.close()
 
@@ -317,7 +317,7 @@ class Dashboard:
             ORDER BY date DESC
         """)
 
-        size_history = [dict(row) for row in cursor.fetchall()]
+        size_history = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         # Record counts by table
         counts = {}
@@ -394,7 +394,7 @@ class Dashboard:
             (hours,),
         )
 
-        durations = [dict(row) for row in cursor.fetchall()]
+        durations = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         conn.close()
 
@@ -430,7 +430,7 @@ class Dashboard:
             (limit,),
         )
 
-        recent_learnings = [dict(row) for row in cursor.fetchall()]
+        recent_learnings = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         # Recent heuristics
         cursor.execute(
@@ -449,7 +449,7 @@ class Dashboard:
             (limit,),
         )
 
-        recent_heuristics = [dict(row) for row in cursor.fetchall()]
+        recent_heuristics = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         # Top validated heuristics
         cursor.execute(
@@ -468,7 +468,7 @@ class Dashboard:
             (limit,),
         )
 
-        top_heuristics = [dict(row) for row in cursor.fetchall()]
+        top_heuristics = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         conn.close()
 

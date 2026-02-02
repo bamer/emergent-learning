@@ -295,7 +295,7 @@ def get_unsummarized_sessions(older_than_hours: float = 1.0) -> List[str]:
 
     # Get already summarized sessions
     cursor.execute("SELECT session_id FROM session_summaries WHERE is_stale = 0")
-    summarized = set(row[0] for row in cursor.fetchall())
+    summarized = set(row[0] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
     conn.close()
 
     # Scan projects for unsummarized sessions

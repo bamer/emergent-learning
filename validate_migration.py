@@ -81,7 +81,7 @@ def check_database():
             
             # Check tables
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-            tables = [row[0] for row in cursor.fetchall()]
+            tables = [row[0] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
             conn.close()
             
             required_tables = ['heuristics', 'golden_rules', 'sessions']

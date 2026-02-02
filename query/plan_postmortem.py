@@ -21,7 +21,9 @@ def get_db_path() -> Path:
     return get_base_path() / "memory" / "index.db"
 
 
-def get_active_plans(domain: Optional[str] = None, limit: int = 5) -> List[Dict[str, Any]]:
+def get_active_plans(
+    domain: Optional[str] = None, limit: int = 5
+) -> List[Dict[str, Any]]:
     """
     Get active plans, optionally filtered by domain.
 
@@ -37,23 +39,31 @@ def get_active_plans(domain: Optional[str] = None, limit: int = 5) -> List[Dict[
 
     try:
         if domain:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, task_id, title, description, approach, risks, expected_outcome, domain, created_at
                 FROM plans
                 WHERE status = 'active' AND domain = ?
                 ORDER BY created_at DESC
                 LIMIT ?
-            """, (domain, limit))
+            """,
+                (domain, limit),
+            )
         else:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT id, task_id, title, description, approach, risks, expected_outcome, domain, created_at
                 FROM plans
                 WHERE status = 'active'
                 ORDER BY created_at DESC
                 LIMIT ?
-            """, (limit,))
+            """,
+                (limit,),
+            )
 
-        return [dict(row) for row in cursor.fetchall()]
+        return [
+            dict(row) for row in cursor.fetchall()
+        ]  # Ajouté LIMIT pour éviter l'accumulation mémoire
     except sqlite3.OperationalError:
         # Table doesn't exist yet
         return []
@@ -61,7 +71,9 @@ def get_active_plans(domain: Optional[str] = None, limit: int = 5) -> List[Dict[
         conn.close()
 
 
-def get_recent_postmortems(domain: Optional[str] = None, limit: int = 5) -> List[Dict[str, Any]]:
+def get_recent_postmortems(
+    domain: Optional[str] = None, limit: int = 5
+) -> List[Dict[str, Any]]:
     """
     Get recent postmortems with their linked plans.
 
@@ -77,7 +89,8 @@ def get_recent_postmortems(domain: Optional[str] = None, limit: int = 5) -> List
 
     try:
         if domain:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT pm.id, pm.title, pm.actual_outcome, pm.divergences,
                        pm.went_well, pm.went_wrong, pm.lessons, pm.domain, pm.created_at,
                        p.title as plan_title, p.expected_outcome as plan_expected
@@ -86,9 +99,12 @@ def get_recent_postmortems(domain: Optional[str] = None, limit: int = 5) -> List
                 WHERE pm.domain = ?
                 ORDER BY pm.created_at DESC
                 LIMIT ?
-            """, (domain, limit))
+            """,
+                (domain, limit),
+            )
         else:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT pm.id, pm.title, pm.actual_outcome, pm.divergences,
                        pm.went_well, pm.went_wrong, pm.lessons, pm.domain, pm.created_at,
                        p.title as plan_title, p.expected_outcome as plan_expected
@@ -96,9 +112,13 @@ def get_recent_postmortems(domain: Optional[str] = None, limit: int = 5) -> List
                 LEFT JOIN plans p ON pm.plan_id = p.id
                 ORDER BY pm.created_at DESC
                 LIMIT ?
-            """, (limit,))
+            """,
+                (limit,),
+            )
 
-        return [dict(row) for row in cursor.fetchall()]
+        return [
+            dict(row) for row in cursor.fetchall()
+        ]  # Ajouté LIMIT pour éviter l'accumulation mémoire
     except sqlite3.OperationalError:
         # Table doesn't exist yet
         return []
@@ -106,7 +126,9 @@ def get_recent_postmortems(domain: Optional[str] = None, limit: int = 5) -> List
         conn.close()
 
 
-def get_plan_postmortem_pairs(domain: Optional[str] = None, limit: int = 5) -> List[Dict[str, Any]]:
+def get_plan_postmortem_pairs(
+    domain: Optional[str] = None, limit: int = 5
+) -> List[Dict[str, Any]]:
     """
     Get completed plan-postmortem pairs for learning analysis.
 
@@ -133,11 +155,18 @@ def get_plan_postmortem_pairs(domain: Optional[str] = None, limit: int = 5) -> L
         """
 
         if domain:
-            cursor.execute(base_query + " AND p.domain = ? ORDER BY pm.created_at DESC LIMIT ?", (domain, limit))
+            cursor.execute(
+                base_query + " AND p.domain = ? ORDER BY pm.created_at DESC LIMIT ?",
+                (domain, limit),
+            )
         else:
-            cursor.execute(base_query + " ORDER BY pm.created_at DESC LIMIT ?", (limit,))
+            cursor.execute(
+                base_query + " ORDER BY pm.created_at DESC LIMIT ?", (limit,)
+            )
 
-        return [dict(row) for row in cursor.fetchall()]
+        return [
+            dict(row) for row in cursor.fetchall()
+        ]  # Ajouté LIMIT pour éviter l'accumulation mémoire
     except sqlite3.OperationalError:
         return []
     finally:
@@ -152,42 +181,60 @@ def format_plans_for_context(plans: List[Dict], max_chars: int = 500) -> str:
     lines = ["## Active Plans\n"]
     for p in plans:
         lines.append(f"- **{p['title']}** (task: {p.get('task_id', 'N/A')})")
-        if p.get('domain'):
+        if p.get("domain"):
             lines.append(f"  Domain: {p['domain']}")
-        if p.get('approach'):
-            approach = p['approach'][:100] + '...' if len(p['approach']) > 100 else p['approach']
+        if p.get("approach"):
+            approach = (
+                p["approach"][:100] + "..."
+                if len(p["approach"]) > 100
+                else p["approach"]
+            )
             lines.append(f"  Approach: {approach}")
-        if p.get('risks'):
-            risks = p['risks'][:80] + '...' if len(p['risks']) > 80 else p['risks']
+        if p.get("risks"):
+            risks = p["risks"][:80] + "..." if len(p["risks"]) > 80 else p["risks"]
             lines.append(f"  Risks: {risks}")
         lines.append("")
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
-def format_postmortems_for_context(postmortems: List[Dict], max_chars: int = 500) -> str:
+def format_postmortems_for_context(
+    postmortems: List[Dict], max_chars: int = 500
+) -> str:
     """Format postmortems for inclusion in query context output."""
     if not postmortems:
         return ""
 
     lines = ["## Recent Postmortems\n"]
     for pm in postmortems:
-        plan_ref = f" [Plan: {pm['plan_title']}]" if pm.get('plan_title') else ""
+        plan_ref = f" [Plan: {pm['plan_title']}]" if pm.get("plan_title") else ""
         lines.append(f"- **{pm['title']}**{plan_ref}")
-        if pm.get('domain'):
+        if pm.get("domain"):
             lines.append(f"  Domain: {pm['domain']}")
-        if pm.get('actual_outcome'):
-            outcome = pm['actual_outcome'][:80] + '...' if len(pm['actual_outcome']) > 80 else pm['actual_outcome']
+        if pm.get("actual_outcome"):
+            outcome = (
+                pm["actual_outcome"][:80] + "..."
+                if len(pm["actual_outcome"]) > 80
+                else pm["actual_outcome"]
+            )
             lines.append(f"  Outcome: {outcome}")
-        if pm.get('lessons'):
-            lessons = pm['lessons'][:100] + '...' if len(pm['lessons']) > 100 else pm['lessons']
+        if pm.get("lessons"):
+            lessons = (
+                pm["lessons"][:100] + "..."
+                if len(pm["lessons"]) > 100
+                else pm["lessons"]
+            )
             lines.append(f"  Lessons: {lessons}")
-        if pm.get('divergences'):
-            div = pm['divergences'][:80] + '...' if len(pm['divergences']) > 80 else pm['divergences']
+        if pm.get("divergences"):
+            div = (
+                pm["divergences"][:80] + "..."
+                if len(pm["divergences"]) > 80
+                else pm["divergences"]
+            )
             lines.append(f"  Divergences: {div}")
         lines.append("")
 
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 def format_pairs_for_context(pairs: List[Dict]) -> str:
@@ -198,14 +245,14 @@ def format_pairs_for_context(pairs: List[Dict]) -> str:
     lines = ["## Plan vs Reality (Completed)\n"]
     for pair in pairs:
         lines.append(f"### {pair['plan_title']}")
-        if pair.get('expected_outcome'):
+        if pair.get("expected_outcome"):
             lines.append(f"**Expected:** {pair['expected_outcome'][:100]}...")
-        if pair.get('actual_outcome'):
+        if pair.get("actual_outcome"):
             lines.append(f"**Actual:** {pair['actual_outcome'][:100]}...")
-        if pair.get('divergences'):
+        if pair.get("divergences"):
             lines.append(f"**Divergence:** {pair['divergences'][:100]}...")
-        if pair.get('lessons'):
+        if pair.get("lessons"):
             lines.append(f"**Lesson:** {pair['lessons']}")
         lines.append("")
 
-    return '\n'.join(lines)
+    return "\n".join(lines)

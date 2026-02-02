@@ -90,7 +90,7 @@ class TestDatabaseSetup(unittest.TestCase):
         ]
 
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        existing_tables = [row[0] for row in cursor.fetchall()]
+        existing_tables = [row[0] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         for table in required_tables:
             self.assertIn(table, existing_tables, f"Missing table: {table}")

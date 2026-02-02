@@ -637,7 +637,7 @@ def validate_domains(domain_list: List[str], cursor: sqlite3.Cursor) -> List[str
         List of valid domain names (subset of input)
     """
     cursor.execute("SELECT DISTINCT domain FROM heuristics")
-    valid_domains = set(row[0] for row in cursor.fetchall())
+    valid_domains = set(row[0] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
 
     invalid = [d for d in domain_list if d not in valid_domains]
     if invalid:
@@ -716,7 +716,7 @@ def get_relevant_heuristics(domains: List[str], limit: int = 5) -> List[Dict]:
                 (limit,),
             )
 
-        results = [dict(row) for row in cursor.fetchall()]
+        results = [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         # Cache golden rules for future calls
         if not domains:
@@ -774,7 +774,7 @@ def get_recent_failures(domains: List[str], limit: int = 3) -> List[Dict]:
                 (limit,),
             )
 
-        return [dict(row) for row in cursor.fetchall()]
+        return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
     except Exception as e:
         sys.stderr.write(f"Warning: Failed to query failures: {e}\n")
         return []

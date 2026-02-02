@@ -13,101 +13,105 @@ import re
 from .database import dict_from_row
 
 
-ALLOWED_TABLES = frozenset([
-    "decisions",
-    "heuristics",
-    "learnings",
-    "experiments",
-    "violations",
-    "invariants",
-    "assumptions",
-    "spike_reports",
-    "workflows",
-    "workflow_runs",
-    "workflow_edges",
-    "node_executions",
-    "trails",
-    "metrics",
-    "session_summaries",
-    "building_queries",
-    "system_health",
-    "schema_version",
-    "db_operations",
-    "cycles",
-    "conductor_decisions",
-    "confidence_updates",
-    "fraud_reports",
-    "meta_alerts",
-    "game_state",
-    "tags",
-    "learning_tags",
-])
+ALLOWED_TABLES = frozenset(
+    [
+        "decisions",
+        "heuristics",
+        "learnings",
+        "experiments",
+        "violations",
+        "invariants",
+        "assumptions",
+        "spike_reports",
+        "workflows",
+        "workflow_runs",
+        "workflow_edges",
+        "node_executions",
+        "trails",
+        "metrics",
+        "session_summaries",
+        "building_queries",
+        "system_health",
+        "schema_version",
+        "db_operations",
+        "cycles",
+        "conductor_decisions",
+        "confidence_updates",
+        "fraud_reports",
+        "meta_alerts",
+        "game_state",
+        "tags",
+        "learning_tags",
+    ]
+)
 
-ALLOWED_COLUMNS = frozenset([
-    "id",
-    "domain",
-    "rule",
-    "explanation",
-    "confidence",
-    "times_validated",
-    "times_violated",
-    "is_golden",
-    "is_quarantined",
-    "status",
-    "title",
-    "context",
-    "decision",
-    "rationale",
-    "created_at",
-    "updated_at",
-    "type",
-    "severity",
-    "summary",
-    "source",
-    "tags",
-    "workflow_id",
-    "workflow_name",
-    "run_id",
-    "node_id",
-    "node_name",
-    "node_type",
-    "agent_type",
-    "started_at",
-    "completed_at",
-    "duration_ms",
-    "result_json",
-    "findings_json",
-    "error_message",
-    "metric_type",
-    "metric_name",
-    "metric_value",
-    "timestamp",
-    "session_id",
-    "session_file_path",
-    "project_path",
-    "score",
-    "username",
-    "github_id",
-    "avatar_url",
-    "review_outcome",
-    "heuristic_id",
-    "experiment_id",
-    "from_node",
-    "to_node",
-    "condition",
-    "phase",
-    "total_nodes",
-    "completed_nodes",
-    "failed_nodes",
-    "input_json",
-    "output_json",
-    "context_json",
-    "nodes_json",
-    "config_json",
-    "superseded_by",
-    "name",
-    "description",
-])
+ALLOWED_COLUMNS = frozenset(
+    [
+        "id",
+        "domain",
+        "rule",
+        "explanation",
+        "confidence",
+        "times_validated",
+        "times_violated",
+        "is_golden",
+        "is_quarantined",
+        "status",
+        "title",
+        "context",
+        "decision",
+        "rationale",
+        "created_at",
+        "updated_at",
+        "type",
+        "severity",
+        "summary",
+        "source",
+        "tags",
+        "workflow_id",
+        "workflow_name",
+        "run_id",
+        "node_id",
+        "node_name",
+        "node_type",
+        "agent_type",
+        "started_at",
+        "completed_at",
+        "duration_ms",
+        "result_json",
+        "findings_json",
+        "error_message",
+        "metric_type",
+        "metric_name",
+        "metric_value",
+        "timestamp",
+        "session_id",
+        "session_file_path",
+        "project_path",
+        "score",
+        "username",
+        "github_id",
+        "avatar_url",
+        "review_outcome",
+        "heuristic_id",
+        "experiment_id",
+        "from_node",
+        "to_node",
+        "condition",
+        "phase",
+        "total_nodes",
+        "completed_nodes",
+        "failed_nodes",
+        "input_json",
+        "output_json",
+        "context_json",
+        "nodes_json",
+        "config_json",
+        "superseded_by",
+        "name",
+        "description",
+    ]
+)
 
 ALLOWED_ORDER_DIRECTIONS = frozenset(["ASC", "DESC"])
 
@@ -230,7 +234,7 @@ class BaseRepository:
         table: str,
         limit: int = 100,
         offset: int = 0,
-        order_by: str = "created_at DESC"
+        order_by: str = "created_at DESC",
     ) -> list[dict[str, Any]]:
         """
         List all records from a table with pagination.
@@ -268,7 +272,7 @@ class BaseRepository:
         filters: dict[str, Any],
         limit: int = 100,
         offset: int = 0,
-        order_by: str = "created_at DESC"
+        order_by: str = "created_at DESC",
     ) -> list[dict[str, Any]]:
         """
         List records with WHERE clause filters.
@@ -334,8 +338,7 @@ class BaseRepository:
         """
         validated_table = _validate_identifier(table, ALLOWED_TABLES, "table")
         validated_columns = [
-            _validate_identifier(col, ALLOWED_COLUMNS, "column")
-            for col in data.keys()
+            _validate_identifier(col, ALLOWED_COLUMNS, "column") for col in data.keys()
         ]
         columns = ", ".join(validated_columns)
         placeholders = ", ".join(["?" for _ in data])
@@ -372,8 +375,7 @@ class BaseRepository:
 
         validated_table = _validate_identifier(table, ALLOWED_TABLES, "table")
         validated_columns = [
-            _validate_identifier(col, ALLOWED_COLUMNS, "column")
-            for col in data.keys()
+            _validate_identifier(col, ALLOWED_COLUMNS, "column") for col in data.keys()
         ]
         set_clause = ", ".join([f"{col} = ?" for col in validated_columns])
         query = f"UPDATE {validated_table} SET {set_clause} WHERE id = ?"
@@ -430,7 +432,9 @@ class BaseRepository:
                 print("Decision exists")
         """
         validated_table = _validate_identifier(table, ALLOWED_TABLES, "table")
-        self.cursor.execute(f"SELECT 1 FROM {validated_table} WHERE id = ? LIMIT 1", (id,))
+        self.cursor.execute(
+            f"SELECT 1 FROM {validated_table} WHERE id = ? LIMIT 1", (id,)
+        )
         return self.cursor.fetchone() is not None
 
     def count(self, table: str, filters: Optional[dict[str, Any]] = None) -> int:
@@ -461,7 +465,9 @@ class BaseRepository:
         if filters:
             for column, value in filters.items():
                 if value is not None:
-                    validated_col = _validate_identifier(column, ALLOWED_COLUMNS, "column")
+                    validated_col = _validate_identifier(
+                        column, ALLOWED_COLUMNS, "column"
+                    )
                     query += f" AND {validated_col} = ?"
                     params.append(value)
 

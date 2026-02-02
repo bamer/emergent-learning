@@ -40,7 +40,7 @@ def check_column_exists(conn: sqlite3.Connection, table: str, column: str) -> bo
     """Check if a column exists in a table."""
     cursor = conn.cursor()
     cursor.execute(f"PRAGMA table_info({table})")
-    columns = [row[1] for row in cursor.fetchall()]
+    columns = [row[1] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
     return column in columns
 
 

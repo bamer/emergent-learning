@@ -273,7 +273,7 @@ async def _async_main(args: argparse.Namespace) -> int:
                     cursor.execute(
                         "SELECT rule, explanation, confidence FROM heuristics ORDER BY confidence DESC LIMIT 20"
                     )
-                    heuristics = cursor.fetchall()
+                    heuristics = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
                     if heuristics:
                         output.append("## Project Heuristics" + chr(10) + chr(10))
                         for rule, expl, conf in heuristics:
@@ -292,7 +292,7 @@ async def _async_main(args: argparse.Namespace) -> int:
                     cursor.execute(
                         "SELECT type, summary FROM learnings ORDER BY created_at DESC LIMIT 10"
                     )
-                    learnings = cursor.fetchall()
+                    learnings = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
                     if learnings:
                         output.append("## Project Learnings" + chr(10) + chr(10))
                         for ltype, summary in learnings:

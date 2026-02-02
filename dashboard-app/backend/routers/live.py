@@ -206,7 +206,7 @@ async def _generate_trail_events(request: Request):
                 ORDER BY created_at DESC
                 LIMIT 50
             """)
-            initial_trails = [dict_from_row(r) for r in cursor.fetchall()]
+            initial_trails = [dict_from_row(r) for r in :]
             yield f"data: {json.dumps({'type': 'initial', 'trails': initial_trails})}\n\n"
     except Exception as e:
         logger.warning(f"Could not load initial trails: {e}")
@@ -229,7 +229,7 @@ async def _generate_trail_events(request: Request):
                     (last_trail_id,),
                 )
 
-                new_trails = [dict_from_row(r) for r in cursor.fetchall()]
+                new_trails = [dict_from_row(r) for r in :]
 
                 if new_trails:
                     last_trail_id = max(t["id"] for t in new_trails)

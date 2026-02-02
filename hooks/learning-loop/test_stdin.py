@@ -34,7 +34,7 @@ cursor = conn.cursor()
 cursor.execute(
     "SELECT file_path, tool_name FROM pheromone_trails ORDER BY id DESC LIMIT 5"
 )
-trails = cursor.fetchall()
+trails = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 conn.close()
 
 print("Recent trails:")

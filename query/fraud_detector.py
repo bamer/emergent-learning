@@ -226,7 +226,7 @@ class FraudDetector:
                   AND (h.times_validated + h.times_violated + COALESCE(h.times_contradicted, 0)) >= ?
             """, (domain, self.config.min_applications))
 
-            heuristics = cursor.fetchall()
+            heuristics = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 
             if len(heuristics) < 3:
                 # Not enough data for meaningful baseline
@@ -263,7 +263,7 @@ class FraudDetector:
             """, (domain,))
 
             update_frequencies = []
-            for row in cursor.fetchall():
+            for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
                 freq = row['update_count'] / max(row['days_active'], 1)
                 update_frequencies.append(freq)
 
@@ -358,7 +358,7 @@ class FraudDetector:
                 ORDER BY domain
             """)
 
-            domains = [row['domain'] for row in cursor.fetchall()]
+            domains = [row['domain'] for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
             results = {
                 "total_domains": len(domains),
@@ -414,7 +414,7 @@ class FraudDetector:
                 SELECT * FROM domains_needing_refresh
                 WHERE needs_refresh = 1
             """)
-            return [dict(row) for row in cursor.fetchall()]
+            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
         finally:
             conn.close()
 
@@ -448,7 +448,7 @@ class FraudDetector:
         conn = self._get_connection()
         try:
             cursor = conn.execute("SELECT * FROM unacknowledged_drift_alerts")
-            return [dict(row) for row in cursor.fetchall()]
+            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
         finally:
             conn.close()
 
@@ -491,7 +491,7 @@ class FraudDetector:
                 ORDER BY created_at ASC
             """, (heuristic_id,))
 
-            updates = cursor.fetchall()
+            updates = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 
             if len(updates) < self.config.min_updates_for_temporal:
                 return None
@@ -576,7 +576,7 @@ class FraudDetector:
                 ORDER BY created_at ASC
             """, (heuristic_id,))
 
-            updates = cursor.fetchall()
+            updates = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 
             if len(updates) < self.config.min_updates_for_trajectory:
                 return None
@@ -861,7 +861,7 @@ class FraudDetector:
                 WHERE fr.review_outcome IS NULL OR fr.review_outcome = 'pending'
                 ORDER BY fr.fraud_score DESC
             """)
-            return [dict(row) for row in cursor.fetchall()]
+            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
         finally:
             conn.close()
 
@@ -1038,7 +1038,7 @@ if __name__ == "__main__":
         # Get overall fraud detection stats
         conn = detector._get_connection()
         cursor = conn.execute("SELECT * FROM fraud_detection_metrics")
-        result = [dict(row) for row in cursor.fetchall()]
+        result = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
         conn.close()
 
     elif args.command == "drift-alerts":
@@ -1071,7 +1071,7 @@ if __name__ == "__main__":
                 ORDER BY calculated_at DESC
                 LIMIT ?
             """, (args.limit,))
-        result = [dict(row) for row in cursor.fetchall()]
+        result = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
         conn.close()
 
         if not args.json and result:

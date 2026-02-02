@@ -427,7 +427,15 @@ async def handle_login(
     try:
         with get_db() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM users WHERE github_id = ?", (github_id,))
+            # OPTIMIZATION: Select specific columns only
+            cursor.execute(
+                """
+                SELECT id, github_id, username, email, avatar_url, role, created_at, updated_at
+                FROM users
+                WHERE github_id = ?
+            """,
+                (github_id,),
+            )
             existing = cursor.fetchone()
             if existing:
                 user_id = existing["id"]

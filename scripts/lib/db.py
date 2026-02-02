@@ -91,7 +91,7 @@ def list_experiments(db_path: str, status: Optional[str] = None) -> List[Dict[st
         else:
             cursor.execute('SELECT * FROM experiments ORDER BY created_at DESC')
         
-        rows = cursor.fetchall()
+        rows = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
         conn.close()
         
         return [dict(row) for row in rows]

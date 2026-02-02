@@ -86,7 +86,7 @@ class EdgeCaseTesterV2:
 
             # Run foreign key check
             cursor.execute("PRAGMA foreign_key_check")
-            fk_issues = cursor.fetchall()
+            fk_issues = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 
             conn.close()
 
@@ -114,7 +114,7 @@ class EdgeCaseTesterV2:
 
             # Check learnings table columns
             cursor.execute("PRAGMA table_info(learnings)")
-            columns = [row[1] for row in cursor.fetchall()]
+            columns = [row[1] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
             expected_cols = ['id', 'type', 'filepath', 'title', 'summary', 'tags', 'domain', 'severity', 'created_at', 'updated_at']
             missing = [col for col in expected_cols if col not in columns]
@@ -223,7 +223,7 @@ class EdgeCaseTesterV2:
 
             # Get sample dates
             cursor.execute("SELECT created_at FROM learnings LIMIT 20")
-            dates = [row[0] for row in cursor.fetchall()]
+            dates = [row[0] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
             # Check for non-standard formats
             standard_count = 0
@@ -312,7 +312,7 @@ class EdgeCaseTesterV2:
 
             # Look for any Unicode content
             cursor.execute("SELECT title, tags FROM learnings LIMIT 100")
-            rows = cursor.fetchall()
+            rows = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 
             unicode_found = 0
             for title, tags in rows:

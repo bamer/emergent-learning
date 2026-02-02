@@ -189,15 +189,32 @@ async def export_data(export_type: str, format: str = "json"):
                 "metrics_summary": {},
             }
 
-            cursor.execute("SELECT * FROM heuristics ORDER BY confidence DESC")
+            # OPTIMIZATION: Select specific columns only
+            cursor.execute("""
+                SELECT id, domain, rule, explanation, confidence, times_validated,
+                       times_violated, is_golden, source_type, created_at, updated_at
+                FROM heuristics
+                ORDER BY confidence DESC
+            """)
             data["heuristics"] = [dict_from_row(r) for r in cursor.fetchall()]
 
-            cursor.execute("SELECT * FROM learnings ORDER BY created_at DESC")
+            # OPTIMIZATION: Select specific columns only
+            cursor.execute("""
+                SELECT id, type, filepath, title, summary, domain, severity, created_at
+                FROM learnings
+                ORDER BY created_at DESC
+            """)
             data["learnings"] = [dict_from_row(r) for r in cursor.fetchall()]
 
-            cursor.execute(
-                "SELECT * FROM workflow_runs ORDER BY created_at DESC LIMIT 100"
-            )
+            # OPTIMIZATION: Select specific columns only with pagination
+            cursor.execute("""
+                SELECT id, workflow_id, workflow_name, status, phase,
+                       total_nodes, completed_nodes, failed_nodes,
+                       started_at, completed_at, created_at
+                FROM workflow_runs
+                ORDER BY created_at DESC
+                LIMIT 100
+            """)
             data["runs"] = [dict_from_row(r) for r in cursor.fetchall()]
 
             cursor.execute("""

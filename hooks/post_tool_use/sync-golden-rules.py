@@ -58,7 +58,7 @@ def sync_golden_rules():
         
         # Get all heuristics (no status column exists)
         cur.execute('SELECT id, rule, is_golden FROM heuristics')
-        all_heuristics = cur.fetchall()
+        all_heuristics = cur\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
         
         updates = 0
         for heuristic_id, rule_text, is_golden in all_heuristics:

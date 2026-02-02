@@ -287,7 +287,7 @@ class Conductor:
                     FROM workflow_edges WHERE workflow_id = ?
                     ORDER BY priority
                 """, (workflow["id"],))
-                workflow["edges"] = [dict(r) for r in cursor.fetchall()]
+                workflow["edges"] = [dict(r) for r in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
                 return workflow
             return None
@@ -300,7 +300,7 @@ class Conductor:
                 SELECT id, name, description, created_at
                 FROM workflows ORDER BY name
             """)
-            return [dict(row) for row in cursor.fetchall()]
+            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
     # =========================================================================
     # Run Management
@@ -556,7 +556,7 @@ class Conductor:
                 ORDER BY created_at
             """, (run_id,))
             results = []
-            for row in cursor.fetchall():
+            for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
                 record = dict(row)
                 record["result"] = json.loads(record.pop("result_json", "{}"))
                 record["findings"] = json.loads(record.pop("findings_json", "[]"))
@@ -643,7 +643,7 @@ class Conductor:
                 LIMIT 100
             """
             cursor.execute(query, params)
-            return [dict(row) for row in cursor.fetchall()]
+            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
     def get_hot_spots(self, run_id: int = None, limit: int = 20) -> List[Dict]:
         """
@@ -673,7 +673,7 @@ class Conductor:
                 LIMIT ?
             """, params + [limit])
 
-            return [dict(row) for row in cursor.fetchall()]
+            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
     def decay_trails(self, decay_rate: float = 0.1):
         """
@@ -771,7 +771,7 @@ class Conductor:
                 ORDER BY created_at
             """, (run_id,))
             results = []
-            for row in cursor.fetchall():
+            for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
                 record = dict(row)
                 record["data"] = json.loads(record.pop("decision_data", "{}"))
                 results.append(record)

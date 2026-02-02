@@ -8,8 +8,8 @@ from pathlib import Path
 
 from fastapi import APIRouter
 
-from models import WorkflowCreate, ActionResult
-from utils import get_db, dict_from_row
+from ..models import WorkflowCreate, ActionResult
+from ..utils.database import get_db, dict_from_row
 
 router = APIRouter(prefix="/api/v1", tags=["workflows"])
 logger = logging.getLogger(__name__)
@@ -25,18 +25,30 @@ def set_paths(elf_path: Path):
 
 
 @router.get("/workflows")
-async def get_workflows():
-    """Get all workflow definitions."""
+async def get_workflows(limit: int = 100, offset: int = 0):
+    """Get workflow definitions with pagination.
+
+    Args:
+        limit: Maximum number of workflows to return (default: 100)
+        offset: Number of workflows to skip for pagination (default: 0)
+    """
     with get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute("""
-            SELECT w.*, COUNT(DISTINCT we.id) as edge_count
+        # OPTIMIZATION: Replaced SELECT * with specific columns for better performance
+        # OPTIMIZATION: Added pagination to prevent memory issues with large datasets
+        cursor.execute(
+            """
+            SELECT w.id, w.name, w.description, w.nodes, w.edges, 
+                   w.created_at, w.updated_at, COUNT(DISTINCT we.id) as edge_count
             FROM workflows w
             LEFT JOIN workflow_edges we ON w.id = we.workflow_id
-            GROUP BY w.id
+            GROUP BY w.id, w.name, w.description, w.nodes, w.edges, w.created_at, w.updated_at
             ORDER BY w.created_at DESC
-        """)
-        return [dict_from_row(r) for r in cursor.fetchall()]
+            LIMIT ? OFFSET ?
+        """,
+            (limit, offset),
+        )  # Parameter binding prevents SQL injection
+        return [dict_from_row(r) for r in cursor]
 
 
 @router.post("/workflows")

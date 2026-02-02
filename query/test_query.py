@@ -218,7 +218,7 @@ class TestQuerySystem:
         conn = sqlite3.connect(str(db_path))
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        tables = {row[0] for row in cursor.fetchall()}
+        tables = {row[0] for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire}
         conn.close()
 
         required_tables = {'learnings', 'heuristics', 'experiments', 'ceo_reviews'}

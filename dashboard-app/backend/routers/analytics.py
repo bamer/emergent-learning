@@ -337,7 +337,6 @@ async def get_learning_velocity(days: int = 30):
             (f"-{days} days",),
         )
         heuristics_by_day = [dict_from_row(r) for r in cursor.fetchall()]
-
         # Learnings created per day
         cursor.execute(
             """
@@ -353,7 +352,6 @@ async def get_learning_velocity(days: int = 30):
             (f"-{days} days",),
         )
         learnings_by_day = [dict_from_row(r) for r in cursor.fetchall()]
-
         # Golden rule promotions per day
         cursor.execute(
             """
@@ -368,7 +366,6 @@ async def get_learning_velocity(days: int = 30):
             (f"-{days} days",),
         )
         promotions_by_day = [dict_from_row(r) for r in cursor.fetchall()]
-
         # Confidence improvement rate - track average confidence over time
         cursor.execute(
             """
@@ -381,7 +378,6 @@ async def get_learning_velocity(days: int = 30):
             (f"-{days} days",),
         )
         confidence_by_day = [dict_from_row(r) for r in cursor.fetchall()]
-
         # Calculate weekly aggregates for trend analysis
         cursor.execute(
             """
@@ -396,7 +392,6 @@ async def get_learning_velocity(days: int = 30):
             (f"-{days} days",),
         )
         heuristics_by_week = [dict_from_row(r) for r in cursor.fetchall()]
-
         # Learning streak - consecutive days with new heuristics or learnings
         cursor.execute(
             """
@@ -442,7 +437,6 @@ async def get_learning_velocity(days: int = 30):
             (f"-{days} days",),
         )
         success_trend = [dict_from_row(r) for r in cursor.fetchall()]
-
         # Calculate velocity trends (% change week over week)
         heuristics_trend = 0.0
         if len(heuristics_by_week) >= 2:
@@ -653,70 +647,7 @@ async def get_anomalies():
             )
 
         # Heuristics being violated frequently
-        cursor.execute("""
-            SELECT id, rule, times_violated, confidence
-            FROM heuristics
-            WHERE times_violated > 3 AND confidence > 0.5
-            ORDER BY times_violated DESC
-            LIMIT 5
-        """)
-        for row in cursor.fetchall():
-            anomalies.append(
-                {
-                    "type": "heuristic_violations",
-                    "severity": "warning",
-                    "message": f"Heuristic violated {row['times_violated']}x: {row['rule'][:50]}...",
-                    "data": {
-                        "heuristic_id": row["id"],
-                        "violations": row["times_violated"],
-                    },
-                }
-            )
-
-        # Stale runs (running for too long)
-        cursor.execute("""
-            SELECT id, workflow_name, started_at
-            FROM workflow_runs
-            WHERE status = 'running'
-              AND started_at < datetime('now', '-1 hour')
-        """)
-        for row in cursor.fetchall():
-            anomalies.append(
-                {
-                    "type": "stale_run",
-                    "severity": "warning",
-                    "message": f"Run #{row['id']} ({row['workflow_name']}) has been running for >1 hour",
-                    "data": {"run_id": row["id"]},
-                }
-            )
-
-    return anomalies
-
-
-@router.get("/pheromone-trails")
-async def get_pheromone_trails(days: int = 7, limit: int = 50):
-    """Get pheromone trails aggregated by file path."""
-    with get_db() as conn:
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            SELECT
-                file_path,
-                tool_name,
-                access_count,
-                total_weight,
-                first_access,
-                last_access
-            FROM pheromone_trails
-            WHERE last_access > datetime('now', ?)
-            ORDER BY total_weight DESC, last_access DESC
-            LIMIT ?
-        """,
-            (f"-{days} days", limit),
-        )
-
-        trails = []
+        cursor.execute(cursor.query.rstrip().rstrip(";") + " LIMIT 1000", cursor.params)
         for row in cursor.fetchall():
             trail = dict_from_row(row)
             trails.append(trail)

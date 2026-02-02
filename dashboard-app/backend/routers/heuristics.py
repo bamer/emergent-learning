@@ -17,11 +17,12 @@ from models import HeuristicUpdate, ActionResult
 from utils import get_db, dict_from_row
 
 logger = logging.getLogger(__name__)
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def retry_on_locked(max_retries: int = 3, base_delay: float = 0.1):
     """Decorator to retry database operations on lock errors with exponential backoff."""
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> T:
@@ -32,14 +33,19 @@ def retry_on_locked(max_retries: int = 3, base_delay: float = 0.1):
                 except sqlite3.OperationalError as e:
                     if "database is locked" in str(e):
                         last_error = e
-                        delay = base_delay * (2 ** attempt)
-                        logger.warning(f"DB locked, retry {attempt + 1}/{max_retries} in {delay:.2f}s")
+                        delay = base_delay * (2**attempt)
+                        logger.warning(
+                            f"DB locked, retry {attempt + 1}/{max_retries} in {delay:.2f}s"
+                        )
                         time.sleep(delay)
                     else:
                         raise
             raise last_error
+
         return wrapper
+
     return decorator
+
 
 router = APIRouter(prefix="/api/v1", tags=["heuristics"])
 
@@ -102,14 +108,24 @@ async def get_heuristics(
 
 
 @router.get("/heuristics/{heuristic_id}")
-async def get_heuristic(heuristic_id: int):
-    """Get single heuristic with full details."""
+async def get_heuristic(heuristic_id: int, history_limit: int = 20):
+    """Get single heuristic with full details.
+
+    Args:
+        heuristic_id: ID of the heuristic to retrieve
+        history_limit: Maximum number of history records to fetch (default: 20)
+    """
     with get_db() as conn:
         cursor = conn.cursor()
 
+        # Optimized: SELECT * replaced with specific columns
+        # This reduces data transfer and improves query performance
         cursor.execute(
             """
-            SELECT * FROM heuristics WHERE id = ?
+            SELECT id, domain, rule, explanation, confidence,
+                   times_validated, times_violated, is_golden, 
+                   source_type, created_at, updated_at
+            FROM heuristics WHERE id = ?
         """,
             (heuristic_id,),
         )
@@ -119,15 +135,16 @@ async def get_heuristic(heuristic_id: int):
             raise HTTPException(status_code=404, detail="Heuristic not found")
 
         # Get validation/violation history from metrics
+        # Optimized: Made limit configurable via parameter instead of hardcoded
         cursor.execute(
             """
             SELECT metric_type, timestamp, context
             FROM metrics
             WHERE tags LIKE ?
             ORDER BY timestamp DESC
-            LIMIT 20
+            LIMIT ?
         """,
-            (f"%heuristic_id:{heuristic_id}%",),
+            (f"%heuristic_id:{heuristic_id}%", history_limit),
         )
         heuristic["history"] = [dict_from_row(r) for r in cursor.fetchall()]
 
@@ -330,7 +347,15 @@ async def promote_to_golden(heuristic_id: int) -> ActionResult:
     with get_db() as conn:
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM heuristics WHERE id = ?", (heuristic_id,))
+        # Optimized: SELECT * replaced with specific columns
+        # Only need columns required for validation and logging
+        cursor.execute(
+            """
+            SELECT id, rule, is_golden
+            FROM heuristics WHERE id = ?
+        """,
+            (heuristic_id,),
+        )
         heuristic = cursor.fetchone()
 
         if not heuristic:

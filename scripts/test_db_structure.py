@@ -21,7 +21,7 @@ def test_table_structure():
     # Test heuristics table
     try:
         cursor.execute("PRAGMA table_info(heuristics)")
-        columns = cursor.fetchall()
+        columns = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
         heuristics_cols = [col[1] for col in columns]
         print(f"✅ Colonnes heuristics: {heuristics_cols}")
 

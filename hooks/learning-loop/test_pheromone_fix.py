@@ -56,7 +56,7 @@ print(f"Looking for: {test_file}")
 cursor.execute(
     "SELECT file_path, tool_name, access_count FROM pheromone_trails ORDER BY id DESC LIMIT 5"
 )
-trails = cursor.fetchall()
+trails = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 print("Recent trails:")
 for trail in trails:
     print(f"  - {trail[0]} ({trail[1]}) - {trail[2]} accesses")

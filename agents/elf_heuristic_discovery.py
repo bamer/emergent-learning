@@ -257,7 +257,7 @@ class ELFHeuristicManager:
             """)
 
             golden_rules = []
-            for row in cursor.fetchall():
+            for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
                 golden_rules.append(
                     {
                         "rule": row[0],
@@ -306,10 +306,10 @@ class ELFHeuristicManager:
 
         # Analyze knowledge gaps
         cursor.execute("SELECT domain, COUNT(*) FROM heuristics GROUP BY domain")
-        domain_coverage = dict(cursor.fetchall())
+        domain_coverage = dict(cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
 
         cursor.execute("SELECT type, COUNT(*) FROM learnings GROUP BY type")
-        learning_coverage = dict(cursor.fetchall())
+        learning_coverage = dict(cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
 
         recommendations = []
 

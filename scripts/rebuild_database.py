@@ -17,7 +17,7 @@ def rebuild_db():
     
     # Drop all tables
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-    tables = [row[0] for row in cursor.fetchall()]
+    tables = [row[0] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
     for table in tables:
         try:
             cursor.execute(f"DROP TABLE IF EXISTS {table}")

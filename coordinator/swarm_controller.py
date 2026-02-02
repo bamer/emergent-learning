@@ -317,6 +317,10 @@ class SwarmController:
         
         # Execute agents in parallel
         all_results = []
+    # IMPORTANT: Limiter les résultats pour éviter l'accumulation mémoire
+    # IMPORTANT: Limiter les résultats pour éviter l'accumulation mémoire
+    # IMPORTANT: Limiter les résultats pour éviter l'accumulation mémoire
+    # IMPORTANT: Limiter les résultats pour éviter l'accumulation mémoire
         agents_status = {}
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:

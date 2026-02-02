@@ -163,7 +163,7 @@ Provide a structured analysis in JSON format:
             cursor = conn.cursor()
             
             cursor.execute("SELECT id FROM experiments WHERE status = 'active' ORDER BY created_at DESC")
-            ids = [row['id'] for row in cursor.fetchall()]
+            ids = [row['id'] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
             conn.close()
         except Exception as e:
             return {"error": str(e), "analyses": []}

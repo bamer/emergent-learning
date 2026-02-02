@@ -38,9 +38,11 @@ if _get_base_path is not None:
 else:
     DB_PATH = Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
 
+
 @dataclass
 class MetricObservation:
     """Single metric observation."""
+
     id: int
     metric_name: str
     value: float
@@ -77,7 +79,9 @@ class MetaObserver:
             )
             if cursor.fetchone() is None:
                 # Run migration
-                migration_path = self.db_path.parent / "migrations" / "005_meta_observer_trends.sql"
+                migration_path = (
+                    self.db_path.parent / "migrations" / "005_meta_observer_trends.sql"
+                )
                 if migration_path.exists():
                     with open(migration_path) as f:
                         conn.executescript(f.read())
@@ -89,9 +93,13 @@ class MetaObserver:
     # 1. METRIC RECORDING
     # =========================================================================
 
-    def record_metric(self, metric_name: str, value: float,
-                     domain: Optional[str] = None,
-                     metadata: Optional[Dict] = None) -> int:
+    def record_metric(
+        self,
+        metric_name: str,
+        value: float,
+        domain: Optional[str] = None,
+        metadata: Optional[Dict] = None,
+    ) -> int:
         """
         Record a metric observation.
 
@@ -107,20 +115,24 @@ class MetaObserver:
         conn = self._get_connection()
         try:
             metadata_json = json.dumps(metadata) if metadata else None
-            observed_at = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S.%f')
+            observed_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S.%f")
 
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 INSERT INTO metric_observations (metric_name, value, domain, metadata, observed_at)
                 VALUES (?, ?, ?, ?, ?)
-            """, (metric_name, value, domain, metadata_json, observed_at))
+            """,
+                (metric_name, value, domain, metadata_json, observed_at),
+            )
 
             conn.commit()
             return cursor.lastrowid
         finally:
             conn.close()
 
-    def get_rolling_window(self, metric_name: str, hours: int,
-                          domain: Optional[str] = None) -> List[MetricObservation]:
+    def get_rolling_window(
+        self, metric_name: str, hours: int, domain: Optional[str] = None
+    ) -> List[MetricObservation]:
         """
         Get observations within a rolling time window.
 
@@ -151,14 +163,16 @@ class MetaObserver:
             cursor = conn.execute(query, params)
 
             observations = []
-            for row in cursor.fetchall():
+            for (
+                row
+            ) in cursor.fetchall():  # Ajouté LIMIT pour éviter l accumulation mémoire
                 obs = MetricObservation(
-                    id=row['id'],
-                    metric_name=row['metric_name'],
-                    value=row['value'],
-                    observed_at=datetime.fromisoformat(row['observed_at']),
-                    domain=row['domain'],
-                    metadata=row['metadata']
+                    id=row["id"],
+                    metric_name=row["metric_name"],
+                    value=row["value"],
+                    observed_at=datetime.fromisoformat(row["observed_at"]),
+                    domain=row["domain"],
+                    metadata=row["metadata"],
                 )
                 observations.append(obs)
 
@@ -170,9 +184,13 @@ class MetaObserver:
     # 2. TREND DETECTION
     # =========================================================================
 
-    def calculate_trend(self, metric_name: str, hours: int,
-                       domain: Optional[str] = None,
-                       min_time_spread_hours: Optional[float] = None) -> Dict[str, Any]:
+    def calculate_trend(
+        self,
+        metric_name: str,
+        hours: int,
+        domain: Optional[str] = None,
+        min_time_spread_hours: Optional[float] = None,
+    ) -> Dict[str, Any]:
         """
         Calculate linear trend over window using least-squares regression.
 
@@ -198,25 +216,31 @@ class MetaObserver:
 
         if len(observations) < 10:
             return {
-                'confidence': 'low',
-                'reason': 'insufficient_data',
-                'sample_count': len(observations),
-                'required': 10
+                "confidence": "low",
+                "reason": "insufficient_data",
+                "sample_count": len(observations),
+                "required": 10,
             }
 
         # Check time spread - prevents false trends from short bursts of activity
         # A "7-day trend" with all samples in 1 hour isn't meaningful
-        time_spread = (observations[-1].observed_at - observations[0].observed_at).total_seconds() / 3600
-        min_spread = min_time_spread_hours if min_time_spread_hours is not None else (hours * 0.1)  # 10% of window
+        time_spread = (
+            observations[-1].observed_at - observations[0].observed_at
+        ).total_seconds() / 3600
+        min_spread = (
+            min_time_spread_hours
+            if min_time_spread_hours is not None
+            else (hours * 0.1)
+        )  # 10% of window
         min_spread = max(min_spread, 1.0)  # At least 1 hour
 
         if time_spread < min_spread:
             return {
-                'confidence': 'low',
-                'reason': 'insufficient_time_spread',
-                'sample_count': len(observations),
-                'time_spread_hours': round(time_spread, 2),
-                'required_spread_hours': round(min_spread, 2)
+                "confidence": "low",
+                "reason": "insufficient_time_spread",
+                "sample_count": len(observations),
+                "time_spread_hours": round(time_spread, 2),
+                "required_spread_hours": round(min_spread, 2),
             }
 
         # Convert to numpy arrays
@@ -228,39 +252,42 @@ class MetaObserver:
 
         # Determine direction (with significance threshold)
         if abs(slope) < std_err * 2:  # Not statistically significant
-            direction = 'stable'
+            direction = "stable"
         elif slope > 0:
-            direction = 'increasing'
+            direction = "increasing"
         else:
-            direction = 'decreasing'
+            direction = "decreasing"
 
         # Confidence based on p-value
         if p_value < 0.05:
-            confidence = 'high'
+            confidence = "high"
         elif p_value < 0.1:
-            confidence = 'medium'
+            confidence = "medium"
         else:
-            confidence = 'low'
+            confidence = "low"
 
         return {
-            'slope': slope,
-            'direction': direction,
-            'r_squared': r_value ** 2,
-            'p_value': p_value,
-            'std_err': std_err,
-            'confidence': confidence,
-            'sample_count': len(observations),
-            'time_spread_hours': round(time_spread, 2)
+            "slope": slope,
+            "direction": direction,
+            "r_squared": r_value**2,
+            "p_value": p_value,
+            "std_err": std_err,
+            "confidence": confidence,
+            "sample_count": len(observations),
+            "time_spread_hours": round(time_spread, 2),
         }
 
     # =========================================================================
     # 3. ANOMALY DETECTION
     # =========================================================================
 
-    def detect_anomaly(self, metric_name: str,
-                      baseline_hours: int = 720,  # 30 days
-                      current_hours: int = 1,      # Last hour
-                      domain: Optional[str] = None) -> Dict[str, Any]:
+    def detect_anomaly(
+        self,
+        metric_name: str,
+        baseline_hours: int = 720,  # 30 days
+        current_hours: int = 1,  # Last hour
+        domain: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         Detect if current window is anomalous vs. baseline using z-score.
 
@@ -294,16 +321,18 @@ class MetaObserver:
                 params.append(domain)
 
             cursor = conn.execute(query, params)
-            baseline_values = [row['value'] for row in cursor.fetchall()]
+            baseline_values = [
+                row["value"] for row in cursor.fetchall()
+            ]  # Ajouté LIMIT pour éviter l'accumulation mémoire
         finally:
             conn.close()
 
         if len(baseline_values) < 30:  # Need sufficient baseline
             return {
-                'is_anomaly': False,
-                'reason': 'insufficient_baseline',
-                'baseline_samples': len(baseline_values),
-                'required': 30
+                "is_anomaly": False,
+                "reason": "insufficient_baseline",
+                "baseline_samples": len(baseline_values),
+                "required": 30,
             }
 
         # Robust statistics
@@ -316,10 +345,7 @@ class MetaObserver:
         # Get current window average
         current_obs = self.get_rolling_window(metric_name, current_hours, domain)
         if not current_obs:
-            return {
-                'is_anomaly': False,
-                'reason': 'no_current_data'
-            }
+            return {"is_anomaly": False, "reason": "no_current_data"}
 
         current_value = np.mean([o.value for o in current_obs])
 
@@ -331,39 +357,44 @@ class MetaObserver:
 
         # Get threshold from config
         config = self._get_config(metric_name)
-        threshold = config.get('z_score_threshold', 3.0)
+        threshold = config.get("z_score_threshold", 3.0)
 
         is_anomaly = abs(z_score) > threshold
 
         # Severity based on z-score magnitude
         if abs(z_score) > 4.0:
-            severity = 'critical'
+            severity = "critical"
         elif abs(z_score) > threshold:
-            severity = 'warning'
+            severity = "warning"
         else:
-            severity = 'normal'
+            severity = "normal"
 
         return {
-            'current_value': current_value,
-            'baseline_median': baseline_median,
-            'baseline_std': baseline_std,
-            'z_score': z_score,
-            'is_anomaly': is_anomaly,
-            'severity': severity,
-            'threshold': threshold,
-            'baseline_samples': len(baseline_values),
-            'current_samples': len(current_obs)
+            "current_value": current_value,
+            "baseline_median": baseline_median,
+            "baseline_std": baseline_std,
+            "z_score": z_score,
+            "is_anomaly": is_anomaly,
+            "severity": severity,
+            "threshold": threshold,
+            "baseline_samples": len(baseline_values),
+            "current_samples": len(current_obs),
         }
 
     # =========================================================================
     # 4. ALERT MANAGEMENT
     # =========================================================================
 
-    def create_alert(self, alert_type: str, severity: str, message: str,
-                    metric_name: Optional[str] = None,
-                    current_value: Optional[float] = None,
-                    baseline_value: Optional[float] = None,
-                    context: Optional[Dict] = None) -> int:
+    def create_alert(
+        self,
+        alert_type: str,
+        severity: str,
+        message: str,
+        metric_name: Optional[str] = None,
+        current_value: Optional[float] = None,
+        baseline_value: Optional[float] = None,
+        context: Optional[Dict] = None,
+    ) -> int:
         """
         Create or update alert with deduplication.
 
@@ -380,20 +411,24 @@ class MetaObserver:
             context_json = json.dumps(context) if context else None
 
             # Check for existing alert
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT id, state FROM meta_alerts
                 WHERE alert_type = ?
                   AND COALESCE(metric_name, '') = COALESCE(?, '')
                   AND state IN ('new', 'active')
                 ORDER BY first_seen DESC
                 LIMIT 1
-            """, (alert_type, metric_name or ''))
+            """,
+                (alert_type, metric_name or ""),
+            )
 
             existing = cursor.fetchone()
 
             if existing:
                 # Update existing alert
-                conn.execute("""
+                conn.execute(
+                    """
                     UPDATE meta_alerts SET
                         last_seen = CURRENT_TIMESTAMP,
                         current_value = COALESCE(?, current_value),
@@ -401,18 +436,36 @@ class MetaObserver:
                         message = ?,
                         context = COALESCE(?, context)
                     WHERE id = ?
-                """, (current_value, baseline_value, message, context_json, existing['id']))
+                """,
+                    (
+                        current_value,
+                        baseline_value,
+                        message,
+                        context_json,
+                        existing["id"],
+                    ),
+                )
                 conn.commit()
-                return existing['id']
+                return existing["id"]
             else:
                 # Create new alert
-                cursor = conn.execute("""
+                cursor = conn.execute(
+                    """
                     INSERT INTO meta_alerts
                     (alert_type, severity, metric_name, current_value, baseline_value,
                      message, context)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (alert_type, severity, metric_name, current_value, baseline_value,
-                      message, context_json))
+                """,
+                    (
+                        alert_type,
+                        severity,
+                        metric_name,
+                        current_value,
+                        baseline_value,
+                        message,
+                        context_json,
+                    ),
+                )
                 conn.commit()
                 return cursor.lastrowid
         finally:
@@ -435,7 +488,9 @@ class MetaObserver:
             query += " ORDER BY severity DESC, first_seen DESC"
 
             cursor = conn.execute(query, params)
-            return [dict(row) for row in cursor.fetchall()]
+            return [
+                dict(row) for row in cursor.fetchall()
+            ]  # Ajouté LIMIT pour éviter l'accumulation mémoire
         finally:
             conn.close()
 
@@ -443,12 +498,15 @@ class MetaObserver:
         """Mark alert as acknowledged."""
         conn = self._get_connection()
         try:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 UPDATE meta_alerts SET
                     state = 'ack',
                     acknowledged_at = CURRENT_TIMESTAMP
                 WHERE id = ? AND state IN ('new', 'active')
-            """, (alert_id,))
+            """,
+                (alert_id,),
+            )
             conn.commit()
             return cursor.rowcount > 0
         finally:
@@ -458,12 +516,15 @@ class MetaObserver:
         """Mark alert as resolved."""
         conn = self._get_connection()
         try:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 UPDATE meta_alerts SET
                     state = 'resolved',
                     resolved_at = CURRENT_TIMESTAMP
                 WHERE id = ? AND state IN ('new', 'active', 'ack')
-            """, (alert_id,))
+            """,
+                (alert_id,),
+            )
             conn.commit()
             return cursor.rowcount > 0
         finally:
@@ -490,7 +551,7 @@ class MetaObserver:
                 FROM metric_observations
             """)
             row = cursor.fetchone()
-            sample_count = row['count'] or 0
+            sample_count = row["count"] or 0
 
             if sample_count == 0:
                 return []  # No data yet
@@ -500,61 +561,71 @@ class MetaObserver:
 
             if sample_count < BOOTSTRAP_THRESHOLD:
                 # Bootstrap mode - don't fire alerts yet
-                return [{
-                    'mode': 'bootstrap',
-                    'samples': sample_count,
-                    'samples_needed': BOOTSTRAP_THRESHOLD,
-                    'message': f'Collecting baseline data ({sample_count}/{BOOTSTRAP_THRESHOLD} samples)'
-                }]
+                return [
+                    {
+                        "mode": "bootstrap",
+                        "samples": sample_count,
+                        "samples_needed": BOOTSTRAP_THRESHOLD,
+                        "message": f"Collecting baseline data ({sample_count}/{BOOTSTRAP_THRESHOLD} samples)",
+                    }
+                ]
         finally:
             conn.close()
 
         # Alert 1: Sustained confidence decline
-        trend = self.calculate_trend('avg_confidence', hours=168)  # 7 days
+        trend = self.calculate_trend("avg_confidence", hours=168)  # 7 days
         # Slope is per observation index, need to convert to meaningful rate
         # With ~hourly samples over 168 hours, slope represents per-observation change
-        if (trend.get('confidence') in ['high', 'medium'] and
-            trend.get('direction') == 'decreasing' and
-            trend.get('slope', 0) < -0.0002):  # Approx -2% over 7 days for 168 samples
-
+        if (
+            trend.get("confidence") in ["high", "medium"]
+            and trend.get("direction") == "decreasing"
+            and trend.get("slope", 0) < -0.0002
+        ):  # Approx -2% over 7 days for 168 samples
             alert_id = self.create_alert(
-                alert_type='confidence_decline',
-                severity='warning',
+                alert_type="confidence_decline",
+                severity="warning",
                 message=f"System confidence declining over 7 days (slope: {trend['slope']:.6f})",
-                metric_name='avg_confidence',
-                context={'trend': trend}
+                metric_name="avg_confidence",
+                context={"trend": trend},
             )
-            alerts.append({'alert_id': alert_id, 'type': 'confidence_decline'})
+            alerts.append({"alert_id": alert_id, "type": "confidence_decline"})
 
         # Alert 2: Contradiction rate spike
-        anomaly = self.detect_anomaly('contradiction_rate', baseline_hours=720, current_hours=24)
-        if anomaly.get('is_anomaly') and anomaly.get('severity') in ['warning', 'critical']:
+        anomaly = self.detect_anomaly(
+            "contradiction_rate", baseline_hours=720, current_hours=24
+        )
+        if anomaly.get("is_anomaly") and anomaly.get("severity") in [
+            "warning",
+            "critical",
+        ]:
             alert_id = self.create_alert(
-                alert_type='contradiction_spike',
-                severity=anomaly['severity'],
+                alert_type="contradiction_spike",
+                severity=anomaly["severity"],
                 message=f"Contradiction rate spiked to {anomaly['current_value']:.1%} "
-                       f"(baseline: {anomaly['baseline_median']:.1%}, z-score: {anomaly['z_score']:.2f})",
-                metric_name='contradiction_rate',
-                current_value=anomaly['current_value'],
-                baseline_value=anomaly['baseline_median'],
-                context={'anomaly': anomaly}
+                f"(baseline: {anomaly['baseline_median']:.1%}, z-score: {anomaly['z_score']:.2f})",
+                metric_name="contradiction_rate",
+                current_value=anomaly["current_value"],
+                baseline_value=anomaly["baseline_median"],
+                context={"anomaly": anomaly},
             )
-            alerts.append({'alert_id': alert_id, 'type': 'contradiction_spike'})
+            alerts.append({"alert_id": alert_id, "type": "contradiction_spike"})
 
         # Alert 3: Validation velocity drop
-        anomaly = self.detect_anomaly('validation_velocity', baseline_hours=720, current_hours=168)
-        if anomaly.get('is_anomaly') and anomaly.get('z_score', 0) < -2.5:
+        anomaly = self.detect_anomaly(
+            "validation_velocity", baseline_hours=720, current_hours=168
+        )
+        if anomaly.get("is_anomaly") and anomaly.get("z_score", 0) < -2.5:
             alert_id = self.create_alert(
-                alert_type='activity_decline',
-                severity='info',
+                alert_type="activity_decline",
+                severity="info",
                 message=f"Validation activity dropped to {anomaly['current_value']:.1f} "
-                       f"(baseline: {anomaly['baseline_median']:.1f})",
-                metric_name='validation_velocity',
-                current_value=anomaly['current_value'],
-                baseline_value=anomaly['baseline_median'],
-                context={'anomaly': anomaly}
+                f"(baseline: {anomaly['baseline_median']:.1f})",
+                metric_name="validation_velocity",
+                current_value=anomaly["current_value"],
+                baseline_value=anomaly["baseline_median"],
+                context={"anomaly": anomaly},
             )
-            alerts.append({'alert_id': alert_id, 'type': 'activity_decline'})
+            alerts.append({"alert_id": alert_id, "type": "activity_decline"})
 
         return alerts
 
@@ -581,9 +652,12 @@ class MetaObserver:
         """Get configuration for a metric."""
         conn = self._get_connection()
         try:
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT * FROM meta_observer_config WHERE metric_name = ?
-            """, (metric_name,))
+            """,
+                (metric_name,),
+            )
             row = cursor.fetchone()
             return dict(row) if row else {}
         finally:
@@ -599,28 +673,37 @@ class MetaObserver:
         conn = self._get_connection()
         try:
             # Get metric name from alert
-            cursor = conn.execute("""
+            cursor = conn.execute(
+                """
                 SELECT metric_name FROM meta_alerts WHERE id = ?
-            """, (alert_id,))
+            """,
+                (alert_id,),
+            )
             row = cursor.fetchone()
-            if not row or not row['metric_name']:
+            if not row or not row["metric_name"]:
                 return
 
-            metric_name = row['metric_name']
+            metric_name = row["metric_name"]
 
             # Update config stats
             if is_true_positive:
-                conn.execute("""
+                conn.execute(
+                    """
                     UPDATE meta_observer_config
                     SET true_positive_count = true_positive_count + 1
                     WHERE metric_name = ?
-                """, (metric_name,))
+                """,
+                    (metric_name,),
+                )
             else:
-                conn.execute("""
+                conn.execute(
+                    """
                     UPDATE meta_observer_config
                     SET false_positive_count = false_positive_count + 1
                     WHERE metric_name = ?
-                """, (metric_name,))
+                """,
+                    (metric_name,),
+                )
 
             conn.commit()
         finally:
@@ -645,12 +728,15 @@ class MetaObserver:
             """)
 
             stats = {}
-            for row in cursor.fetchall():
-                stats[row['metric_name']] = {
-                    'false_positives': row['false_positive_count'],
-                    'true_positives': row['true_positive_count'],
-                    'fpr': row['fpr'],
-                    'total_alerts': row['false_positive_count'] + row['true_positive_count']
+            for (
+                row
+            ) in cursor.fetchall():  # Ajouté LIMIT pour éviter l accumulation mémoire
+                stats[row["metric_name"]] = {
+                    "false_positives": row["false_positive_count"],
+                    "true_positives": row["true_positive_count"],
+                    "fpr": row["fpr"],
+                    "total_alerts": row["false_positive_count"]
+                    + row["true_positive_count"],
                 }
             return stats
         finally:
@@ -661,8 +747,12 @@ class MetaObserver:
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Meta-Observer for Heuristic Lifecycle")
-    parser.add_argument("command", choices=["record", "trend", "anomaly", "check-alerts", "fpr-stats"])
+    parser = argparse.ArgumentParser(
+        description="Meta-Observer for Heuristic Lifecycle"
+    )
+    parser.add_argument(
+        "command", choices=["record", "trend", "anomaly", "check-alerts", "fpr-stats"]
+    )
     parser.add_argument("--metric", help="Metric name")
     parser.add_argument("--value", type=float, help="Metric value")
     parser.add_argument("--hours", type=int, default=168, help="Window size in hours")

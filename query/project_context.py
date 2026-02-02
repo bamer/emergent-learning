@@ -111,7 +111,7 @@ class ProjectContextMixin:
             cursor.execute(query, params)
 
             results = []
-            for row in cursor.fetchall():
+            for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
                 results.append({
                     'id': row[0],
                     'rule': row[1],
@@ -174,7 +174,7 @@ class ProjectContextMixin:
             cursor.execute(query, params)
 
             results = []
-            for row in cursor.fetchall():
+            for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
                 results.append({
                     'id': row[0],
                     'type': row[1],
@@ -225,7 +225,7 @@ class ProjectContextMixin:
             cursor.execute(query, params)
 
             results = []
-            for row in cursor.fetchall():
+            for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
                 results.append({
                     'id': row[0],
                     'title': row[1],

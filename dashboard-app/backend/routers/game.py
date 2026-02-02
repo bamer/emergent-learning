@@ -126,7 +126,7 @@ async def get_leaderboard(
             (MIN_LEADERBOARD_SCORE, MAX_VALID_SCORE, limit, offset),
         )
 
-        rows = cursor.fetchall()
+        rows = :]
 
         # Build leaderboard entries
         entries: List[LeaderboardEntry] = []
@@ -293,7 +293,7 @@ async def get_leaderboard_around_me(
             (MIN_LEADERBOARD_SCORE, MAX_VALID_SCORE, limit, offset),
         )
 
-        rows = cursor.fetchall()
+        rows = :]
 
         entries: List[LeaderboardEntry] = []
         for row in rows:
@@ -347,7 +347,12 @@ async def get_game_state(request: Request):
 
     with get_db() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM game_state WHERE user_id = ?", (user_id,))
+        # OPTIMIZATION: Select specific columns only
+        cursor.execute("""
+            SELECT id, user_id, level, xp, achievements, completed_challenges, created_at, updated_at
+            FROM user_progress
+            WHERE user_id = ?
+        """, (user_id,))
         row = cursor.fetchone()
 
         if not row:

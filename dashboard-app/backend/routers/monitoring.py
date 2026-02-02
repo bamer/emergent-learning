@@ -50,6 +50,7 @@ except Exception:
     def _log_error(message: str) -> None:
         logger.error(message)
 
+
 router = APIRouter(prefix="/api/v1", tags=["monitoring"])
 
 # Database path
@@ -397,9 +398,7 @@ async def get_orchestrator_status():
         if response.status_code == 200:
             status_payload = response.json()
         else:
-            _log_error(
-                f"Orchestrator status check failed: HTTP {response.status_code}"
-            )
+            _log_error(f"Orchestrator status check failed: HTTP {response.status_code}")
     except Exception as e:
         _log_error(f"Orchestrator status check failed: {e}")
 
@@ -466,9 +465,7 @@ async def control_orchestrator(request: OrchestratorControlRequest):
                     else "Orchestrator start requested (not yet running)",
                 }
             _log_error("Orchestrator script not found")
-            raise HTTPException(
-                status_code=500, detail="Orchestrator script not found"
-            )
+            raise HTTPException(status_code=500, detail="Orchestrator script not found")
 
         if request.action == "stop":
             subprocess.run(
@@ -505,13 +502,9 @@ async def control_orchestrator(request: OrchestratorControlRequest):
                     "message": "Orchestrator restarted successfully",
                 }
             _log_error("Orchestrator script not found")
-            raise HTTPException(
-                status_code=500, detail="Orchestrator script not found"
-            )
+            raise HTTPException(status_code=500, detail="Orchestrator script not found")
 
-        raise HTTPException(
-            status_code=400, detail=f"Unknown action: {request.action}"
-        )
+        raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}")
 
     except HTTPException:
         raise
@@ -631,10 +624,12 @@ async def get_system_health():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get current health
+        # Get current health - OPTIMIZATION: Select specific columns only
         cursor.execute(
             """
-            SELECT * FROM system_health
+            SELECT id, timestamp, status, cpu_percent, memory_percent, disk_percent,
+                   services_status, response_time_ms, error_rate, uptime_percentage
+            FROM system_health
             ORDER BY timestamp DESC
             LIMIT 1
             """
@@ -645,10 +640,12 @@ async def get_system_health():
         if current_row:
             current = dict(current_row)
 
-        # Get recent history
+        # Get recent history - OPTIMIZATION: Select specific columns with pagination
         cursor.execute(
             """
-            SELECT * FROM system_health
+            SELECT id, timestamp, status, cpu_percent, memory_percent, disk_percent,
+                   services_status, response_time_ms, error_rate, uptime_percentage
+            FROM system_health
             ORDER BY timestamp DESC
             LIMIT 50
             """
@@ -913,8 +910,6 @@ async def control_watcher(request: WatcherControlRequest):
             subprocess.run(["pkill", "-f", "watcher/launcher.py"], capture_output=True)
 
             # Wait a moment
-            import time
-
             time.sleep(1)
 
             # Remove stop file

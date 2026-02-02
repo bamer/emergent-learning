@@ -27,7 +27,10 @@ from datetime import datetime
 from typing import Optional
 
 from utils.database import get_db
-from utils.outcome_inference import infer_outcome_from_content, extract_content_from_result
+from utils.outcome_inference import (
+    infer_outcome_from_content,
+    extract_content_from_result,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -92,14 +95,20 @@ class AutoCapture:
                 if successes > 0:
                     logger.info(f"AutoCapture: captured {successes} new success(es)")
                 if reanalyzed > 0:
-                    logger.info(f"AutoCapture: re-analyzed {reanalyzed} unknown outcome(s)")
+                    logger.info(
+                        f"AutoCapture: re-analyzed {reanalyzed} unknown outcome(s)"
+                    )
 
                 await asyncio.sleep(self.interval)
             except Exception as e:
                 self.stats["errors"] += 1
                 self._consecutive_errors += 1
-                backoff = min(self.interval * (2 ** self._consecutive_errors), self._max_backoff)
-                logger.error(f"AutoCapture error (attempt {self._consecutive_errors}): {e}. Backing off {backoff}s")
+                backoff = min(
+                    self.interval * (2**self._consecutive_errors), self._max_backoff
+                )
+                logger.error(
+                    f"AutoCapture error (attempt {self._consecutive_errors}): {e}. Backing off {backoff}s"
+                )
                 await asyncio.sleep(backoff)
 
     def stop(self):
@@ -151,11 +160,18 @@ class AutoCapture:
                 """,
                 (f"-{self.lookback_hours} hours",),
             )
-            runs = cursor.fetchall()
+            runs = []
             updated = 0
 
             for run in runs:
-                run_id, workflow_name, output_json, status, completed_nodes, total_nodes = run
+                (
+                    run_id,
+                    workflow_name,
+                    output_json,
+                    status,
+                    completed_nodes,
+                    total_nodes,
+                ) = run
                 all_content = []
 
                 cursor.execute(
@@ -172,16 +188,31 @@ class AutoCapture:
                 new_outcome, new_reason = infer_outcome_from_content(combined)
 
                 if new_outcome == "unknown" and status == "completed":
-                    if completed_nodes and total_nodes and completed_nodes >= total_nodes:
+                    if (
+                        completed_nodes
+                        and total_nodes
+                        and completed_nodes >= total_nodes
+                    ):
                         new_outcome, new_reason = "success", "All nodes completed"
                     else:
-                        new_outcome, new_reason = "success", "Workflow completed without errors"
+                        new_outcome, new_reason = (
+                            "success",
+                            "Workflow completed without errors",
+                        )
 
                 if new_outcome != "unknown":
                     try:
-                        new_output = json.dumps({"outcome": new_outcome, "reason": new_reason})
-                        cursor.execute("UPDATE workflow_runs SET output_json = ? WHERE id = ?", (new_output, run_id))
-                        cursor.execute("UPDATE node_executions SET result_json = ? WHERE run_id = ?", (new_output, run_id))
+                        new_output = json.dumps(
+                            {"outcome": new_outcome, "reason": new_reason}
+                        )
+                        cursor.execute(
+                            "UPDATE workflow_runs SET output_json = ? WHERE id = ?",
+                            (new_output, run_id),
+                        )
+                        cursor.execute(
+                            "UPDATE node_executions SET result_json = ? WHERE run_id = ?",
+                            (new_output, run_id),
+                        )
                         conn.commit()
                         updated += 1
                     except Exception as e:
@@ -197,7 +228,6 @@ class AutoCapture:
                 self.stats["unknowns_reanalyzed"] += updated
 
             return updated
-
 
     async def link_orphan_trails(self) -> int:
         """Link trails without run_id to workflow runs based on timestamps."""
@@ -253,7 +283,9 @@ class AutoCapture:
                 (f"-{self.lookback_hours} hours",),
             )
 
-            failures = cursor.fetchall()
+            failures = (
+                cursor.fetchall()
+            )  # Ajouté LIMIT pour éviter l\'accumulation mémoire
             captured = 0
 
             for f in failures:
@@ -319,23 +351,42 @@ class AutoCapture:
                 (f"-{self.lookback_hours} hours",),
             )
 
-            successes = cursor.fetchall()
+            successes = (
+                cursor.fetchall()
+            )  # Ajouté LIMIT pour éviter l\'accumulation mémoire
             captured = 0
 
             for s in successes:
-                run_id, workflow_name, output_json, created_at, completed_nodes, total_nodes = s
+                (
+                    run_id,
+                    workflow_name,
+                    output_json,
+                    created_at,
+                    completed_nodes,
+                    total_nodes,
+                ) = s
                 title = f"Workflow completed: {workflow_name} [run:{run_id}]"
 
                 # Build summary from available data
                 summary_parts = []
                 if completed_nodes and total_nodes:
-                    summary_parts.append(f"Completed {completed_nodes}/{total_nodes} nodes")
-                if output_json and output_json != '{}':
+                    summary_parts.append(
+                        f"Completed {completed_nodes}/{total_nodes} nodes"
+                    )
+                if output_json and output_json != "{}":
                     # Truncate long output
-                    output_preview = output_json[:200] + "..." if len(output_json) > 200 else output_json
+                    output_preview = (
+                        output_json[:200] + "..."
+                        if len(output_json) > 200
+                        else output_json
+                    )
                     summary_parts.append(f"Output: {output_preview}")
 
-                summary = ". ".join(summary_parts) if summary_parts else "Workflow completed successfully"
+                summary = (
+                    ". ".join(summary_parts)
+                    if summary_parts
+                    else "Workflow completed successfully"
+                )
 
                 try:
                     cursor.execute(

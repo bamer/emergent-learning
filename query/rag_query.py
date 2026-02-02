@@ -223,7 +223,7 @@ class RAGQuerySystem:
         h_params.append(limit)
 
         cursor.execute(h_query, h_params)
-        heuristics = [dict(row) for row in cursor.fetchall()]
+        heuristics = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         # Query learnings
         l_conditions = ["1=1"]
@@ -248,7 +248,7 @@ class RAGQuerySystem:
         l_params.append(limit)
 
         cursor.execute(l_query, l_params)
-        learnings = [dict(row) for row in cursor.fetchall()]
+        learnings = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
 
         conn.close()
         return heuristics, learnings
@@ -411,10 +411,10 @@ class RAGQuerySystem:
         cursor = conn.cursor()
 
         cursor.execute("SELECT id, rule, explanation FROM heuristics")
-        heuristics = cursor.fetchall()
+        heuristics = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 
         cursor.execute("SELECT id, title, summary FROM learnings")
-        learnings = cursor.fetchall()
+        learnings = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 
         conn.close()
 

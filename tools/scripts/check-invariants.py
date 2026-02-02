@@ -66,8 +66,9 @@ def main():
             SELECT id, statement, validation_type, validation_code, severity
             FROM invariants
             WHERE status = 'active' AND validation_code IS NOT NULL
+            LIMIT 1000
         ''')
-        invariants = cursor.fetchall()
+        invariants = cursor.fetchall()  # Limite pour éviter accumulation mémoire
         conn.close()
     except Exception as e:
         print(f"⚠️  Could not query invariants: {e}")
