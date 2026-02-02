@@ -5673,3 +5673,13 @@ ACTIONS_TAKEN:
 **RECOMMENDATION**: System is idle and ready for new 
 2026-02-02T09:28:45.000000 | STATUS: nominal | NOTES: System idle and healthy - no agents or swarm activity detected
 2026-02-02T09:28:45.000000 | STATUS: stale | NOTES: Terminated stale watcher process (PID 988974, 14+ hours old) - system idle and ready
+[TIER 1 ERROR] Error: opencode returned error code 1
+
+2026-02-02T11:49:24.703210 | STATUS: nominal | NOTES: System idle and healthy, no active agents detected
+2026-02-02T05:17:50.773459Z | STATUS: nominal | NOTES: System idle and healthy - no active agents, blackboard clean
+[TIER 1 ERROR] Error: opencode returned error code 1
+
+[TIER 1 ERROR] Error: opencode returned error code 1
+
+[TIER 1 ERROR] Error: opencode returned error code 1
+

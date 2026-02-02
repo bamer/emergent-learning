@@ -44,11 +44,38 @@ def main():
     # Chemins
     elf_base = Path.home() / ".opencode" / "emergent-learning"
     hooks_dir = Path.home() / ".opencode" / "hooks"
+    coordination_dir = elf_base / ".coordination"
+    heartbeat_file = coordination_dir / "event-bridge-heartbeat.json"
 
     # Définir l'environnement
     env = dict(os.environ)
     env["ELF_BASE_PATH"] = str(elf_base)
     env["PYTHONPATH"] = str(elf_base)
+
+    # Ensure coordination directory exists
+    coordination_dir.mkdir(parents=True, exist_ok=True)
+
+    # Update Event Bridge heartbeat
+    try:
+        heartbeat = {
+            "created_at": datetime.now().isoformat(),
+            "last_event_time": datetime.now().isoformat(),
+            "events_processed": 1,
+        }
+        if heartbeat_file.exists():
+            try:
+                existing = json.loads(heartbeat_file.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                existing = {}
+            heartbeat["created_at"] = existing.get(
+                "created_at", heartbeat["created_at"]
+            )
+            heartbeat["events_processed"] = (
+                int(existing.get("events_processed", 0)) + 1
+            )
+        heartbeat_file.write_text(json.dumps(heartbeat), encoding="utf-8")
+    except Exception:
+        pass
 
     # Exécuter les hooks PostToolUse
     post_tool_dir = hooks_dir / "PostToolUse"

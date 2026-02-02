@@ -85,7 +85,7 @@ function AppContent() {
     hotspots,
     runs,
     events,
-    timeline: _timeline,
+    timelineEvents,
     anomalies,
     reload: reloadDashboardData,
     loadStats,
@@ -430,21 +430,7 @@ function AppContent() {
 
           {activeTab === 'timeline' && (
             <CosmicTimelineView
-              events={events.map((e, idx) => {
-                const validEventTypes = ['task_start', 'task_end', 'heuristic_consulted', 'heuristic_validated', 'heuristic_violated', 'failure_recorded', 'golden_promoted'] as const
-                const rawType = e.event_type || e.type || 'task_start'
-                const eventType = validEventTypes.includes(rawType as any) ? rawType as TimelineEvent['event_type'] : 'task_start'
-                return {
-                  id: idx,
-                  timestamp: e.timestamp,
-                  event_type: eventType,
-                  description: e.description || e.message || '',
-                  metadata: e.metadata || (e.tags ? { tags: e.tags } : {}),
-                  file_path: e.file_path,
-                  line_number: e.line_number,
-                  domain: e.domain,
-                }
-              })}
+              events={timelineEvents}
               heuristics={normalizedHeuristics}
               onEventClick={() => { }}
             />

@@ -5,7 +5,7 @@ export interface Task {
   id: string
   subject: string
   description?: string
-  status: 'pending' | 'in_progress' | 'completed' | 'blocked' | 'cancelled'
+  status: 'pending' | 'in_progress' | 'completed' | 'blocked' | 'cancelled' | 'error'
   activeForm?: string
   blocks?: string[]
   blockedBy?: string[]
@@ -68,6 +68,13 @@ const STATUS_CONFIG = {
     bgColor: 'bg-red-500/10',
     borderColor: 'border-red-500/30',
   },
+  error: {
+    label: 'Failed',
+    icon: AlertCircle,
+    color: 'text-red-400',
+    bgColor: 'bg-red-500/10',
+    borderColor: 'border-red-500/30',
+  },
 }
 
 function TaskCard({
@@ -95,7 +102,7 @@ function TaskCard({
   const blocksTasks = task.blocks?.map(id => allTasks.find(t => t.id === id)).filter(Boolean) || []
   
   // Determine which action to show based on task status
-  const showStartButton = task.status === 'pending' || task.status === 'blocked'
+  const showStartButton = task.status === 'pending' || task.status === 'blocked' || task.status === 'error'
   const showStopButton = task.status === 'in_progress'
   const showRelaunchButton = task.status === 'completed' || task.status === 'cancelled'
   
@@ -304,6 +311,7 @@ export function TaskKanban({
   // Group tasks by status
   const pendingTasks = allTasks.filter(t => t.status === 'pending' || t.status === 'blocked')
   const inProgressTasks = allTasks.filter(t => t.status === 'in_progress')
+  const failedTasks = allTasks.filter(t => t.status === 'error')
   const completedTasks = allTasks.filter(t => t.status === 'completed' || t.status === 'cancelled')
 
   const sessionIds = Object.keys(sessions)
@@ -350,6 +358,17 @@ export function TaskKanban({
           title="IN PROGRESS"
           tasks={inProgressTasks}
           status="in_progress"
+          selectedTask={selectedTask}
+          onTaskSelect={onTaskSelect}
+          allTasks={allTasks}
+          onStartTask={onStartTask}
+          onStopTask={onStopTask}
+          onRelaunchTask={onRelaunchTask}
+        />
+        <KanbanColumn
+          title="FAILED"
+          tasks={failedTasks}
+          status="error"
           selectedTask={selectedTask}
           onTaskSelect={onTaskSelect}
           allTasks={allTasks}

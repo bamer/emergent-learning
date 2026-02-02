@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode, useEffect } from 'react'
-import { Stats, Hotspot, ApiRun, RawEvent, TimelineData, ApiAnomaly, Heuristic } from '../types'
+import { Stats, Hotspot, ApiRun, RawEvent, TimelineEvent, ApiAnomaly, Heuristic } from '../types'
 import { useDashboardData } from '../hooks/useDashboardData'
 import { useHeuristics } from '../hooks/useHeuristics'
 import { useScopeStore } from '../store/scopeStore'
@@ -10,7 +10,7 @@ interface DataContextType {
   hotspots: Hotspot[]
   runs: ApiRun[]
   events: RawEvent[]
-  timeline: TimelineData | null
+  timelineEvents: TimelineEvent[]
   anomalies: ApiAnomaly[]
   isLoading: boolean
   reload: () => void
@@ -54,7 +54,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     hotspots: dashboardData.hotspots,
     runs: dashboardData.runs,
     events: dashboardData.events,
-    timeline: dashboardData.timeline,
+    timelineEvents: dashboardData.timelineEvents,
     anomalies: dashboardData.anomalies,
     isLoading: dashboardData.isLoading,
     reload: dashboardData.reload,

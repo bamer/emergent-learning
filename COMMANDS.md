@@ -3,6 +3,7 @@
 ## Démarrage des Services
 
 ### 1. Dashboard Backend
+
 ```bash
 # Démarrer le backend FastAPI (port 8888)
 cd /home/bamer/.opencode/emergent-learning/dashboard-app/backend
@@ -11,6 +12,7 @@ uvicorn main:app --host 0.0.0.0 --port 8888
 ```
 
 ### 2. Event Bridge (Hooks)
+
 ```bash
 # Démarrer le pont d'événements (port 9998)
 cd /home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator
@@ -18,6 +20,7 @@ python3 event_bridge.py start
 ```
 
 ### 3. Orchestrateur ELF (Optionnel)
+
 ```bash
 # Démarrer l'orchestrateur ELF (port 9999)
 cd /home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator
@@ -25,6 +28,7 @@ python3 orchestrator.py start
 ```
 
 ### 4. Démarrage Complet (Tous les services)
+
 ```bash
 # Script pour tout démarrer
 cd /home/bamer/.opencode/emergent-learning
@@ -42,6 +46,7 @@ cd dashboard-app/frontend && npm run dev
 ## Vérification des Services
 
 ### Status des services
+
 ```bash
 # Vérifier le backend
 curl -s http://localhost:8888/api/v1/agents/status | python3 -m json.tool
@@ -57,6 +62,7 @@ curl -s http://localhost:9999/status | python3 -m json.tool
 ```
 
 ### Liste des processus
+
 ```bash
 # Voir tous les services ELF en cours
 ps aux | grep -E "(uvicorn|event_bridge|orchestrator)" | grep -v grep
@@ -68,6 +74,7 @@ netstat -tlnp | grep -E "(8888|9998|9999|4096)"
 ## Gestion des Agents
 
 ### Lister les agents
+
 ```bash
 # Liste complète via API
 curl -s http://localhost:8888/api/v1/agents/list | python3 -m json.tool
@@ -80,6 +87,7 @@ curl -s http://localhost:4096/agent | python3 -m json.tool
 ```
 
 ### Lister les modèles disponibles
+
 ```bash
 # Modèles via backend
 curl -s http://localhost:8888/api/v1/agents/models | python3 -m json.tool
@@ -89,6 +97,7 @@ curl -s http://localhost:4096/config/providers | python3 -m json.tool
 ```
 
 ### Exécuter une mission
+
 ```bash
 # Mode smart (auto-détection)
 curl -s -X POST http://localhost:8888/api/v1/agents/run \
@@ -112,6 +121,7 @@ curl -s -X POST http://localhost:8888/api/v1/agents/run \
 ```
 
 ### Démarrer/Arrêter un agent
+
 ```bash
 # Démarrer un agent
 curl -s -X POST http://localhost:8888/api/v1/agents/spawn \
@@ -132,6 +142,7 @@ curl -s -X POST http://localhost:8888/api/v1/agents/test \
 ## Gestion des Sessions OpenCode
 
 ### Sessions
+
 ```bash
 # Lister les sessions
 curl -s http://localhost:4096/session | python3 -m json.tool
@@ -154,6 +165,7 @@ curl -s -X DELETE http://localhost:4096/session/{SESSION_ID}
 ```
 
 ### Stream d'événements SSE
+
 ```bash
 # Écouter les événements (à exécuter dans un terminal séparé)
 curl -s -N http://localhost:4096/event -H "Accept: text/event-stream"
@@ -165,6 +177,7 @@ timeout 5 curl -s -N http://localhost:4096/event -H "Accept: text/event-stream"
 ## Logs et Debugging
 
 ### Logs des services
+
 ```bash
 # Logs Event Bridge
 tail -f /home/bamer/.opencode/emergent-learning/Open_ELF/logs/event_bridge.log
@@ -180,6 +193,7 @@ tail -f /home/bamer/.opencode/emergent-learning/Open_ELF/logs/heuristics.log
 ```
 
 ### Vérifier les hooks
+
 ```bash
 # Lister les hooks installés
 ls -la ~/.opencode/hooks/
@@ -195,6 +209,7 @@ echo '{"test": "data"}' | python3 post_tool_learning.py
 ```
 
 ### Debugging
+
 ```bash
 # Tester la connexion OpenCode
 curl -s http://localhost:4096/global/health
@@ -212,6 +227,7 @@ grep -i "error" /home/bamer/.opencode/emergent-learning/Open_ELF/logs/event_brid
 ## Recherche Sémantique
 
 ### Index et recherche
+
 ```bash
 # Statistiques
 curl -s http://localhost:8888/api/v1/semantic/stats | python3 -m json.tool
@@ -231,6 +247,7 @@ curl -s "http://localhost:8888/api/v1/semantic/embeddings?limit=10" | python3 -m
 ## Tasks et Trails
 
 ### Gestion des tasks
+
 ```bash
 # Lister les tasks
 ls -la ~/.opencode/tasks/
@@ -243,6 +260,7 @@ find ~/.opencode/tasks -name "*.json" | wc -l
 ```
 
 ### Trails (Phéromones)
+
 ```bash
 # Voir les trails dans la base de données
 sqlite3 ~/.opencode/emergent-learning/memory/index.db \
@@ -256,6 +274,7 @@ sqlite3 ~/.opencode/emergent-learning/memory/index.db \
 ## Base de Données
 
 ### Requêtes SQL utiles
+
 ```bash
 # Se connecter à la base
 sqlite3 ~/.opencode/emergent-learning/memory/index.db
@@ -285,6 +304,7 @@ ORDER BY created_at DESC LIMIT 10;
 ## Arrêt des Services
 
 ### Arrêter proprement
+
 ```bash
 # Trouver les PIDs et arrêter
 pkill -f "uvicorn.*8888"
@@ -297,6 +317,7 @@ pgrep -f "event_bridge" | xargs kill -9
 ```
 
 ### Redémarrage complet
+
 ```bash
 # Script de redémarrage
 cd /home/bamer/.opencode/emergent-learning
@@ -323,6 +344,7 @@ curl -s http://localhost:9998/status | grep -o '"running": true'
 ## Commandes de Test
 
 ### Test complet du système
+
 ```bash
 #!/bin/bash
 # test_elf.sh
@@ -357,6 +379,7 @@ echo "=== Test Complete ==="
 ## Raccourcis Utiles
 
 ### Aliases Bash (à ajouter dans ~/.bashrc)
+
 ```bash
 # ELF
 alias elf-start='cd /home/bamer/.opencode/emergent-learning/dashboard-app/backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8888'
@@ -376,19 +399,20 @@ alias oc-models='curl -s http://localhost:4096/config/providers | python3 -m jso
 
 | Service | URL |
 |---------|-----|
-| Dashboard Frontend | http://localhost:3001 |
-| Dashboard Backend API | http://localhost:8888 |
-| Event Bridge Status | http://localhost:9998/status |
-| Orchestrateur Status | http://localhost:9999/status |
-| OpenCode Server | http://localhost:4096 |
-| OpenCode Health | http://localhost:4096/global/health |
-| OpenCode Docs | http://localhost:4096/doc |
+| Dashboard Frontend | <http://localhost:3001> |
+| Dashboard Backend API | <http://localhost:8888> |
+| Event Bridge Status | <http://localhost:9998/status> |
+| Orchestrateur Status | <http://localhost:9999/status> |
+| OpenCode Server | <http://localhost:4096> |
+| OpenCode Health | <http://localhost:4096/global/health> |
+| OpenCode Docs | <http://localhost:4096/doc> |
 
 ## Troubleshooting
 
 ### Problèmes courants
 
 **Backend ne démarre pas (erreur 500)**
+
 ```bash
 # Vérifier les dépendances
 cd dashboard-app/backend
@@ -401,6 +425,7 @@ python3 -c "import requests; print('Requests OK')"
 ```
 
 **Event Bridge se reconnecte en boucle**
+
 ```bash
 # Vérifier OpenCode
 curl http://localhost:4096/global/health
@@ -415,6 +440,7 @@ python3 ~/.opencode/emergent-learning/Open_ELF/orchestrator event_bridge.py star
 ```
 
 **Pas d'agents dans le dashboard**
+
 ```bash
 # Vérifier OpenCode
 curl http://localhost:4096/agent
@@ -424,6 +450,7 @@ curl http://localhost:8888/api/v1/agents/list
 ```
 
 **Hooks ne se déclenchent pas**
+
 ```bash
 # Vérifier les hooks
 ls ~/.opencode/hooks/PostToolUse/

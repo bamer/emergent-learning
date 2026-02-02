@@ -25,6 +25,8 @@ OPENCODE_SERVER = "http://localhost:4096"
 LOGS_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
 HOOKS_DIR = Path.home() / ".opencode" / "hooks"
 ELF_DIR = Path("/home/bamer/.opencode/emergent-learning")
+COORDINATION_DIR = ELF_DIR / ".coordination"
+EVENT_BRIDGE_HEARTBEAT = COORDINATION_DIR / "event-bridge-heartbeat.json"
 
 # Ensure logs directory exists
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
@@ -125,6 +127,31 @@ class EventBridge:
         self.hook_manager = HookManager()
         self.event_count = 0
         self.session_tools = {}  # Track tools used per session
+        self.started_at: Optional[datetime] = None
+        self.last_event_time: Optional[str] = None
+
+        COORDINATION_DIR.mkdir(parents=True, exist_ok=True)
+
+    def _write_heartbeat(self):
+        """Write heartbeat for monitoring."""
+        try:
+            heartbeat = {
+                "started_at": self.started_at.isoformat() if self.started_at else None,
+                "last_event_time": self.last_event_time,
+                "events_processed": self.event_count,
+                "running": self.running,
+            }
+            EVENT_BRIDGE_HEARTBEAT.write_text(
+                json.dumps(heartbeat), encoding="utf-8"
+            )
+        except Exception:
+            pass
+
+    def _record_event(self):
+        """Increment counters and update heartbeat for any event."""
+        self.event_count += 1
+        self.last_event_time = datetime.now().isoformat()
+        self._write_heartbeat()
 
     def start(self):
         """Démarre le bridge d'événements."""
@@ -144,6 +171,8 @@ class EventBridge:
 
         logger.info("✅ Connected to OpenCode server")
         self.running = True
+        self.started_at = datetime.now()
+        self._write_heartbeat()
 
         # Démarrer l'écoute des events dans un thread
         events_thread = threading.Thread(target=self._listen_events, daemon=True)
@@ -266,6 +295,7 @@ class EventBridge:
                                     "timestamp": datetime.now().isoformat(),
                                 }
 
+                                self._record_event()
                                 self.hook_manager.run_hook("PostToolUse", hook_data)
 
                 # Attendre avant le prochain poll
@@ -293,7 +323,7 @@ class EventBridge:
     def _handle_event(self, event: Dict[str, Any]):
         """Gère un événement reçu d'OpenCode."""
         event_type = event.get("type", "unknown")
-        self.event_count += 1
+        self._record_event()
 
         logger.debug(f"Event #{self.event_count}: {event_type}")
 
@@ -496,11 +526,21 @@ class EventBridge:
                     handler_self.send_header("Content-type", "application/json")
                     handler_self.end_headers()
 
+                    uptime_seconds = None
+                    if bridge.started_at:
+                        uptime_seconds = int(
+                            (datetime.now() - bridge.started_at).total_seconds()
+                        )
                     status = {
                         "running": bridge.running,
                         "events_processed": bridge.event_count,
                         "hooks_dir": str(bridge.hook_manager.hooks_dir),
                         "opencode_server": bridge.base_url,
+                        "started_at": bridge.started_at.isoformat()
+                        if bridge.started_at
+                        else None,
+                        "uptime_seconds": uptime_seconds,
+                        "last_event_time": bridge.last_event_time,
                     }
                     handler_self.wfile.write(json.dumps(status).encode())
                 else:

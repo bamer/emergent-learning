@@ -251,14 +251,12 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
         console.info("OpenCode agent start request ignored:", agent.id);
         return;
       }
-      
-      const response = await fetch(`${apiBaseUrl}/api/v1/agents/spawn`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent_type: agent.type }),
-      });
-      if (!response.ok) throw new Error(`Failed to start agent: ${response.statusText}`);
-      fetchAgents(true);
+
+      setSelectedAgent(agent);
+      setExecutionMode('manual');
+      setMissionText('');
+      setLastResult(null);
+      setShowMissionModal(true);
     } catch (err) {
       console.error('Failed to start agent:', err);
       setError(err instanceof Error ? err.message : 'Failed to start agent');

@@ -13,6 +13,7 @@ import sqlite3
 import subprocess
 import os
 import signal
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -20,6 +21,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
+import requests
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -32,6 +34,11 @@ DB_PATH = Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db
 EVENT_CHRONICLE_DIR = (
     Path.home() / ".opencode" / "emergent-learning" / "event_chronicle"
 )
+ELF_DIR = Path.home() / ".opencode" / "emergent-learning"
+HOOKS_DIR = Path.home() / ".opencode" / "hooks"
+COORDINATION_DIR = ELF_DIR / ".coordination"
+EVENT_BRIDGE_HEARTBEAT = COORDINATION_DIR / "event-bridge-heartbeat.json"
+OPENCODE_SERVER = "http://localhost:4096"
 
 
 def get_db_connection() -> sqlite3.Connection:
@@ -277,6 +284,161 @@ async def get_chronicle_stats():
 
 
 # ==============================================================================
+# Event Bridge Control Request Model
+# ==============================================================================
+
+
+class EventBridgeControlRequest(BaseModel):
+    action: str  # 'start', 'stop', 'restart'
+
+
+# ==============================================================================
+# Event Bridge Endpoints
+# ==============================================================================
+
+
+@router.get("/event-bridge/status")
+async def get_event_bridge_status():
+    """Return Event Bridge status based on hook heartbeat + OpenCode reachability."""
+    now = datetime.now()
+    hooks_dir = HOOKS_DIR
+    opencode_status = "unknown"
+    last_event_time = None
+    events_processed = 0
+    uptime_seconds = None
+
+    if EVENT_BRIDGE_HEARTBEAT.exists():
+        try:
+            payload = json.loads(EVENT_BRIDGE_HEARTBEAT.read_text(encoding="utf-8"))
+            last_event_time = payload.get("last_event_time")
+            events_processed = int(payload.get("events_processed", 0))
+            started_at = payload.get("started_at") or payload.get("created_at")
+            if started_at:
+                try:
+                    uptime_seconds = int(
+                        (now - datetime.fromisoformat(started_at)).total_seconds()
+                    )
+                except ValueError:
+                    uptime_seconds = None
+        except json.JSONDecodeError:
+            last_event_time = None
+
+    # Check OpenCode server reachability
+    try:
+        response = requests.get(f"{OPENCODE_SERVER}/health", timeout=3)
+        opencode_status = "ok" if response.status_code < 400 else "error"
+    except Exception:
+        opencode_status = "error"
+
+    # Determine running status based on heartbeat freshness
+    running = False
+    if last_event_time:
+        try:
+            last_time = datetime.fromisoformat(last_event_time)
+            running = (now - last_time).total_seconds() < 120
+        except ValueError:
+            running = False
+
+    return {
+        "running": running,
+        "events_processed": events_processed,
+        "hooks_dir": str(hooks_dir),
+        "opencode_server": OPENCODE_SERVER,
+        "opencode_status": opencode_status,
+        "uptime_seconds": uptime_seconds,
+        "last_event_time": last_event_time,
+    }
+
+
+@router.post("/event-bridge/control")
+async def control_event_bridge(request: EventBridgeControlRequest):
+    """Control Event Bridge (start/stop/restart)."""
+    try:
+        logger.info(f"Event Bridge control action: {request.action}")
+
+        bridge_script = ELF_DIR / "Open_ELF" / "orchestrator" / "event_bridge.py"
+
+        if request.action == "start":
+            result = subprocess.run(
+                ["pgrep", "-f", "event_bridge.py"],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                return {
+                    "status": "ok",
+                    "action": "start",
+                    "message": "Event Bridge is already running",
+                    "pid": result.stdout.strip(),
+                }
+
+            if bridge_script.exists():
+                subprocess.Popen(
+                    ["python3", str(bridge_script), "start"],
+                    cwd=str(bridge_script.parent),
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+                time.sleep(1)
+                check = subprocess.run(
+                    ["pgrep", "-f", "event_bridge.py"],
+                    capture_output=True,
+                    text=True,
+                )
+                return {
+                    "status": "ok",
+                    "action": "start",
+                    "message": "Event Bridge started successfully"
+                    if check.returncode == 0
+                    else "Event Bridge start requested (not yet running)",
+                }
+            raise HTTPException(status_code=500, detail="Event Bridge script not found")
+
+        if request.action == "stop":
+            subprocess.run(
+                ["pkill", "-f", "event_bridge.py"],
+                capture_output=True,
+                text=True,
+            )
+            return {
+                "status": "ok",
+                "action": "stop",
+                "message": "Event Bridge stop signal sent",
+            }
+
+        if request.action == "restart":
+            subprocess.run(
+                ["pkill", "-f", "event_bridge.py"],
+                capture_output=True,
+                text=True,
+            )
+            time.sleep(1)
+            if bridge_script.exists():
+                subprocess.Popen(
+                    ["python3", str(bridge_script), "start"],
+                    cwd=str(bridge_script.parent),
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+                return {
+                    "status": "ok",
+                    "action": "restart",
+                    "message": "Event Bridge restarted successfully",
+                }
+            raise HTTPException(status_code=500, detail="Event Bridge script not found")
+
+        raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error controlling Event Bridge: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==============================================================================
 # System Health Endpoints
 # ==============================================================================
 
@@ -490,7 +652,7 @@ async def control_watcher(request: WatcherControlRequest):
 
         ELF_DIR = Path.home() / ".opencode" / "emergent-learning"
         WATCHER_DIR = ELF_DIR / "watcher"
-        START_SCRIPT = WATCHER_DIR / "start-watcher.sh"
+        START_SCRIPT = Path.home() / ".opencode" / "scripts" / "start-watcher-fixed.sh"
         STOP_FILE = ELF_DIR / ".coordination" / "watcher-stop"
         PID_FILE = Path("/tmp") / "elf-watcher.pid"
 
@@ -521,10 +683,18 @@ async def control_watcher(request: WatcherControlRequest):
                     stderr=subprocess.DEVNULL,
                     start_new_session=True,
                 )
+                time.sleep(1)
+                check = subprocess.run(
+                    ["pgrep", "-f", "watcher/launcher.py"],
+                    capture_output=True,
+                    text=True,
+                )
                 return {
                     "status": "ok",
                     "action": "start",
-                    "message": "Watcher started successfully",
+                    "message": "Watcher started successfully"
+                    if check.returncode == 0
+                    else "Watcher start requested (not yet running)",
                 }
             else:
                 raise HTTPException(

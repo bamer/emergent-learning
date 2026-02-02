@@ -11,16 +11,19 @@ Le système ELF crée maintenant des heuristiques **automatiquement** à partir 
 ## ✅ MÉCANISMES ACTIVÉS
 
 ### 1. Pattern Response Handler (`pattern_response_handler.py`)
+
 - ✅ **FONCTIONNE** : `_record_pattern_as_learning()` crée automatiquement des heuristiques
 - ✅ **FONCTIONNE** : Patterns enregistrés dans `event_chronicle` ET comme heuristiques
 - ✅ **SOURCE_TYPE** : `auto` pour identifier les heuristiques créées automatiquement
 
 ### 2. Post-Task Learning Hook (`post_tool_learning.py`)
+
 - ✅ **FONCTIONNE** : Extraction automatique d'heuristiques des sorties
 - ✅ **MOTS-CLÉS** : always, never, should, must, don't, avoid, prefer
 - ✅ **SOURCE_TYPE** : `auto` avec UPSERT pour éviter les doublons
 
 ### 3. Dashboard Sentinel (`dashboard_sentinel_complete.py`)
+
 - ✅ **FONCTIONNE** : Promotion automatique à golden rule si critères remplis
 - ✅ **CRITÈRES** : min_validations=5, confidence_threshold=0.9, age_days=30, consistency_score=0.8
 - ✅ **LOG** : `🧠 ELF Learning: Promoted X heuristics to golden rules`
@@ -28,16 +31,19 @@ Le système ELF crée maintenant des heuristiques **automatiquement** à partir 
 ## 📊 COMMENT ÇA MARCHE
 
 ### 1. Détection de Pattern
+
 ```
 Pattern détecté → _record_pattern_as_learning() → Heuristique créée
 ```
 
 ### 2. Extraction de Tâche
+
 ```
 Sortie de tâche → Analyse mots-clés → Heuristique créée (source_type='auto')
 ```
 
 ### 3. Promotion Automatique
+
 ```
 Heuristique validée 5+ fois → Critères remplis → Promue en golden rule
 ```
@@ -64,11 +70,13 @@ sqlite3 ~/.opencode/emergent-learning/memory/index.db \
 ## 📝 EXEMPLES D'HEURISTIQUES CRÉÉES
 
 ### Patterns Détectés
+
 - `system-patterns`: "Declining activity trend detected" (confidence: 0.8)
 - `system-patterns`: "Service instability detected" (confidence: 0.7)
 - `system-patterns`: "Cyclical pattern detected" (confidence: 0.8)
 
 ### Extractions de Tâches
+
 - `testing`: "Always test hooks thoroughly" (confidence: 0.5)
 - `general`: "Never use eval() on untrusted data" (confidence: 0.75)
 - `general`: "Always check file permissions" (confidence: 0.7)
@@ -76,11 +84,13 @@ sqlite3 ~/.opencode/emergent-learning/memory/index.db \
 ## 🚨 LOGS À SURVEILLER
 
 **Dans les logs, vous devriez voir :**
+
 - ✅ `AUTO-EXTRACTED HEURISTIC: ...` - Heuristique créée depuis sortie de tâche
 - ✅ `🧠 ELF Learning: Promoted X heuristics to golden rules` - Promotion automatique
 - ✅ `Learning recorded: True` - Pattern enregistré comme heuristique
 
 **Erreurs normales (base verrouillée) :**
+
 - ⚠️ `database is locked` - Normal en cas d'accès concurrent
 - ⚠️ `UNIQUE constraint failed` - Heuristique déjà existante (UPSERT devrait gérer)
 

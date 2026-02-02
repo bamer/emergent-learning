@@ -68,7 +68,7 @@ class SignalRequest(BaseModel):
 class TaskStatusRequest(BaseModel):
     """Request body for changing task status."""
 
-    status: str  # 'blocked', 'cancelled', 'pending', 'in_progress', 'completed'
+    status: str  # 'blocked', 'cancelled', 'pending', 'in_progress', 'completed', 'error'
     reason: Optional[str] = None
 
 
@@ -505,7 +505,14 @@ async def update_task_status(session_id: str, task_id: str, request: TaskStatusR
     Returns:
         {"status": "ok", "task_id": "...", "new_status": "..."}
     """
-    valid_statuses = {"pending", "in_progress", "completed", "blocked", "cancelled"}
+    valid_statuses = {
+        "pending",
+        "in_progress",
+        "completed",
+        "blocked",
+        "cancelled",
+        "error",
+    }
     if request.status not in valid_statuses:
         raise HTTPException(
             status_code=400,

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   Zap, Activity, FolderOpen, Server, CheckCircle, XCircle,
   AlertCircle, RefreshCw, Clock, ChevronRight, ChevronDown,
-  TrendingUp, ZapOff
+  TrendingUp, ZapOff, Play, Square
 } from 'lucide-react';
 
 // Types
@@ -11,6 +11,7 @@ interface EventBridgeStatus {
   events_processed: number;
   hooks_dir: string;
   opencode_server: string;
+  opencode_status?: string;
   uptime_seconds?: number;
   last_event_time?: string;
 }
@@ -48,7 +49,6 @@ const STATUS_CONFIG = {
 
 export function EventBridgeStatusPanel({
   apiBaseUrl = '',
-  eventBridgeUrl = 'http://localhost:9998',
   refreshInterval = 5000
 }: EventBridgeStatusPanelProps) {
   const [status, setStatus] = useState<EventBridgeStatus | null>(null);
@@ -61,7 +61,7 @@ export function EventBridgeStatusPanel({
   // Fetch status data
   const fetchStatus = useCallback(async () => {
     try {
-      const response = await fetch(`${eventBridgeUrl}/status`);
+      const response = await fetch(`${apiBaseUrl}/api/v1/event-bridge/status`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = await response.json();
@@ -79,7 +79,24 @@ export function EventBridgeStatusPanel({
     } finally {
       setLoading(false);
     }
-  }, [eventBridgeUrl]);
+  }, [apiBaseUrl]);
+
+  const controlBridge = useCallback(async (action: 'start' | 'stop' | 'restart') => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/event-bridge/control`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      setTimeout(fetchStatus, 500);
+    } catch (err) {
+      console.error(`Failed to ${action} event bridge:`, err);
+      setError(err instanceof Error ? err.message : `Failed to ${action} event bridge`);
+    }
+  }, [apiBaseUrl, fetchStatus]);
 
   // Initial load and auto-refresh
   useEffect(() => {
@@ -172,6 +189,23 @@ export function EventBridgeStatusPanel({
 
         {/* Controls */}
         <div className="flex items-center gap-2">
+          {status?.running ? (
+            <button
+              onClick={() => controlBridge('stop')}
+              className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded"
+              title="Stop event bridge"
+            >
+              <Square className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              onClick={() => controlBridge('start')}
+              className="p-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 rounded"
+              title="Start event bridge"
+            >
+              <Play className="w-4 h-4" />
+            </button>
+          )}
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
             className={`p-1.5 rounded text-xs flex items-center gap-1 ${
@@ -259,6 +293,20 @@ export function EventBridgeStatusPanel({
                         Service status
                       </div>
                     </div>
+
+                    {/* OpenCode Health */}
+                    <div className="p-3 bg-slate-700/30 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Server className="w-4 h-4 text-slate-400" />
+                        <span className="text-xs text-slate-400">OpenCode</span>
+                      </div>
+                      <div className={`text-lg font-bold ${status.opencode_status === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {status.opencode_status === 'ok' ? 'Healthy' : 'Down'}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        {status.opencode_server}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Last Update */}
@@ -304,8 +352,8 @@ export function EventBridgeStatusPanel({
                     </div>
                     <div className="flex items-center justify-between p-2 bg-slate-700/30 rounded">
                       <span className="text-sm text-slate-400">Event Bridge URL</span>
-                      <span className="text-sm font-medium text-slate-300">
-                        {eventBridgeUrl}
+                       <span className="text-sm font-medium text-slate-300">
+                        {`${apiBaseUrl}/api/v1/event-bridge/status`}
                       </span>
                     </div>
                   </div>
@@ -374,7 +422,7 @@ export function EventBridgeStatusPanel({
           <div className="flex items-center justify-between text-xs text-slate-500">
             <div className="flex items-center gap-4">
               <span>Checks: {history.length}</span>
-              <span>URL: {eventBridgeUrl}</span>
+                <span>URL: {`${apiBaseUrl}/api/v1/event-bridge/status`}</span>
             </div>
             <div>
               Refresh: {refreshInterval / 1000}s

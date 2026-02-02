@@ -59,6 +59,16 @@ def _import_get_base_path() -> Optional[callable]:
     return None
 
 
+# Add Open_ELF to Python path for timeline dashboard integration
+def _add_open_elf_to_path():
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        open_elf_path = parent / "Open_ELF"
+        if open_elf_path.exists():
+            sys.path.insert(0, str(open_elf_path))
+            break
+
+
 def get_base_path() -> Path:
     imported = _import_get_base_path()
     if imported is not None:
@@ -79,6 +89,9 @@ def get_base_path() -> Path:
 current_dir = Path(__file__).resolve().parent
 if str(current_dir) not in sys.path:
     sys.path.insert(0, str(current_dir))
+
+# Add Open_ELF to path
+_add_open_elf_to_path()
 
 EMERGENT_LEARNING_PATH = get_base_path()
 FRONTEND_PATH = current_dir.parent / "frontend" / "dist"
@@ -117,6 +130,29 @@ from routers import (
     monitoring_router,
 )
 from routers.auth import init_redis
+
+
+# Timeline Dashboard Integration
+def integrate_timeline_dashboard(app):
+    try:
+        print("Attempting to integrate timeline dashboard...")
+        from timeline_dashboard.timeline_integration import integrate_with_dashboard
+
+        integrate_with_dashboard(app)
+        print("Timeline dashboard integration completed successfully!")
+        # Verify integration by checking if routes were added
+        timeline_routes = [
+            route for route in app.routes if "timeline" in str(route.path)
+        ]
+        print(f"Added {len(timeline_routes)} timeline routes:")
+        for route in timeline_routes:
+            print(f"  {list(route.methods)[0]} {route.path}")
+    except ImportError as e:
+        print(f"Warning: Could not integrate timeline dashboard: {e}")
+        import traceback
+
+        traceback.print_exc()
+
 
 # Configure logging
 logging.basicConfig(
@@ -599,6 +635,7 @@ async def monitor_changes():
 
 @app.on_event("startup")
 async def startup_event():
+    logger.info("Startup event handler called")
     # Initialize project context
     ctx = init_project_context()
     if ctx.has_project:
@@ -637,6 +674,23 @@ async def startup_event():
     # Start auto-capture background job
     asyncio.create_task(auto_capture.start())
     logger.info("Auto-capture background job started")
+
+    # Integrate Timeline Dashboard
+    logger.info("Attempting to integrate timeline dashboard...")
+    try:
+        integrate_timeline_dashboard(app)
+        logger.info("Timeline dashboard integration attempt completed successfully")
+        # Count timeline routes
+        timeline_route_count = sum(
+            1
+            for route in app.routes
+            if hasattr(route, "path") and "timeline" in str(route.path)
+        )
+        logger.info(
+            f"Verified: {timeline_route_count} timeline routes should be available"
+        )
+    except Exception as e:
+        logger.error(f"Timeline dashboard integration failed: {e}", exc_info=True)
 
 
 @app.on_event("shutdown")
