@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import {
   Shield, ScrollText, Heart, Eye, Grid, List,
-  ChevronDown, ChevronRight
+  ChevronDown, ChevronRight, Zap
 } from 'lucide-react';
 import {
   SentinelMonitorPanel,
   EventChronicleViewer,
   SystemHealthPanel,
-  WatcherStatusPanel
+  WatcherStatusPanel,
+  EventBridgeStatusPanel
 } from './monitoring';
 
 interface MonitoringPanelProps {
   apiBaseUrl?: string;
 }
 
-type MonitorView = 'sentinel' | 'chronicle' | 'health' | 'watcher' | 'all';
+type MonitorView = 'sentinel' | 'chronicle' | 'health' | 'watcher' | 'eventbridge' | 'all';
 
 export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
   const [activeView, setActiveView] = useState<MonitorView>('all');
@@ -25,6 +26,7 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
     { id: 'chronicle', label: 'Event Chronicle', icon: ScrollText, component: EventChronicleViewer },
     { id: 'health', label: 'System Health', icon: Heart, component: SystemHealthPanel },
     { id: 'watcher', label: 'Watcher', icon: Eye, component: WatcherStatusPanel },
+    { id: 'eventbridge', label: 'Event Bridge', icon: Zap, component: EventBridgeStatusPanel },
   ] as const;
 
   const ActiveComponent = views.find(v => v.id === activeView)?.component;
@@ -98,13 +100,16 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
       <div className="flex-1 overflow-y-auto p-4">
         {activeView === 'all' ? (
           layoutMode === 'grid' ? (
-            /* Grid Layout - 2x2 */
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
+            /* Grid Layout - 2x3 */
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 h-full">
               <div className="min-h-[400px]">
                 <SentinelMonitorPanel apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="min-h-[400px]">
                 <SystemHealthPanel apiBaseUrl={apiBaseUrl} />
+              </div>
+              <div className="min-h-[400px]">
+                <EventBridgeStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="min-h-[400px]">
                 <WatcherStatusPanel apiBaseUrl={apiBaseUrl} />
@@ -121,6 +126,9 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
               </div>
               <div className="h-[500px]">
                 <SystemHealthPanel apiBaseUrl={apiBaseUrl} />
+              </div>
+              <div className="h-[500px]">
+                <EventBridgeStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="h-[500px]">
                 <WatcherStatusPanel apiBaseUrl={apiBaseUrl} />

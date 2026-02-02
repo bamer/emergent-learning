@@ -153,7 +153,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
   
   // Task action handlers
   const handleTaskStart = useCallback(async (sessionId: string, taskId: string) => {
-    const response = await fetch(`${apiBaseUrl}/api/v1/live/tasks/${sessionId}/${taskId}/start`, {
+    const response = await fetch(`${apiBaseUrl}/api/v1/live/task/${sessionId}/${taskId}/start`, {
       method: 'POST',
     })
     if (response.ok) {
@@ -163,7 +163,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
   }, [apiBaseUrl])
   
   const handleTaskStop = useCallback(async (sessionId: string, taskId: string) => {
-    const response = await fetch(`${apiBaseUrl}/api/v1/live/tasks/${sessionId}/${taskId}/stop`, {
+    const response = await fetch(`${apiBaseUrl}/api/v1/live/task/${sessionId}/${taskId}/stop`, {
       method: 'POST',
     })
     if (response.ok) {
@@ -172,7 +172,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
   }, [apiBaseUrl])
   
   const handleTaskRelaunch = useCallback(async (sessionId: string, taskId: string) => {
-    const response = await fetch(`${apiBaseUrl}/api/v1/live/tasks/${sessionId}/${taskId}/relaunch`, {
+    const response = await fetch(`${apiBaseUrl}/api/v1/live/task/${sessionId}/${taskId}/relaunch`, {
       method: 'POST',
     })
     if (response.ok) {
