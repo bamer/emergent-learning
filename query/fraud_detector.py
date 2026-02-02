@@ -16,7 +16,7 @@ import json
 import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, List, Dict, Tuple, Any
+from typing import Literal, Optional, List, Dict, Tuple, Any
 from dataclasses import dataclass
 from statistics import mean, stdev, variance
 from math import prod
@@ -226,7 +226,7 @@ class FraudDetector:
                   AND (h.times_validated + h.times_violated + COALESCE(h.times_contradicted, 0)) >= ?
             """, (domain, self.config.min_applications))
 
-            heuristics = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            heuristics = cursor.fetchall()
 
             if len(heuristics) < 3:
                 # Not enough data for meaningful baseline
@@ -263,7 +263,7 @@ class FraudDetector:
             """, (domain,))
 
             update_frequencies = []
-            for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+            for row in cursor.fetchall():
                 freq = row['update_count'] / max(row['days_active'], 1)
                 update_frequencies.append(freq)
 
@@ -307,7 +307,7 @@ class FraudDetector:
             """, (domain, avg_success, std_success, avg_freq, std_freq, len(heuristics)))
 
             # Create drift alert if significant
-            if is_significant_drift:
+            if is_significant_drift and drift_percentage is not None:
                 severity = self._classify_drift_severity(abs(drift_percentage))
                 conn.execute("""
                     INSERT INTO baseline_drift_alerts
@@ -358,7 +358,7 @@ class FraudDetector:
                 ORDER BY domain
             """)
 
-            domains = [row['domain'] for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            domains = [row['domain'] for row in cursor.fetchall()]
 
             results = {
                 "total_domains": len(domains),
@@ -414,7 +414,7 @@ class FraudDetector:
                 SELECT * FROM domains_needing_refresh
                 WHERE needs_refresh = 1
             """)
-            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
 
@@ -448,7 +448,7 @@ class FraudDetector:
         conn = self._get_connection()
         try:
             cursor = conn.execute("SELECT * FROM unacknowledged_drift_alerts")
-            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
 
@@ -491,7 +491,7 @@ class FraudDetector:
                 ORDER BY created_at ASC
             """, (heuristic_id,))
 
-            updates = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            updates = cursor.fetchall()
 
             if len(updates) < self.config.min_updates_for_temporal:
                 return None
@@ -576,7 +576,7 @@ class FraudDetector:
                 ORDER BY created_at ASC
             """, (heuristic_id,))
 
-            updates = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            updates = cursor.fetchall()
 
             if len(updates) < self.config.min_updates_for_trajectory:
                 return None
@@ -861,11 +861,11 @@ class FraudDetector:
                 WHERE fr.review_outcome IS NULL OR fr.review_outcome = 'pending'
                 ORDER BY fr.fraud_score DESC
             """)
-            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
 
-    def record_outcome(self, report_id: int, outcome: str,
+    def record_outcome(self, report_id: int, outcome: Literal['true_positive', 'false_positive', 'dismissed', 'pending'],
                       decided_by: str = 'user', notes: Optional[str] = None) -> bool:
         """
         Record human decision on a fraud report.
@@ -992,6 +992,8 @@ if __name__ == "__main__":
 
     detector = FraudDetector()
 
+    result = None  # Initialize result to avoid unbound variable error
+
     if args.command == "check":
         if not args.heuristic_id:
             print("Error: --heuristic-id required for check command")
@@ -1038,7 +1040,7 @@ if __name__ == "__main__":
         # Get overall fraud detection stats
         conn = detector._get_connection()
         cursor = conn.execute("SELECT * FROM fraud_detection_metrics")
-        result = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+        result = [dict(row) for row in cursor.fetchall()]
         conn.close()
 
     elif args.command == "drift-alerts":
@@ -1071,7 +1073,7 @@ if __name__ == "__main__":
                 ORDER BY calculated_at DESC
                 LIMIT ?
             """, (args.limit,))
-        result = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+        result = [dict(row) for row in cursor.fetchall()]
         conn.close()
 
         if not args.json and result:
@@ -1103,7 +1105,9 @@ if __name__ == "__main__":
                     print(f"    Interval: {domain['interval_days']} days")
                     print()
 
-    if args.json:
-        print(json.dumps(result, indent=2, default=str))
-    elif args.command not in ["refresh-all", "drift-alerts", "baseline-history", "needs-refresh"]:
-        print(json.dumps(result, indent=2, default=str))
+    # Only output result if it was defined and we're not in the special commands that handle their own output
+    if result is not None:
+        if args.json:
+            print(json.dumps(result, indent=2, default=str))
+        elif args.command not in ["refresh-all", "drift-alerts", "baseline-history", "needs-refresh"]:
+            print(json.dumps(result, indent=2, default=str))

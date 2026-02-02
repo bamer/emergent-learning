@@ -1,0 +1,6 @@
+{
+  "agent_type": "python-pro",
+  "prompt": "Analyze and work on: tools/swarm_coordinator.py\n\nContext: Testing swarm system\n\n**Your Role:** Python Development Expert\n**Focus on:**\n- Python-specific patterns and idioms\n- Standard library usage\n- Python ecosystem integration\n- Performance optimizations\n- Type hints and documentation\n\n**Provide recommendations for:**\n- Code structure improvements\n- Modern Python features\n- Dependency management\n- Testing strategies",
+  "target": "emergent-learning",
+  "timestamp": "2026-02-03T01:09:26.076257"
+}

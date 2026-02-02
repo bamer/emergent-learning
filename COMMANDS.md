@@ -381,7 +381,7 @@ echo "=== Test Complete ==="
 ### Aliases Bash (à ajouter dans ~/.bashrc)
 
 ```bash
-# ELF
+# ELF Backend
 alias elf-start='cd /home/bamer/.opencode/emergent-learning/dashboard-app/backend && source venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8888'
 alias elf-bridge='cd /home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator && python3 event_bridge.py start'
 alias elf-status='curl -s http://localhost:8888/api/v1/agents/status | python3 -m json.tool'

@@ -68,7 +68,7 @@ async def semantic_stats():
         cursor.execute(
             "SELECT source_type, COUNT(*) FROM embeddings GROUP BY source_type"
         )
-        by_type = {row[0]: row[1] for row in :]
+        by_type = {row[0]: row[1] for row in cursor.fetchall()}
 
         conn.close()
 
@@ -118,7 +118,7 @@ async def semantic_search(request: SemanticSearchRequest):
         """
 
         cursor.execute(sql, params)
-        all_rows = :]
+        all_rows = cursor.fetchall()
         conn.close()
 
         # Calculate keyword-based similarity scores for ALL results
@@ -257,7 +257,7 @@ async def list_embeddings(source_type: Optional[str] = None, limit: int = 50):
                 (limit,),
             )
 
-        rows = :]
+        rows = cursor.fetchall()
         conn.close()
 
         results = []

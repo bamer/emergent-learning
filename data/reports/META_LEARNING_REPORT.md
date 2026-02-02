@@ -1,4 +1,5 @@
 # Meta-Learning Capabilities Report
+
 **Agent:** Opus Agent J (Meta-Learning Specialist)
 **Date:** 2025-12-01
 **Focus:** Can the system learn about itself?
@@ -6,6 +7,7 @@
 ## Executive Summary
 
 Successfully implemented comprehensive meta-learning capabilities for the Emergent Learning Framework. The system can now:
+
 - Detect its own bugs through automated self-diagnostics
 - Track learning velocity and efficiency metrics
 - Detect and prevent circular dependencies
@@ -20,6 +22,7 @@ Successfully implemented comprehensive meta-learning capabilities for the Emerge
 **Purpose:** Can the system detect its own bugs?
 
 **Features:**
+
 - Directory structure validation
 - Database integrity checks
 - File-database synchronization verification
@@ -44,6 +47,7 @@ Successfully implemented comprehensive meta-learning capabilities for the Emerge
 **Purpose:** Track how fast and efficiently the system is learning
 
 **Metrics Tracked:**
+
 - Learnings per day/week/month
 - Domain activity distribution
 - Heuristic promotion rate (percentage of heuristics promoted to golden rules)
@@ -54,7 +58,8 @@ Successfully implemented comprehensive meta-learning capabilities for the Emerge
 - System health indicators
 
 **Example Output:**
-```
+
+```markdown
 Total learnings: 79
 Total failures: 73
 Total successes: 6
@@ -66,6 +71,7 @@ Most active domain: testing (23 learnings)
 ```
 
 **Modes:**
+
 - Standard output (human-readable)
 - JSON output (machine-readable)
 - Detailed mode (breakdown by domain, time trends)
@@ -79,6 +85,7 @@ Most active domain: testing (23 learnings)
 **Purpose:** Verify no circular imports/dependencies that could cause infinite loops
 
 **Checks:**
+
 - Python circular imports (self-imports, module cycles)
 - Shell script circular sourcing
 - External command dependencies (sqlite3, python3, git, bc)
@@ -86,6 +93,7 @@ Most active domain: testing (23 learnings)
 - Self-recording capability verification (critical for meta-learning)
 
 **Key Finding:** The system is designed with a clear hierarchy:
+
 1. Core utilities (query.py, database)
 2. Recording scripts (record-failure.sh, record-heuristic.sh)
 3. Meta-learning scripts (self-test.sh, learning-metrics.sh)
@@ -103,6 +111,7 @@ This hierarchy prevents circular dependencies and allows the system to monitor a
 **Purpose:** Recover from system corruption and self-heal
 
 **Recovery Capabilities:**
+
 - Restore database from markdown files
 - Rebuild indexes for query optimization
 - Fix missing directories
@@ -113,12 +122,14 @@ This hierarchy prevents circular dependencies and allows the system to monitor a
 
 **Bootstrap Problem Solution:**
 The system can recover from complete corruption because:
+
 1. Knowledge is stored redundantly (both markdown files and database)
 2. The database schema is embedded in query.py
 3. Recovery script can rebuild everything from markdown files
 4. All critical directories are auto-created if missing
 
 **Modes:**
+
 - Interactive mode (with user confirmation)
 - Auto mode (`--auto` flag for scripts)
 
@@ -131,6 +142,7 @@ The system can recover from complete corruption because:
 **Purpose:** Improve learning efficiency by identifying duplicate and similar failures
 
 **Features:**
+
 - Exact duplicate detection (same title)
 - Similarity scoring based on:
   - Domain match (+40 points)
@@ -142,7 +154,8 @@ The system can recover from complete corruption because:
 - Suggestions for improving record scripts
 
 **Example Output:**
-```
+
+```markdown
 Duplicate: 'Test failure' (3 instances, IDs: 15,23,47)
 Similar (75%): [12] Database connection failed <-> [34] Database timeout
 ```
@@ -160,6 +173,7 @@ Similar (75%): [12] Database connection failed <-> [34] Database timeout
 **Purpose:** Automatically suggest heuristics from failure patterns
 
 **Features:**
+
 - Analyze failures by domain
 - Suggest heuristics when domain has 3+ failures
 - Extract common themes from failure titles
@@ -169,6 +183,7 @@ Similar (75%): [12] Database connection failed <-> [34] Database timeout
 - Generate comprehensive opportunity reports
 
 **Auto-Generated Heuristic Template:**
+
 ```markdown
 # Heuristic Suggestion for Domain: [domain]
 
@@ -194,6 +209,7 @@ Based on N failures, a pattern emerges around:
 ```
 
 **Promotion Criteria:**
+
 - 3+ validations
 - Confidence ≥ 0.7
 - Violations = 0 OR validation/violation ratio > 5
@@ -205,6 +221,7 @@ Based on N failures, a pattern emerges around:
 ## Test Results
 
 ### Self-Test Execution
+
 - **Tests Run:** 11 test categories
 - **Directory Structure:** ✓ All required directories present
 - **Database Integrity:** ✓ Database intact and valid
@@ -215,6 +232,7 @@ Based on N failures, a pattern emerges around:
 - **Bootstrap Recovery:** ✓ Auto-initialization working
 
 ### Learning Metrics
+
 - **Current System Stats:**
   - 79 total learnings
   - 73 failures, 6 successes
@@ -224,16 +242,19 @@ Based on N failures, a pattern emerges around:
   - 11.29 learnings/day average
 
 ### Dependency Check
+
 - **Python:** No circular imports
 - **Shell:** Some legacy scripts have issues (not core functionality)
 - **External Deps:** sqlite3, python3, git all present (bc missing but non-critical)
 
 ### Deduplication
+
 - **Uniqueness Rate:** 93.67% (74 unique / 79 total)
 - **Duplicates Found:** 5 duplicate titles
 - **Similarity Detection:** Working with configurable threshold
 
 ### Heuristic Suggestions
+
 - **Coverage:** 26 domains have heuristics, 13 domains have failures
 - **Over-coverage:** Some heuristics for domains without failures (pre-emptive)
 - **Auto-suggestions:** System ready to generate heuristic drafts
@@ -245,6 +266,7 @@ Based on N failures, a pattern emerges around:
 ### 1. System Self-Awareness
 
 The system can now answer questions about itself:
+
 - "How fast am I learning?" → 11.29 learnings/day
 - "What are my most common failure domains?" → testing (23 failures)
 - "Am I improving?" → Learning velocity metrics show trends
@@ -255,6 +277,7 @@ The system can now answer questions about itself:
 
 **Before:** No detection of duplicate failures or patterns
 **After:**
+
 - Automatic duplicate detection
 - Similarity scoring prevents redundant recording
 - Pattern recognition suggests when to extract heuristics
@@ -264,11 +287,13 @@ The system can now answer questions about itself:
 ### 3. Self-Healing Capabilities
 
 **Bootstrap Problem Solved:**
+
 - System can recover from complete database corruption
 - Knowledge redundancy (markdown + database) provides resilience
 - Auto-initialization prevents manual intervention
 
 **Circular Dependency Protection:**
+
 - Clear hierarchy prevents infinite loops
 - Self-test can call record-failure without circularity
 - System can safely monitor itself
@@ -276,12 +301,14 @@ The system can now answer questions about itself:
 ### 4. Automated Heuristic Extraction
 
 **Pattern Recognition:**
+
 - 3+ failures in same domain → heuristic suggestion
 - Common words extracted from failure titles
 - Severity patterns identified
 - Evidence automatically collected
 
 **Promotion Pipeline:**
+
 - Heuristics with 3+ validations flagged for review
 - Confidence scores track reliability
 - Golden rule promotion criteria automated
@@ -289,6 +316,7 @@ The system can now answer questions about itself:
 ### 5. Learning Velocity Tracking
 
 **Acceleration Detection:**
+
 - Week-over-week comparison
 - Growth/decline trends identified
 - Domain activity shifts tracked
@@ -301,7 +329,7 @@ The system can now answer questions about itself:
 
 ### No Circular Dependencies ✓
 
-```
+```markdown
 query.py (Tier 1: Foundation)
     ↑
     |
@@ -319,6 +347,7 @@ suggest-heuristics.sh (Tier 3: Meta-learning)
 ### Self-Recording Capability ✓
 
 The system can record its own failures without infinite loops:
+
 1. self-test.sh discovers bug
 2. self-test.sh calls record-failure.sh
 3. record-failure.sh writes to database
@@ -328,6 +357,7 @@ The system can record its own failures without infinite loops:
 ### Bootstrap Recovery ✓
 
 If database is deleted/corrupted:
+
 1. query.py auto-initializes database (CREATE TABLE IF NOT EXISTS)
 2. bootstrap-recovery.sh can rebuild from markdown files
 3. All directories auto-created if missing
@@ -338,23 +368,27 @@ If database is deleted/corrupted:
 ## Known Issues & Limitations
 
 ### 1. External Dependency: bc (basic calculator)
+
 - **Impact:** Some metric calculations may fail
 - **Workaround:** Most scripts use Python for math, bc is backup
 - **Priority:** Low
 
 ### 2. Legacy Scripts with Self-Sourcing
+
 - **Files:** error-handling.sh, logging.sh, metrics.sh
 - **Impact:** False positives in dependency check
 - **Cause:** Defensive sourcing pattern
 - **Priority:** Low (not core functionality)
 
 ### 3. Similarity Detection Performance
+
 - **Algorithm:** O(n²) pairwise comparison
 - **Impact:** Slow with >1000 failures
 - **Mitigation:** Currently acceptable (<100 failures)
 - **Future:** Index-based similarity search
 
 ### 4. Date Calculation in MSYS/Windows
+
 - **Issue:** Some date calculations may fail on Windows
 - **Workaround:** Using Python for critical date operations
 - **Priority:** Low (system still functional)
@@ -364,16 +398,19 @@ If database is deleted/corrupted:
 ## Recommendations
 
 ### Immediate Actions
+
 1. ✓ All meta-learning scripts operational
 2. ✓ Self-test integrated into workflow
 3. ✓ Learning metrics available on demand
 
 ### Short-Term Improvements
+
 1. Install bc for full metric calculation support
 2. Add self-test to CI/CD pipeline (if applicable)
 3. Schedule weekly heuristic opportunity reports
 
 ### Long-Term Enhancements
+
 1. Machine learning for similarity detection (semantic embeddings)
 2. Automated heuristic validation tracking
 3. Visual dashboards for learning velocity
@@ -386,21 +423,25 @@ If database is deleted/corrupted:
 ### Daily Operations
 
 **Check system health:**
+
 ```bash
 ~/.opencode/emergent-learning/scripts/self-test.sh
 ```
 
 **View learning metrics:**
+
 ```bash
 ~/.opencode/emergent-learning/scripts/learning-metrics.sh
 ```
 
 **Check for duplicates:**
+
 ```bash
 ~/.opencode/emergent-learning/scripts/deduplicate-failures.sh --stats
 ```
 
 **Get heuristic suggestions:**
+
 ```bash
 ~/.opencode/emergent-learning/scripts/suggest-heuristics.sh
 ```
@@ -408,6 +449,7 @@ If database is deleted/corrupted:
 ### Weekly Reviews
 
 **Generate comprehensive reports:**
+
 ```bash
 ~/.opencode/emergent-learning/scripts/learning-metrics.sh --detailed
 ~/.opencode/emergent-learning/scripts/suggest-heuristics.sh --report
@@ -417,11 +459,13 @@ If database is deleted/corrupted:
 ### Recovery Operations
 
 **If system is corrupted:**
+
 ```bash
 ~/.opencode/emergent-learning/scripts/bootstrap-recovery.sh
 ```
 
 **Check dependencies:**
+
 ```bash
 ~/.opencode/emergent-learning/scripts/dependency-check.sh
 ```

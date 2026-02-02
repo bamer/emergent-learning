@@ -1,0 +1,8 @@
+{
+  "max_size_mb": 5,
+  "max_age_hours": 24,
+  "max_archives": 10,
+  "critical_size_mb": 20,
+  "auto_cleanup": true,
+  "notifications": true
+}

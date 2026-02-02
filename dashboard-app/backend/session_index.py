@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SessionMetadata:
     """Lightweight metadata for a session."""
+
     session_id: str
     project: str
     project_path: str
@@ -39,6 +40,7 @@ class SessionMetadata:
 @dataclass
 class SessionMessage:
     """Individual message in a session."""
+
     uuid: str
     type: str  # 'user' or 'assistant'
     timestamp: str
@@ -66,6 +68,7 @@ class SessionIndex:
         else:
             try:
                 from utils.database import get_base_path
+
                 self.base_path = get_base_path()
             except ImportError:
                 # Fallback if utils.database is not available
@@ -76,17 +79,22 @@ class SessionIndex:
             if candidate.exists():
                 self.projects_dir = candidate
             else:
-                self.projects_dir = Path.home() / ".opencode" / "projects"
-        
+                self.projects_dir = (
+                    self.base_path
+                )  # Use the emergent-learning directory itself
+
         self._index: Dict[str, SessionMetadata] = {}
         self._last_scan: Optional[datetime] = None
         self._lock = threading.RLock()
 
         try:
             from utils.database import get_base_path
+
             self._db_path = get_base_path() / "memory" / "index.db"
         except ImportError:
-            self._db_path = Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
+            self._db_path = (
+                Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
+            )
 
     # Tools that commonly have large inputs (file contents)
     LARGE_INPUT_TOOLS = {"Read", "Write", "Edit", "NotebookEdit"}
@@ -94,7 +102,9 @@ class SessionIndex:
     # Max chars for tool input display
     MAX_INPUT_CHARS = 500
 
-    def _truncate_tool_input(self, tool_name: str, raw_input: Any, depth: int = 0) -> Any:
+    def _truncate_tool_input(
+        self, tool_name: str, raw_input: Any, depth: int = 0
+    ) -> Any:
         """
         Truncate tool input to prevent context flooding.
 
@@ -107,7 +117,7 @@ class SessionIndex:
 
         if not isinstance(raw_input, dict):
             if isinstance(raw_input, str) and len(raw_input) > self.MAX_INPUT_CHARS:
-                return raw_input[:self.MAX_INPUT_CHARS] + "... [truncated]"
+                return raw_input[: self.MAX_INPUT_CHARS] + "... [truncated]"
             return raw_input
 
         truncated = {}
@@ -117,7 +127,9 @@ class SessionIndex:
             elif key in ("content", "new_source", "old_string", "new_string"):
                 if isinstance(value, str):
                     if len(value) > 100:
-                        truncated[key] = value[:100] + f"... [{len(value)} chars truncated]"
+                        truncated[key] = (
+                            value[:100] + f"... [{len(value)} chars truncated]"
+                        )
                     else:
                         truncated[key] = value
                 else:
@@ -125,11 +137,14 @@ class SessionIndex:
             elif isinstance(value, dict):
                 truncated[key] = self._truncate_tool_input(tool_name, value, depth + 1)
             elif isinstance(value, list):
-                truncated[key] = [self._truncate_tool_input(tool_name, item, depth + 1) for item in value[:10]]
+                truncated[key] = [
+                    self._truncate_tool_input(tool_name, item, depth + 1)
+                    for item in value[:10]
+                ]
                 if len(value) > 10:
                     truncated[key].append(f"[{len(value) - 10} more items truncated]")
             elif isinstance(value, str) and len(value) > self.MAX_INPUT_CHARS:
-                truncated[key] = value[:self.MAX_INPUT_CHARS] + "... [truncated]"
+                truncated[key] = value[: self.MAX_INPUT_CHARS] + "... [truncated]"
             else:
                 truncated[key] = value
 
@@ -147,17 +162,21 @@ class SessionIndex:
         """
         try:
             import sqlite3
+
             conn = sqlite3.connect(str(self._db_path))
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT tool_summary, content_summary, conversation_summary,
                        files_touched, tool_counts, message_count,
                        summarized_at, summarizer_model, is_stale
                 FROM session_summaries
                 WHERE session_id = ?
-            """, (session_id,))
+            """,
+                (session_id,),
+            )
 
             row = cursor.fetchone()
             conn.close()
@@ -169,12 +188,16 @@ class SessionIndex:
                 "tool_summary": row["tool_summary"],
                 "content_summary": row["content_summary"],
                 "conversation_summary": row["conversation_summary"],
-                "files_touched": json.loads(row["files_touched"]) if row["files_touched"] else [],
-                "tool_counts": json.loads(row["tool_counts"]) if row["tool_counts"] else {},
+                "files_touched": json.loads(row["files_touched"])
+                if row["files_touched"]
+                else [],
+                "tool_counts": json.loads(row["tool_counts"])
+                if row["tool_counts"]
+                else {},
                 "message_count": row["message_count"],
                 "summarized_at": row["summarized_at"],
                 "summarizer_model": row["summarizer_model"],
-                "is_stale": bool(row["is_stale"])
+                "is_stale": bool(row["is_stale"]),
             }
 
         except Exception as e:
@@ -217,10 +240,14 @@ class SessionIndex:
             self._index = new_index
             self._last_scan = datetime.now()
 
-        logger.info(f"Indexed {session_count} sessions from {len(list(self.projects_dir.iterdir()))} projects")
+        logger.info(
+            f"Indexed {session_count} sessions from {len(list(self.projects_dir.iterdir()))} projects"
+        )
         return session_count
 
-    def _extract_metadata(self, file_path: Path, project_name: str) -> Optional[SessionMetadata]:
+    def _extract_metadata(
+        self, file_path: Path, project_name: str
+    ) -> Optional[SessionMetadata]:
         """
         Extract metadata from a session file without loading full content.
 
@@ -253,7 +280,7 @@ class SessionIndex:
             git_branch = ""
             corruption_count = 0
 
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 for line in f:
                     if not line.strip():
                         continue
@@ -300,7 +327,10 @@ class SessionIndex:
                             # Handle list content (tool results, etc.)
                             elif isinstance(content, list):
                                 for item in content:
-                                    if isinstance(item, dict) and item.get("type") != "tool_result":
+                                    if (
+                                        isinstance(item, dict)
+                                        and item.get("type") != "tool_result"
+                                    ):
                                         first_prompt_preview = str(item.get("text", ""))
                                         break
                                     elif isinstance(item, str):
@@ -330,11 +360,13 @@ class SessionIndex:
                 file_path=str(file_path),
                 file_size=file_size,
                 is_partial=corruption_count > 0,
-                corruption_count=corruption_count
+                corruption_count=corruption_count,
             )
 
         except Exception as e:
-            logger.error(f"Error extracting metadata from {file_path}: {e}", exc_info=True)
+            logger.error(
+                f"Error extracting metadata from {file_path}: {e}", exc_info=True
+            )
             return None
 
     def list_sessions(
@@ -344,7 +376,7 @@ class SessionIndex:
         days: Optional[int] = None,
         project: Optional[str] = None,
         search: Optional[str] = None,
-        include_agent: bool = False
+        include_agent: bool = False,
     ) -> tuple[List[SessionMetadata], int]:
         """
         List sessions with filtering and pagination.
@@ -371,8 +403,12 @@ class SessionIndex:
         if days is not None:
             cutoff = datetime.now().timestamp() - (days * 24 * 60 * 60)
             sessions = [
-                s for s in sessions
-                if datetime.fromisoformat(s.last_timestamp.replace('Z', '+00:00')).timestamp() > cutoff
+                s
+                for s in sessions
+                if datetime.fromisoformat(
+                    s.last_timestamp.replace("Z", "+00:00")
+                ).timestamp()
+                > cutoff
             ]
 
         # Filter by project
@@ -383,7 +419,8 @@ class SessionIndex:
         if search:
             search_lower = search.lower()
             sessions = [
-                s for s in sessions
+                s
+                for s in sessions
                 if search_lower in s.first_prompt_preview.lower()
                 or search_lower in s.project.lower()
             ]
@@ -394,7 +431,7 @@ class SessionIndex:
         total_count = len(sessions)
 
         # Apply pagination
-        paginated_sessions = sessions[offset:offset + limit]
+        paginated_sessions = sessions[offset : offset + limit]
 
         return paginated_sessions, total_count
 
@@ -422,7 +459,7 @@ class SessionIndex:
             messages = []
             file_path = Path(metadata.file_path)
 
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 for line in f:
                     if not line.strip():
                         continue
@@ -433,7 +470,10 @@ class SessionIndex:
                         continue
 
                     # Skip sidechains and snapshots
-                    if data.get("isSidechain") or data.get("type") == "file-history-snapshot":
+                    if (
+                        data.get("isSidechain")
+                        or data.get("type") == "file-history-snapshot"
+                    ):
                         continue
 
                     msg_type = data.get("type")
@@ -470,7 +510,10 @@ class SessionIndex:
                                     break
 
                         # Check if it's a command (single word or starts with /)
-                        if content and (not " " in content.strip() or content.strip().startswith("/")):
+                        if content and (
+                            not " " in content.strip()
+                            or content.strip().startswith("/")
+                        ):
                             is_command = True
 
                     elif msg_type == "assistant":
@@ -488,13 +531,17 @@ class SessionIndex:
                                     raw_input = item.get("input", {})
 
                                     # Truncate tool inputs to prevent context flooding
-                                    truncated_input = self._truncate_tool_input(tool_name, raw_input)
+                                    truncated_input = self._truncate_tool_input(
+                                        tool_name, raw_input
+                                    )
 
-                                    tool_use.append({
-                                        "id": item.get("id", ""),
-                                        "name": tool_name,
-                                        "input": truncated_input
-                                    })
+                                    tool_use.append(
+                                        {
+                                            "id": item.get("id", ""),
+                                            "name": tool_name,
+                                            "input": truncated_input,
+                                        }
+                                    )
                                 elif item.get("type") == "thinking":
                                     # Check if thinking is encrypted (has signature)
                                     if "signature" in item:
@@ -504,15 +551,17 @@ class SessionIndex:
 
                         content = "\n".join(text_parts)
 
-                    messages.append(SessionMessage(
-                        uuid=uuid,
-                        type=msg_type,
-                        timestamp=timestamp,
-                        content=content,
-                        is_command=is_command,
-                        tool_use=tool_use if tool_use else None,
-                        thinking=thinking
-                    ))
+                    messages.append(
+                        SessionMessage(
+                            uuid=uuid,
+                            type=msg_type,
+                            timestamp=timestamp,
+                            content=content,
+                            is_command=is_command,
+                            tool_use=tool_use if tool_use else None,
+                            thinking=thinking,
+                        )
+                    )
 
             # Try to get summary from database
             summary = self.get_session_summary(session_id)
@@ -527,7 +576,7 @@ class SessionIndex:
                 "git_branch": metadata.git_branch,
                 "is_agent": metadata.is_agent,
                 "messages": [asdict(m) for m in messages],
-                "has_summary": summary is not None
+                "has_summary": summary is not None,
             }
 
             # Include summary if available
@@ -559,7 +608,7 @@ class SessionIndex:
                 projects[project_name] = {
                     "name": project_name,
                     "session_count": 0,
-                    "last_activity": metadata.last_timestamp
+                    "last_activity": metadata.last_timestamp,
                 }
 
             projects[project_name]["session_count"] += 1
@@ -590,5 +639,5 @@ class SessionIndex:
             "user_sessions": total_sessions - agent_sessions,
             "total_prompts": total_prompts,
             "last_scan": last_scan.isoformat() if last_scan else None,
-            "projects_count": len(set(m.project for m in index_values))
+            "projects_count": len(set(m.project for m in index_values)),
         }

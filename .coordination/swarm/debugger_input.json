@@ -1,0 +1,6 @@
+{
+  "agent_type": "debugger",
+  "prompt": "Analyze and work on: dashboard-app/backend\n\nContext: --mode\n\n**Your Role:** System Debugger\n**Focus on:**\n- Runtime errors and exceptions\n- Logic flow issues\n- Configuration problems\n- Environment setup issues\n- Performance bottlenecks\n\n**Report findings with:**\n- Root cause analysis\n- Debugging steps taken\n- Solution recommendations\n- Prevention strategies",
+  "target": "emergent-learning",
+  "timestamp": "2026-02-03T01:11:33.454798"
+}

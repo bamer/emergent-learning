@@ -31,7 +31,7 @@ if str(AGENTS_DIR) not in sys.path:
 
 # Import centralized logger
 try:
-    from logger import setup_logger, log_critical_error
+    from agents.logger import setup_logger, log_critical_error
 
     watcher_logger = setup_logger("watcher")
 except ImportError:
@@ -40,6 +40,16 @@ except ImportError:
 
     logging.basicConfig(level=logging.INFO)
     watcher_logger = logging.getLogger("watcher")
+
+    # Fallback function for log_critical_error
+    def log_critical_error(component: str, message: str):
+        watcher_logger.error(f"[CRITICAL ERROR] {component}: {message}")
+
+
+try:
+    from opencode_client import OpenCodeClient
+except ImportError:
+    OpenCodeClient = None
 
 try:
     from opencode_client import OpenCodeClient
@@ -103,9 +113,9 @@ def call_opencode_http(
         )
 
         if session_resp.status_code != 201 and session_resp.status_code != 200:
-            # If primary fails, try failsafe
-            failsafe_url = os.environ.get(
-                "OPENCODE_FAILSAFE_SERVER", "http://localhost:12134"
+            return (
+                f"Error: Failed to create session ({session_resp.status_code})",
+                False,
             )
             failsafe_model = os.environ.get(
                 "OPENCODE_FAILSAFE_MODEL", "nemotron-v3-coder"

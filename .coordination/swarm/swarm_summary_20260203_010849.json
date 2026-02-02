@@ -1,0 +1,34 @@
+{
+  "summary": {
+    "total_agents": 2,
+    "successful": 2,
+    "failed": 0,
+    "timestamp": "2026-02-03T01:08:49.506220"
+  },
+  "findings_by_severity": {
+    "critical": [],
+    "high": [],
+    "medium": [],
+    "low": []
+  },
+  "recommendations": [
+    "- python-pro: Analysis completed",
+    "- debugger: Analysis completed"
+  ],
+  "agent_results": [
+    {
+      "agent_type": "python-pro",
+      "status": "launched",
+      "output_file": "/home/bamer/.opencode/emergent-learning/.coordination/swarm/python-pro_result_20260203_010849.json",
+      "input_file": "/home/bamer/.opencode/emergent-learning/.coordination/swarm/python-pro_input.json",
+      "timestamp": "2026-02-03T01:08:49.506082"
+    },
+    {
+      "agent_type": "debugger",
+      "status": "launched",
+      "output_file": "/home/bamer/.opencode/emergent-learning/.coordination/swarm/debugger_result_20260203_010849.json",
+      "input_file": "/home/bamer/.opencode/emergent-learning/.coordination/swarm/debugger_input.json",
+      "timestamp": "2026-02-03T01:08:49.506211"
+    }
+  ]
+}

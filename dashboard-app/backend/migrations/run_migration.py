@@ -94,7 +94,7 @@ class MigrationRunner:
         )
 
         self.applied_migrations = {
-            row["filename"]: row["checksum"] for row in :]
+            row["filename"]: row["checksum"] for row in cursor.fetchall()
         }
 
         logger.info(

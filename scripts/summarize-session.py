@@ -22,6 +22,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 from collections import Counter
 
+
 # Paths
 def _resolve_base_path() -> Path:
     env_path = os.environ.get("ELF_BASE_PATH")
@@ -34,6 +35,7 @@ def _resolve_base_path() -> Path:
             sys.path.insert(0, str(parent / "src"))
             try:
                 from elf_paths import get_base_path
+
                 return get_base_path(parent)
             except ImportError:
                 break
@@ -42,7 +44,7 @@ def _resolve_base_path() -> Path:
 
 
 ELF_DIR = _resolve_base_path()
-PROJECTS_DIR = Path.home() / ".opencode" / "projects"
+PROJECTS_DIR = ELF_DIR
 DB_PATH = ELF_DIR / "memory" / "index.db"
 
 
@@ -76,7 +78,7 @@ def extract_session_data(file_path: Path) -> Dict[str, Any]:
     assistant_snippets = []
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             for line in f:
                 if not line.strip():
                     continue
@@ -131,26 +133,32 @@ def extract_session_data(file_path: Path) -> Dict[str, Any]:
         "files_touched": list(files_touched)[:50],  # Cap at 50 files
         "user_prompts": user_prompts[:10],  # First 10 prompts
         "assistant_snippets": assistant_snippets[:5],  # First 5 snippets
-        "file_size": file_path.stat().st_size
+        "file_size": file_path.stat().st_size,
     }
 
 
 def generate_summary_prompt(session_data: Dict[str, Any], session_id: str) -> str:
     """Create a prompt for haiku to summarize the session."""
-    tool_str = ", ".join(f"{k}: {v}" for k, v in session_data.get("tool_counts", {}).items())
-    files_str = "\n".join(f"  - {f}" for f in session_data.get("files_touched", [])[:20])
-    prompts_str = "\n".join(f"  - {p}" for p in session_data.get("user_prompts", [])[:5])
+    tool_str = ", ".join(
+        f"{k}: {v}" for k, v in session_data.get("tool_counts", {}).items()
+    )
+    files_str = "\n".join(
+        f"  - {f}" for f in session_data.get("files_touched", [])[:20]
+    )
+    prompts_str = "\n".join(
+        f"  - {p}" for p in session_data.get("user_prompts", [])[:5]
+    )
 
     return f"""Summarize this Claude Code session concisely. Return JSON only.
 
 Session ID: {session_id}
-Messages: {session_data.get('message_count', 0)}
-Tools used: {tool_str or 'none'}
+Messages: {session_data.get("message_count", 0)}
+Tools used: {tool_str or "none"}
 Files touched:
-{files_str or '  (none)'}
+{files_str or "  (none)"}
 
 User prompts (first few):
-{prompts_str or '  (none)'}
+{prompts_str or "  (none)"}
 
 Return this exact JSON structure (no markdown, just raw JSON):
 {{
@@ -181,7 +189,9 @@ def generate_fallback_summary(session_data: Dict[str, Any]) -> Dict[str, Any]:
 
     # Tool summary
     if tool_counts:
-        parts = [f"{v}x {k}" for k, v in sorted(tool_counts.items(), key=lambda x: -x[1])[:5]]
+        parts = [
+            f"{v}x {k}" for k, v in sorted(tool_counts.items(), key=lambda x: -x[1])[:5]
+        ]
         tool_summary = f"Used {', '.join(parts)}"
     else:
         tool_summary = "No tool usage recorded"
@@ -205,7 +215,7 @@ def generate_fallback_summary(session_data: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "tool_summary": tool_summary,
         "content_summary": content_summary,
-        "conversation_summary": conversation_summary
+        "conversation_summary": conversation_summary,
     }
 
 
@@ -231,7 +241,9 @@ def summarize_session(session_id: str, use_llm: bool = True) -> bool:
     # Extract session data
     session_data = extract_session_data(file_path)
     if "error" in session_data:
-        print(f"Error extracting session data: {session_data['error']}", file=sys.stderr)
+        print(
+            f"Error extracting session data: {session_data['error']}", file=sys.stderr
+        )
         return False
 
     # Generate summary
@@ -252,7 +264,8 @@ def summarize_session(session_id: str, use_llm: bool = True) -> bool:
     conn = get_db()
     try:
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO session_summaries (
                 session_id, project,
                 tool_summary, content_summary, conversation_summary,
@@ -260,20 +273,22 @@ def summarize_session(session_id: str, use_llm: bool = True) -> bool:
                 session_file_path, session_file_size, session_last_modified,
                 summarized_at, summarizer_model, is_stale
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, 0)
-        """, (
-            session_id,
-            project,
-            summary.get("tool_summary", ""),
-            summary.get("content_summary", ""),
-            summary.get("conversation_summary", ""),
-            json.dumps(session_data.get("files_touched", [])),
-            json.dumps(session_data.get("tool_counts", {})),
-            session_data.get("message_count", 0),
-            str(file_path),
-            session_data.get("file_size", 0),
-            datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
-            model
-        ))
+        """,
+            (
+                session_id,
+                project,
+                summary.get("tool_summary", ""),
+                summary.get("content_summary", ""),
+                summary.get("conversation_summary", ""),
+                json.dumps(session_data.get("files_touched", [])),
+                json.dumps(session_data.get("tool_counts", {})),
+                session_data.get("message_count", 0),
+                str(file_path),
+                session_data.get("file_size", 0),
+                datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
+                model,
+            ),
+        )
         conn.commit()
         print(f"Summarized {session_id} ({model})")
         return True
@@ -295,7 +310,9 @@ def get_unsummarized_sessions(older_than_hours: float = 1.0) -> List[str]:
 
     # Get already summarized sessions
     cursor.execute("SELECT session_id FROM session_summaries WHERE is_stale = 0")
-    summarized = set(row[0] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
+    summarized = set(
+        row[0] for row in cursor.fetchall()
+    )  # Get already summarized sessions
     conn.close()
 
     # Scan projects for unsummarized sessions
@@ -325,11 +342,24 @@ def get_unsummarized_sessions(older_than_hours: float = 1.0) -> List[str]:
 def main():
     parser = argparse.ArgumentParser(description="Summarize Claude sessions with haiku")
     parser.add_argument("session_id", nargs="?", help="Session ID to summarize")
-    parser.add_argument("--batch", action="store_true", help="Batch summarize multiple sessions")
-    parser.add_argument("--older-than", type=str, default="1h", help="Only sessions older than (e.g., 1h, 30m)")
-    parser.add_argument("--limit", type=int, default=10, help="Max sessions to process in batch")
-    parser.add_argument("--no-llm", action="store_true", help="Use fallback summary (no API call)")
-    parser.add_argument("--list-unsummarized", action="store_true", help="List unsummarized sessions")
+    parser.add_argument(
+        "--batch", action="store_true", help="Batch summarize multiple sessions"
+    )
+    parser.add_argument(
+        "--older-than",
+        type=str,
+        default="1h",
+        help="Only sessions older than (e.g., 1h, 30m)",
+    )
+    parser.add_argument(
+        "--limit", type=int, default=10, help="Max sessions to process in batch"
+    )
+    parser.add_argument(
+        "--no-llm", action="store_true", help="Use fallback summary (no API call)"
+    )
+    parser.add_argument(
+        "--list-unsummarized", action="store_true", help="List unsummarized sessions"
+    )
 
     args = parser.parse_args()
 
@@ -344,7 +374,9 @@ def main():
 
     if args.list_unsummarized:
         sessions = get_unsummarized_sessions(older_than_hours)
-        print(f"Found {len(sessions)} unsummarized sessions (older than {args.older_than}):")
+        print(
+            f"Found {len(sessions)} unsummarized sessions (older than {args.older_than}):"
+        )
         for sid in sessions[:20]:
             print(f"  {sid}")
         if len(sessions) > 20:
@@ -359,10 +391,12 @@ def main():
     if args.batch:
         # Batch summarize
         sessions = get_unsummarized_sessions(older_than_hours)
-        print(f"Found {len(sessions)} unsummarized sessions, processing up to {args.limit}")
+        print(
+            f"Found {len(sessions)} unsummarized sessions, processing up to {args.limit}"
+        )
 
         success_count = 0
-        for session_id in sessions[:args.limit]:
+        for session_id in sessions[: args.limit]:
             if summarize_session(session_id, use_llm=not args.no_llm):
                 success_count += 1
 

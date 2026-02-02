@@ -161,9 +161,7 @@ class EventBridge:
                 "events_processed": self.event_count,
                 "running": self.running,
             }
-            EVENT_BRIDGE_HEARTBEAT.write_text(
-                json.dumps(heartbeat), encoding="utf-8"
-            )
+            EVENT_BRIDGE_HEARTBEAT.write_text(json.dumps(heartbeat), encoding="utf-8")
         except Exception:
             pass
 
@@ -538,44 +536,60 @@ class EventBridge:
 
     def _start_status_server(self):
         """Démarre un serveur HTTP simple pour exposer le status."""
-        bridge = self  # Capture reference to EventBridge instance
+        try:
+            bridge = self  # Capture reference to EventBridge instance
 
-        class StatusHandler(BaseHTTPRequestHandler):
-            def do_GET(handler_self):
-                if handler_self.path == "/status":
-                    handler_self.send_response(200)
-                    handler_self.send_header("Content-type", "application/json")
-                    handler_self.end_headers()
+            class StatusHandler(BaseHTTPRequestHandler):
+                def do_GET(handler_self):
+                    if handler_self.path == "/status":
+                        handler_self.send_response(200)
+                        handler_self.send_header("Content-type", "application/json")
+                        handler_self.end_headers()
 
-                    uptime_seconds = None
-                    if bridge.started_at:
-                        uptime_seconds = int(
-                            (datetime.now() - bridge.started_at).total_seconds()
-                        )
-                    status = {
-                        "running": bridge.running,
-                        "events_processed": bridge.event_count,
-                        "hooks_dir": str(bridge.hook_manager.hooks_dir),
-                        "opencode_server": bridge.base_url,
-                        "started_at": bridge.started_at.isoformat()
-                        if bridge.started_at
-                        else None,
-                        "uptime_seconds": uptime_seconds,
-                        "last_event_time": bridge.last_event_time,
-                    }
-                    handler_self.wfile.write(json.dumps(status).encode())
-                else:
-                    handler_self.send_response(404)
-                    handler_self.end_headers()
+                        uptime_seconds = None
+                        if bridge.started_at:
+                            uptime_seconds = int(
+                                (datetime.now() - bridge.started_at).total_seconds()
+                            )
+                        status = {
+                            "running": bridge.running,
+                            "events_processed": bridge.event_count,
+                            "hooks_dir": str(bridge.hook_manager.hooks_dir),
+                            "opencode_server": bridge.base_url,
+                            "started_at": bridge.started_at.isoformat()
+                            if bridge.started_at
+                            else None,
+                            "uptime_seconds": uptime_seconds,
+                            "last_event_time": bridge.last_event_time,
+                        }
+                        handler_self.wfile.write(json.dumps(status).encode())
+                    else:
+                        handler_self.send_response(404)
+                        handler_self.end_headers()
 
-            def log_message(self, format, *args):
-                pass
+                def log_message(self, format, *args):
+                    pass
 
-        server = HTTPServer(("localhost", 9998), StatusHandler)
-        logger.info("📊 Status server started on http://localhost:9998/status")
+            # Utiliser un port différent si 9998 est occupé
+            port = 9998
+            try:
+                server = HTTPServer(("localhost", port), StatusHandler)
+            except OSError:
+                port = 9999
+                try:
+                    server = HTTPServer(("localhost", port), StatusHandler)
+                except OSError:
+                    _log_error(f"❌ Cannot start status server on ports 9998-9999")
+                    return
 
-        server_thread = threading.Thread(target=server.serve_forever, daemon=True)
-        server_thread.start()
+            logger.info(f"📊 Status server started on http://localhost:{port}/status")
+
+            server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+            server_thread.start()
+
+        except Exception as e:
+            _log_error(f"❌ Failed to start status server: {e}")
+            # Ne pas échouer complètement si le serveur de statut ne peut pas démarrer
 
 
 def main():

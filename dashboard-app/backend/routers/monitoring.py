@@ -24,6 +24,24 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 import requests
 
+# Import database utilities
+try:
+    from utils.database import get_db_connection, dict_from_row
+except ImportError:
+
+    def get_db_connection():
+        import sqlite3
+
+        db_path = (
+            Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
+        )
+        return sqlite3.connect(str(db_path))
+
+    def dict_from_row(row):
+        """Convert sqlite3.Row to dict"""
+        return dict(row) if hasattr(row, "keys") else row
+
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -31,15 +49,17 @@ logger = logging.getLogger(__name__)
 # Unified logging (best-effort)
 try:
     sys.path.insert(0, str(Path.home() / ".opencode" / "emergent-learning" / "agents"))
-    from elf_logging import get_logger, log_info, log_error
+    import logging
 
-    unified_logger = get_logger("monitoring")
+    logger = logging.getLogger(__name__)
+
+    unified_logger = logger
 
     def _log_info(message: str) -> None:
-        log_info("monitoring", message)
+        logger.info(message)
 
     def _log_error(message: str) -> None:
-        log_error("monitoring", message)
+        logger.error(message)
 
 except Exception:
     unified_logger = logger
@@ -624,11 +644,11 @@ async def get_system_health():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get current health - OPTIMIZATION: Select specific columns only
+        # Get current health - Use actual columns in system_health table
         cursor.execute(
             """
-            SELECT id, timestamp, status, cpu_percent, memory_percent, disk_percent,
-                   services_status, response_time_ms, error_rate, uptime_percentage
+            SELECT id, timestamp, status, db_integrity, db_size_mb, disk_free_mb,
+                   git_status, stale_locks, details
             FROM system_health
             ORDER BY timestamp DESC
             LIMIT 1
@@ -640,11 +660,11 @@ async def get_system_health():
         if current_row:
             current = dict(current_row)
 
-        # Get recent history - OPTIMIZATION: Select specific columns with pagination
+        # Get recent history - Use actual columns in system_health table
         cursor.execute(
             """
-            SELECT id, timestamp, status, cpu_percent, memory_percent, disk_percent,
-                   services_status, response_time_ms, error_rate, uptime_percentage
+            SELECT id, timestamp, status, db_integrity, db_size_mb, disk_free_mb,
+                   git_status, stale_locks, details
             FROM system_health
             ORDER BY timestamp DESC
             LIMIT 50
@@ -949,3 +969,259 @@ async def control_watcher(request: WatcherControlRequest):
     except Exception as e:
         _log_error(f"Error controlling watcher: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/v1/monitoring/watcher/events")
+async def get_watcher_events():
+    """Get last 20 watcher events for monitoring card."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get recent file monitoring events
+        cursor.execute("""
+            SELECT id, timestamp, type, tool, input_summary, output_summary, outcome,
+                   session_id, agent_id, file_path
+            FROM event_chronicle 
+            WHERE type IN ('file_change', 'file_creation', 'file_deletion', 'watcher_status')
+            ORDER BY timestamp DESC 
+            LIMIT 20
+        """)
+
+        events = []
+        for row in cursor.fetchall():
+            event_data = dict_from_row(row)
+            # Format for display
+            event_data["display_type"] = event_data.get("type", "unknown")
+            event_data["display_time"] = event_data.get("timestamp", "")
+            event_data["display_message"] = (
+                f"{event_data.get('tool', 'watcher')}: {event_data.get('input_summary', 'No summary')}"
+            )
+            events.append(event_data)
+
+        conn.close()
+
+        return {
+            "status": "ok",
+            "events": events,
+            "total_count": len(events),
+            "last_updated": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching watcher events: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+@router.get("/api/v1/monitoring/orchestrator/events")
+async def get_orchestrator_events():
+    """Get last 20 orchestrator events (questions and responses) for monitoring card."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get recent orchestrator events - questions received and responses
+        cursor.execute("""
+            SELECT id, timestamp, type, tool, input_summary, output_summary, outcome,
+                   session_id, agent_id
+            FROM event_chronicle 
+            WHERE type IN ('agent_question', 'agent_response', 'orchestrator_action', 'question_received', 'response_sent')
+            ORDER BY timestamp DESC 
+            LIMIT 20
+        """)
+
+        events = []
+        for row in cursor.fetchall():
+            event_data = dict_from_row(row)
+
+            # Categorize as question or response
+            is_question = event_data.get("type") in [
+                "agent_question",
+                "question_received",
+            ]
+            event_data["event_category"] = "question" if is_question else "response"
+
+            # Format display message
+            if is_question:
+                event_data["display_message"] = (
+                    f"❓ Question: {event_data.get('input_summary', 'No question')}"
+                )
+            else:
+                event_data["display_message"] = (
+                    f"✅ Response: {event_data.get('output_summary', 'No response')}"
+                )
+
+            event_data["display_type"] = "Question" if is_question else "Response"
+            event_data["display_time"] = event_data.get("timestamp", "")
+
+            events.append(event_data)
+
+        conn.close()
+
+        return {
+            "status": "ok",
+            "events": events,
+            "total_count": len(events),
+            "question_count": len(
+                [e for e in events if e.get("event_category") == "question"]
+            ),
+            "response_count": len(
+                [e for e in events if e.get("event_category") == "response"]
+            ),
+            "last_updated": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching orchestrator events: {e}")
+        return {"status": "error", "error": str(e)}
+
+
+@router.get("/api/v1/monitoring/ollama/status")
+async def get_ollama_status():
+    """Get Ollama embeddings service status for monitoring."""
+    try:
+        import requests
+
+        # Check if Ollama service is running
+        try:
+            response = requests.get("http://localhost:11434/api/tags", timeout=5)
+            ollama_running = response.status_code == 200
+        except:
+            ollama_running = False
+
+        # Test embedding generation
+        embedding_status = "not_tested"
+        if ollama_running:
+            try:
+                test_response = requests.post(
+                    "http://localhost:11434/api/embeddings",
+                    json={"model": "nomic-embed-text", "prompt": "test embedding"},
+                    timeout=10,
+                )
+                if test_response.status_code == 200:
+                    embedding_status = "working"
+                else:
+                    embedding_status = "error"
+            except:
+                embedding_status = "failed"
+
+        # Get models available
+        models = []
+        if ollama_running:
+            try:
+                tags_response = requests.get(
+                    "http://localhost:11434/api/tags", timeout=5
+                )
+                if tags_response.status_code == 200:
+                    models_data = tags_response.json()
+                    models = [
+                        model.get("name", "") for model in models_data.get("models", [])
+                    ]
+            except:
+                models = []
+
+        return {
+            "status": "ok",
+            "service_running": ollama_running,
+            "embedding_status": embedding_status,
+            "models_available": models,
+            "embedding_model": "nomic-embed-text"
+            if "nomic-embed-text" in models
+            else None,
+            "service_url": "http://localhost:11434",
+            "last_checked": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error checking Ollama status: {e}")
+        return {
+            "status": "error",
+            "service_running": False,
+            "embedding_status": "unknown",
+            "error": str(e),
+            "last_checked": datetime.now().isoformat(),
+        }
+
+
+@router.post("/api/v1/monitoring/system-health/update")
+async def update_system_health():
+    """Update system health record with current status."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check database integrity (fix typo)
+        db_integrity = "ok"
+        try:
+            cursor.execute("PRAGMA integrity_check")
+            integrity_result = cursor.fetchone()
+            if integrity_result and integrity_result[0] == "ok":
+                db_integrity = "Integrity Check ✅ Passed"
+            else:
+                db_integrity = "Integrity Check ❌ Failed"
+        except Exception:
+            db_integrity = "Integrity Check ❌ Failed"
+
+        # Get database size
+        cursor.execute("PRAGMA page_count")
+        page_count_result = cursor.fetchone()
+        page_count = page_count_result[0] if page_count_result else 0
+        cursor.execute("PRAGMA page_size")
+        page_size_result = cursor.fetchone()
+        page_size = page_size_result[0] if page_size_result else 4096
+        db_size_mb = (page_count * page_size) / (1024 * 1024)
+
+        # Get disk space
+        import shutil
+
+        disk_free_mb = shutil.disk_usage("/").free / (1024 * 1024)
+
+        # Get git status
+        try:
+            result = subprocess.run(
+                ["git", "status", "--porcelain"], capture_output=True, text=True
+            )
+            git_status = "Clean" if not result.stdout else "Modified files"
+        except:
+            git_status = "Unknown"
+
+        # Insert new health record
+        cursor.execute(
+            """
+            INSERT INTO system_health (timestamp, status, db_integrity, db_size_mb, 
+                                     disk_free_mb, git_status, stale_locks, details)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            (
+                datetime.now().isoformat(),
+                "ok",
+                db_integrity,
+                db_size_mb,
+                disk_free_mb,
+                git_status,
+                0,  # stale_locks - would need implementation
+                json.dumps(
+                    {
+                        "embedding_service": "ollama",
+                        "dashboard_version": "1.0",
+                        "monitoring_active": True,
+                    }
+                ),
+            ),
+        )
+
+        conn.commit()
+        conn.close()
+
+        return {
+            "status": "ok",
+            "db_integrity": db_integrity,
+            "db_size_mb": round(db_size_mb, 2),
+            "disk_free_mb": round(disk_free_mb, 2),
+            "git_status": git_status,
+            "updated_at": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error updating system health: {e}")
+        return {"status": "error", "error": str(e)}

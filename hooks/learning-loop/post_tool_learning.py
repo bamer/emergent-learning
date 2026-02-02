@@ -690,7 +690,7 @@ def check_golden_rule_promotion(conn):
               AND (times_violated = 0 OR times_validated / times_violated > 10)
         """)
 
-        candidates = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        candidates = cursor.fetchall()
 
         for c in candidates:
             # Promote to golden

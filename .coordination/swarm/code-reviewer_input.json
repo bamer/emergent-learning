@@ -1,0 +1,6 @@
+{
+  "agent_type": "code-reviewer",
+  "prompt": "Analyze and work on: dashboard-app/backend\n\nContext: --mode\n\n**Your Role:** Expert Code Reviewer\n**Focus on:**\n- Code quality and readability\n- Security vulnerabilities  \n- Performance issues\n- Best practices compliance\n- Potential bugs or edge cases\n\n**Report findings with:**\n- File:line references\n- Issue severity (critical/high/medium/low)\n- Recommended fixes\n- Code quality metrics",
+  "target": "emergent-learning",
+  "timestamp": "2026-02-03T01:11:33.451664"
+}

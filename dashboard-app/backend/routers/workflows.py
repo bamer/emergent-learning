@@ -8,8 +8,8 @@ from pathlib import Path
 
 from fastapi import APIRouter
 
-from ..models import WorkflowCreate, ActionResult
-from ..utils.database import get_db, dict_from_row
+from models import WorkflowCreate, ActionResult
+from utils.database import get_db, dict_from_row
 
 router = APIRouter(prefix="/api/v1", tags=["workflows"])
 logger = logging.getLogger(__name__)

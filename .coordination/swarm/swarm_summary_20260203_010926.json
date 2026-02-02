@@ -1,0 +1,26 @@
+{
+  "summary": {
+    "total_agents": 1,
+    "successful": 1,
+    "failed": 0,
+    "timestamp": "2026-02-03T01:09:26.076489"
+  },
+  "findings_by_severity": {
+    "critical": [],
+    "high": [],
+    "medium": [],
+    "low": []
+  },
+  "recommendations": [
+    "- python-pro: Analysis completed"
+  ],
+  "agent_results": [
+    {
+      "agent_type": "python-pro",
+      "status": "launched",
+      "output_file": "/home/bamer/.opencode/emergent-learning/.coordination/swarm/python-pro_result_20260203_010926.json",
+      "input_file": "/home/bamer/.opencode/emergent-learning/.coordination/swarm/python-pro_input.json",
+      "timestamp": "2026-02-03T01:09:26.076474"
+    }
+  ]
+}

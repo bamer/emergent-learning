@@ -10,8 +10,8 @@ from pathlib import Path
 from datetime import datetime
 import os
 
-# Centralized log directory
-LOG_DIR = Path("/home/bamer/.opencode/emergent-learning/logs")
+# Centralized log directory - Use Open_ELF/logs for unified logging
+LOG_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 

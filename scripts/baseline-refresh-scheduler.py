@@ -28,7 +28,8 @@ from datetime import datetime
 from pathlib import Path
 
 # Add query directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "query"))
+script_path = Path(__file__).resolve()
+sys.path.insert(0, str(script_path.parent.parent / "query"))
 
 from fraud_detector import FraudDetector
 from config_loader import get_base_path
@@ -189,7 +190,7 @@ def show_drift_alerts():
         print()
 
 
-def acknowledge_alert(alert_id: int, user: str, notes: str = None):
+def acknowledge_alert(alert_id: int, user: str, notes: str):
     """Acknowledge a drift alert."""
     detector = FraudDetector()
     detector.acknowledge_drift_alert(alert_id, user, notes)

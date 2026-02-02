@@ -1,0 +1,47 @@
+{
+  "thresholds": {
+    "event-bridge.log": {
+      "size_mb": 1,
+      "interval_minutes": 5
+    },
+    "watcher.log": {
+      "size_mb": 2,
+      "interval_minutes": 10
+    },
+    "orchestrator.log": {
+      "size_mb": 2,
+      "interval_minutes": 15
+    },
+    "backend.log": {
+      "size_mb": 3,
+      "interval_minutes": 20
+    },
+    "opencode-server.log": {
+      "size_mb": 3,
+      "interval_minutes": 20
+    },
+    "frontend.log": {
+      "size_mb": 2,
+      "interval_minutes": 15
+    },
+    "researcher.log": {
+      "size_mb": 2,
+      "interval_minutes": 15
+    },
+    "architect.log": {
+      "size_mb": 2,
+      "interval_minutes": 15
+    },
+    "creative.log": {
+      "size_mb": 2,
+      "interval_minutes": 15
+    },
+    "ceo.log": {
+      "size_mb": 1,
+      "interval_minutes": 10
+    }
+  },
+  "global_size_mb": 5,
+  "global_file_count": 15,
+  "last_updated": "2026-02-02T22:09:09.849619"
+}
