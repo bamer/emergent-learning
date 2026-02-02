@@ -32,19 +32,19 @@ Le système ELF crée maintenant des heuristiques **automatiquement** à partir 
 
 ### 1. Détection de Pattern
 
-```
+```markdown
 Pattern détecté → _record_pattern_as_learning() → Heuristique créée
 ```
 
 ### 2. Extraction de Tâche
 
-```
+```markdown
 Sortie de tâche → Analyse mots-clés → Heuristique créée (source_type='auto')
 ```
 
 ### 3. Promotion Automatique
 
-```
+```markdown
 Heuristique validée 5+ fois → Critères remplis → Promue en golden rule
 ```
 
@@ -99,7 +99,7 @@ sqlite3 ~/.opencode/emergent-learning/memory/index.db \
 Pour qu'une heuristique soit promue automatiquement en golden rule :
 
 | Critère | Valeur | Description |
-|---------|--------|-------------|
+| ------- | ------ | ----------- |
 | **min_validations** | 5+ | Répétition réussie 5+ fois |
 | **confidence_threshold** | 0.9 | Confiance ≥ 90% |
 | **age_days** | 30 | Stable pendant 30 jours |

@@ -120,63 +120,97 @@ async def get_stats():
 
 @router.get("/timeline")
 async def get_timeline(days: int = 7):
-    """Get activity timeline data."""
-    with get_db() as conn:
-        cursor = conn.cursor()
+    """Get activity timeline data from Event Chronicle."""
+    try:
+        # Try to import Event Chronicle functionality
+        import sys
+        from pathlib import Path
 
-        # Runs by day
-        cursor.execute(
-            """
-            SELECT DATE(created_at) as date, COUNT(*) as runs
-            FROM workflow_runs
-            WHERE created_at > datetime('now', ?)
-            GROUP BY DATE(created_at)
-            ORDER BY date
-        """,
-            (f"-{days} days",),
-        )
-        runs_by_day = [dict_from_row(r) for r in cursor.fetchall()]
+        # Add Open_ELF to path
+        current = Path(__file__).resolve()
+        for parent in current.parents:
+            open_elf_path = parent.parent / "Open_ELF"
+            if open_elf_path.exists():
+                sys.path.insert(0, str(open_elf_path))
+                break
 
-        # Trails by day
-        cursor.execute(
-            """
-            SELECT DATE(created_at) as date, COUNT(*) as trails, SUM(strength) as strength
-            FROM trails
-            WHERE created_at > datetime('now', ?)
-            GROUP BY DATE(created_at)
-            ORDER BY date
-        """,
-            (f"-{days} days",),
+        from timeline_dashboard.event_adapter import (
+            get_chronicle_events,
+            get_chronicle_stats,
         )
-        trails_by_day = [dict_from_row(r) for r in cursor.fetchall()]
 
-        # Validations by day
-        cursor.execute(
-            """
-            SELECT DATE(timestamp) as date, COUNT(*) as validations
-            FROM metrics
-            WHERE metric_type = 'heuristic_validated'
-              AND timestamp > datetime('now', ?)
-            GROUP BY DATE(timestamp)
-            ORDER BY date
-        """,
-            (f"-{days} days",),
-        )
-        validations_by_day = [dict_from_row(r) for r in cursor.fetchall()]
+        # Get recent events (last N days)
+        from datetime import datetime, timedelta
+        import json
 
-        # Failures by day
-        cursor.execute(
-            """
-            SELECT DATE(timestamp) as date, COUNT(*) as failures
-            FROM metrics
-            WHERE metric_type = 'auto_failure_capture'
-              AND timestamp > datetime('now', ?)
-            GROUP BY DATE(timestamp)
-            ORDER BY date
-        """,
-            (f"-{days} days",),
+        # For backward compatibility, we'll return the same structure but with real data
+        # Get events from the last N days
+        events = get_chronicle_events(
+            limit=1000
+        )  # Get enough events to cover the period
+
+        # Group events by day and type for backward compatibility
+        from collections import defaultdict
+
+        daily_events = defaultdict(
+            lambda: {
+                "runs": 0,
+                "trails": 0,
+                "strength": 0.0,
+                "validations": 0,
+                "failures": 0,
+            }
         )
-        failures_by_day = [dict_from_row(r) for r in cursor.fetchall()]
+
+        # Process events to create daily aggregations
+        for event in events:
+            try:
+                # Parse timestamp
+                timestamp = event.get("timestamp", "")
+                if timestamp:
+                    # Extract date from timestamp (assuming ISO format)
+                    if "T" in timestamp:
+                        date_str = timestamp.split("T")[0]
+                    else:
+                        date_str = timestamp.split()[0]
+
+                    event_type = event.get("event_type", "")
+
+                    # Map event types to categories
+                    if "task" in event_type or "workflow" in event_type:
+                        daily_events[date_str]["runs"] += 1
+                    elif "trail" in event_type.lower():
+                        daily_events[date_str]["trails"] += 1
+                        daily_events[date_str]["strength"] += 1.0  # Default strength
+                    elif "validated" in event_type:
+                        daily_events[date_str]["validations"] += 1
+                    elif "failure" in event_type or "violated" in event_type:
+                        daily_events[date_str]["failures"] += 1
+            except Exception:
+                continue
+
+        # Convert to the expected format
+        runs_by_day = [
+            {"date": date, "runs": data["runs"]} for date, data in daily_events.items()
+        ]
+        trails_by_day = [
+            {"date": date, "trails": data["trails"], "strength": data["strength"]}
+            for date, data in daily_events.items()
+        ]
+        validations_by_day = [
+            {"date": date, "validations": data["validations"]}
+            for date, data in daily_events.items()
+        ]
+        failures_by_day = [
+            {"date": date, "failures": data["failures"]}
+            for date, data in daily_events.items()
+        ]
+
+        # Sort by date
+        runs_by_day.sort(key=lambda x: x["date"])
+        trails_by_day.sort(key=lambda x: x["date"])
+        validations_by_day.sort(key=lambda x: x["date"])
+        failures_by_day.sort(key=lambda x: x["date"])
 
         return {
             "runs": runs_by_day,
@@ -184,6 +218,72 @@ async def get_timeline(days: int = 7):
             "validations": validations_by_day,
             "failures": failures_by_day,
         }
+
+    except ImportError:
+        # Fallback to original database-based implementation
+        with get_db() as conn:
+            cursor = conn.cursor()
+
+            # Runs by day
+            cursor.execute(
+                """
+                SELECT DATE(created_at) as date, COUNT(*) as runs
+                FROM workflow_runs
+                WHERE created_at > datetime('now', ?)
+                GROUP BY DATE(created_at)
+                ORDER BY date
+            """,
+                (f"-{days} days",),
+            )
+            runs_by_day = [dict_from_row(r) for r in cursor.fetchall()]
+
+            # Trails by day
+            cursor.execute(
+                """
+                SELECT DATE(created_at) as date, COUNT(*) as trails, SUM(strength) as strength
+                FROM trails
+                WHERE created_at > datetime('now', ?)
+                GROUP BY DATE(created_at)
+                ORDER BY date
+            """,
+                (f"-{days} days",),
+            )
+            trails_by_day = [dict_from_row(r) for r in cursor.fetchall()]
+
+            # Validations by day
+            cursor.execute(
+                """
+                SELECT DATE(timestamp) as date, COUNT(*) as validations
+                FROM metrics
+                WHERE metric_type = 'heuristic_validated'
+                  AND timestamp > datetime('now', ?)
+                GROUP BY DATE(timestamp)
+                ORDER BY date
+            """,
+                (f"-{days} days",),
+            )
+            validations_by_day = [dict_from_row(r) for r in cursor.fetchall()]
+
+            # Failures by day
+            cursor.execute(
+                """
+                SELECT DATE(timestamp) as date, COUNT(*) as failures
+                FROM metrics
+                WHERE metric_type = 'auto_failure_capture'
+                  AND timestamp > datetime('now', ?)
+                GROUP BY DATE(timestamp)
+                ORDER BY date
+            """,
+                (f"-{days} days",),
+            )
+            failures_by_day = [dict_from_row(r) for r in cursor.fetchall()]
+
+            return {
+                "runs": runs_by_day,
+                "trails": trails_by_day,
+                "validations": validations_by_day,
+                "failures": failures_by_day,
+            }
 
 
 @router.get("/learning-velocity")
