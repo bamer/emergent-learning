@@ -57,6 +57,7 @@ export function EventBridgeStatusPanel({
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
+  const [isLaunching, setIsLaunching] = useState(false);
 
   // Fetch status data
   const fetchStatus = useCallback(async () => {
@@ -83,6 +84,10 @@ export function EventBridgeStatusPanel({
 
   const controlBridge = useCallback(async (action: 'start' | 'stop' | 'restart') => {
     try {
+      if (action === 'start' || action === 'restart') {
+        setIsLaunching(true);
+        setError(null);
+      }
       const response = await fetch(`${apiBaseUrl}/api/v1/event-bridge/control`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -95,6 +100,10 @@ export function EventBridgeStatusPanel({
     } catch (err) {
       console.error(`Failed to ${action} event bridge:`, err);
       setError(err instanceof Error ? err.message : `Failed to ${action} event bridge`);
+    } finally {
+      if (action === 'start' || action === 'restart') {
+        setTimeout(() => setIsLaunching(false), 1500);
+      }
     }
   }, [apiBaseUrl, fetchStatus]);
 
@@ -227,7 +236,7 @@ export function EventBridgeStatusPanel({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {error ? (
+        {error && !isLaunching ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
@@ -239,6 +248,14 @@ export function EventBridgeStatusPanel({
               >
                 Retry
               </button>
+            </div>
+          </div>
+        ) : isLaunching ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <RefreshCw className="w-12 h-12 text-emerald-400 mx-auto mb-3 animate-spin" />
+              <h3 className="text-lg font-semibold text-emerald-400 mb-2">Launching event bridge...</h3>
+              <p className="text-slate-400 text-sm mb-4">Starting service, this can take a few seconds.</p>
             </div>
           </div>
         ) : (

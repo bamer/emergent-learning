@@ -16,6 +16,7 @@ import sys
 import time
 import subprocess
 import threading
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -31,16 +32,35 @@ EVENT_BRIDGE_HEARTBEAT = COORDINATION_DIR / "event-bridge-heartbeat.json"
 # Ensure logs directory exists
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(LOGS_DIR / "event_bridge.log"),
-        logging.StreamHandler(sys.stdout),
-    ],
-)
-logger = logging.getLogger("EventBridge")
+# Setup logging (unified + local)
+sys.path.insert(0, str(ELF_DIR / "agents"))
+try:
+    from elf_logging import get_logger, log_info, log_error
+
+    logger = get_logger("event_bridge")
+
+    def _log_info(message: str):
+        log_info("event_bridge", message)
+
+    def _log_error(message: str):
+        log_error("event_bridge", message)
+
+except Exception:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[
+            logging.FileHandler(LOGS_DIR / "event_bridge.log"),
+            logging.StreamHandler(sys.stdout),
+        ],
+    )
+    logger = logging.getLogger("EventBridge")
+
+    def _log_info(message: str):
+        logger.info(message)
+
+    def _log_error(message: str):
+        logger.error(message)
 
 
 class HookManager:
@@ -152,24 +172,27 @@ class EventBridge:
         self.event_count += 1
         self.last_event_time = datetime.now().isoformat()
         self._write_heartbeat()
+        _log_info(
+            f"event_bridge: event received count={self.event_count} last={self.last_event_time}"
+        )
 
     def start(self):
         """Démarre le bridge d'événements."""
-        logger.info("=" * 70)
-        logger.info("🌉 OpenCode Event Bridge Starting")
-        logger.info("=" * 70)
+        _log_info("=" * 70)
+        _log_info("🌉 OpenCode Event Bridge Starting")
+        _log_info("=" * 70)
 
         # Vérifier la connexion à OpenCode
         try:
             response = requests.get(f"{self.base_url}/global/health", timeout=5)
             if response.status_code != 200:
-                logger.error("❌ OpenCode server not accessible")
+                _log_error("❌ OpenCode server not accessible")
                 return False
         except Exception as e:
-            logger.error(f"❌ Cannot connect to OpenCode: {e}")
+            _log_error(f"❌ Cannot connect to OpenCode: {e}")
             return False
 
-        logger.info("✅ Connected to OpenCode server")
+        _log_info("✅ Connected to OpenCode server")
         self.running = True
         self.started_at = datetime.now()
         self._write_heartbeat()
@@ -189,7 +212,7 @@ class EventBridge:
 
     def _listen_events(self):
         """Écoute le stream SSE des événements OpenCode."""
-        logger.info("👂 Listening to OpenCode events...")
+        _log_info("👂 Listening to OpenCode events...")
 
         while self.running:
             try:
@@ -205,13 +228,13 @@ class EventBridge:
                 )
 
                 if response.status_code != 200:
-                    logger.error(
+                    _log_error(
                         f"❌ Failed to connect to event stream: {response.status_code}"
                     )
                     time.sleep(5)
                     continue
 
-                logger.info("✅ Connected to SSE stream")
+                _log_info("✅ Connected to SSE stream")
 
                 # Traiter les events ligne par ligne
                 for line in response.iter_lines():
@@ -223,15 +246,15 @@ class EventBridge:
                         self._process_sse_line(line_str)
 
             except requests.exceptions.ChunkedEncodingError:
-                logger.warning("⚠️ SSE stream disconnected, reconnecting...")
+                _log_info("⚠️ SSE stream disconnected, reconnecting...")
                 time.sleep(2)
             except Exception as e:
-                logger.error(f"❌ Error listening to events: {e}")
+                _log_error(f"❌ Error listening to events: {e}")
                 time.sleep(5)
 
     def _poll_sessions(self):
         """Poll les sessions actives pour détecter les outils utilisés."""
-        logger.info("🔄 Starting session polling...")
+        _log_info("🔄 Starting session polling...")
 
         # Tracker les messages déjà vus par session
         seen_messages = {}
@@ -280,9 +303,7 @@ class EventBridge:
                                 tool_name = part.get("tool", "unknown")
                                 tool_input = part.get("input", {})
 
-                                logger.info(
-                                    f"🔧 Tool detected via polling: {tool_name}"
-                                )
+                                _log_info(f"🔧 Tool detected via polling: {tool_name}")
 
                                 # Déclencher le hook
                                 hook_data = {
@@ -302,7 +323,7 @@ class EventBridge:
                 time.sleep(30)
 
             except Exception as e:
-                logger.error(f"❌ Error polling sessions: {e}")
+                _log_error(f"❌ Error polling sessions: {e}")
                 time.sleep(30)
 
     def _process_sse_line(self, line: str):
@@ -315,7 +336,7 @@ class EventBridge:
                     data = json.loads(data_str)
                     self._handle_event(data)
                 except json.JSONDecodeError as e:
-                    logger.debug(f"Failed to parse SSE data: {e}")
+                    _log_error(f"Failed to parse SSE data: {e}")
         elif line.startswith("event:"):
             # Type d'événement (optionnel)
             pass

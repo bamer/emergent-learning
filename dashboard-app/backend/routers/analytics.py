@@ -2,8 +2,9 @@
 Analytics Router - Stats, timeline, learning velocity, events, anomalies, domains.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from utils import get_db, dict_from_row
+from typing import Optional
 
 router = APIRouter(prefix="/api/v1", tags=["analytics"])
 
@@ -689,3 +690,157 @@ async def get_pheromone_trails(days: int = 7, limit: int = 50):
             trails.append(trail)
 
         return trails
+
+
+"""
+Event Chronicle Endpoints
+"""
+
+
+@router.get("/timeline/events")
+async def get_timeline_events(
+    event_type: Optional[str] = None,
+    source: Optional[str] = None,
+    limit: int = Query(default=50, le=1000),
+):
+    """
+    Get individual events for timeline display from Event Chronicle.
+
+    This endpoint provides events in the format expected by the dashboard's TimelineView component.
+
+    Args:
+        event_type: Filter by event type (e.g., 'heuristic_validated', 'task_start')
+        source: Filter by source component (e.g., 'record-heuristic.sh', 'orchestrator')
+        limit: Maximum number of events to return (max 1000)
+
+    Returns:
+        Dictionary with status, events list, and count
+    """
+    try:
+        # Add Open_ELF to path
+        import sys
+        from pathlib import Path
+
+        current = Path(__file__).resolve()
+        for parent in current.parents:
+            open_elf_path = parent.parent / "Open_ELF"
+            if open_elf_path.exists():
+                sys.path.insert(0, str(open_elf_path))
+                break
+
+        from timeline_dashboard.event_adapter import get_chronicle_events
+
+        events = get_chronicle_events(
+            event_type=event_type,
+            source=source,
+            limit=limit,
+        )
+
+        return {"status": "ok", "events": events, "count": len(events)}
+
+    except ImportError as e:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=500, detail=f"Event Chronicle not available: {str(e)}"
+        )
+
+
+@router.get("/timeline/stats")
+async def get_timeline_stats():
+    """
+    Get timeline statistics from Event Chronicle.
+
+    Returns statistics about events in the chronicle.
+
+    Returns:
+        Dictionary with total events, event types, sources, and date range
+    """
+    try:
+        # Add Open_ELF to path
+        import sys
+        from pathlib import Path
+
+        current = Path(__file__).resolve()
+        for parent in current.parents:
+            open_elf_path = parent.parent / "Open_ELF"
+            if open_elf_path.exists():
+                sys.path.insert(0, str(open_elf_path))
+                break
+
+        from timeline_dashboard.event_adapter import get_chronicle_stats
+
+        stats = get_chronicle_stats()
+        return stats
+
+    except ImportError as e:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=500, detail=f"Event Chronicle not available: {str(e)}"
+        )
+
+
+@router.get("/timeline/recent")
+async def get_recent_events(limit: int = Query(default=10, le=100)):
+    """
+    Get most recent events for quick overview from Event Chronicle.
+
+    Args:
+        limit: Number of recent events to return (max 100)
+
+    Returns:
+        List of recent timeline events
+    """
+    try:
+        # Add Open_ELF to path
+        import sys
+        from pathlib import Path
+
+        current = Path(__file__).resolve()
+        for parent in current.parents:
+            open_elf_path = parent.parent / "Open_ELF"
+            if open_elf_path.exists():
+                sys.path.insert(0, str(open_elf_path))
+                break
+
+        from timeline_dashboard.event_adapter import get_chronicle_events
+
+        events = get_chronicle_events(limit=limit)
+        return events
+
+    except ImportError as e:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=500, detail=f"Event Chronicle not available: {str(e)}"
+        )
+
+
+# Event type constants for frontend use
+EVENT_TYPES = [
+    "task_start",
+    "task_end",
+    "heuristic_consulted",
+    "heuristic_validated",
+    "heuristic_violated",
+    "failure_recorded",
+    "golden_promoted",
+    "agent_spawned",
+    "workflow_started",
+    "session_started",
+    "session_ended",
+]
+
+
+@router.get("/timeline/event-types")
+async def get_event_types():
+    """
+    Get available event types.
+
+    Returns list of event types that can be used for filtering.
+
+    Returns:
+        List of event type strings
+    """
+    return EVENT_TYPES

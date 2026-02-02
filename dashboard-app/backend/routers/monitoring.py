@@ -14,6 +14,7 @@ import subprocess
 import os
 import signal
 import time
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -26,6 +27,28 @@ import requests
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Unified logging (best-effort)
+try:
+    sys.path.insert(0, str(Path.home() / ".opencode" / "emergent-learning" / "agents"))
+    from elf_logging import get_logger, log_info, log_error
+
+    unified_logger = get_logger("monitoring")
+
+    def _log_info(message: str) -> None:
+        log_info("monitoring", message)
+
+    def _log_error(message: str) -> None:
+        log_error("monitoring", message)
+
+except Exception:
+    unified_logger = logger
+
+    def _log_info(message: str) -> None:
+        logger.info(message)
+
+    def _log_error(message: str) -> None:
+        logger.error(message)
 
 router = APIRouter(prefix="/api/v1", tags=["monitoring"])
 
@@ -354,7 +377,7 @@ async def get_event_bridge_status():
 async def control_event_bridge(request: EventBridgeControlRequest):
     """Control Event Bridge (start/stop/restart)."""
     try:
-        logger.info(f"Event Bridge control action: {request.action}")
+        _log_info(f"Event Bridge control action: {request.action}")
 
         bridge_script = ELF_DIR / "Open_ELF" / "orchestrator" / "event_bridge.py"
 
@@ -365,6 +388,7 @@ async def control_event_bridge(request: EventBridgeControlRequest):
                 text=True,
             )
             if result.returncode == 0:
+                _log_info("Event Bridge already running")
                 return {
                     "status": "ok",
                     "action": "start",
@@ -373,6 +397,7 @@ async def control_event_bridge(request: EventBridgeControlRequest):
                 }
 
             if bridge_script.exists():
+                _log_info(f"Launching Event Bridge: {bridge_script}")
                 subprocess.Popen(
                     ["python3", str(bridge_script), "start"],
                     cwd=str(bridge_script.parent),
@@ -386,6 +411,11 @@ async def control_event_bridge(request: EventBridgeControlRequest):
                     capture_output=True,
                     text=True,
                 )
+                _log_info(
+                    "Event Bridge start check: running"
+                    if check.returncode == 0
+                    else "Event Bridge start check: not running"
+                )
                 return {
                     "status": "ok",
                     "action": "start",
@@ -393,6 +423,7 @@ async def control_event_bridge(request: EventBridgeControlRequest):
                     if check.returncode == 0
                     else "Event Bridge start requested (not yet running)",
                 }
+            _log_error("Event Bridge script not found")
             raise HTTPException(status_code=500, detail="Event Bridge script not found")
 
         if request.action == "stop":
@@ -401,6 +432,7 @@ async def control_event_bridge(request: EventBridgeControlRequest):
                 capture_output=True,
                 text=True,
             )
+            _log_info("Event Bridge stop signal sent")
             return {
                 "status": "ok",
                 "action": "stop",
@@ -415,6 +447,7 @@ async def control_event_bridge(request: EventBridgeControlRequest):
             )
             time.sleep(1)
             if bridge_script.exists():
+                _log_info("Restarting Event Bridge")
                 subprocess.Popen(
                     ["python3", str(bridge_script), "start"],
                     cwd=str(bridge_script.parent),
@@ -427,6 +460,7 @@ async def control_event_bridge(request: EventBridgeControlRequest):
                     "action": "restart",
                     "message": "Event Bridge restarted successfully",
                 }
+            _log_error("Event Bridge script not found")
             raise HTTPException(status_code=500, detail="Event Bridge script not found")
 
         raise HTTPException(status_code=400, detail=f"Unknown action: {request.action}")
@@ -434,7 +468,7 @@ async def control_event_bridge(request: EventBridgeControlRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error controlling Event Bridge: {e}")
+        _log_error(f"Error controlling Event Bridge: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -648,7 +682,7 @@ async def control_watcher(request: WatcherControlRequest):
     """Control watcher (start/stop/restart)."""
     try:
         # Log the control action
-        logger.info(f"Watcher control action: {request.action}")
+        _log_info(f"Watcher control action: {request.action}")
 
         ELF_DIR = Path.home() / ".opencode" / "emergent-learning"
         WATCHER_DIR = ELF_DIR / "watcher"
@@ -667,6 +701,7 @@ async def control_watcher(request: WatcherControlRequest):
                 ["pgrep", "-f", "watcher/launcher.py"], capture_output=True, text=True
             )
             if result.returncode == 0:
+                _log_info("Watcher already running")
                 return {
                     "status": "ok",
                     "action": "start",
@@ -676,6 +711,7 @@ async def control_watcher(request: WatcherControlRequest):
 
             # Start the watcher
             if START_SCRIPT.exists():
+                _log_info(f"Launching watcher via {START_SCRIPT}")
                 subprocess.Popen(
                     [str(START_SCRIPT), "--daemon"],
                     cwd=str(ELF_DIR),
@@ -689,6 +725,11 @@ async def control_watcher(request: WatcherControlRequest):
                     capture_output=True,
                     text=True,
                 )
+                _log_info(
+                    "Watcher start check: running"
+                    if check.returncode == 0
+                    else "Watcher start check: not running"
+                )
                 return {
                     "status": "ok",
                     "action": "start",
@@ -697,6 +738,7 @@ async def control_watcher(request: WatcherControlRequest):
                     else "Watcher start requested (not yet running)",
                 }
             else:
+                _log_error("Watcher start script not found")
                 raise HTTPException(
                     status_code=500, detail="Watcher start script not found"
                 )
@@ -704,12 +746,13 @@ async def control_watcher(request: WatcherControlRequest):
         elif request.action == "stop":
             # Create stop file to signal watcher to stop
             STOP_FILE.touch()
-            logger.info("Created watcher stop file")
+            _log_info("Created watcher stop file")
 
             # Also try to kill the process directly
             result = subprocess.run(
                 ["pkill", "-f", "watcher/launcher.py"], capture_output=True, text=True
             )
+            _log_info("Watcher stop signal sent")
 
             return {
                 "status": "ok",
@@ -733,6 +776,7 @@ async def control_watcher(request: WatcherControlRequest):
 
             # Start again
             if START_SCRIPT.exists():
+                _log_info("Restarting watcher")
                 subprocess.Popen(
                     [str(START_SCRIPT), "--daemon"],
                     cwd=str(ELF_DIR),
@@ -746,6 +790,7 @@ async def control_watcher(request: WatcherControlRequest):
                     "message": "Watcher restarted successfully",
                 }
             else:
+                _log_error("Watcher start script not found")
                 raise HTTPException(
                     status_code=500, detail="Watcher start script not found"
                 )
@@ -758,5 +803,5 @@ async def control_watcher(request: WatcherControlRequest):
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error controlling watcher: {e}")
+        _log_error(f"Error controlling watcher: {e}")
         raise HTTPException(status_code=500, detail=str(e))
