@@ -85,3 +85,5 @@ Thumbs.db
 .env.local
 .env.*.local
 .coordination/event-bridge-heartbeat.json
+.coordination/event-bridge-heartbeat.json
+.gitignore

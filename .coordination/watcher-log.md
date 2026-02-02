@@ -5763,3 +5763,5 @@ ACTIONS_TAKEN:
 **ISSUES_FOUND:** none  
 **ACTIONS_TAKEN:** none  
 **RECOMMENDATION:** System is idle and healthy - ready for new swarm deployme
+[TIER 1 ERROR] Error: opencode returned error code 1
+
