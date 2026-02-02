@@ -1,7 +1,7 @@
 {
   "mission_id": "mission-1769820988",
   "created_at": "2026-01-31T07:56:28.430166",
-  "status": "launching",
+  "status": "failed",
   "config": {
     "mission_name": "critical-analysis",
     "objective": "Analyze ELF codebase and identify 5 critical issues with detailed fix plan",

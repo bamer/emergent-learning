@@ -1,6 +1,17 @@
 {
-  "timestamp": "2026-02-02T00:04:47.018Z",
-  "blackboard": {},
+  "timestamp": "2026-02-02T09:28:45.000+07:00",
+  "blackboard": {
+    "timestamp": "2026-02-02T09:28:45.000+07:00",
+    "blackboard": {},
+    "agent_files": [],
+    "stop_requested": false
+  },
   "agent_files": [],
-  "stop_requested": false
+  "stop_requested": false,
+  "status": "idle",
+  "findings": {
+    "last_check": "2026-02-02T09:28:45.000+07:00",
+    "system_state": "restarted",
+    "recommendation": "Stale watcher terminated, system idle and ready"
+  }
 }

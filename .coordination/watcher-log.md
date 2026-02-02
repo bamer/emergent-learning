@@ -5603,3 +5603,73 @@ ACTIONS_TAKEN: Updated coordination state with current timestamp
 RECOMMENDATION: System is idle and healthy, no action re
 [TIER 1 ERROR] Error: opencode returned error code 1
 
+2026-02-02T02:15:09Z | STATUS: complete | NOTES: No active coordination state - swarm appears complete or never started
+2026-02-02T02:15:10Z | Stop signal detected - exiting
+2026-02-02T02:15:57.000Z | STATUS: nominal | NOTES: System idle, no active agents, old blackboard timestamp is normal for idle state
+[TIER 1 WATCHER] ## Step 5: Output Summary
+
+```
+== WATCHER SUMMARY ==
+STATUS: nominal
+AGENTS_CHECKED: 0
+ISSUES_FOUND: none
+ACTIONS_TAKEN: none
+RECOMMENDATION: System is idle and ready for new tasks
+```
+2026-02-02T02:17:15Z | STATUS: nominal | NOTES: System idle, no active agents, blackboard timestamp from 2026-02-02T00:04:47.018Z indicates no recent swarm activity
+[TIER 1 WATCHER] ```
+== WATCHER SUMMARY ==
+STATUS: nominal
+AGENTS_CHECKED: 0
+ISSUES_FOUND: none
+ACTIONS_TAKEN: Updated coordination state with current timestamp
+RECOMMENDATION: System is idle and ready for new tasks
+`
+2026-02-02T09:18:15.350516 | STATUS: complete | NOTES: No active coordination state - swarm appears complete or never started
+[TIER 1 WATCHER] == WATCHER SUMMARY ==
+STATUS: complete
+AGENTS_CHECKED: 0
+ISSUES_FOUND: none
+ACTIONS_TAKEN: none
+RECOMMENDATION: System idle and ready for new swarm - coordination state is empty and healthy
+
+The coord
+2026-02-02T09:20:10Z | STATUS: nominal | NOTES: System idle, no active agents, coordination state is empty and healthy
+[TIER 1 WATCHER] ## WATCHER SUMMARY
+
+```
+== WATCHER SUMMARY ==
+STATUS: nominal
+AGENTS_CHECKED: 0
+ISSUES_FOUND: none
+ACTIONS_TAKEN: Logged monitoring pass, verified system state
+RECOMMENDATION: System is idle and ready
+2026-02-02T09:21:27.970629 | STATUS: complete | NOTES: No active agents detected - coordination state empty
+2026-02-02T09:22:58 | STATUS: cleaned | NOTES: Marked stale mission as failed - system idle and ready
+[TIER 1 WATCHER] ```
+== WATCHER SUMMARY ==
+STATUS: complete
+AGENTS_CHECKED: 0
+ISSUES_FOUND: 1 (stale mission)
+ACTIONS_TAKEN: Marked 2-day-old mission as failed
+RECOMMENDATION: System idle and ready for new swarm deplo
+2026-02-02T02:24:26Z | STATUS: complete | NOTES: No active coordination state - swarm appears complete or never started
+2026-02-02T02:24:26Z | STATUS: cleaned | NOTES: Mission mission-1769820988 from Jan 31 still in failed state - older than 24h, system idle and ready
+[TIER 1 WATCHER] ## WATCHER SUMMARY
+
+STATUS: **complete**
+AGENTS_CHECKED: 0 (no active agents)
+ISSUES_FOUND: 1 (stale failed mission from Jan 31)
+ACTIONS_TAKEN: 
+- Updated blackboard timestamp to current time
+- Identi
+2026-02-02T09:26:27.000000 | STATUS: idle | NOTES: No active agents - blackboard empty, coordination state shows idle system
+[TIER 1 WATCHER] ## WATCHER SUMMARY
+
+**STATUS**: idle
+**AGENTS_CHECKED**: 0 (no active agents in coordination state)
+**ISSUES_FOUND**: none
+**ACTIONS_TAKEN**: none
+**RECOMMENDATION**: System is idle and ready for new 
+2026-02-02T09:28:45.000000 | STATUS: nominal | NOTES: System idle and healthy - no agents or swarm activity detected
+2026-02-02T09:28:45.000000 | STATUS: stale | NOTES: Terminated stale watcher process (PID 988974, 14+ hours old) - system idle and ready

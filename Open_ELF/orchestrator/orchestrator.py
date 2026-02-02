@@ -176,7 +176,7 @@ class OpenCodeClient:
         try:
             body = {"parts": [{"type": "text", "text": message}]}
             if agent:
-                body["agent"] = agent
+                body["agent"] = [{"type": "text", "text": agent}]
 
             response = self.session.post(
                 f"{self.base_url}/session/{session_id}/message", json=body, timeout=30

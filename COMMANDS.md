@@ -409,6 +409,9 @@ curl http://localhost:4096/global/health
 pkill -f event_bridge
 cd Open_ELF/orchestrator
 python3 event_bridge.py start
+
+python3 ~/.opencode/emergent-learning/Open_ELF/orchestrator event_bridge.py start
+
 ```
 
 **Pas d'agents dans le dashboard**
