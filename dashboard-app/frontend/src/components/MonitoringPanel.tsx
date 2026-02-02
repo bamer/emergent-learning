@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
 import {
   Shield, ScrollText, Heart, Eye, Grid, List,
-  ChevronDown, ChevronRight, Zap
+  ChevronDown, ChevronRight, Zap, Cpu
 } from 'lucide-react';
 import {
   SentinelMonitorPanel,
   EventChronicleViewer,
   SystemHealthPanel,
   WatcherStatusPanel,
-  EventBridgeStatusPanel
+  EventBridgeStatusPanel,
+  OrchestratorStatusPanel
 } from './monitoring';
 
 interface MonitoringPanelProps {
   apiBaseUrl?: string;
 }
 
-type MonitorView = 'sentinel' | 'chronicle' | 'health' | 'watcher' | 'eventbridge' | 'all';
+type MonitorView = 'sentinel' | 'chronicle' | 'health' | 'watcher' | 'eventbridge' | 'orchestrator' | 'all';
 
 export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
   const [activeView, setActiveView] = useState<MonitorView>('all');
@@ -27,6 +28,7 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
     { id: 'health', label: 'System Health', icon: Heart, component: SystemHealthPanel },
     { id: 'watcher', label: 'Watcher', icon: Eye, component: WatcherStatusPanel },
     { id: 'eventbridge', label: 'Event Bridge', icon: Zap, component: EventBridgeStatusPanel },
+    { id: 'orchestrator', label: 'Orchestrator', icon: Cpu, component: OrchestratorStatusPanel },
   ] as const;
 
   const ActiveComponent = views.find(v => v.id === activeView)?.component;
@@ -115,6 +117,9 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
                 <WatcherStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="min-h-[400px]">
+                <OrchestratorStatusPanel apiBaseUrl={apiBaseUrl} />
+              </div>
+              <div className="min-h-[400px]">
                 <EventChronicleViewer apiBaseUrl={apiBaseUrl} />
               </div>
             </div>
@@ -132,6 +137,9 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
               </div>
               <div className="h-[500px]">
                 <WatcherStatusPanel apiBaseUrl={apiBaseUrl} />
+              </div>
+              <div className="h-[500px]">
+                <OrchestratorStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="h-[500px]">
                 <EventChronicleViewer apiBaseUrl={apiBaseUrl} />

@@ -315,6 +315,10 @@ class EventBridgeControlRequest(BaseModel):
     action: str  # 'start', 'stop', 'restart'
 
 
+class OrchestratorControlRequest(BaseModel):
+    action: str  # 'start', 'stop', 'restart'
+
+
 # ==============================================================================
 # Event Bridge Endpoints
 # ==============================================================================
@@ -371,6 +375,149 @@ async def get_event_bridge_status():
         "uptime_seconds": uptime_seconds,
         "last_event_time": last_event_time,
     }
+
+
+# ==============================================================================
+# Orchestrator Endpoints
+# ==============================================================================
+
+
+@router.get("/orchestrator/status")
+async def get_orchestrator_status():
+    """Return orchestrator status from the Open_ELF status server."""
+    status_url = "http://localhost:9999/status"
+    status_payload = {
+        "running": False,
+        "missions_count": 0,
+        "missions": [],
+    }
+
+    try:
+        response = requests.get(status_url, timeout=3)
+        if response.status_code == 200:
+            status_payload = response.json()
+        else:
+            _log_error(
+                f"Orchestrator status check failed: HTTP {response.status_code}"
+            )
+    except Exception as e:
+        _log_error(f"Orchestrator status check failed: {e}")
+
+    return {
+        "status": "ok",
+        "status_data": {
+            "running": bool(status_payload.get("running")),
+            "missions_count": int(status_payload.get("missions_count", 0)),
+            "last_check": datetime.now().isoformat(),
+            "status_url": status_url,
+        },
+        "missions": status_payload.get("missions", []),
+    }
+
+
+@router.post("/orchestrator/control")
+async def control_orchestrator(request: OrchestratorControlRequest):
+    """Control Open_ELF orchestrator (start/stop/restart)."""
+    try:
+        _log_info(f"Orchestrator control action: {request.action}")
+
+        orchestrator_script = ELF_DIR / "Open_ELF" / "orchestrator" / "orchestrator.py"
+
+        if request.action == "start":
+            result = subprocess.run(
+                ["pgrep", "-f", "orchestrator.py"],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                _log_info("Orchestrator already running")
+                return {
+                    "status": "ok",
+                    "action": "start",
+                    "message": "Orchestrator is already running",
+                    "pid": result.stdout.strip(),
+                }
+
+            if orchestrator_script.exists():
+                _log_info(f"Launching orchestrator: {orchestrator_script}")
+                subprocess.Popen(
+                    ["python3", str(orchestrator_script), "start"],
+                    cwd=str(orchestrator_script.parent),
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+                time.sleep(1)
+                check = subprocess.run(
+                    ["pgrep", "-f", "orchestrator.py"],
+                    capture_output=True,
+                    text=True,
+                )
+                _log_info(
+                    "Orchestrator start check: running"
+                    if check.returncode == 0
+                    else "Orchestrator start check: not running"
+                )
+                return {
+                    "status": "ok",
+                    "action": "start",
+                    "message": "Orchestrator started successfully"
+                    if check.returncode == 0
+                    else "Orchestrator start requested (not yet running)",
+                }
+            _log_error("Orchestrator script not found")
+            raise HTTPException(
+                status_code=500, detail="Orchestrator script not found"
+            )
+
+        if request.action == "stop":
+            subprocess.run(
+                ["pkill", "-f", "orchestrator.py"],
+                capture_output=True,
+                text=True,
+            )
+            _log_info("Orchestrator stop signal sent")
+            return {
+                "status": "ok",
+                "action": "stop",
+                "message": "Orchestrator stop signal sent",
+            }
+
+        if request.action == "restart":
+            subprocess.run(
+                ["pkill", "-f", "orchestrator.py"],
+                capture_output=True,
+                text=True,
+            )
+            time.sleep(1)
+            if orchestrator_script.exists():
+                _log_info("Restarting orchestrator")
+                subprocess.Popen(
+                    ["python3", str(orchestrator_script), "start"],
+                    cwd=str(orchestrator_script.parent),
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+                return {
+                    "status": "ok",
+                    "action": "restart",
+                    "message": "Orchestrator restarted successfully",
+                }
+            _log_error("Orchestrator script not found")
+            raise HTTPException(
+                status_code=500, detail="Orchestrator script not found"
+            )
+
+        raise HTTPException(
+            status_code=400, detail=f"Unknown action: {request.action}"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        _log_error(f"Error controlling orchestrator: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/event-bridge/control")

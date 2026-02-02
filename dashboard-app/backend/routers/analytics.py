@@ -149,6 +149,11 @@ async def get_timeline(days: int = 7):
         events = get_chronicle_events(
             limit=1000
         )  # Get enough events to cover the period
+        print(f"DEBUG: Retrieved {len(events)} events from chronicle")
+        if events:
+            print(
+                f"DEBUG: First event: {events[0]['event_type']} at {events[0]['timestamp']}"
+            )
 
         # Group events by day and type for backward compatibility
         from collections import defaultdict
@@ -170,24 +175,51 @@ async def get_timeline(days: int = 7):
                 timestamp = event.get("timestamp", "")
                 if timestamp:
                     # Extract date from timestamp (assuming ISO format)
-                    if "T" in timestamp:
-                        date_str = timestamp.split("T")[0]
-                    else:
-                        date_str = timestamp.split()[0]
+                    try:
+                        from datetime import datetime
 
-                    event_type = event.get("event_type", "")
+                        # Handle the timestamp format: 2026-01-28T06:00:41.681422+00:00
+                        if "+" in timestamp:
+                            date_part = timestamp.split("+")[0].split("T")[0]
+                        elif "T" in timestamp:
+                            date_part = timestamp.split("T")[0]
+                        else:
+                            date_part = timestamp.split()[0]
+                        date_str = date_part
 
-                    # Map event types to categories
-                    if "task" in event_type or "workflow" in event_type:
-                        daily_events[date_str]["runs"] += 1
-                    elif "trail" in event_type.lower():
-                        daily_events[date_str]["trails"] += 1
-                        daily_events[date_str]["strength"] += 1.0  # Default strength
-                    elif "validated" in event_type:
-                        daily_events[date_str]["validations"] += 1
-                    elif "failure" in event_type or "violated" in event_type:
-                        daily_events[date_str]["failures"] += 1
-            except Exception:
+                        event_type = event.get("event_type", "")
+
+                        # Map event types to categories based on ELF Event Chronicle types
+                        if event_type in [
+                            "task_start",
+                            "task_end",
+                            "workflow_started",
+                            "agent_spawned",
+                        ]:
+                            daily_events[date_str]["runs"] += 1
+                        elif "trail" in event_type.lower():
+                            daily_events[date_str]["trails"] += 1
+                            daily_events[date_str]["strength"] += (
+                                1.0  # Default strength
+                            )
+                        elif event_type in [
+                            "heuristic_validated",
+                            "heuristic_consulted",
+                        ]:
+                            daily_events[date_str]["validations"] += 1
+                        elif event_type in ["failure_recorded", "heuristic_violated"]:
+                            daily_events[date_str]["failures"] += 1
+                        elif event_type == "heuristic_created":
+                            # Treat heuristic creation as a validation event
+                            daily_events[date_str]["validations"] += 1
+                        elif event_type == "golden_promoted":
+                            # Treat golden promotion as a validation event
+                            daily_events[date_str]["validations"] += 1
+                    except Exception as e:
+                        print(f"Error parsing timestamp {timestamp}: {e}")
+                        continue
+            except Exception as e:
+                print(f"Error processing event: {e}")
                 continue
 
         # Convert to the expected format

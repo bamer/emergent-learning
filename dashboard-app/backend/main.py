@@ -132,26 +132,9 @@ from routers import (
 from routers.auth import init_redis
 
 
-# Timeline Dashboard Integration
+# Timeline Dashboard Integration (now handled directly in analytics router)
 def integrate_timeline_dashboard(app):
-    try:
-        print("Attempting to integrate timeline dashboard...")
-        from timeline_dashboard.timeline_integration import integrate_with_dashboard
-
-        integrate_with_dashboard(app)
-        print("Timeline dashboard integration completed successfully!")
-        # Verify integration by checking if routes were added
-        timeline_routes = [
-            route for route in app.routes if "timeline" in str(route.path)
-        ]
-        print(f"Added {len(timeline_routes)} timeline routes:")
-        for route in timeline_routes:
-            print(f"  {list(route.methods)[0]} {route.path}")
-    except ImportError as e:
-        print(f"Warning: Could not integrate timeline dashboard: {e}")
-        import traceback
-
-        traceback.print_exc()
+    pass
 
 
 # Configure logging
@@ -675,22 +658,9 @@ async def startup_event():
     asyncio.create_task(auto_capture.start())
     logger.info("Auto-capture background job started")
 
-    # Integrate Timeline Dashboard
-    logger.info("Attempting to integrate timeline dashboard...")
-    try:
-        integrate_timeline_dashboard(app)
-        logger.info("Timeline dashboard integration attempt completed successfully")
-        # Count timeline routes
-        timeline_route_count = sum(
-            1
-            for route in app.routes
-            if hasattr(route, "path") and "timeline" in str(route.path)
-        )
-        logger.info(
-            f"Verified: {timeline_route_count} timeline routes should be available"
-        )
-    except Exception as e:
-        logger.error(f"Timeline dashboard integration failed: {e}", exc_info=True)
+
+# Timeline Dashboard routes are now integrated directly in analytics router
+logger.info("Using direct timeline routes from analytics router")
 
 
 @app.on_event("shutdown")
