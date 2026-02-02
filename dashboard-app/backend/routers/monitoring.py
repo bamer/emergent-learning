@@ -830,7 +830,9 @@ async def control_watcher(request: WatcherControlRequest):
 
         ELF_DIR = Path.home() / ".opencode" / "emergent-learning"
         WATCHER_DIR = ELF_DIR / "watcher"
-        START_SCRIPT = Path.home() / ".opencode" / "scripts" / "start-watcher-fixed.sh"
+        START_SCRIPT = (
+            Path.home() / ".opencode" / "scripts" / "start-watcher-corrected.sh"
+        )
         STOP_FILE = ELF_DIR / ".coordination" / "watcher-stop"
         PID_FILE = Path("/tmp") / "elf-watcher.pid"
 

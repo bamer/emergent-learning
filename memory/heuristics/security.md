@@ -14,3 +14,13 @@ Found dangerous exec() usage in learning-loop hooks and hardcoded URLs without T
 
 ---
 
+## H-64: Always validate file paths to prevent directory traversal attacks
+
+**Confidence**: 0.95
+**Source**: observation
+**Created**: 2026-02-02
+
+Path traversal vulnerability allows attackers to read arbitrary files. Validate paths contain no '..' sequences and resolve to ensure they stay within allowed directories.
+
+---
+

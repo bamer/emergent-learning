@@ -95,8 +95,29 @@ def fetch_prompt(prompt_type: str = "prompt") -> str:
 def call_opencode_http(
     server_url: str, model: str, prompt: str, timeout: int = 300
 ) -> Tuple[str, bool]:
-    """Call OpenCode via HTTP API on port 4096."""
+    """Call OpenCode via HTTP API with failsafe support."""
     try:
+        # Primary attempt with original server
+        session_resp = requests.post(
+            f"{server_url}/session", json={"title": "watcher"}, timeout=10
+        )
+
+        if session_resp.status_code != 201 and session_resp.status_code != 200:
+            # If primary fails, try failsafe
+            failsafe_url = os.environ.get(
+                "OPENCODE_FAILSAFE_SERVER", "http://localhost:12134"
+            )
+            failsafe_model = os.environ.get(
+                "OPENCODE_FAILSAFE_MODEL", "nemotron-v3-coder"
+            )
+            if failsafe_url != server_url:
+                return call_opencode_failsafe(
+                    failsafe_url, failsafe_model, prompt, timeout
+                )
+            return (
+                f"Error: Failed to create session ({session_resp.status_code})",
+                False,
+            )
         # Create session
         session_resp = requests.post(
             f"{server_url}/session", json={"title": "watcher"}, timeout=10
