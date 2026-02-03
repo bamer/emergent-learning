@@ -8,6 +8,7 @@
 # 3. Event Bridge (port 9998)
 # 4. Dashboard Frontend (port 3001)
 # 5. Watcher (continuous monitoring)
+# 6. Learning Capture Service (auto-extraction des heuristiques)
 
 # Usage:
 #     ./start-elf-system.sh [mode]
@@ -50,6 +51,7 @@ BACKEND_PID=""
 EVENT_BRIDGE_PID=""
 FRONTEND_PID=""
 WATCHER_PID=""
+LEARNING_CAPTURE_PID=""
 RUNNING=true
 OPENCODE_EXTERNAL=false  # true si OpenCode est déjà démarré manuellement
 
@@ -84,6 +86,11 @@ cleanup() {
         sleep 1
         kill -9 "${WATCHER_PID}" 2>/dev/null || true
     fi
+    if [[ -n "${LEARNING_CAPTURE_PID:-}" ]]; then
+        kill "${LEARNING_CAPTURE_PID}" 2>/dev/null || true
+        sleep 1
+        kill -9 "${LEARNING_CAPTURE_PID}" 2>/dev/null || true
+    fi
     
     # Kill tous les processus liés à Open_ELF et dashboard
     pkill -f "opencode serve" 2>/dev/null || true
@@ -91,6 +98,7 @@ cleanup() {
     pkill -f "event_bridge.py" 2>/dev/null || true
     pkill -f "npm run dev" 2>/dev/null || true
     pkill -f "Open_ELF/watcher/launcher.py" 2>/dev/null || true
+    pkill -f "background-learning-capture.py" 2>/dev/null || true
     
     log_success "✅ Nettoyage terminé"
     log "👋 Au revoir!"
@@ -282,6 +290,42 @@ start_watcher() {
     fi
 }
 
+# Démarrer le Learning Capture Service
+start_learning_capture() {
+    log "🧠 Démarrage du Learning Capture Service..."
+    
+    local capture_script="${ELF_DIR}/scripts/background-learning-capture.py"
+    
+    # Vérifier que le script existe
+    if [[ ! -f "${capture_script}" ]]; then
+        log_warning "⚠️ Script learning capture introuvable: ${capture_script}"
+        return 0  # Continuer sans le service
+    fi
+    
+    # Tuer tout processus existant avant de lancer
+    pkill -f "background-learning-capture.py" 2>/dev/null || true
+    sleep 1
+    
+    # Démarrer le service en arrière-plan
+    cd "${ELF_DIR}"
+    nohup python3 "${capture_script}" >"${LOGS_DIR}/learning-capture.log" 2>&1 &
+    LEARNING_CAPTURE_PID=$!
+    cd - >/dev/null
+    
+    # Attendre quelques secondes
+    sleep 2
+    
+    # Vérifier qu'il tourne
+    if is_running "${LEARNING_CAPTURE_PID}"; then
+        log_success "✅ Learning Capture Service démarré (PID: ${LEARNING_CAPTURE_PID})"
+        log_info "   📊 Capture automatique des heuristiques activée"
+        return 0
+    else
+        log_warning "⚠️ Learning Capture Service non démarré"
+        return 0  # Continuer même si non prêt
+    fi
+}
+
 # Démarrer le Dashboard Frontend
 start_frontend() {
     log "🚀 Démarrage du Dashboard Frontend (port 3001)..."
@@ -370,6 +414,12 @@ show_status() {
     else
         echo "❌ Watcher"
     fi
+    
+    if is_running "${LEARNING_CAPTURE_PID}"; then
+        echo "✅ Learning Capture (PID: ${LEARNING_CAPTURE_PID})"
+    else
+        echo "⚪ Learning Capture (non actif)"
+    fi
     echo "----------------------------------------"
 }
 
@@ -393,6 +443,7 @@ test_mode() {
     start_backend || return 1
     start_event_bridge || return 1
     start_watcher || return 1
+    start_learning_capture || return 0  # Ne pas bloquer si échec
     
     show_status
     show_urls
@@ -426,6 +477,7 @@ all_mode() {
     start_event_bridge || return 1
     start_watcher || return 1
     start_frontend || return 1
+    start_learning_capture || return 0  # Ne pas bloquer si échec
     
     show_status
     show_urls
@@ -452,6 +504,7 @@ no_opencode_mode() {
     start_event_bridge || return 1
     start_watcher || return 1
     start_frontend || return 1
+    start_learning_capture || return 0  # Ne pas bloquer si échec
     
     show_status
     show_urls
