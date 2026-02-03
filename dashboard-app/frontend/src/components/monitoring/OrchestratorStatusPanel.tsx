@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Cpu, Activity, CheckCircle, AlertTriangle, RefreshCw,
-  ChevronRight, ChevronDown, Clock, Play, Square
+  ChevronRight, ChevronDown, Clock, Play, Square, FolderOpen,
+  TrendingUp, Server, MessageCircle, MessageSquare
 } from 'lucide-react';
 
 interface OrchestratorStatusData {
@@ -9,6 +10,10 @@ interface OrchestratorStatusData {
   missions_count: number;
   last_check?: string;
   status_url?: string;
+  hooks_dir?: string;
+  opencode_server?: string;
+  opencode_status?: string;
+  uptime_seconds?: number;
 }
 
 interface OrchestratorMission {
@@ -44,6 +49,13 @@ const STATUS_CONFIG = {
     borderColor: 'border-red-500/20',
     icon: AlertTriangle,
     label: 'Stopped'
+  },
+  error: {
+    color: 'text-red-400',
+    bgColor: 'bg-red-500/10',
+    borderColor: 'border-red-500/20',
+    icon: AlertTriangle,
+    label: 'Error'
   }
 };
 
@@ -53,19 +65,49 @@ export function OrchestratorStatusPanel({
 }: OrchestratorStatusPanelProps) {
   const [status, setStatus] = useState<OrchestratorStatusData | null>(null);
   const [missions, setMissions] = useState<OrchestratorMission[]>([]);
+  const [history, setHistory] = useState<OrchestratorStatusData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
   const [isLaunching, setIsLaunching] = useState(false);
+  
+  // Event stats
+  const [questionCount, setQuestionCount] = useState(0);
+  const [responseCount, setResponseCount] = useState(0);
+  const [totalEvents, setTotalEvents] = useState(0);
 
   const fetchStatus = useCallback(async () => {
     try {
-      const response = await fetch(`${apiBaseUrl}/api/v1/orchestrator/status`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data: OrchestratorStatusResponse = await response.json();
+      // Fetch status
+      const statusResponse = await fetch(`${apiBaseUrl}/api/v1/orchestrator/status`);
+      if (!statusResponse.ok) throw new Error(`HTTP ${statusResponse.status}`);
+      const data: OrchestratorStatusResponse = await statusResponse.json();
       setStatus(data.status_data || null);
       setMissions(data.missions || []);
+      
+      // Add to history (keep last 20 entries)
+      setHistory(prev => {
+        const newHistory = [{ ...(data.status_data || {}), last_check: new Date().toISOString() }, ...prev];
+        return newHistory.slice(0, 20);
+      });
+      
+      // Fetch event stats
+      try {
+        const eventsResponse = await fetch(`${apiBaseUrl}/api/v1/monitoring/orchestrator/events`);
+        if (eventsResponse.ok) {
+          const eventsData = await eventsResponse.json();
+          if (eventsData.status === 'ok') {
+            setQuestionCount(eventsData.question_count || 0);
+            setResponseCount(eventsData.response_count || 0);
+            setTotalEvents(eventsData.events?.length || 0);
+          }
+        }
+      } catch (eventsErr) {
+        // Silently fail for events - status is more important
+        console.debug('Failed to fetch orchestrator events:', eventsErr);
+      }
+      
       setError(null);
     } catch (err) {
       console.error('Failed to fetch orchestrator status:', err);
@@ -122,6 +164,27 @@ export function OrchestratorStatusPanel({
     return new Date(timestamp).toLocaleTimeString();
   };
 
+  // Format uptime
+  const formatUptime = (seconds?: number) => {
+    if (!seconds) return '-';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m ${secs}s`;
+    return `${secs}s`;
+  };
+
+  // Calculate missions per second
+  const calculateMissionsPerSecond = () => {
+    if (history.length < 2) return null;
+    const current = status?.missions_count || 0;
+    const previous = history[1]?.missions_count || 0;
+    const timeDiff = (new Date().getTime() - new Date(history[1].last_check || '').getTime()) / 1000;
+    if (timeDiff <= 0) return null;
+    return (current - previous) / timeDiff;
+  };
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-slate-900/30 rounded-lg border border-slate-700/50">
@@ -137,12 +200,18 @@ export function OrchestratorStatusPanel({
   const statusConfig = isRunning ? STATUS_CONFIG.running : STATUS_CONFIG.stopped;
   const StatusIcon = statusConfig.icon;
 
+  const missionsPerSecond = calculateMissionsPerSecond();
+
   return (
     <div className="h-full flex flex-col bg-slate-900/30 rounded-lg border border-slate-700/50">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Cpu className="w-5 h-5 text-violet-400" />
+            {isRunning ? (
+              <Cpu className="w-5 h-5 text-violet-400" />
+            ) : (
+              <Cpu className="w-5 h-5 text-slate-500" />
+            )}
             <h2 className="text-lg font-semibold text-slate-200">Orchestrator</h2>
           </div>
           {status && (
@@ -151,6 +220,25 @@ export function OrchestratorStatusPanel({
               <span>{statusConfig.label}</span>
             </div>
           )}
+          
+          {/* Event Stats */}
+          <div className="flex items-center gap-4 ml-4 text-xs">
+            <div className="flex items-center gap-1 text-slate-400">
+              <MessageCircle className="w-3 h-3 text-orange-400" />
+              <span>Questions:</span>
+              <span className="text-orange-400 font-medium">{questionCount}</span>
+            </div>
+            <div className="flex items-center gap-1 text-slate-400">
+              <CheckCircle className="w-3 h-3 text-green-400" />
+              <span>Responses:</span>
+              <span className="text-green-400 font-medium">{responseCount}</span>
+            </div>
+            <div className="flex items-center gap-1 text-slate-400">
+              <MessageSquare className="w-3 h-3 text-slate-500" />
+              <span>Total:</span>
+              <span className="text-slate-300 font-medium">{totalEvents}</span>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -214,6 +302,7 @@ export function OrchestratorStatusPanel({
           </div>
         ) : (
           <>
+            {/* Overview Section */}
             <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden">
               <button
                 onClick={() => toggleSection('overview')}
@@ -233,19 +322,71 @@ export function OrchestratorStatusPanel({
               {expandedSections.has('overview') && status && (
                 <div className="px-4 pb-4 border-t border-slate-700/50">
                   <div className="grid grid-cols-2 gap-3 mt-3">
+                    {/* Missions Count */}
                     <div className="p-3 bg-slate-700/30 rounded-lg">
-                      <div className="text-xs text-slate-400 mb-1">State</div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Cpu className="w-4 h-4 text-violet-400" />
+                        <span className="text-xs text-slate-400">Missions</span>
+                      </div>
+                      <div className="text-xl font-bold text-violet-400">
+                        {status.missions_count?.toLocaleString() || 0}
+                      </div>
+                      {missionsPerSecond !== null && (
+                        <div className="text-xs text-emerald-400 flex items-center gap-1 mt-1">
+                          <TrendingUp className="w-3 h-3" />
+                          {missionsPerSecond.toFixed(1)} missions/s
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Running Status */}
+                    <div className="p-3 bg-slate-700/30 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Server className="w-4 h-4 text-slate-400" />
+                        <span className="text-xs text-slate-400">Status</span>
+                      </div>
                       <div className={`text-lg font-bold ${isRunning ? 'text-emerald-400' : 'text-red-400'}`}>
                         {isRunning ? 'Running' : 'Stopped'}
                       </div>
-                    </div>
-                    <div className="p-3 bg-slate-700/30 rounded-lg">
-                      <div className="text-xs text-slate-400 mb-1">Missions</div>
-                      <div className="text-lg font-bold text-violet-400">
-                        {status.missions_count ?? 0}
+                      <div className="text-xs text-slate-500 mt-1">
+                        Service status
                       </div>
                     </div>
+
+                    {/* OpenCode Health */}
+                    {status.opencode_status && (
+                      <div className="p-3 bg-slate-700/30 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Server className="w-4 h-4 text-slate-400" />
+                          <span className="text-xs text-slate-400">OpenCode</span>
+                        </div>
+                        <div className={`text-lg font-bold ${status.opencode_status === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>
+                          {status.opencode_status === 'ok' ? 'Healthy' : 'Down'}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          {status.opencode_server}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Uptime */}
+                    {status.uptime_seconds !== undefined && (
+                      <div className="p-3 bg-slate-700/30 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Clock className="w-4 h-4 text-slate-400" />
+                          <span className="text-xs text-slate-400">Uptime</span>
+                        </div>
+                        <div className="text-lg font-bold text-cyan-400">
+                          {formatUptime(status.uptime_seconds)}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          Service uptime
+                        </div>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Last Update */}
                   <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
                     <Clock className="w-3 h-3" />
                     Last check: {formatTime(status.last_check)}
@@ -254,6 +395,108 @@ export function OrchestratorStatusPanel({
               )}
             </div>
 
+            {/* Configuration Section */}
+            {(status?.hooks_dir || status?.opencode_server) && (
+              <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden">
+                <button
+                  onClick={() => toggleSection('config')}
+                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <FolderOpen className="w-4 h-4 text-slate-400" />
+                    <span className="font-medium text-slate-200">Configuration</span>
+                  </div>
+                  {expandedSections.has('config') ? (
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  )}
+                </button>
+
+                {expandedSections.has('config') && status && (
+                  <div className="px-4 pb-4 border-t border-slate-700/50">
+                    <div className="mt-3 space-y-2">
+                      {status.hooks_dir && (
+                        <div className="flex items-center justify-between p-2 bg-slate-700/30 rounded">
+                          <span className="text-sm text-slate-400">Hooks Directory</span>
+                          <span className="text-sm font-medium text-slate-300 truncate max-w-[200px]">
+                            {status.hooks_dir}
+                          </span>
+                        </div>
+                      )}
+                      {status.opencode_server && (
+                        <div className="flex items-center justify-between p-2 bg-slate-700/30 rounded">
+                          <span className="text-sm text-slate-400">OpenCode Server</span>
+                          <span className="text-sm font-medium text-cyan-400">
+                            {status.opencode_server}
+                          </span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between p-2 bg-slate-700/30 rounded">
+                        <span className="text-sm text-slate-400">Orchestrator URL</span>
+                        <span className="text-sm font-medium text-slate-300">
+                          {`${apiBaseUrl}/api/v1/orchestrator/status`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Mission History */}
+            {history.length > 1 && (
+              <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden">
+                <button
+                  onClick={() => toggleSection('history')}
+                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-slate-400" />
+                    <span className="font-medium text-slate-200">Status History</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">{history.length} entries</span>
+                    {expandedSections.has('history') ? (
+                      <ChevronDown className="w-4 h-4 text-slate-400" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    )}
+                  </div>
+                </button>
+
+                {expandedSections.has('history') && (
+                  <div className="border-t border-slate-700/50">
+                    <div className="max-h-64 overflow-y-auto">
+                      {history.slice(0, 10).map((entry, index) => (
+                        <div
+                          key={index}
+                          className="px-4 py-2 flex items-center justify-between border-b border-slate-700/30 last:border-0 hover:bg-slate-700/20"
+                        >
+                          <div className="flex items-center gap-3">
+                            {entry.running ? (
+                              <Cpu className="w-4 h-4 text-violet-400" />
+                            ) : (
+                              <Cpu className="w-4 h-4 text-slate-500" />
+                            )}
+                            <span className="text-sm text-slate-300">
+                              {formatTime(entry.last_check)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs">
+                            <span className="text-violet-400">
+                              {entry.missions_count?.toLocaleString() || 0} missions
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Active Missions */}
             {missions.length > 0 && (
               <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden">
                 <button
@@ -296,9 +539,24 @@ export function OrchestratorStatusPanel({
                 )}
               </div>
             )}
-          </>
-        )}
-      </div>
+           </>
+          )}
+        </div>
+        
+        {/* Footer */}
+      {status && (
+        <div className="px-4 py-3 border-t border-slate-700/50">
+          <div className="flex items-center justify-between text-xs text-slate-500">
+            <div className="flex items-center gap-4">
+              <span>Checks: {history.length}</span>
+              <span>URL: {`${apiBaseUrl}/api/v1/orchestrator/status`}</span>
+            </div>
+            <div>
+              Refresh: {refreshInterval / 1000}s
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

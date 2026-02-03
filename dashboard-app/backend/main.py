@@ -128,6 +128,7 @@ from routers import (
     semantic_router,
     agents_router,
     monitoring_router,
+    persistence_router,
 )
 from routers.auth import init_redis
 
@@ -137,11 +138,33 @@ def integrate_timeline_dashboard(app):
     pass
 
 
-# Configure logging
+# Configure logging - Console + File in .coordination/
+LOG_DIR = EMERGENT_LEARNING_PATH / ".coordination"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+LOG_FILE = LOG_DIR / "dashboard.log"
+
+# Create formatters
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+# Console handler
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(formatter)
+
+# File handler
+file_handler = logging.FileHandler(LOG_FILE)
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(formatter)
+
+# Configure root logger
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    handlers=[console_handler, file_handler],
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
+
 logger = logging.getLogger(__name__)
+logger.info(f"Logging to console and {LOG_FILE}")
 
 app = FastAPI(
     title="Emergent Learning Dashboard",
@@ -330,6 +353,7 @@ app.include_router(live_router)
 app.include_router(semantic_router)
 app.include_router(agents_router)
 app.include_router(monitoring_router)
+app.include_router(persistence_router)
 
 
 # ==============================================================================

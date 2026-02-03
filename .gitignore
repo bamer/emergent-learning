@@ -87,3 +87,5 @@ Thumbs.db
 .coordination/event-bridge-heartbeat.json
 .coordination/event-bridge-heartbeat.json
 .gitignore
+.coordination/watcher-log.md
+.coordination/event-bridge-heartbeat.json

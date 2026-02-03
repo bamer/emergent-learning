@@ -3,7 +3,7 @@ import {
   Shield, Activity, AlertTriangle, CheckCircle, Clock,
   TrendingUp, TrendingDown, Minus, Zap, Brain, Server,
   Database, Wifi, RefreshCw, ChevronDown, ChevronRight,
-  Filter, Download, Eye, EyeOff, Bell, BellOff
+  Filter, Download, Eye, EyeOff, Bell, BellOff, Play, Pause
 } from 'lucide-react';
 
 // Types
@@ -118,6 +118,7 @@ export function SentinelMonitorPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [sentinelRunning, setSentinelRunning] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'overview' | 'cycles' | 'patterns' | 'actions'>('overview');
   const [expandedCycles, setExpandedCycles] = useState<Set<number>>(new Set());
 
@@ -150,11 +151,11 @@ export function SentinelMonitorPanel({
   useEffect(() => {
     fetchSentinelStatus();
     
-    if (!autoRefresh) return;
+    if (!autoRefresh || !sentinelRunning) return;
     
     const interval = setInterval(fetchSentinelStatus, refreshInterval);
     return () => clearInterval(interval);
-  }, [fetchSentinelStatus, autoRefresh, refreshInterval]);
+  }, [fetchSentinelStatus, autoRefresh, sentinelRunning, refreshInterval]);
 
   // Toggle cycle expansion
   const toggleCycleExpansion = (index: number) => {
@@ -236,10 +237,11 @@ export function SentinelMonitorPanel({
           
           {/* Play/Pause Button */}
           <button
+            onClick={() => setSentinelRunning(!sentinelRunning)}
             className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 rounded"
-            title="Toggle Sentinel"
+            title={sentinelRunning ? "Pause Sentinel" : "Start Sentinel"}
           >
-            <Play className="w-4 h-4" />
+            {sentinelRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
           
           <button

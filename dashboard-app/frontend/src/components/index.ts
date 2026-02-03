@@ -29,8 +29,6 @@ export {
   WatcherStatusPanel,
   EventBridgeStatusPanel,
   OrchestratorStatusPanel,
-  WatcherEventHistory,
-  OrchestratorEventHistory,
   OllamaStatus,
   CeoStatusPanel
 } from './monitoring'

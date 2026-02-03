@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Shield, ScrollText, Heart, Eye, Grid, List,
-  ChevronDown, ChevronRight, Zap, Cpu, MessageSquare, Brain, User
+  ChevronDown, ChevronRight, Zap, Cpu, Brain, User
 } from 'lucide-react';
 import {
   SentinelMonitorPanel,
@@ -10,8 +10,6 @@ import {
   WatcherStatusPanel,
   EventBridgeStatusPanel,
   OrchestratorStatusPanel,
-  WatcherEventHistory,
-  OrchestratorEventHistory,
   OllamaStatus,
   CeoStatusPanel
 } from './monitoring';
@@ -20,7 +18,7 @@ interface MonitoringPanelProps {
   apiBaseUrl?: string;
 }
 
-type MonitorView = 'sentinel' | 'chronicle' | 'health' | 'watcher' | 'eventbridge' | 'orchestrator' | 'watcher-events' | 'orchestrator-events' | 'ollama' | 'all';
+type MonitorView = 'sentinel' | 'chronicle' | 'health' | 'watcher' | 'eventbridge' | 'orchestrator' | 'ollama' | 'all';
 
 export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
   const [activeView, setActiveView] = useState<MonitorView>('all');
@@ -33,9 +31,7 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
     { id: 'watcher', label: 'Watcher', icon: Eye, component: WatcherStatusPanel },
     { id: 'eventbridge', label: 'Event Bridge', icon: Zap, component: EventBridgeStatusPanel },
     { id: 'orchestrator', label: 'Orchestrator', icon: Cpu, component: OrchestratorStatusPanel },
-    { id: 'ceo', label: 'CEO Status', icon: User, component: CeoStatusPanel }, // Nouveau panel
-    { id: 'watcher-events', label: 'Watcher Events', icon: Eye, component: WatcherEventHistory },
-    { id: 'orchestrator-events', label: 'Orchestrator Events', icon: MessageSquare, component: OrchestratorEventHistory },
+    { id: 'ceo', label: 'CEO Status', icon: User, component: CeoStatusPanel },
     { id: 'ollama', label: 'Ollama', icon: Brain, component: OllamaStatus },
   ] as const;
 
@@ -131,13 +127,7 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
                 <CeoStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="min-h-[400px]">
-                <WatcherEventHistory apiBaseUrl={apiBaseUrl} />
-              </div>
-              <div className="min-h-[400px]">
-                <OrchestratorEventHistory apiBaseUrl={apiBaseUrl} />
-              </div>
-              <div className="min-h-[400px]">
-                <EventChronicleViewer apiBaseUrl={apiBaseUrl} />
+                <OllamaStatus apiBaseUrl={apiBaseUrl} />
               </div>
             </div>
           ) : (
@@ -162,13 +152,7 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
                 <CeoStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="h-[500px]">
-                <WatcherEventHistory apiBaseUrl={apiBaseUrl} />
-              </div>
-              <div className="h-[500px]">
-                <OrchestratorEventHistory apiBaseUrl={apiBaseUrl} />
-              </div>
-              <div className="h-[500px]">
-                <EventChronicleViewer apiBaseUrl={apiBaseUrl} />
+                <OllamaStatus apiBaseUrl={apiBaseUrl} />
               </div>
             </div>
           )

@@ -90,6 +90,7 @@ const STATUS_COLORS: Record<string, string> = {
   ready: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   idle: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
   completed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  unknown: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
 };
 
 const STATUS_DISPLAY: Record<string, { text: string; emoji: string }> = {
@@ -102,6 +103,7 @@ const STATUS_DISPLAY: Record<string, { text: string; emoji: string }> = {
   ready: { text: 'Ready', emoji: '🔵' },
   idle: { text: 'Idle', emoji: '⚪' },
   completed: { text: 'Completed', emoji: '✅' },
+  unknown: { text: 'Unknown', emoji: '❓' },
 };
 
 // Mission templates
@@ -159,8 +161,9 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
   // New states for filtering and organization
   const [showSystemAgents, setShowSystemAgents] = useState(false);
   const [showHiddenAgents, setShowHiddenAgents] = useState(false);
-  const [filterPrimaryOnly, setFilterPrimaryOnly] = useState(false);
+  const [filterPrimaryOnly, setFilterPrimaryOnly] = useState(true); // Default to showing primary agents only
   const [agentModalKey, setAgentModalKey] = useState(0); // Force modal remount on close
+  const [searchQuery, setSearchQuery] = useState(''); // Search query for filtering agents
 
   // Fetch available models
   const fetchModels = useCallback(async () => {
@@ -201,27 +204,27 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
         
         // Get ELF agents from status - map all fields correctly
         elfAgents = (statusData.agents || []).map((agent: any) => {
-          const agentName = agent.name || agent.display_name || agent.agent_type;
-          const agentDescription = agent.description || `${agent.agent_type} agent`;
+          const agentName = (agent.name || agent.display_name || agent.agent_type || 'Unknown Agent').toString();
+          const agentDescription = (agent.description || `${agent.agent_type || agent.type || 'agent'} agent`).toString();
           
           return {
-            id: agent.agent_type || agent.type || agent.id,
+            id: (agent.agent_type || agent.type || agent.id || 'unknown').toString(),
             name: agentName,
-            display_name: agent.display_name || agent.name || agent.agent_type,
+            display_name: (agent.display_name || agent.name || agent.agent_type || agentName).toString(),
             description: agentDescription,
-            type: agent.agent_type || agent.type,
+            type: (agent.agent_type || agent.type || 'unknown').toString(),
             system: 'elf' as const,
-            status: agent.status || 'idle',
-            icon: agent.agent_type || agent.type,
-            role: agent.role || agent.agent_type,
-            is_primary: agent.is_primary !== false, // Default to true if not specified
-            session_id: agent.session_id,
-            last_activity: agent.last_activity,
-            start_time: agent.start_time,
-            error_count: agent.error_count || 0,
-            can_spawn: agent.status === 'stopped' || agent.status === 'idle' || agent.status === 'completed',
-            is_hidden: isHiddenAgent(agent),
-            is_system: isSystemAgent(agent),
+            status: (agent.status || 'idle').toString(),
+            icon: (agent.agent_type || agent.type || 'default').toString(),
+            role: (agent.role || agent.agent_type || agent.type || 'agent').toString(),
+            is_primary: Boolean(agent.is_primary !== false), // Default to true if not specified
+            session_id: agent.session_id || null,
+            last_activity: agent.last_activity || null,
+            start_time: agent.start_time || null,
+            error_count: Number(agent.error_count) || 0,
+            can_spawn: Boolean(agent.status === 'stopped' || agent.status === 'idle' || agent.status === 'completed' || agent.status === 'ready'),
+            is_hidden: Boolean(isHiddenAgent(agent)),
+            is_system: Boolean(isSystemAgent(agent)),
           };
         });
       }
@@ -233,21 +236,22 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
       if (openCodeResponse.ok) {
         const openCodeData = await openCodeResponse.json();
         openCodeAgents = (openCodeData.agents || []).map((agent: any) => {
-          const agentName = agent.name;
+          const agentName = (agent.name || agent.id || 'Unknown Agent').toString();
           
           return {
-            id: agent.id,
+            id: (agent.id || 'unknown').toString(),
             name: agentName,
-            display_name: agent.name,
-            type: agent.id,
+            display_name: (agent.name || agent.id || agentName).toString(),
+            type: (agent.id || 'unknown').toString(),
             system: 'opencode' as const,
             status: 'ready',
-            description: agent.description || '',
-            icon: agent.id,
+            description: (agent.description || '').toString(),
+            icon: (agent.id || 'default').toString(),
             can_spawn: true,
             role: 'Persona',
-            is_hidden: isHiddenAgent(agent),
-            is_system: isSystemAgent(agent),
+            is_hidden: Boolean(isHiddenAgent(agent)),
+            is_system: Boolean(isSystemAgent(agent)),
+            is_primary: true, // Default OpenCode agents as primary
           };
         });
       }
@@ -289,14 +293,38 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
   const handleStartAgent = async (agent: Agent) => {
     setStartingAgentKey(getAgentKey(agent));
     try {
-      setSelectedAgent(agent);
-      setExecutionMode('manual');
-      setMissionText('');
-      setLastResult(null);
-      setShowMissionModal(true);
+      // Spawn agent directly in main session + sub-session
+      const response = await fetch(`${apiBaseUrl}/api/v1/agents/spawn_direct`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          agent_type: agent.type,
+          agent_name: agent.name,
+          model: selectedModel || getDefaultModelForAgent(agent),
+          mission: `You are ${agent.display_name}. Identify yourself precisely: your role, capabilities, primary behaviors, and what makes you unique. Be specific about your expertise and how you approach tasks.`
+        }),
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        // Store agent ID reference for later communication
+        if (result.agent_id) {
+          // Update the agent in the local state
+          setAllAgents(prevAgents => 
+            prevAgents.map(a => 
+              a.id === agent.id && a.system === agent.system 
+                ? {...a, session_id: result.agent_id, status: 'running'} 
+                : a
+            )
+          );
+        }
+        fetchAgents(true); // Refresh agent list
+      } else {
+        throw new Error(`Failed to spawn agent: ${response.statusText}`);
+      }
     } catch (err) {
-      console.error('Failed to start agent:', err);
-      setError(err instanceof Error ? err.message : 'Failed to start agent');
+      console.error('Failed to spawn agent:', err);
+      setError(err instanceof Error ? err.message : 'Failed to spawn agent');
     } finally {
       setStartingAgentKey(null);
     }
@@ -390,6 +418,11 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
     if (agent) {
       setSelectedAgent(agent);
       setExecutionMode('manual');
+      // Set default model for this agent
+      const agentDefaultModel = getDefaultModelForAgent(agent);
+      if (agentDefaultModel && agentDefaultModel !== selectedModel) {
+        setSelectedModel(agentDefaultModel);
+      }
     } else {
       setSelectedAgent(null);
       setExecutionMode('smart');
@@ -412,6 +445,19 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
     return `${secs}s`;
   };
 
+  const getDefaultModelForAgent = (agent: Agent): string => {
+    // Check if agent has a preferred model
+    const agentPreferredModel = (agent as any).preferred_model || (agent as any).model;
+    if (agentPreferredModel) {
+      const modelExists = availableModels.find(m => m.id === agentPreferredModel);
+      if (modelExists) return agentPreferredModel;
+    }
+    
+    // Return system default model
+    const defaultModel = availableModels.find(m => m.is_default);
+    return defaultModel?.id || availableModels[0]?.id || '';
+  };
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-slate-900/30 rounded-lg border border-slate-700/50">
@@ -425,10 +471,10 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
 
   return (
     <div className="h-full flex flex-col bg-slate-900/30 rounded-lg border border-slate-700/50">
-      {/* Mission Modal */}
-      {showMissionModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div key={agentModalKey} className="bg-slate-800 rounded-lg border border-slate-700 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+       {/* Mission Modal */}
+       {showMissionModal && (
+         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+           <div key={agentModalKey} className="bg-slate-800 rounded-lg border border-slate-700 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Zap className="w-5 h-5 text-violet-400" />
@@ -481,22 +527,30 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
                 <Cpu className="w-4 h-4" />
                 Model ({availableModels.length} available)
               </label>
-              <select
-                value={selectedModel}
-                onChange={(e) => setSelectedModel(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200"
-              >
-                {availableModels.length === 0 && (
-                  <option value="">Loading models...</option>
-                )}
-                {availableModels.map((model) => (
-                  <option key={`${model.provider_id}-${model.id}`} value={model.id}>
-                    {model.name} {model.is_default ? '(default)' : ''} - {model.provider}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200 appearance-none cursor-pointer"
+                >
+                  {availableModels.length === 0 && (
+                    <option value="">Loading models...</option>
+                  )}
+                  {availableModels.map((model) => (
+                    <option key={`${model.provider_id}-${model.id}`} value={model.id}>
+                      {model.name} {model.is_default ? '(default)' : ''} - {model.provider}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                  <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
               <p className="text-xs text-slate-500 mt-1">
                 Select which AI model will execute this mission
+                {selectedAgent && ` (Default for ${selectedAgent.display_name}: ${getDefaultModelForAgent(selectedAgent) || 'System default'})`}
               </p>
             </div>
             
@@ -610,7 +664,7 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
             <div className="flex items-center gap-1.5">
               <span className="text-slate-500">Running:</span>
               <span className="text-emerald-400 font-semibold">
-                {allAgents.filter(a => a.status === 'running').length}
+                {allAgents.filter(a => a.status && (a.status === 'running' || a.status === 'busy' || a.status === 'ready')).length}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -627,8 +681,20 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
         )}
 
         <div className="flex items-center gap-2">
-          {/* Filter Toggles */}
-          <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/50 rounded">
+        {/* Search Box */}
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search agents..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-3 py-1.5 bg-slate-700/50 border border-slate-600/50 rounded text-sm text-slate-200 placeholder-slate-400 focus:outline-none focus:border-violet-500/50 w-48"
+          />
+        </div>
+
+        {/* Filter Toggles */}
+        <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/50 rounded">
             <button
               onClick={() => setShowSystemAgents(!showSystemAgents)}
               className={`px-2 py-1 rounded text-xs ${
@@ -676,21 +742,22 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-4">
-        {/* Filter Info */}
-        <div className="mb-4 p-2 bg-slate-700/30 rounded border border-slate-600/30 text-xs text-slate-400">
-          <div className="flex items-center gap-4">
-            <span>Filters:</span>
-            <span className={showSystemAgents ? 'text-blue-400' : ''}>
-              System: {showSystemAgents ? 'ON' : 'OFF'}
-            </span>
-            <span className={showHiddenAgents ? 'text-orange-400' : ''}>
-              Hidden: {showHiddenAgents ? 'ON' : 'OFF'}
-            </span>
-            <span className={filterPrimaryOnly ? 'text-green-400' : ''}>
-              Primary Only: {filterPrimaryOnly ? 'ON' : 'OFF'}
-            </span>
-          </div>
-        </div>
+         {/* Filter Info */}
+         <div className="mb-4 p-2 bg-slate-700/30 rounded border border-slate-600/30 text-xs text-slate-400">
+           <div className="flex items-center gap-4">
+             <span>Filters:</span>
+             {searchQuery && <span className="text-violet-400">Search: "{searchQuery}"</span>}
+             <span className={showSystemAgents ? 'text-blue-400' : ''}>
+               System: {showSystemAgents ? 'ON' : 'OFF'}
+             </span>
+             <span className={showHiddenAgents ? 'text-orange-400' : ''}>
+               Hidden: {showHiddenAgents ? 'ON' : 'OFF'}
+             </span>
+             <span className={filterPrimaryOnly ? 'text-green-400' : 'text-slate-500'}>
+               Primary Only: {filterPrimaryOnly ? 'ON' : 'OFF'}
+             </span>
+           </div>
+         </div>
 
         {error ? (
           <div className="flex items-center justify-center h-full">
@@ -710,7 +777,19 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {allAgents
               .filter(agent => {
-                // Apply filters
+                // Apply search filter
+                if (searchQuery.trim()) {
+                  const query = searchQuery.toLowerCase();
+                  const matchesSearch = 
+                    (agent.display_name && typeof agent.display_name === 'string' && agent.display_name.toLowerCase().includes(query)) ||
+                    (agent.name && typeof agent.name === 'string' && agent.name.toLowerCase().includes(query)) ||
+                    (agent.description && typeof agent.description === 'string' && agent.description.toLowerCase().includes(query)) ||
+                    (agent.type && typeof agent.type === 'string' && agent.type.toLowerCase().includes(query)) ||
+                    (agent.role && typeof agent.role === 'string' && agent.role.toLowerCase().includes(query));
+                  if (!matchesSearch) return false;
+                }
+                
+                // Apply other filters
                 if (!showSystemAgents && agent.is_system) return false;
                 if (!showHiddenAgents && agent.is_hidden) return false;
                 if (filterPrimaryOnly && !agent.is_primary) return false;
@@ -718,8 +797,8 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
               })
               .map((agent, index) => {
               const IconComponent = getIconComponent(agent);
-              const statusClass = STATUS_COLORS[agent.status] || STATUS_COLORS.stopped;
-              const statusDisplay = STATUS_DISPLAY[agent.status] || { text: agent.status, emoji: '⚪' };
+              const statusClass = STATUS_COLORS[agent.status || 'unknown'] || STATUS_COLORS.stopped;
+              const statusDisplay = STATUS_DISPLAY[agent.status || 'unknown'] || { text: agent.status || 'Unknown', emoji: '⚪' };
               const isElf = agent.system === 'elf';
               
               return (
@@ -746,12 +825,14 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
                             </span>
                           )}
                         </h3>
-                        <p className="text-xs text-slate-400">{agent.role || agent.type}</p>
+                         <p className="text-xs text-slate-400">
+                           {((agent.is_primary !== undefined && agent.is_primary !== null) ? (agent.is_primary ? 'Primary' : 'Secondary') : 'Unknown')} • {agent.system === 'elf' ? 'ELF Agent' : 'OpenCode Agent'}
+                         </p>
                       </div>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full border ${statusClass}`}>
-                      {statusDisplay.emoji} {statusDisplay.text}
-                    </span>
+              <span className={`text-xs px-2 py-1 rounded-full border ${statusClass}`}>
+                {statusDisplay?.emoji || '⚪'} {statusDisplay?.text || agent.status || 'Unknown'}
+              </span>
                   </div>
 
                   {/* Agent Info */}
@@ -772,32 +853,32 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    {agent.status === 'running' ? (
-                      <button
-                        onClick={() => handleStopAgent(agent.type)}
-                        className="flex items-center gap-1 px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded text-xs"
-                        title="Stop agent"
-                      >
-                        <Square className="w-3 h-3" />
-                        Stop
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleStartAgent(agent)}
-                        disabled={startingAgentKey === getAgentKey(agent)}
-                        className="flex items-center gap-1 px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                        title="Start agent"
-                      >
-                        {startingAgentKey === getAgentKey(agent) ? (
-                          <RefreshCw className="w-3 h-3 animate-spin" />
-                        ) : (
-                          <Play className="w-3 h-3" />
-                        )}
-                        Start
-                      </button>
-                    )}
-                    
+                   <div className="flex gap-2">
+                     {agent.status && (agent.status === 'running' ? (
+                       <button
+                         onClick={() => handleStopAgent(agent.type)}
+                         className="flex items-center gap-1 px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded text-xs"
+                         title="Stop agent"
+                       >
+                         <Square className="w-3 h-3" />
+                         Stop
+                       </button>
+                     ) : (
+                       <button
+                         onClick={() => handleStartAgent(agent)}
+                         disabled={startingAgentKey === getAgentKey(agent)}
+                         className="flex items-center gap-1 px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                         title="Start agent"
+                       >
+                         {startingAgentKey === getAgentKey(agent) ? (
+                           <RefreshCw className="w-3 h-3 animate-spin" />
+                         ) : (
+                           <Play className="w-3 h-3" />
+                         )}
+                         Start
+                       </button>
+                     ))}
+
                     <button
                       onClick={() => handleTestAgent(agent)}
                       disabled={callingAgent === getAgentKey(agent)}
@@ -815,7 +896,7 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
                     <button
                       onClick={() => handleStartClick(agent)}
                       className="flex items-center gap-1 px-2 py-1 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded text-xs"
-                      title="Send mission"
+                      title="Open mission modal centered"
                     >
                       <MessageSquare className="w-3 h-3" />
                       Mission

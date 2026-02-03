@@ -4,7 +4,5 @@ export { SystemHealthPanel } from './SystemHealthPanel'
 export { WatcherStatusPanel } from './WatcherStatusPanel'
 export { EventBridgeStatusPanel } from './EventBridgeStatusPanel'
 export { OrchestratorStatusPanel } from './OrchestratorStatusPanel'
-export { WatcherEventHistory } from './WatcherEventHistory'
-export { OrchestratorEventHistory } from './OrchestratorEventHistory'
 export { OllamaStatus } from './OllamaStatus'
-export { CeoStatusPanel } from './CeoStatusPanel'  // Nouveau composant
+export { CeoStatusPanel } from './CeoStatusPanel'

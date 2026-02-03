@@ -3,7 +3,7 @@
 # ELF OpenCode - Script de démarrage complet
 #
 # Démarrage de tous les services nécessaires pour ELF OpenCode:
-# 1. OpenCode Server (port 4096)
+# 1. OpenCode Server (port 4096) - Optionnel si déjà démarré manuellement
 # 2. Dashboard Backend (port 8888) 
 # 3. Event Bridge (port 9998)
 # 4. Dashboard Frontend (port 3001)
@@ -13,9 +13,10 @@
 #     ./start-elf-system.sh [mode]
 #     
 # Modes:
-#     all     - Démarre tout (défaut)
-#     minimal - Démarre seulement OpenCode + Backend
-#     test    - Mode test rapide
+#     all       - Démarre tout (défaut)
+#     minimal   - Démarre seulement OpenCode + Backend
+#     test      - Mode test rapide
+#     no-opencode - Démarre tout sauf OpenCode (si vous le gérez manuellement)
 
 set -euo pipefail
 
@@ -33,6 +34,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 # Logging functions
@@ -40,6 +42,7 @@ log() { echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*"; }
 log_success() { echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*"; }
 log_warning() { echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*"; }
 log_error() { echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*"; }
+log_info() { echo -e "${CYAN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*"; }
 
 # Variables globales
 OPENCODE_PID=""
@@ -47,38 +50,55 @@ BACKEND_PID=""
 EVENT_BRIDGE_PID=""
 FRONTEND_PID=""
 WATCHER_PID=""
+RUNNING=true
+OPENCODE_EXTERNAL=false  # true si OpenCode est déjà démarré manuellement
 
-# Nettoyage à la sortie
+# Nettoyage à la sortie - Version améliorée avec kill -9 si nécessaire
 cleanup() {
     log "🧹 Nettoyage des processus..."
+    RUNNING=false
     
-    # Tuer les processus enfants
+    # Tuer les processus enfants avec kill -9 si nécessaire
     if [[ -n "${OPENCODE_PID:-}" ]]; then
         kill "${OPENCODE_PID}" 2>/dev/null || true
+        sleep 1
+        kill -9 "${OPENCODE_PID}" 2>/dev/null || true
     fi
     if [[ -n "${BACKEND_PID:-}" ]]; then
         kill "${BACKEND_PID}" 2>/dev/null || true
+        sleep 1
+        kill -9 "${BACKEND_PID}" 2>/dev/null || true
     fi
     if [[ -n "${EVENT_BRIDGE_PID:-}" ]]; then
         kill "${EVENT_BRIDGE_PID}" 2>/dev/null || true
+        sleep 1
+        kill -9 "${EVENT_BRIDGE_PID}" 2>/dev/null || true
     fi
     if [[ -n "${FRONTEND_PID:-}" ]]; then
         kill "${FRONTEND_PID}" 2>/dev/null || true
+        sleep 1
+        kill -9 "${FRONTEND_PID}" 2>/dev/null || true
     fi
     if [[ -n "${WATCHER_PID:-}" ]]; then
         kill "${WATCHER_PID}" 2>/dev/null || true
+        sleep 1
+        kill -9 "${WATCHER_PID}" 2>/dev/null || true
     fi
     
-    # Attendre la fin des processus
-    [[ -n "${OPENCODE_PID:-}" ]] && wait "${OPENCODE_PID}" 2>/dev/null || true
-    [[ -n "${BACKEND_PID:-}" ]] && wait "${BACKEND_PID}" 2>/dev/null || true
-    [[ -n "${EVENT_BRIDGE_PID:-}" ]] && wait "${EVENT_BRIDGE_PID}" 2>/dev/null || true
-    [[ -n "${FRONTEND_PID:-}" ]] && wait "${FRONTEND_PID}" 2>/dev/null || true
-    [[ -n "${WATCHER_PID:-}" ]] && wait "${WATCHER_PID}" 2>/dev/null || true
+    # Kill tous les processus liés à Open_ELF et dashboard
+    pkill -f "opencode serve" 2>/dev/null || true
+    pkill -f "uvicorn main:app" 2>/dev/null || true
+    pkill -f "event_bridge.py" 2>/dev/null || true
+    pkill -f "npm run dev" 2>/dev/null || true
+    pkill -f "Open_ELF/watcher/launcher.py" 2>/dev/null || true
     
     log_success "✅ Nettoyage terminé"
+    log "👋 Au revoir!"
+    exit 0
 }
-trap cleanup EXIT INT TERM
+
+# Trap tous les signaux d'arrêt
+trap cleanup EXIT INT TERM HUP
 
 # Vérifier si un service est en cours d'exécution
 is_running() {
@@ -88,6 +108,19 @@ is_running() {
     else
         return 1
     fi
+}
+
+# Vérifier si tous les services tournent encore
+# Note: OpenCode n'est pas vérifié si son PID est vide (démarré manuellement par l'utilisateur)
+all_services_running() {
+    # Vérifier seulement les services que nous avons démarrés
+    if is_running "${BACKEND_PID}" && \
+       is_running "${EVENT_BRIDGE_PID}" && \
+       is_running "${FRONTEND_PID}" && \
+       is_running "${WATCHER_PID}"; then
+        return 0
+    fi
+    return 1
 }
 
 # Attendre qu'un service soit prêt
@@ -113,14 +146,25 @@ wait_for_service() {
 }
 
 # Démarrer OpenCode Server
+# Retourne 0 si démarré avec succès OU si déjà démarré manuellement
 start_opencode_server() {
     log "🚀 Démarrage d'OpenCode Server (port 4096)..."
+    
+    # Vérifier si OpenCode tourne déjà (démarré manuellement par l'utilisateur)
+    if pgrep -f "opencode serve" >/dev/null 2>&1; then
+        log_info "ℹ️ OpenCode Server est déjà en cours d'exécution (démarré manuellement)"
+        log_info "   Le script ne gérera pas ce processus"
+        OPENCODE_EXTERNAL=true
+        return 0  # Considéré comme succès
+    fi
     
     # Vérifier si OpenCode est installé
     if ! command -v opencode >/dev/null 2>&1; then
         log_error "❌ OpenCode n'est pas installé. Installez-le avec:"
         log_error "curl -fsSL https://get.opencde.ai | sh"
-        exit 1
+        log_warning "⚠️ Continuation sans OpenCode Server"
+        OPENCODE_EXTERNAL=true
+        return 0  # Ne pas bloquer le démarrage
     fi
     
     # Démarrer le serveur en arrière-plan
@@ -133,7 +177,9 @@ start_opencode_server() {
         return 0
     else
         log_error "❌ Impossible de démarrer OpenCode Server"
-        return 1
+        log_warning "⚠️ Le script va continuer sans OpenCode"
+        OPENCODE_EXTERNAL=true
+        return 0  # Ne pas bloquer le démarrage
     fi
 }
 
@@ -283,10 +329,22 @@ show_status() {
     log "📊 Statut des services:"
     
     echo "----------------------------------------"
-    if is_running "${OPENCODE_PID}"; then
-        echo "✅ OpenCode Server (PID: ${OPENCODE_PID})"
+    # Si OpenCode PID est défini, on l'a démarré nous-mêmes
+    if [[ -n "${OPENCODE_PID:-}" ]]; then
+        if is_running "${OPENCODE_PID}"; then
+            echo "✅ OpenCode Server (PID: ${OPENCODE_PID})"
+        else
+            echo "❌ OpenCode Server (arrêté)"
+        fi
+    elif [[ "${OPENCODE_EXTERNAL}" == true ]]; then
+        # OpenCode géré manuellement par l'utilisateur
+        if pgrep -f "opencode serve" >/dev/null 2>&1; then
+            echo "🔌 OpenCode Server (externe - géré manuellement)"
+        else
+            echo "⚪ OpenCode Server (non démarré)"
+        fi
     else
-        echo "❌ OpenCode Server"
+        echo "⚪ OpenCode Server (non démarré)"
     fi
     
     if is_running "${BACKEND_PID}"; then
@@ -376,7 +434,33 @@ all_mode() {
     return 0
 }
 
-# Fonction principale
+# Mode sans OpenCode (si vous le gérez manuellement)
+no_opencode_mode() {
+    log "🔧 Mode sans OpenCode (gestion manuelle)"
+    OPENCODE_EXTERNAL=true
+    
+    # Vérifier quand même si OpenCode tourne
+    if pgrep -f "opencode serve" >/dev/null 2>&1; then
+        log_info "ℹ️ OpenCode Server détecté (démarré manuellement)"
+    else
+        log_warning "⚠️ OpenCode Server n'est pas démarré"
+        log_info "   Démarrez-le manuellement avec: opencode serve --port 4096"
+    fi
+    
+    # Démarrer les autres services
+    start_backend || return 1
+    start_event_bridge || return 1
+    start_watcher || return 1
+    start_frontend || return 1
+    
+    show_status
+    show_urls
+    
+    log_success "✅ Services démarrés (sans gestion d'OpenCode)!"
+    return 0
+}
+
+# Fonction principale - VERSION CORRIGÉE
 main() {
     local mode="all"
     
@@ -398,6 +482,9 @@ main() {
         "minimal")
             minimal_mode
             ;;
+        "no-opencode")
+            no_opencode_mode
+            ;;
         "all"|*)
             all_mode
             ;;
@@ -407,13 +494,30 @@ main() {
     
     if [[ $result -eq 0 ]]; then
         log_success "🎉 Démarrage terminé avec succès!"
-        log "💡 Pour arrêter: Ctrl+C ou kill $$"
+        log "💡 Pour arrêter: Ctrl+C"
         log "📝 Logs dans: ${LOGS_DIR}"
         
-        # Boucle infinie pour garder le script en vie
-        while true; do
-            sleep 60
+        if [[ "${OPENCODE_EXTERNAL}" == true ]]; then
+            log_info "ℹ️ OpenCode n'est pas géré par ce script"
+            log_info "   Il ne sera pas arrêté lors de l'arrêt du script"
+        fi
+        
+        # Boucle principale corrigée - vérifie les processus et répond à Ctrl+C
+        log "🔄 Surveillance des services (Ctrl+C pour arrêter)..."
+        while [[ $RUNNING == true ]]; do
+            # Vérifier si les processus sont encore en vie
+            if ! all_services_running; then
+                log_warning "⚠️ Un ou plusieurs services se sont arrêtés"
+                show_status
+            fi
+            
+            # Attendre mais vérifier régulièrement les signaux
+            sleep 5 &
+            wait $! 2>/dev/null || true
         done
+        
+        # Sortie normale
+        cleanup
     else
         log_error "💥 Échec du démarrage"
         exit 1

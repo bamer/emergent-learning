@@ -687,6 +687,98 @@ async def run_mission(request: MissionRequest):
         }
 
 
+@router.post("/spawn_direct")
+async def spawn_agent_direct(request: Dict[str, Any]):
+    """Spawn an agent directly in main session + sub-session."""
+    try:
+        agent_type = request.get("agent_type")
+        agent_name = request.get("agent_name") or agent_type or "Unknown Agent"
+        model = request.get("model")
+        mission = (
+            request.get("mission")
+            or f"You are {agent_name}. Identify yourself and your capabilities."
+        )
+
+        if not agent_type:
+            raise HTTPException(status_code=400, detail="Missing agent_type")
+
+        if not is_valid_agent_type(agent_type):
+            raise HTTPException(
+                status_code=400, detail=f"Invalid agent type: {agent_type}"
+            )
+
+        # Create a session for the agent
+        session_response = requests.post(
+            f"{OPENCODE_SERVER}/session",
+            json={"title": f"Agent: {agent_name}"},
+            timeout=30,
+        )
+
+        if session_response.status_code not in [200, 201]:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to create session: {session_response.status_code}",
+            )
+
+        session_data = session_response.json()
+        session_id = session_data.get("id") if session_data else None
+
+        if not session_id:
+            raise HTTPException(
+                status_code=500, detail="Failed to get session ID from response"
+            )
+
+        logger.info(f"Created session {session_id} for agent {agent_name}")
+
+        # Send initialization mission to agent
+        message_payload = {
+            "parts": [{"type": "text", "text": mission}],
+            "agent": agent_type,
+        }
+
+        if model:
+            message_payload["model"] = model
+
+        message_response = requests.post(
+            f"{OPENCODE_SERVER}/session/{session_id}/message",
+            json=message_payload,
+            timeout=120,
+        )
+
+        if message_response.status_code not in [200, 201]:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to initialize agent: {message_response.status_code}",
+            )
+
+        # Start background monitoring
+        task_id, task_file = create_task(mission, agent_type, session_id)
+
+        monitor_thread = threading.Thread(
+            target=monitor_mission,
+            args=(session_id, task_file, agent_type, mission),
+            daemon=True,
+        )
+        monitor_thread.start()
+
+        return {
+            "status": "spawned",
+            "agent_id": session_id,
+            "agent_type": agent_type,
+            "agent_name": agent_name,
+            "model": model,
+            "session_id": session_id,
+            "task_id": task_id,
+            "message": f"Agent {agent_name} spawned successfully with ID {session_id}",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error spawning agent directly: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/spawn")
 async def spawn_agent_legacy(request: Dict[str, Any]):
     """Legacy: Start an agent."""
