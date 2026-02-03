@@ -7,3 +7,4 @@ export { OrchestratorStatusPanel } from './OrchestratorStatusPanel'
 export { WatcherEventHistory } from './WatcherEventHistory'
 export { OrchestratorEventHistory } from './OrchestratorEventHistory'
 export { OllamaStatus } from './OllamaStatus'
+export { CeoStatusPanel } from './CeoStatusPanel'  // Nouveau composant

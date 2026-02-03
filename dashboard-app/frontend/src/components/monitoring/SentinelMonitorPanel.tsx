@@ -234,6 +234,14 @@ export function SentinelMonitorPanel({
             {autoRefresh ? 'Live' : 'Paused'}
           </button>
           
+          {/* Play/Pause Button */}
+          <button
+            className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 rounded"
+            title="Toggle Sentinel"
+          >
+            <Play className="w-4 h-4" />
+          </button>
+          
           <button
             onClick={fetchSentinelStatus}
             className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 rounded"

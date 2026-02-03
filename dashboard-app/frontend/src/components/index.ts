@@ -31,6 +31,7 @@ export {
   OrchestratorStatusPanel,
   WatcherEventHistory,
   OrchestratorEventHistory,
-  OllamaStatus
+  OllamaStatus,
+  CeoStatusPanel
 } from './monitoring'
 export { MonitoringPanel } from './MonitoringPanel'

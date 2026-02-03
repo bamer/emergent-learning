@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Shield, ScrollText, Heart, Eye, Grid, List,
-  ChevronDown, ChevronRight, Zap, Cpu, MessageSquare, Brain
+  ChevronDown, ChevronRight, Zap, Cpu, MessageSquare, Brain, User
 } from 'lucide-react';
 import {
   SentinelMonitorPanel,
@@ -12,7 +12,8 @@ import {
   OrchestratorStatusPanel,
   WatcherEventHistory,
   OrchestratorEventHistory,
-  OllamaStatus
+  OllamaStatus,
+  CeoStatusPanel
 } from './monitoring';
 
 interface MonitoringPanelProps {
@@ -32,6 +33,7 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
     { id: 'watcher', label: 'Watcher', icon: Eye, component: WatcherStatusPanel },
     { id: 'eventbridge', label: 'Event Bridge', icon: Zap, component: EventBridgeStatusPanel },
     { id: 'orchestrator', label: 'Orchestrator', icon: Cpu, component: OrchestratorStatusPanel },
+    { id: 'ceo', label: 'CEO Status', icon: User, component: CeoStatusPanel }, // Nouveau panel
     { id: 'watcher-events', label: 'Watcher Events', icon: Eye, component: WatcherEventHistory },
     { id: 'orchestrator-events', label: 'Orchestrator Events', icon: MessageSquare, component: OrchestratorEventHistory },
     { id: 'ollama', label: 'Ollama', icon: Brain, component: OllamaStatus },
@@ -126,7 +128,7 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
                 <OrchestratorStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="min-h-[400px]">
-                <OllamaStatus apiBaseUrl={apiBaseUrl} />
+                <CeoStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="min-h-[400px]">
                 <WatcherEventHistory apiBaseUrl={apiBaseUrl} />
@@ -157,7 +159,7 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
                 <OrchestratorStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="h-[500px]">
-                <OllamaStatus apiBaseUrl={apiBaseUrl} />
+                <CeoStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="h-[500px]">
                 <WatcherEventHistory apiBaseUrl={apiBaseUrl} />
