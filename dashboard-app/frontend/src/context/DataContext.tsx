@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode, useEffect } from 'react'
-import { Stats, Hotspot, ApiRun, RawEvent, TimelineEvent, ApiAnomaly, Heuristic } from '../types'
+import { Stats, Hotspot, ApiRun, RawEvent, TimelineEvent, Heuristic } from '../types'
 import { useDashboardData } from '../hooks/useDashboardData'
 import { useHeuristics } from '../hooks/useHeuristics'
 import { useScopeStore } from '../store/scopeStore'
@@ -11,12 +11,10 @@ interface DataContextType {
   runs: ApiRun[]
   events: RawEvent[]
   timelineEvents: TimelineEvent[]
-  anomalies: ApiAnomaly[]
   isLoading: boolean
   reload: () => void
   loadStats: () => Promise<void>
   setStats: React.Dispatch<React.SetStateAction<Stats | null>>
-  setAnomalies: React.Dispatch<React.SetStateAction<ApiAnomaly[]>>
 
   // Heuristics data
   heuristics: Heuristic[]
@@ -55,12 +53,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     runs: dashboardData.runs,
     events: dashboardData.events,
     timelineEvents: dashboardData.timelineEvents,
-    anomalies: dashboardData.anomalies,
     isLoading: dashboardData.isLoading,
     reload: dashboardData.reload,
     loadStats: dashboardData.loadStats,
     setStats: dashboardData.setStats,
-    setAnomalies: dashboardData.setAnomalies,
 
     // Heuristics data
     heuristics: heuristicsData.heuristics,

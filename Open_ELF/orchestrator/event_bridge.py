@@ -28,6 +28,18 @@ HOOKS_DIR = Path.home() / ".opencode" / "hooks"
 ELF_DIR = Path("/home/bamer/.opencode/emergent-learning")
 COORDINATION_DIR = ELF_DIR / ".coordination"
 EVENT_BRIDGE_HEARTBEAT = COORDINATION_DIR / "event-bridge-heartbeat.json"
+EVENT_BRIDGE_CONFIG = ELF_DIR / "Open_ELF/orchestrator/event_bridge_config.json"
+
+# Default configuration
+DEFAULT_CONFIG = {
+    "logging": {
+        "throttle_seconds": 5,
+        "important_events": ["message", "tool", "error", "session"],
+        "summary_interval": 10,
+        "max_details_length": 100,
+    },
+    "status_server": {"default_port": 9998, "fallback_port": 9999},
+}
 
 # Ensure logs directory exists
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
@@ -119,8 +131,11 @@ class HookManager:
                         try:
                             result = json.loads(stdout.decode())
                             logger.debug(f"Hook result: {result}")
-                        except:
-                            pass
+                        except Exception as e:
+                            logger.error(
+                                f"Failed to parse hook result from {hook_file.name}: {e}"
+                            )
+                            # Continue with other hooks but log the error
                     success = True
                 else:
                     logger.warning(
@@ -149,30 +164,130 @@ class EventBridge:
         self.session_tools = {}  # Track tools used per session
         self.started_at: Optional[datetime] = None
         self.last_event_time: Optional[str] = None
+        self.status_server_running = False  # Track status server health
+
+        # Load configuration
+        self.config = self._load_config()
+        logging_config = self.config.get("logging", {})
+
+        # Event deduplication and tracking
+        self.last_events = {}  # Track last event types to avoid spam
+        self.event_stats = {}  # Count events by type
+        self.last_log_time = {}  # Track when we last logged specific event types
+        self.log_throttle_seconds = logging_config.get("throttle_seconds", 5)
+        self.important_events = set(
+            logging_config.get(
+                "important_events", ["message", "tool", "error", "session"]
+            )
+        )
+        self.event_summary_interval = logging_config.get("summary_interval", 10)
+        self.max_details_length = logging_config.get("max_details_length", 100)
 
         COORDINATION_DIR.mkdir(parents=True, exist_ok=True)
+
+    def _load_config(self) -> Dict:
+        """Load configuration from file or use defaults"""
+        if EVENT_BRIDGE_CONFIG.exists():
+            try:
+                with open(EVENT_BRIDGE_CONFIG, "r") as f:
+                    config = json.load(f)
+                logger.info(f"✅ Configuration loaded from {EVENT_BRIDGE_CONFIG}")
+                return config
+            except Exception as e:
+                logger.warning(f"⚠️ Error loading config, using defaults: {e}")
+
+        # Create default config file
+        try:
+            EVENT_BRIDGE_CONFIG.parent.mkdir(parents=True, exist_ok=True)
+            with open(EVENT_BRIDGE_CONFIG, "w") as f:
+                json.dump(DEFAULT_CONFIG, f, indent=2)
+            logger.info(f"✅ Default configuration created at {EVENT_BRIDGE_CONFIG}")
+        except Exception as e:
+            logger.warning(f"⚠️ Could not create config file: {e}")
+
+        return DEFAULT_CONFIG
 
     def _write_heartbeat(self):
         """Write heartbeat for monitoring."""
         try:
+            # Get top event types
+            top_events = sorted(
+                self.event_stats.items(), key=lambda x: x[1], reverse=True
+            )[:5]
+
             heartbeat = {
                 "started_at": self.started_at.isoformat() if self.started_at else None,
                 "last_event_time": self.last_event_time,
                 "events_processed": self.event_count,
                 "running": self.running,
+                "status_server_running": self.status_server_running,
+                "health": "healthy" if self.status_server_running else "degraded",
+                "event_stats": {
+                    "total_types": len(self.event_stats),
+                    "top_events": dict(top_events),
+                    "last_updated": datetime.now().isoformat(),
+                },
             }
             EVENT_BRIDGE_HEARTBEAT.write_text(json.dumps(heartbeat), encoding="utf-8")
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Failed to write heartbeat: {e}")
+            # Note: Don't fail completely, but log the error for visibility
 
-    def _record_event(self):
-        """Increment counters and update heartbeat for any event."""
+    def _record_event(self, event_type: str = "unknown", details: str = ""):
+        """Increment counters and update heartbeat for any event with smart logging."""
         self.event_count += 1
         self.last_event_time = datetime.now().isoformat()
+
+        # Track event statistics
+        self.event_stats[event_type] = self.event_stats.get(event_type, 0) + 1
+
+        # Update heartbeat without logging every time
         self._write_heartbeat()
-        _log_info(
-            f"event_bridge: event received count={self.event_count} last={self.last_event_time}"
+
+        # Smart logging strategy
+        current_time = datetime.now()
+        last_log = self.last_log_time.get(event_type, datetime.min)
+
+        # Log important events immediately, others with throttling
+        is_important = any(imp in event_type.lower() for imp in self.important_events)
+
+        should_log = (
+            is_important
+            or (current_time - last_log).total_seconds() > self.log_throttle_seconds
+            or self.event_stats[event_type] == 1  # First time we see this event type
         )
+
+        if should_log:
+            # Build informative log message
+            if self.event_stats[event_type] == 1:
+                frequency = " (first time)"
+            elif (
+                self.event_stats[event_type] % self.event_summary_interval == 0
+            ):  # Every Nth occurrence
+                frequency = f" (#{self.event_stats[event_type]} total)"
+            else:
+                frequency = ""
+
+            log_message = (
+                f"📡 Event: {event_type}{frequency}"
+                f" | Total: {self.event_count}"
+                f" | Type count: {self.event_stats[event_type]}"
+            )
+
+            if details:
+                log_message += (
+                    f" | Details: {details[:100]}{'...' if len(details) > 100 else ''}"
+                )
+
+            # Use appropriate log level
+            if "error" in event_type.lower():
+                _log_error(f"❌ {log_message}")
+            elif is_important:
+                _log_info(f"🔍 {log_message}")
+            else:
+                logger.debug(log_message)
+
+            self.last_log_time[event_type] = current_time
 
     def start(self):
         """Démarre le bridge d'événements."""
@@ -204,7 +319,15 @@ class EventBridge:
         polling_thread.start()
 
         # Démarrer le serveur HTTP pour le status
-        self._start_status_server()
+        try:
+            self._start_status_server()
+        except RuntimeError as e:
+            _log_error(f"❌ Critical error starting status server: {e}")
+            # Status server is critical for monitoring, but don't stop the bridge
+            # Instead mark as degraded state
+            self.status_server_running = False
+        else:
+            self.status_server_running = True
 
         return True
 
@@ -314,7 +437,10 @@ class EventBridge:
                                     "timestamp": datetime.now().isoformat(),
                                 }
 
-                                self._record_event()
+                                self._record_event(
+                                    "tool_poll",
+                                    f"Tool: {tool_name} | Session: {session_id[:8]}",
+                                )
                                 self.hook_manager.run_hook("PostToolUse", hook_data)
 
                 # Attendre avant le prochain poll
@@ -342,9 +468,24 @@ class EventBridge:
     def _handle_event(self, event: Dict[str, Any]):
         """Gère un événement reçu d'OpenCode."""
         event_type = event.get("type", "unknown")
-        self._record_event()
+        event_properties = event.get("properties", {})
 
-        logger.debug(f"Event #{self.event_count}: {event_type}")
+        # Extract useful details for logging
+        details = ""
+        if event_type == "tool":
+            tool_name = event_properties.get("tool", "unknown")
+            session_id = event_properties.get("session_id", "")
+            details = f"Tool: {tool_name} | Session: {session_id[:8] if session_id else 'N/A'}"
+        elif event_type == "message":
+            content_preview = event_properties.get("content", "")[:50]
+            details = f"Content: {content_preview}..."
+        elif event_type == "error":
+            error_msg = event_properties.get("error", "Unknown error")
+            details = f"Error: {error_msg[:100]}"
+
+        self._record_event(event_type, details)
+
+        logger.debug(f"📡 Processing event #{self.event_count}: {event_type}")
 
         # Mapper les événements OpenCode aux hooks ELF
         if event_type == "message":
@@ -570,16 +711,22 @@ class EventBridge:
                 def log_message(self, format, *args):
                     pass
 
-            # Utiliser un port différent si 9998 est occupé
-            port = 9998
+            # Utiliser les ports de configuration
+            status_config = self.config.get("status_server", {})
+            default_port = status_config.get("default_port", 9998)
+            fallback_port = status_config.get("fallback_port", 9999)
+
+            port = default_port
             try:
                 server = HTTPServer(("localhost", port), StatusHandler)
             except OSError:
-                port = 9999
+                port = fallback_port
                 try:
                     server = HTTPServer(("localhost", port), StatusHandler)
                 except OSError:
-                    _log_error(f"❌ Cannot start status server on ports 9998-9999")
+                    _log_error(
+                        f"❌ Cannot start status server on ports {default_port}-{fallback_port}"
+                    )
                     return
 
             logger.info(f"📊 Status server started on http://localhost:{port}/status")
@@ -589,7 +736,8 @@ class EventBridge:
 
         except Exception as e:
             _log_error(f"❌ Failed to start status server: {e}")
-            # Ne pas échouer complètement si le serveur de statut ne peut pas démarrer
+            # Propagate error - status server is critical for monitoring
+            raise RuntimeError(f"Critical: Status server failed to start: {e}")
 
 
 def main():
@@ -624,8 +772,8 @@ def main():
                 print(f"  Hooks directory: {status['hooks_dir']}")
             else:
                 print("❌ Event bridge not running")
-        except:
-            print("❌ Event bridge not running")
+        except Exception as e:
+            print(f"❌ Event bridge not running or not accessible: {e}")
 
     else:
         print(f"Unknown command: {command}")

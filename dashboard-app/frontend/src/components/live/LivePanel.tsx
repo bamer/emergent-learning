@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { Activity, RefreshCw, Wifi, WifiOff } from 'lucide-react'
+import { Activity, RefreshCw, Wifi, WifiOff, PlusCircle, Play } from 'lucide-react'
 import { TaskKanban, Task, TaskSessions } from './TaskKanban'
 import { TrailFeed, Trail } from './TrailFeed'
 import { SignalInput } from './SignalInput'
@@ -179,6 +179,20 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
       console.info(`Relaunched task ${taskId} in session ${sessionId}`)
     }
   }, [apiBaseUrl])
+
+  const handleLaunchWatcher = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/monitoring/watcher/start`, {
+        method: 'POST',
+      })
+      if (response.ok) {
+        const data = await response.json();
+        console.info('Watcher launched:', data.message || 'Started');
+      }
+    } catch (err) {
+      console.error('Failed to launch watcher:', err);
+    }
+  }, [apiBaseUrl])
   
   const isConnected = taskConnected && trailConnected
   
@@ -238,21 +252,50 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
           )}
         </div>
 
+        {/* Launch Watcher button - visible in Tasks view */}
+        {viewMode === 'tasks' && (
+          <button
+            onClick={handleLaunchWatcher}
+            className="flex items-center gap-1.5 px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-medium transition-colors"
+            title="Launch Log Watcher"
+          >
+            <Play className="w-3.5 h-3.5" />
+            <span className="ml-1">Launch Watcher</span>
+          </button>
+        )}
+
         {/* Stats for tasks view */}
         {viewMode === 'tasks' && (
-          <div className="flex items-center gap-4 text-xs">
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-500">Sessions:</span>
-              <span className="text-violet-400 font-semibold">{activeSessions}</span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500">Sessions:</span>
+                <span className="text-violet-400 font-semibold">{activeSessions}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500">Tasks:</span>
+                <span className="text-cyan-400 font-semibold">{totalTasks}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500">Active:</span>
+                <span className="text-emerald-400 font-semibold">{inProgressTasks}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-500">Tasks:</span>
-              <span className="text-cyan-400 font-semibold">{totalTasks}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-500">Active:</span>
-              <span className="text-emerald-400 font-semibold">{inProgressTasks}</span>
-            </div>
+            
+            {/* New Mission Button for Tasks View */}
+            <button
+              onClick={() => {
+                // Switch to agents view and open mission modal
+                setViewMode('agents')
+                // The AgentsPanel will need to handle opening the modal
+                // We'll dispatch a custom event
+                window.dispatchEvent(new CustomEvent('openNewMissionModal'))
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded text-xs font-medium transition-colors"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              New Mission
+            </button>
           </div>
         )}
       </div>

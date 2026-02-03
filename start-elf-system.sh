@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
-"""
-ELF OpenCode - Script de démarrage complet
 
-Démarrage de tous les services nécessaires pour ELF OpenCode:
-1. OpenCode Server (port 4096)
-2. Dashboard Backend (port 8888) 
-3. Event Bridge (port 9998)
-4. Dashboard Frontend (port 3001)
+# ELF OpenCode - Script de démarrage complet
+#
+# Démarrage de tous les services nécessaires pour ELF OpenCode:
+# 1. OpenCode Server (port 4096)
+# 2. Dashboard Backend (port 8888) 
+# 3. Event Bridge (port 9998)
+# 4. Dashboard Frontend (port 3001)
+# 5. Watcher (continuous monitoring)
 
-Usage:
-    ./start-elf-system.sh [mode]
-    
-Modes:
-    all     - Démarre tout (défaut)
-    minimal - Démarre seulement OpenCode + Backend
-    test    - Mode test rapide
-"""
+# Usage:
+#     ./start-elf-system.sh [mode]
+#     
+# Modes:
+#     all     - Démarre tout (défaut)
+#     minimal - Démarre seulement OpenCode + Backend
+#     test    - Mode test rapide
 
 set -euo pipefail
 
@@ -24,6 +24,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ELF_DIR="${SCRIPT_DIR}"
 OPENCODE_DIR="${HOME}/.opencode"
 LOGS_DIR="${ELF_DIR}/Open_ELF/logs"
+
+# Create logs directory
+mkdir -p "${LOGS_DIR}"
 
 # Couleurs
 RED='\033[0;31m'
@@ -43,6 +46,7 @@ OPENCODE_PID=""
 BACKEND_PID=""
 EVENT_BRIDGE_PID=""
 FRONTEND_PID=""
+WATCHER_PID=""
 
 # Nettoyage à la sortie
 cleanup() {
@@ -61,12 +65,16 @@ cleanup() {
     if [[ -n "${FRONTEND_PID:-}" ]]; then
         kill "${FRONTEND_PID}" 2>/dev/null || true
     fi
+    if [[ -n "${WATCHER_PID:-}" ]]; then
+        kill "${WATCHER_PID}" 2>/dev/null || true
+    fi
     
     # Attendre la fin des processus
     [[ -n "${OPENCODE_PID:-}" ]] && wait "${OPENCODE_PID}" 2>/dev/null || true
     [[ -n "${BACKEND_PID:-}" ]] && wait "${BACKEND_PID}" 2>/dev/null || true
     [[ -n "${EVENT_BRIDGE_PID:-}" ]] && wait "${EVENT_BRIDGE_PID}" 2>/dev/null || true
     [[ -n "${FRONTEND_PID:-}" ]] && wait "${FRONTEND_PID}" 2>/dev/null || true
+    [[ -n "${WATCHER_PID:-}" ]] && wait "${WATCHER_PID}" 2>/dev/null || true
     
     log_success "✅ Nettoyage terminé"
 }
@@ -192,6 +200,42 @@ start_event_bridge() {
     fi
 }
 
+# Démarrer le Watcher
+start_watcher() {
+    log "👁️ Démarrage du Watcher..."
+    
+    local watcher_script="${ELF_DIR}/Open_ELF/watcher/launcher.py"
+    
+    # Vérifier que le script existe
+    if [[ ! -f "${watcher_script}" ]]; then
+        log_warning "⚠️ Script watcher introuvable: ${watcher_script}"
+        return 0  # Continuer sans le watcher
+    fi
+    
+    # Tuer tout processus watcher existant avant de lancer (force restart)
+    log "🔄 Arrêt des anciennes instances du watcher..."
+    pkill -f "Open_ELF/watcher/launcher.py" 2>/dev/null || true
+    sleep 1  # Attendre que les processus se terminent
+    
+    # Démarrer le watcher en arrière-plan
+    cd "${ELF_DIR}"
+    python3 "${watcher_script}" >"${LOGS_DIR}/watcher.log" 2>&1 &
+    WATCHER_PID=$!
+    cd - >/dev/null
+    
+    # Attendre quelques secondes pour laisser le watcher démarrer
+    sleep 2
+    
+    # Vérifier qu'il tourne
+    if is_running "${WATCHER_PID}"; then
+        log_success "✅ Watcher démarré (PID: ${WATCHER_PID})"
+        return 0
+    else
+        log_warning "⚠️ Watcher démarré mais non prêt (PID: ${WATCHER_PID})"
+        return 0  # Continuer même si non prêt
+    fi
+}
+
 # Démarrer le Dashboard Frontend
 start_frontend() {
     log "🚀 Démarrage du Dashboard Frontend (port 3001)..."
@@ -262,6 +306,12 @@ show_status() {
     else
         echo "❌ Dashboard Frontend"
     fi
+    
+    if is_running "${WATCHER_PID}"; then
+        echo "✅ Watcher (PID: ${WATCHER_PID})"
+    else
+        echo "❌ Watcher"
+    fi
     echo "----------------------------------------"
 }
 
@@ -284,6 +334,7 @@ test_mode() {
     start_opencode_server || return 1
     start_backend || return 1
     start_event_bridge || return 1
+    start_watcher || return 1
     
     show_status
     show_urls
@@ -315,6 +366,7 @@ all_mode() {
     start_opencode_server || return 1
     start_backend || return 1
     start_event_bridge || return 1
+    start_watcher || return 1
     start_frontend || return 1
     
     show_status

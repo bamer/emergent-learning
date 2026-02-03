@@ -24,7 +24,8 @@
 ## Watcher - How It Works
 
 ### Architecture
-```
+
+```markdown
 User Interaction → Hook → Spawns Watcher → Haiku (30s check)
                                             ↓
                                       Issue? → Exit 1 → Opus (deep analysis)
@@ -33,14 +34,17 @@ User Interaction → Hook → Spawns Watcher → Haiku (30s check)
 ```
 
 ### Features
-✅ **Tier 1: Haiku Watcher** (Fast, cheap)
+
+✅ **Tier 1: Opencodeku Watcher Agent** (Fast, cheap)
+
 - Runs every 30 seconds
 - Checks coordination files (blackboard.json, agent status)
 - Detects: stale agents, errors, stuck tasks, completion
 - Exit code 0: normal, 1: needs intervention, 2: error
 - Cost: ~$0.001 per check
 
-✅ **Tier 2: Opus Handler** (Deep analysis)
+✅ **Tier 2: Deepseek Handler** (Deep analysis)
+
 - Invoked only when Haiku exits with code 1
 - Analyzes complex issues
 - Makes decisions: RESTART, ABANDON, ESCALATE
@@ -48,12 +52,14 @@ User Interaction → Hook → Spawns Watcher → Haiku (30s check)
 - Cost: ~$0.10 per intervention
 
 ✅ **Launcher** (Orchestrator)
+
 - Spawns Haiku in subprocess
 - Monitors exit codes
 - Invokes Opus when needed
 - Handles restarts and graceful shutdown
 
 ### Workflow
+
 1. User interaction triggers hook reminder
 2. Main Claude spawns watcher via `python watcher/launcher.py`
 3. Watcher does one comprehensive pass
@@ -64,6 +70,7 @@ User Interaction → Hook → Spawns Watcher → Haiku (30s check)
 8. Main Claude continues, next interaction spawns new watcher
 
 ### What It Monitors
+
 - **Agent heartbeats**: last_seen timestamps
 - **Agent status**: active, completed, failed, restarting
 - **Blackboard state**: coordination data between agents
@@ -71,6 +78,7 @@ User Interaction → Hook → Spawns Watcher → Haiku (30s check)
 - **Agent files**: agent_*.md metadata
 
 ### Models Used
+
 - **Haiku** (claude-3-haiku): ~$0.001 per check
 - **Opus** (claude-3-opus): ~$0.10 per intervention
 - **Frequency**: Haiku every 30s, Opus ~5-10x per day
@@ -81,6 +89,7 @@ User Interaction → Hook → Spawns Watcher → Haiku (30s check)
 ## Sentinel - What I Created
 
 ### Architecture
+
 ```
 Continuous Loop (30s interval)
   ↓
@@ -94,31 +103,37 @@ Sleep 30s → repeat
 ```
 
 ### Features
+
 ✅ **Continuous Monitoring**
+
 - Runs 24/7 in background
 - 30-second monitoring cycles
 - No escalation tiers (always Haiku)
 - Records to event_chronicle table
 
 ✅ **Dashboard Metrics**
+
 - Service health (frontend, backend)
 - Data inventory (learnings, heuristics, experiments)
 - Recent activity (last hour)
 - Quality metrics (confidence, validation)
 
 ✅ **Event Recording**
+
 - Records sentinel_cycle events
 - Stores metrics, analysis, patterns
 - JSON metadata for dashboard
 - Indexed for fast queries
 
 ✅ **API Access**
+
 - REST endpoints (/api/chronicle/*)
 - Query events with filters
 - Statistics and trends
 - Real-time visibility
 
 ### Models Used
+
 - **Haiku** (claude-3-haiku): Every 30 seconds
 - **Cost**: ~$2.88/day
 - **Frequency**: 2,880 checks per day
@@ -129,30 +144,37 @@ Sleep 30s → repeat
 ## Key Differences
 
 ### 1. **Purpose**
+
 - **Watcher**: Monitors multi-agent swarm coordination
 - **Sentinel**: Monitors dashboard health & metrics
 
 ### 2. **Trigger Model**
+
 - **Watcher**: Event-driven (user interaction → spawn watcher)
 - **Sentinel**: Continuous loop (runs 24/7 independently)
 
 ### 3. **Cost Model**
+
 - **Watcher**: Cost-optimized tiered ($3.88/day)
 - **Sentinel**: Continuous full-cost ($2.88/day)
 
 ### 4. **Data Source**
+
 - **Watcher**: Coordination files (blackboard.json, agent states)
 - **Sentinel**: Database queries (SQLite metrics)
 
 ### 5. **Output Format**
+
 - **Watcher**: Exit codes, markdown logs, blackboard updates
 - **Sentinel**: event_chronicle records, REST API
 
 ### 6. **Integration**
+
 - **Watcher**: Integrated with main Claude via hooks
 - **Sentinel**: Integrated with learning loop via event records
 
 ### 7. **API Support**
+
 - **Watcher**: None (file-based communication)
 - **Sentinel**: Full REST API for dashboard access
 
@@ -161,15 +183,19 @@ Sleep 30s → repeat
 ## Can Watcher Run with Your Current Model?
 
 ### Current Model Status
+
 You have access to:
+
 - ✅ Claude Haiku
 - ✅ Claude Opus (likely)
 - ✅ Claude Sonnet (main model)
 
 ### Watcher Compatibility
+
 **YES - Watcher will work perfectly with your current setup.**
 
 The watcher uses:
+
 - **Haiku**: ~$0.001 per check (very affordable)
 - **Opus**: ~$0.10 per intervention (rare, only when needed)
 
@@ -205,16 +231,19 @@ Instead of choosing one, integrate them both:
 ### Implementation Strategy
 
 **Keep Standard ELF Watcher** (No changes needed)
+
 - Already in place and working
 - Monitors agent coordination
 - Cost-optimized tiering
 
 **Add event_chronicle Recording** (Minimal changes)
+
 - Watcher logs its findings to event_chronicle
 - Creates unified event stream
 - Dashboard gets visibility into swarm state
 
 **Integration Points**:
+
 1. Watcher logs to event_chronicle when:
    - Detecting stale agents → `event_type: agent_stale`
    - Restarting agents → `event_type: agent_restart`
@@ -270,6 +299,7 @@ def log_to_event_chronicle(event_type: str, status: str, summary: str, data: dic
 ### Add to watcher summary output
 
 Before exiting, watcher calls:
+
 ```python
 log_to_event_chronicle(
     event_type='watcher_cycle',
@@ -289,6 +319,7 @@ log_to_event_chronicle(
 ## Cost Analysis
 
 ### Option A: Watcher Only (Current Standard)
+
 ```
 Daily: 2,880 Haiku checks × $0.001 = $2.88
       + ~10 Opus calls × $0.10 = $1.00
@@ -296,12 +327,14 @@ Daily: 2,880 Haiku checks × $0.001 = $2.88
 ```
 
 ### Option B: Sentinel Only (What I Created)
+
 ```
 Daily: 2,880 Haiku checks × $0.001 = $2.88
       = $2.88/day
 ```
 
 ### Option C: Hybrid (Watcher + event_chronicle)
+
 ```
 Same as Option A: $3.88/day
 (No additional cost, just better visibility)
@@ -316,17 +349,20 @@ Same as Option A: $3.88/day
 ### Phase 2B: Integrate Watcher with event_chronicle
 
 **Files to Modify**:
+
 1. `watcher/watcher_loop.py` - Add event_chronicle logging
 2. `watcher/README.md` - Document event_chronicle integration
 3. Remove `dashboard_sentinel.py` (replace with watcher integration)
 4. Remove `agents/sentinel_startup.py` (not needed)
 
 **Keep**:
+
 - `dashboard-app/backend/routers/chronicle.py` (use for watcher events too)
 - `hooks/learning-loop/post_tool_learning.py` (integrate with watcher events)
 - `.coordination/sentinel-config.yaml` (rename to monitor-config.yaml)
 
 **New Files**:
+
 - `.coordination/WATCHER-EVENT-CHRONICLE-INTEGRATION.md`
 
 **Time Estimate**: 1-2 hours
@@ -353,6 +389,7 @@ Same as Option A: $3.88/day
 ### 🎯 Go with **Hybrid Approach (Option C)**
 
 **Reasoning**:
+
 1. ✅ Stays true to ELF standard (uses existing watcher)
 2. ✅ Cost-optimal (tiered approach)
 3. ✅ Better visibility (event_chronicle)
@@ -361,6 +398,7 @@ Same as Option A: $3.88/day
 6. ✅ Production-ready immediately
 
 **Next Steps**:
+
 1. Modify watcher to log to event_chronicle
 2. Remove duplicate Sentinel code
 3. Keep event_chronicle infrastructure (reuse)
@@ -372,18 +410,21 @@ Same as Option A: $3.88/day
 ## Your Decision Points
 
 **A) Remove Sentinel, integrate with Watcher** (Recommended)
+
 - Use standard ELF approach
 - Better cost optimization
 - Full compatibility with existing system
 - Effort: ~2 hours to refactor
 
 **B) Keep both (Sentinel + Watcher)**
+
 - Parallel monitoring systems
 - More expensive ($6.76/day)
 - Redundant but safer
 - Effort: 0 (keep current work)
 
 **C) Keep Sentinel only**
+
 - Depart from ELF standard
 - Lose cost optimization
 - Simpler but less efficient

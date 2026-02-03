@@ -20,7 +20,7 @@ export default function Header({ isConnected, onOpenCommandPalette }: HeaderProp
   const [loadingContent, setLoadingContent] = useState(false)
   const { viewMode, setViewMode } = useCosmicSettings()
   const { playHover, playClick } = useCosmicAudio()
-  const { anomalies, heuristics, setAnomalies } = useDataContext()
+  const { heuristics } = useDataContext()
   const { toggleMenu } = useGame()
 
   // Get golden rules for alerts panel
@@ -156,9 +156,9 @@ export default function Header({ isConnected, onOpenCommandPalette }: HeaderProp
               <NotificationCenter
                 ceoItems={ceoItems}
                 onCeoItemClick={handleItemClick}
-                anomalies={anomalies}
+                anomalies={[]}
                 goldenRules={goldenRules as any}
-                onDismissAnomaly={(index) => setAnomalies(prev => prev.filter((_, i) => i !== index))}
+                onDismissAnomaly={(index) => {}}
               />
 
               <SettingsPanel />

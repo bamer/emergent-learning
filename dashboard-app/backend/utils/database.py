@@ -298,6 +298,31 @@ def dict_from_row(row) -> dict:
     return dict(row) if row else {}
 
 
+def get_db_connection(db_path: Optional[Path] = None) -> sqlite3.Connection:
+    """
+    Get a simple database connection (for backward compatibility).
+    This function provides a simple interface for code that doesn't use context managers.
+    """
+    if db_path is None:
+        db_path = GLOBAL_DB_PATH
+
+    # Create a fresh connection using the pool's connection logic
+    pool = get_pool(db_path)
+    conn = pool.get_connection()
+
+    # Make sure it's set up properly
+    cursor = conn.cursor()
+    try:
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA busy_timeout=30000")
+        cursor.close()
+    except:
+        pass
+
+    return conn
+
+
 async def initialize_database():
     """Ensure database directory exists."""
     GLOBAL_DB_PATH.parent.mkdir(parents=True, exist_ok=True)

@@ -1,1 +1,1 @@
-{"started_at": "2026-02-02T14:49:20.897243", "last_event_time": "2026-02-03T01:13:18.914625", "events_processed": 108309, "running": true}
+{"started_at": "2026-02-03T12:23:25.937768", "last_event_time": "2026-02-03T12:28:42.277287", "events_processed": 14, "running": true, "status_server_running": true, "health": "healthy", "event_stats": {"total_types": 3, "top_events": {"server.heartbeat": 10, "file.watcher.updated": 3, "server.connected": 1}, "last_updated": "2026-02-03T12:28:42.277425"}}

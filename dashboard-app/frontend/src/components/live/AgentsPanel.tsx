@@ -22,6 +22,8 @@ interface Agent {
   start_time?: string | null;
   error_count?: number;
   can_spawn?: boolean;
+  is_hidden?: boolean;
+  is_system?: boolean;
 }
 
 interface AgentStatusResponse {
@@ -105,12 +107,32 @@ const STATUS_DISPLAY: Record<string, { text: string; emoji: string }> = {
 // Mission templates
 const MISSION_TEMPLATES = [
   { label: 'Clear', icon: X, text: '' },
-  { label: 'Analysis', icon: FileSearch, text: 'Analyze the current system state and identify areas for improvement. Provide detailed findings and recommendations.' },
-  { label: 'Investigation', icon: Search, text: 'Investigate recent issues or anomalies in the system. Find root causes and propose solutions.' },
-  { label: 'New Feature', icon: PlusCircle, text: 'Design and plan a new feature for the system. Include architecture, implementation steps, and potential challenges.' },
-  { label: 'Brainstorming', icon: Brain, text: 'Generate creative ideas and innovative approaches for current challenges. Think outside the box and propose unconventional solutions.' },
+  { label: 'Analysis', icon: FileSearch, text: 'Analyze current system state and identify areas for improvement. Provide detailed findings and recommendations.' },
+  { label: 'Investigation', icon: Search, text: 'Investigate recent issues or anomalies in system. Find root causes and propose solutions.' },
+  { label: 'New Feature', icon: PlusCircle, text: 'Design and plan a new feature for system. Include architecture, implementation steps, and potential challenges.' },
+  { label: 'Brainstorming', icon: Brain, text: 'Generate creative ideas and innovative approaches for current challenges. Think outside box and propose unconventional solutions.' },
   { label: 'Swarm', icon: Users, text: 'swarm: Design and implement a complete solution with multi-agent collaboration' },
 ];
+
+// Agent classification helpers
+const SYSTEM_AGENTS = ['agent-title', 'agent-helper', 'agent-utility'];
+const HIDDEN_PATTERNS = ['hidden', 'internal', 'background'];
+
+const isSystemAgent = (agent: Agent): boolean => {
+  return SYSTEM_AGENTS.some(pattern => 
+    (agent.name?.toLowerCase() || '').includes(pattern) || 
+    (agent.type?.toLowerCase() || '').includes(pattern) ||
+    (agent.role?.toLowerCase() || '').includes('utility')
+  );
+};
+
+const isHiddenAgent = (agent: Agent): boolean => {
+  return HIDDEN_PATTERNS.some(pattern => 
+    (agent.name?.toLowerCase() || '').includes(pattern) || 
+    (agent.description?.toLowerCase() || '').includes('hidden') ||
+    (agent.display_name?.toLowerCase() || '').includes('background')
+  );
+};
 
 export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
   const [allAgents, setAllAgents] = useState<Agent[]>([]);
@@ -133,6 +155,12 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
   const [isExecuting, setIsExecuting] = useState(false);
   const [lastResult, setLastResult] = useState<MissionResult | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // New states for filtering and organization
+  const [showSystemAgents, setShowSystemAgents] = useState(false);
+  const [showHiddenAgents, setShowHiddenAgents] = useState(false);
+  const [filterPrimaryOnly, setFilterPrimaryOnly] = useState(false);
+  const [agentModalKey, setAgentModalKey] = useState(0); // Force modal remount on close
 
   // Fetch available models
   const fetchModels = useCallback(async () => {
@@ -172,23 +200,30 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
         setAgentStatus(statusData);
         
         // Get ELF agents from status - map all fields correctly
-        elfAgents = (statusData.agents || []).map((agent: any) => ({
-          id: agent.agent_type || agent.type || agent.id,
-          name: agent.name || agent.display_name || agent.agent_type,
-          display_name: agent.display_name || agent.name || agent.agent_type,
-          description: agent.description || `${agent.agent_type} agent`,
-          type: agent.agent_type || agent.type,
-          system: 'elf' as const,
-          status: agent.status || 'idle',
-          icon: agent.agent_type || agent.type,
-          role: agent.role || agent.agent_type,
-          is_primary: agent.is_primary,
-          session_id: agent.session_id,
-          last_activity: agent.last_activity,
-          start_time: agent.start_time,
-          error_count: agent.error_count || 0,
-          can_spawn: agent.status === 'stopped' || agent.status === 'idle' || agent.status === 'completed',
-        }));
+        elfAgents = (statusData.agents || []).map((agent: any) => {
+          const agentName = agent.name || agent.display_name || agent.agent_type;
+          const agentDescription = agent.description || `${agent.agent_type} agent`;
+          
+          return {
+            id: agent.agent_type || agent.type || agent.id,
+            name: agentName,
+            display_name: agent.display_name || agent.name || agent.agent_type,
+            description: agentDescription,
+            type: agent.agent_type || agent.type,
+            system: 'elf' as const,
+            status: agent.status || 'idle',
+            icon: agent.agent_type || agent.type,
+            role: agent.role || agent.agent_type,
+            is_primary: agent.is_primary !== false, // Default to true if not specified
+            session_id: agent.session_id,
+            last_activity: agent.last_activity,
+            start_time: agent.start_time,
+            error_count: agent.error_count || 0,
+            can_spawn: agent.status === 'stopped' || agent.status === 'idle' || agent.status === 'completed',
+            is_hidden: isHiddenAgent(agent),
+            is_system: isSystemAgent(agent),
+          };
+        });
       }
       
       // Fetch OpenCode agents
@@ -197,22 +232,30 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
       
       if (openCodeResponse.ok) {
         const openCodeData = await openCodeResponse.json();
-        openCodeAgents = (openCodeData.agents || []).map((agent: any) => ({
-          id: agent.id,
-          name: agent.name,
-          display_name: agent.name,
-          type: agent.id,
-          system: 'opencode' as const,
-          status: 'ready',
-          description: agent.description || '',
-          icon: agent.id,
-          can_spawn: true,
-          role: 'Persona',
-        }));
+        openCodeAgents = (openCodeData.agents || []).map((agent: any) => {
+          const agentName = agent.name;
+          
+          return {
+            id: agent.id,
+            name: agentName,
+            display_name: agent.name,
+            type: agent.id,
+            system: 'opencode' as const,
+            status: 'ready',
+            description: agent.description || '',
+            icon: agent.id,
+            can_spawn: true,
+            role: 'Persona',
+            is_hidden: isHiddenAgent(agent),
+            is_system: isSystemAgent(agent),
+          };
+        });
       }
       
-      // Combine ELF and OpenCode agents
-      const combined = [...elfAgents, ...openCodeAgents];
+      // Combine ELF and OpenCode agents and sort alphabetically
+      const combined = [...elfAgents, ...openCodeAgents].sort((a, b) => 
+        (a.display_name || a.name).localeCompare(b.display_name || b.name)
+      );
       setAllAgents(combined);
       setError(null);
       
@@ -246,12 +289,6 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
   const handleStartAgent = async (agent: Agent) => {
     setStartingAgentKey(getAgentKey(agent));
     try {
-      if (agent.system === 'opencode') {
-        // OpenCode agents are managed through a different interface
-        console.info("OpenCode agent start request ignored:", agent.id);
-        return;
-      }
-
       setSelectedAgent(agent);
       setExecutionMode('manual');
       setMissionText('');
@@ -290,7 +327,10 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
       const response = await fetch(`${apiBaseUrl}/api/v1/agents/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ agent_type: agent.name }),
+        body: JSON.stringify({ 
+          agent_type: agent.name,
+          test_prompt: "Dis moi quel agent tu es et ta mission" 
+        }),
       });
       
       if (!response.ok) throw new Error(`Failed to test agent: ${response.statusText}`);
@@ -330,6 +370,14 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
       const result: MissionResult = await response.json();
       setLastResult(result);
       fetchAgents(true);
+      
+      // Auto-close modal after successful execution
+      if (result.status === 'success' || result.status === 'completed') {
+        setShowMissionModal(false);
+        setMissionText('');
+        // Increment modal key to force remount on next open
+        setAgentModalKey(prev => prev + 1);
+      }
     } catch (err) {
       console.error('Execution failed:', err);
       setError(err instanceof Error ? err.message : 'Execution failed');
@@ -379,8 +427,8 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
     <div className="h-full flex flex-col bg-slate-900/30 rounded-lg border border-slate-700/50">
       {/* Mission Modal */}
       {showMissionModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-lg border border-slate-700 p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div key={agentModalKey} className="bg-slate-800 rounded-lg border border-slate-700 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Zap className="w-5 h-5 text-violet-400" />
@@ -579,13 +627,43 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
         )}
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleStartClick()}
-            className="flex items-center gap-2 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded text-sm"
-          >
-            <PlusCircle className="w-4 h-4" />
-            New Mission
-          </button>
+          {/* Filter Toggles */}
+          <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/50 rounded">
+            <button
+              onClick={() => setShowSystemAgents(!showSystemAgents)}
+              className={`px-2 py-1 rounded text-xs ${
+                showSystemAgents 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
+              }`}
+              title="Show/Hide system agents"
+            >
+              System
+            </button>
+            <button
+              onClick={() => setShowHiddenAgents(!showHiddenAgents)}
+              className={`px-2 py-1 rounded text-xs ${
+                showHiddenAgents 
+                  ? 'bg-orange-600 text-white' 
+                  : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
+              }`}
+              title="Show/Hide hidden agents"
+            >
+              Hidden
+            </button>
+            <button
+              onClick={() => setFilterPrimaryOnly(!filterPrimaryOnly)}
+              className={`px-2 py-1 rounded text-xs ${
+                filterPrimaryOnly 
+                  ? 'bg-green-600 text-white' 
+                  : 'bg-slate-600 text-slate-300 hover:bg-slate-500'
+              }`}
+              title="Primary agents only (can spawn others)"
+            >
+              Primary
+            </button>
+          </div>
+          
           <button
             onClick={() => fetchAgents(false)}
             className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 rounded"
@@ -598,6 +676,22 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-4">
+        {/* Filter Info */}
+        <div className="mb-4 p-2 bg-slate-700/30 rounded border border-slate-600/30 text-xs text-slate-400">
+          <div className="flex items-center gap-4">
+            <span>Filters:</span>
+            <span className={showSystemAgents ? 'text-blue-400' : ''}>
+              System: {showSystemAgents ? 'ON' : 'OFF'}
+            </span>
+            <span className={showHiddenAgents ? 'text-orange-400' : ''}>
+              Hidden: {showHiddenAgents ? 'ON' : 'OFF'}
+            </span>
+            <span className={filterPrimaryOnly ? 'text-green-400' : ''}>
+              Primary Only: {filterPrimaryOnly ? 'ON' : 'OFF'}
+            </span>
+          </div>
+        </div>
+
         {error ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
@@ -614,7 +708,15 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
           </div>
         ) : allAgents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {allAgents.map((agent, index) => {
+            {allAgents
+              .filter(agent => {
+                // Apply filters
+                if (!showSystemAgents && agent.is_system) return false;
+                if (!showHiddenAgents && agent.is_hidden) return false;
+                if (filterPrimaryOnly && !agent.is_primary) return false;
+                return true;
+              })
+              .map((agent, index) => {
               const IconComponent = getIconComponent(agent);
               const statusClass = STATUS_COLORS[agent.status] || STATUS_COLORS.stopped;
               const statusDisplay = STATUS_DISPLAY[agent.status] || { text: agent.status, emoji: '⚪' };
@@ -632,6 +734,8 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
                         <h3 className="font-semibold text-slate-200 flex items-center gap-2">
                           {agent.display_name}
                           {agent.is_primary && <Crown className="w-3 h-3 text-yellow-400" />}
+                          {agent.is_hidden && <span className="text-xs px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded">👻</span>}
+                          {agent.is_system && <span className="text-xs px-1.5 py-0.5 bg-blue-500/20 text-blue-400 rounded">⚙️</span>}
                           {isElf ? (
                             <span className="text-xs px-1.5 py-0.5 bg-violet-500/20 text-violet-400 rounded">
                               ELF
@@ -681,13 +785,9 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
                     ) : (
                       <button
                         onClick={() => handleStartAgent(agent)}
-                        disabled={startingAgentKey === getAgentKey(agent) || agent.system === 'opencode'}
-                        className={`flex items-center gap-1 px-2 py-1 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed ${
-                          agent.system === 'opencode'
-                            ? 'bg-slate-600/20 text-slate-500'
-                            : 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400'
-                        }`}
-                        title={agent.system === 'opencode' ? 'OpenCode agents cannot be started via ELF' : 'Start agent'}
+                        disabled={startingAgentKey === getAgentKey(agent)}
+                        className="flex items-center gap-1 px-2 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Start agent"
                       >
                         {startingAgentKey === getAgentKey(agent) ? (
                           <RefreshCw className="w-3 h-3 animate-spin" />

@@ -26,6 +26,11 @@ export {
   SentinelMonitorPanel,
   EventChronicleViewer,
   SystemHealthPanel,
-  WatcherStatusPanel
+  WatcherStatusPanel,
+  EventBridgeStatusPanel,
+  OrchestratorStatusPanel,
+  WatcherEventHistory,
+  OrchestratorEventHistory,
+  OllamaStatus
 } from './monitoring'
 export { MonitoringPanel } from './MonitoringPanel'

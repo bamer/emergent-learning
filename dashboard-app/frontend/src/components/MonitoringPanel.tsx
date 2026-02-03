@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Shield, ScrollText, Heart, Eye, Grid, List,
-  ChevronDown, ChevronRight, Zap, Cpu
+  ChevronDown, ChevronRight, Zap, Cpu, MessageSquare, Brain
 } from 'lucide-react';
 import {
   SentinelMonitorPanel,
@@ -9,14 +9,17 @@ import {
   SystemHealthPanel,
   WatcherStatusPanel,
   EventBridgeStatusPanel,
-  OrchestratorStatusPanel
+  OrchestratorStatusPanel,
+  WatcherEventHistory,
+  OrchestratorEventHistory,
+  OllamaStatus
 } from './monitoring';
 
 interface MonitoringPanelProps {
   apiBaseUrl?: string;
 }
 
-type MonitorView = 'sentinel' | 'chronicle' | 'health' | 'watcher' | 'eventbridge' | 'orchestrator' | 'all';
+type MonitorView = 'sentinel' | 'chronicle' | 'health' | 'watcher' | 'eventbridge' | 'orchestrator' | 'watcher-events' | 'orchestrator-events' | 'ollama' | 'all';
 
 export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
   const [activeView, setActiveView] = useState<MonitorView>('all');
@@ -29,6 +32,9 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
     { id: 'watcher', label: 'Watcher', icon: Eye, component: WatcherStatusPanel },
     { id: 'eventbridge', label: 'Event Bridge', icon: Zap, component: EventBridgeStatusPanel },
     { id: 'orchestrator', label: 'Orchestrator', icon: Cpu, component: OrchestratorStatusPanel },
+    { id: 'watcher-events', label: 'Watcher Events', icon: Eye, component: WatcherEventHistory },
+    { id: 'orchestrator-events', label: 'Orchestrator Events', icon: MessageSquare, component: OrchestratorEventHistory },
+    { id: 'ollama', label: 'Ollama', icon: Brain, component: OllamaStatus },
   ] as const;
 
   const ActiveComponent = views.find(v => v.id === activeView)?.component;
@@ -102,7 +108,7 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
       <div className="flex-1 overflow-y-auto p-4">
         {activeView === 'all' ? (
           layoutMode === 'grid' ? (
-            /* Grid Layout - 2x3 */
+            /* Grid Layout - 3x3 */
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 h-full">
               <div className="min-h-[400px]">
                 <SentinelMonitorPanel apiBaseUrl={apiBaseUrl} />
@@ -118,6 +124,15 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
               </div>
               <div className="min-h-[400px]">
                 <OrchestratorStatusPanel apiBaseUrl={apiBaseUrl} />
+              </div>
+              <div className="min-h-[400px]">
+                <OllamaStatus apiBaseUrl={apiBaseUrl} />
+              </div>
+              <div className="min-h-[400px]">
+                <WatcherEventHistory apiBaseUrl={apiBaseUrl} />
+              </div>
+              <div className="min-h-[400px]">
+                <OrchestratorEventHistory apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="min-h-[400px]">
                 <EventChronicleViewer apiBaseUrl={apiBaseUrl} />
@@ -140,6 +155,15 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
               </div>
               <div className="h-[500px]">
                 <OrchestratorStatusPanel apiBaseUrl={apiBaseUrl} />
+              </div>
+              <div className="h-[500px]">
+                <OllamaStatus apiBaseUrl={apiBaseUrl} />
+              </div>
+              <div className="h-[500px]">
+                <WatcherEventHistory apiBaseUrl={apiBaseUrl} />
+              </div>
+              <div className="h-[500px]">
+                <OrchestratorEventHistory apiBaseUrl={apiBaseUrl} />
               </div>
               <div className="h-[500px]">
                 <EventChronicleViewer apiBaseUrl={apiBaseUrl} />

@@ -22,14 +22,19 @@ class OpenCodeClient:
         self,
         model: str = "opencode/big-pickle",
         server_url: str = "http://localhost:4096",
+        prefer_cli: bool = True,  # CLI优先 pour les scripts
     ):
         self.model = model
         self.server_url = server_url
+        self.prefer_cli = prefer_cli
+
+        # Vérifier CLI d'abord (préféré pour les scripts)
+        self.cli_available = self._check_cli()
         self.server_available = self._check_server()
-        if not self.server_available:
-            self.cli_available = self._check_cli()
-        else:
-            self.cli_available = False
+
+        # Si on préfère le CLI et qu'il est dispo, ne pas utiliser le serveur
+        if prefer_cli and self.cli_available:
+            self.server_available = False
 
     def _check_server(self) -> bool:
         """Check if OpenCode server is running."""
@@ -155,20 +160,51 @@ class OpenCodeClient:
 
     def _call_cli(self, prompt: str, timeout: int) -> Optional[str]:
         """
-        Call via OpenCode CLI.
+        Call via OpenCode CLI using 'run' subcommand.
 
-        The CLI automatically communicates with the running OpenCode TUI backend.
+        This is the correct way to use OpenCode programmatically.
+        Format: opencode run --model provider/model "prompt"
+
+        Returns the assistant's text response from JSON events.
         """
         try:
             cli = self.opencode_path or "opencode"
+
+            # Use 'run' subcommand with JSON format
+            cmd = [cli, "run", "--model", self.model, "--format", "json", prompt]
             result = subprocess.run(
-                [cli, "--model", self.model, "--prompt", prompt],
+                cmd,
                 capture_output=True,
                 text=True,
                 timeout=timeout,
             )
 
             if result.returncode == 0:
+                # Parse JSON events to extract text response
+                import json
+
+                lines = result.stdout.strip().split("\n")
+                for line in lines:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        data = json.loads(line)
+                        # Extract text from text-type events
+                        if data.get("type") == "text":
+                            part = data.get("part", {})
+                            if part.get("type") == "text":
+                                text = part.get("text", "")
+                                if text.strip():
+                                    return text.strip()
+                    except json.JSONDecodeError:
+                        continue
+
+                # Fallback: return first non-empty line
+                for line in lines:
+                    if line.strip():
+                        return line.strip()
+
                 return result.stdout.strip()
 
             # Print error if available
@@ -179,7 +215,20 @@ class OpenCodeClient:
 
         except FileNotFoundError:
             print(
-                "Error: opencode CLI not found. Install: npm install -g opencode",
+                "Error: opencode CLI not found",
+                flush=True,
+            )
+            return None
+        except subprocess.TimeoutExpired:
+            print(f"Error: opencode request timed out (>{timeout}s)", flush=True)
+            return None
+        except Exception as e:
+            print(f"Error calling opencode: {e}", flush=True)
+            return None
+
+        except FileNotFoundError:
+            print(
+                "Error: opencode CLI not found",
                 flush=True,
             )
             return None

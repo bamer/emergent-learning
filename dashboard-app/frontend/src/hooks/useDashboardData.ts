@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Stats, Hotspot, ApiRun, RawEvent, TimelineEvent, ApiAnomaly } from '../types'
+import { Stats, Hotspot, ApiRun, RawEvent, TimelineEvent } from '../types'
 import { useAPI } from './useAPI'
 
 export function useDashboardData() {
@@ -8,26 +8,23 @@ export function useDashboardData() {
   const [runs, setRuns] = useState<ApiRun[]>([])
   const [events, setEvents] = useState<RawEvent[]>([])
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([])
-  const [anomalies, setAnomalies] = useState<ApiAnomaly[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   const api = useAPI()
 
   const loadData = useCallback(async () => {
     try {
-      const [statsData, hotspotsData, runsData, timelineEventsData, anomaliesData, eventsData] = await Promise.all([
+      const [statsData, hotspotsData, runsData, timelineEventsData, eventsData] = await Promise.all([
         api.get('/api/v1/stats').catch(() => null),
         api.get('/api/v1/hotspots').catch(() => []),
         api.get('/api/v1/runs?limit=100').catch(() => []),
         api.get('/api/v1/timeline/events?limit=100').catch(() => []),
-        api.get('/api/v1/anomalies').catch(() => []),
         api.get('/api/v1/events?limit=100').catch(() => []),
       ])
       if (statsData) setStats(statsData)
       setHotspots(hotspotsData || [])
       setRuns(runsData || [])
       setTimelineEvents(timelineEventsData?.events || [])
-      setAnomalies(anomaliesData || [])
       setEvents(eventsData || [])
     } catch (err) {
       console.error('Failed to load dashboard data:', err)
@@ -78,11 +75,9 @@ export function useDashboardData() {
     runs,
     events,
     timelineEvents,
-    anomalies,
     isLoading,
     reload,
     loadStats,
     setStats,
-    setAnomalies,
-  }), [stats, hotspots, runs, events, timelineEvents, anomalies, isLoading, reload, loadStats])
+  }), [stats, hotspots, runs, events, timelineEvents, isLoading, reload, loadStats])
 }

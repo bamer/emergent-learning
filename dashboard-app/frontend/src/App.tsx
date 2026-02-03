@@ -86,10 +86,8 @@ function AppContent() {
     runs,
     events,
     timelineEvents,
-    anomalies,
     reload: reloadDashboardData,
     loadStats,
-    setAnomalies,
     heuristics,
     promoteHeuristic,
     demoteHeuristic,
@@ -373,9 +371,9 @@ function AppContent() {
               </div>
               <div className="space-y-6">
                 <AlertsPanel
-                  anomalies={anomalies}
+                  anomalies={[]}
                   goldenRules={normalizedHeuristics.filter(h => h.is_golden).map(h => ({ ...h, id: String(h.id) })) as any}
-                  onDismissAnomaly={(index) => setAnomalies(prev => prev.filter((_, i) => i !== index))}
+                  onDismissAnomaly={(index) => {}}
                 />
               </div>
             </div>

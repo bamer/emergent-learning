@@ -28,18 +28,29 @@ import requests
 try:
     from utils.database import get_db_connection, dict_from_row
 except ImportError:
+    import sys
+    from pathlib import Path
 
-    def get_db_connection():
-        import sqlite3
+    # Add backend directory to path for imports
+    backend_dir = Path(__file__).parent
+    if str(backend_dir) not in sys.path:
+        sys.path.insert(0, str(backend_dir))
 
-        db_path = (
-            Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
-        )
-        return sqlite3.connect(str(db_path))
+    try:
+        from utils.database import get_db_connection, dict_from_row
+    except ImportError:
 
-    def dict_from_row(row):
-        """Convert sqlite3.Row to dict"""
-        return dict(row) if hasattr(row, "keys") else row
+        def get_db_connection():
+            import sqlite3
+
+            db_path = (
+                Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
+            )
+            return sqlite3.connect(str(db_path))
+
+        def dict_from_row(row):
+            """Convert sqlite3.Row to dict"""
+            return dict(row) if hasattr(row, "keys") else row
 
 
 # Configure logging
@@ -850,9 +861,7 @@ async def control_watcher(request: WatcherControlRequest):
 
         ELF_DIR = Path.home() / ".opencode" / "emergent-learning"
         WATCHER_DIR = ELF_DIR / "watcher"
-        START_SCRIPT = (
-            Path.home() / ".opencode" / "scripts" / "start-watcher-corrected.sh"
-        )
+        START_SCRIPT = Path.home() / ".opencode" / "scripts" / "start-watcher.sh"
         STOP_FILE = ELF_DIR / ".coordination" / "watcher-stop"
         PID_FILE = Path("/tmp") / "elf-watcher.pid"
 
@@ -971,7 +980,7 @@ async def control_watcher(request: WatcherControlRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/api/v1/monitoring/watcher/events")
+@router.get("/monitoring/watcher/events")
 async def get_watcher_events():
     """Get last 20 watcher events for monitoring card."""
     try:
@@ -980,10 +989,9 @@ async def get_watcher_events():
 
         # Get recent file monitoring events
         cursor.execute("""
-            SELECT id, timestamp, type, tool, input_summary, output_summary, outcome,
-                   session_id, agent_id, file_path
+            SELECT id, timestamp, event_type, source, summary, data
             FROM event_chronicle 
-            WHERE type IN ('file_change', 'file_creation', 'file_deletion', 'watcher_status')
+            WHERE event_type IN ('file_change', 'file_creation', 'file_deletion', 'watcher_status')
             ORDER BY timestamp DESC 
             LIMIT 20
         """)
@@ -992,10 +1000,10 @@ async def get_watcher_events():
         for row in cursor.fetchall():
             event_data = dict_from_row(row)
             # Format for display
-            event_data["display_type"] = event_data.get("type", "unknown")
+            event_data["display_type"] = event_data.get("event_type", "unknown")
             event_data["display_time"] = event_data.get("timestamp", "")
             event_data["display_message"] = (
-                f"{event_data.get('tool', 'watcher')}: {event_data.get('input_summary', 'No summary')}"
+                f"{event_data.get('source', 'watcher')}: {event_data.get('summary', 'No summary')}"
             )
             events.append(event_data)
 
@@ -1013,7 +1021,7 @@ async def get_watcher_events():
         return {"status": "error", "error": str(e)}
 
 
-@router.get("/api/v1/monitoring/orchestrator/events")
+@router.get("/monitoring/orchestrator/events")
 async def get_orchestrator_events():
     """Get last 20 orchestrator events (questions and responses) for monitoring card."""
     try:
@@ -1022,10 +1030,9 @@ async def get_orchestrator_events():
 
         # Get recent orchestrator events - questions received and responses
         cursor.execute("""
-            SELECT id, timestamp, type, tool, input_summary, output_summary, outcome,
-                   session_id, agent_id
+            SELECT id, timestamp, event_type, source, summary, data
             FROM event_chronicle 
-            WHERE type IN ('agent_question', 'agent_response', 'orchestrator_action', 'question_received', 'response_sent')
+            WHERE event_type IN ('agent_question', 'agent_response', 'orchestrator_action', 'question_received', 'response_sent')
             ORDER BY timestamp DESC 
             LIMIT 20
         """)
@@ -1035,7 +1042,7 @@ async def get_orchestrator_events():
             event_data = dict_from_row(row)
 
             # Categorize as question or response
-            is_question = event_data.get("type") in [
+            is_question = event_data.get("event_type") in [
                 "agent_question",
                 "question_received",
             ]
@@ -1044,11 +1051,18 @@ async def get_orchestrator_events():
             # Format display message
             if is_question:
                 event_data["display_message"] = (
-                    f"❓ Question: {event_data.get('input_summary', 'No question')}"
+                    f"❓ Question: {event_data.get('summary', 'No question')}"
                 )
             else:
+                # Parse data to get response details if available
+                data_obj = {}
+                try:
+                    if event_data.get("data"):
+                        data_obj = json.loads(event_data["data"])
+                except:
+                    pass
                 event_data["display_message"] = (
-                    f"✅ Response: {event_data.get('output_summary', 'No response')}"
+                    f"✅ Response: {event_data.get('summary', 'No response')}"
                 )
 
             event_data["display_type"] = "Question" if is_question else "Response"
@@ -1076,7 +1090,7 @@ async def get_orchestrator_events():
         return {"status": "error", "error": str(e)}
 
 
-@router.get("/api/v1/monitoring/ollama/status")
+@router.get("/monitoring/ollama/status")
 async def get_ollama_status():
     """Get Ollama embeddings service status for monitoring."""
     try:
@@ -1143,7 +1157,7 @@ async def get_ollama_status():
         }
 
 
-@router.post("/api/v1/monitoring/system-health/update")
+@router.post("/monitoring/system-health/update")
 async def update_system_health():
     """Update system health record with current status."""
     try:
