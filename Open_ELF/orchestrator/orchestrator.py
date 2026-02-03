@@ -259,8 +259,17 @@ class SimpleOrchestrator:
 
     def _scheduler_loop(self):
         """Boucle principale du scheduler - toutes les 60s."""
+        tick_count = 0
         while self.running:
-            logger.info(f"⏰ Scheduler tick - {datetime.now().isoformat()}")
+            tick_count += 1
+            if tick_count % 10 == 1:  # Log every 10 minutes instead of every minute
+                logger.info(
+                    f"⏰ Scheduler tick #{tick_count} - {datetime.now().isoformat()}"
+                )
+            else:
+                logger.debug(
+                    f"⏰ Scheduler tick #{tick_count} - {datetime.now().isoformat()}"
+                )
 
             # Ici on peut ajouter des missions automatiques si besoin
             # Par exemple: health check, monitoring, etc.
