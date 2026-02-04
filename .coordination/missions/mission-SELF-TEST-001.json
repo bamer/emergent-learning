@@ -1,0 +1,22 @@
+{
+  "taskId": "SELF-TEST-001",
+  "role": "researcher",
+  "description": "Self-test mission to verify system functionality",
+  "filesAffected": [
+    "/tmp/test-file.txt"
+  ],
+  "inputs": {
+    "topic": "system testing"
+  },
+  "successCriteria": [
+    "Mission file created",
+    "Task processed"
+  ],
+  "dependsOn": [],
+  "timeoutSeconds": 30,
+  "timestamp": "2026-02-05T01:06:28.886883",
+  "status": "in_progress",
+  "completedAt": "2026-02-05T02:31:50.783351",
+  "response": "Mission processed successfully by minimal orchestrator",
+  "startedAt": "2026-02-05T04:49:24.194868"
+}

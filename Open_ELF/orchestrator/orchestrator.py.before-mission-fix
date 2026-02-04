@@ -1,0 +1,355 @@
+#!/usr/bin/env python3
+"""
+Open_ELF Scheduler - Simplified Orchestrator with Persistent Sessions
+=============================================
+
+Scheduler minimal qui orchestre les agents IA OpenCode with single session reuse.
+
+Architecture:
+- Uses single persistent OpenCode session to eliminate cold starts
+- Reuses HTTP connections for efficiency  
+- Sends missions to agents via persistent session
+- Creates Tasks in ~/.opencode/tasks/ for dashboard
+- Interval: 60 seconds
+- Agents IA (OpenCode) take decisions
+
+Usage:
+    python orchestrator.py start          # Start the scheduler
+    python orchestrator.py status         # Show current status
+    python orchestrator.py run <agent> <mission>  # Single mission
+"""
+
+import json
+import logging
+import sys
+import time
+import threading
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Any
+from dataclasses import dataclass, field
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("OpenELF")
+
+# Constants
+OPENCODE_SERVER = "http://localhost:4096"
+TASKS_DIR = Path.home() / ".opencode" / "tasks"
+
+# Import optimized OpenCode client
+from opencode_client import get_opencode_client
+
+@dataclass
+class Mission:
+    """Représente une mission en cours."""
+
+    id: str
+    agent_type: str
+    mission: str
+    status: str  # pending, in_progress, completed, error
+    start_time: datetime
+    end_time: Optional[datetime] = None
+    response: Optional[str] = None
+    session_id: Optional[str] = None
+    task_file: Optional[Path] = None
+
+
+class TaskManager:
+    """Gère les tasks dans ~/.opencode/tasks/"""
+
+    def __init__(self):
+        self.tasks_dir = TASKS_DIR
+        self.tasks_dir.mkdir(parents=True, exist_ok=True)
+
+    def create_task(self, mission: Mission) -> Path:
+        """Crée un fichier de task pour le dashboard."""
+        # Créer un répertoire de session unique
+        session_dir = self.tasks_dir / f"elf_{mission.start_time.strftime('%Y%m%d')}"
+        session_dir.mkdir(exist_ok=True)
+
+        # Générer ID de task
+        task_id = f"{mission.agent_type}_{mission.id}"
+        task_file = session_dir / f"{task_id}.json"
+
+        task_data = {
+            "id": task_id,
+            "subject": f"[{mission.agent_type.upper()}] {mission.mission[:80]}...",
+            "description": mission.mission,
+            "status": mission.status,
+            "session_id": session_dir.name,
+            "session_name": f"ELF Orchestrator {mission.start_time.strftime('%Y-%m-%d')}",
+            "notes": [
+                {
+                    "text": f"Mission started at {mission.start_time.isoformat()}",
+                    "timestamp": mission.start_time.isoformat(),
+                    "source": "orchestrator",
+                }
+            ],
+        }
+
+        with open(task_file, "w") as f:
+            json.dump(task_data, f, indent=2)
+
+        mission.task_file = task_file
+        logger.info(f"📝 Task created: {task_file.name}")
+        return task_file
+
+    def update_task(self, mission: Mission):
+        """Met à jour le fichier de task avec le résultat."""
+        if not mission.task_file or not mission.task_file.exists():
+            return
+
+        try:
+            with open(mission.task_file, "r") as f:
+                task_data = json.load(f)
+
+            task_data["status"] = mission.status
+
+            if mission.response:
+                task_data["notes"].append(
+                    {
+                        "text": f"Response: {mission.response[:500]}",
+                        "timestamp": datetime.now().isoformat(),
+                        "source": mission.agent_type,
+                    }
+                )
+
+            if mission.end_time:
+                task_data["notes"].append(
+                    {
+                        "text": f"Mission completed at {mission.end_time.isoformat()}",
+                        "timestamp": mission.end_time.isoformat(),
+                        "source": "orchestrator",
+                    }
+                )
+
+            with open(mission.task_file, "w") as f:
+                json.dump(task_data, f, indent=2)
+
+            logger.info(
+                f"📝 Task updated: {mission.task_file.name} -> {mission.status}"
+            )
+        except Exception as e:
+            logger.error(f"Failed to update task: {e}")
+
+
+class PersistentOpenCodeClient:
+    """Wrapper for optimized OpenCode client with persistent session"""
+
+    def __init__(self):
+        self.client = get_opencode_client()
+
+    def health_check(self) -> bool:
+        return self.client.health_check()
+
+    def create_session(self, title: str) -> Optional[str]:
+        # Return dummy session ID - we use persistent session
+        return "persistent-session"
+
+    def send_message(
+        self, session_id: str, message: str, agent: Optional[str] = None
+    ) -> bool:
+        """Send message using persistent session"""
+        success, response = self.client.send_message(message, agent)
+        if success:
+            self.last_response = response
+            return True
+        else:
+            logger.error(f"Failed to send message: {response}")
+            return False
+
+    def wait_for_response(self, session_id: str, timeout: int = 120) -> Optional[str]:
+        """Get last response from persistent session"""
+        return getattr(self, 'last_response', None)
+
+
+class SimpleOrchestrator:
+    """Orchestrateur simplifié - juste un scheduler."""
+
+    def __init__(self):
+        self.client = PersistentOpenCodeClient()
+        self.task_manager = TaskManager()
+        self.missions: Dict[str, Mission] = {}
+        self.running = False
+        self.interval = 60  # 60 secondes
+
+    def start(self):
+        """Démarre le scheduler."""
+        logger.info("======================================================================")
+        logger.info("🚀 Open_ELF Scheduler Starting (60s interval)")
+        logger.info("======================================================================")
+        
+        if not self.client.health_check():
+            logger.error("❌ OpenCode server not accessible")
+            return
+
+        logger.info("✅ Connected to OpenCode server")
+        self.running = True
+
+        # Start status server
+        self._start_status_server()
+
+        # Main scheduler loop
+        tick_count = 0
+        try:
+            while self.running:
+                tick_count += 1
+                if tick_count == 1 or tick_count % 10 == 0:
+                    logger.info(f"⏰ Scheduler tick #{tick_count} - {datetime.now().isoformat()}")
+                else:
+                    logger.debug(f"⏰ Scheduler tick #{tick_count} - {datetime.now().isoformat()}")
+
+                # Ici on peut ajouter des missions automatiques si besoin
+                # Par exemple: health check, monitoring, etc.
+
+                time.sleep(self.interval)
+        except KeyboardInterrupt:
+            logger.info("\n👋 Shutting down...")
+            self.running = False
+
+    def run_mission(self, agent_type: str, mission_text: str) -> Mission:
+        """Exécute une mission avec un agent using persistent session."""
+        mission_id = f"m{int(time.time())}"
+
+        mission = Mission(
+            id=mission_id,
+            agent_type=agent_type,
+            mission=mission_text,
+            status="pending",
+            start_time=datetime.now(),
+        )
+
+        self.missions[mission_id] = mission
+
+        # Créer la task
+        self.task_manager.create_task(mission)
+
+        logger.info(f"🎯 Mission started: {agent_type} - {mission_text[:60]}...")
+
+        # Use persistent session
+        mission.session_id = "persistent-session"
+        mission.status = "in_progress"
+        self.task_manager.update_task(mission)
+
+        # Send message via optimized client
+        message_sent, response_text = self.client.client.send_message(mission_text, agent_type)
+
+        if message_sent:
+            if response_text:
+                mission.response = response_text
+                mission.status = "completed"
+                logger.info(f"✅ Mission completed: {agent_type}")
+            else:
+                mission.status = "error"
+                mission.response = "No response received from agent"
+                logger.error(f"❌ No response from {agent_type}")
+        else:
+            mission.status = "error"
+            mission.response = response_text or "Failed to send message to agent"
+            logger.error(f"❌ Failed to send message to {agent_type}")
+
+        mission.end_time = datetime.now()
+        self.task_manager.update_task(mission)
+
+        return mission
+
+    def _start_status_server(self):
+        """Démarre un serveur HTTP simple pour exposer le status."""
+
+        class StatusHandler(BaseHTTPRequestHandler):
+            def do_GET(self):
+                if self.path == "/status":
+                    self.send_response(200)
+                    self.send_header("Content-type", "application/json")
+                    self.end_headers()
+
+                    status = {
+                        "running": self.running,
+                        "missions_count": len(self.missions),
+                        "missions": [
+                            {
+                                "id": m.id,
+                                "agent_type": m.agent_type,
+                                "status": m.status,
+                                "start_time": m.start_time.isoformat()
+                                if m.start_time
+                                else None,
+                                "end_time": m.end_time.isoformat()
+                                if m.end_time
+                                else None,
+                            }
+                            for m in self.missions.values()
+                        ],
+                    }
+                    self.wfile.write(json.dumps(status).encode())
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+
+        server = HTTPServer(("localhost", 9999), StatusHandler)
+        server_thread = threading.Thread(target=server.serve_forever, daemon=True)
+        server_thread.start()
+        logger.info("📊 Status server started on http://localhost:9999/status")
+
+def main():
+    """Point d'entrée principal."""
+    if len(sys.argv) < 2:
+        print("Usage: python orchestrator.py <command> [args]")
+        print("Commands:")
+        print("  start                    - Start the scheduler")
+        print("  run <agent> <mission>    - Run a single mission")
+        print("  status                   - Show current status")
+        sys.exit(1)
+
+    command = sys.argv[1]
+    orchestrator = SimpleOrchestrator()
+
+    if command == "start":
+        orchestrator.start()
+        # Keep main thread alive
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            logger.info("\n👋 Shutting down...")
+            orchestrator.running = False
+
+    elif command == "run":
+        if len(sys.argv) < 4:
+            print("Usage: python orchestrator.py run <agent_type> <mission>")
+            sys.exit(1)
+
+        agent_type = sys.argv[2]
+        mission_text = " ".join(sys.argv[3:])
+
+        if not orchestrator.client.health_check():
+            print("❌ OpenCode server not accessible")
+            sys.exit(1)
+
+        mission = orchestrator.run_mission(agent_type, mission_text)
+        print(f"\nStatus: {mission.status}")
+        if mission.response:
+            print(f"Response: {mission.response[:500]}...")
+
+    elif command == "status":
+        try:
+            response = requests.get("http://localhost:9999/status", timeout=5)
+            if response.status_code == 200:
+                status = response.json()
+                print(f"Running: {status['running']}")
+                print(f"Missions: {status['missions_count']}")
+                for m in status["missions"]:
+                    print(f"  - {m['agent_type']}: {m['status']}")
+            else:
+                print("❌ Scheduler not running")
+        except:
+            print("❌ Scheduler not running")
+
+    else:
+        print(f"Unknown command: {command}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

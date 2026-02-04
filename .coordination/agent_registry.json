@@ -1,11 +1,133 @@
 {
-  "timestamp": "2026-01-31T07:22:17.369514",
-  "registered_agents": {},
+  "timestamp": "2026-02-05T02:21:30.066163",
+  "version": "2.0",
+  "registered_agents": {
+    "orchestrator": {
+      "name": "Orchestrator",
+      "status": "stale",
+      "last_seen": "2026-02-05T03:04:49.844258",
+      "capabilities": [
+        "task_coordination",
+        "agent_management",
+        "workflow_orchestration"
+      ],
+      "model": "llama/nemotron-v3-coder",
+      "version": "2.0",
+      "pid": 0,
+      "config": {
+        "max_concurrent_tasks": 5,
+        "timeout_seconds": 300,
+        "retry_attempts": 3
+      }
+    },
+    "sentinel": {
+      "name": "Dashboard Sentinel",
+      "status": "stale",
+      "last_seen": "2026-02-05T03:04:49.844258",
+      "capabilities": [
+        "system_monitoring",
+        "health_checks",
+        "alerting",
+        "pattern_detection"
+      ],
+      "model": "llama/nemotron-v3-coder",
+      "version": "1.0",
+      "pid": 0,
+      "config": {
+        "check_interval_seconds": 60,
+        "alert_threshold": 3
+      }
+    },
+    "watcher": {
+      "name": "System Watcher",
+      "status": "stale",
+      "last_seen": "2026-02-05T03:04:49.844258",
+      "capabilities": [
+        "observation",
+        "logging",
+        "event_collection",
+        "analysis"
+      ],
+      "model": "llama/nemotron-v3-coder",
+      "version": "1.0",
+      "pid": 0
+    },
+    "learning_capture": {
+      "name": "Learning Capture",
+      "status": "stale",
+      "last_seen": "2026-02-05T03:04:49.844258",
+      "capabilities": [
+        "heuristic_extraction",
+        "pattern_detection",
+        "auto_capture"
+      ],
+      "model": "llama/nemotron-v3-coder",
+      "version": "1.0",
+      "pid": 0,
+      "config": {
+        "capture_interval_seconds": 60,
+        "auto_capture_enabled": true
+      }
+    },
+    "event_bridge": {
+      "name": "Event Bridge",
+      "status": "stale",
+      "last_seen": "2026-02-05T03:04:49.844258",
+      "capabilities": [
+        "event_processing",
+        "message_routing",
+        "heartbeat"
+      ],
+      "model": "llama/nemotron-v3-coder",
+      "version": "1.0",
+      "pid": 0
+    }
+  },
   "available_personas": [
-    "researcher",
-    "architect",
-    "creative",
-    "skeptic"
+    {
+      "id": "researcher",
+      "name": "Researcher",
+      "role": "Deep investigation and analysis",
+      "capabilities": [
+        "analysis",
+        "research",
+        "documentation"
+      ],
+      "model": "llama/nemotron-v3-coder"
+    },
+    {
+      "id": "architect",
+      "name": "Architect",
+      "role": "System design and planning",
+      "capabilities": [
+        "design",
+        "planning",
+        "architecture"
+      ],
+      "model": "llama/nemotron-v3-coder"
+    },
+    {
+      "id": "creative",
+      "name": "Creative",
+      "role": "Novel solutions and ideation",
+      "capabilities": [
+        "ideation",
+        "innovation",
+        "problem_solving"
+      ],
+      "model": "llama/nemotron-v3-coder"
+    },
+    {
+      "id": "skeptic",
+      "name": "Skeptic",
+      "role": "Quality assurance and testing",
+      "capabilities": [
+        "testing",
+        "qa",
+        "critical_analysis"
+      ],
+      "model": "nvidia/qwen/qwen3-coder-480b-a35b-instruct"
+    }
   ],
   "agent_templates": {
     "researcher": {
@@ -14,7 +136,8 @@
         "analysis",
         "research",
         "documentation"
-      ]
+      ],
+      "model": "llama/nemotron-v3-coder"
     },
     "architect": {
       "role": "System design and planning",
@@ -22,7 +145,8 @@
         "design",
         "planning",
         "architecture"
-      ]
+      ],
+      "model": "llama/nemotron-v3-coder"
     },
     "creative": {
       "role": "Novel solutions and ideation",
@@ -30,7 +154,8 @@
         "ideation",
         "innovation",
         "problem_solving"
-      ]
+      ],
+      "model": "llama/nemotron-v3-coder"
     },
     "skeptic": {
       "role": "Quality assurance and testing",
@@ -38,7 +163,8 @@
         "testing",
         "qa",
         "critical_analysis"
-      ]
+      ],
+      "model": "nvidia/qwen/qwen3-coder-480b-a35b-instruct"
     }
   }
 }

@@ -1,0 +1,17 @@
+{
+  "taskId": "integration-test-001",
+  "role": "researcher",
+  "description": "Integration test mission - verify full flow",
+  "filesAffected": [],
+  "inputs": {
+    "test": "full integration"
+  },
+  "successCriteria": [
+    "Mission file processed",
+    "Response received",
+    "Status updated"
+  ],
+  "dependsOn": [],
+  "timeoutSeconds": 120,
+  "timestamp": "2026-02-05T03:35:00.000Z"
+}

@@ -795,7 +795,7 @@ Respond with JSON format:
 
 if __name__ == "__main__":
     # Create and start AI Sentinel
-    sentinel = AISentinel(name="Dashboard Sentinel AI", model="haiku")
+    sentinel = AISentinel(name="Dashboard Sentinel AI", model="llama/nemotron-v3-coder")
 
     # Start monitoring
     sentinel.start_continuous_monitoring(interval=30)

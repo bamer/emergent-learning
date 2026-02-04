@@ -1,0 +1,151 @@
+{
+  "version": "2.0",
+  "last_updated": "2026-02-04T23:58:03.226440",
+  "principle": "Agents must be proactive in maintaining system health and transparent about failures",
+  "agents": {
+    "sentinel": {
+      "mission": "Ensure system health score remains above 90%. Detect, alert, and auto-fix issues.",
+      "objectives": [
+        {
+          "id": "health-check",
+          "priority": "critical",
+          "description": "Monitor system health every 60 seconds",
+          "success_criteria": "Health score > 90%",
+          "action_on_failure": "Log alert, attempt auto-fix, escalate if score < 70%"
+        },
+        {
+          "id": "pattern-detection",
+          "priority": "high",
+          "description": "Detect concerning patterns in system behavior",
+          "success_criteria": "Patterns identified before user reports them",
+          "action_on_failure": "Notify user immediately"
+        },
+        {
+          "id": "auto-fix",
+          "priority": "high",
+          "description": "Attempt automatic recovery from common failures",
+          "success_criteria": "3 common issues have automated fixes",
+          "action_on_failure": "Document limitation, escalate"
+        }
+      ],
+      "reporting": {
+        "interval": "15 minutes",
+        "channel": "dashboard_alerts",
+        "escalation": "user_notification after 2 consecutive failures"
+      }
+    },
+    "watcher": {
+      "mission": "Observe system activity, detect anomalies, and report changes.",
+      "objectives": [
+        {
+          "id": "anomaly-detection",
+          "priority": "high",
+          "description": "Detect unusual patterns",
+          "success_criteria": "Anomalies detected within 5 minutes",
+          "action_on_failure": "Log, alert if security concern"
+        },
+        {
+          "id": "activity-logging",
+          "priority": "medium",
+          "description": "Log all significant events",
+          "success_criteria": "100% event capture rate",
+          "action_on_failure": "Alert if capture rate < 99%"
+        }
+      ],
+      "reporting": {
+        "interval": "30 minutes",
+        "channel": "event_chronicle"
+      }
+    },
+    "orchestrator": {
+      "mission": "Coordinate task execution with clear SLAs. Ensure missions complete.",
+      "objectives": [
+        {
+          "id": "mission-completion",
+          "priority": "critical",
+          "description": "Complete missions within SLA",
+          "success_criteria": "95% on-time completion",
+          "action_on_failure": "Escalate after 2x SLA timeout"
+        },
+        {
+          "id": "task-queue-health",
+          "priority": "high",
+          "description": "Monitor for stuck tasks",
+          "success_criteria": "No tasks stuck > 15 minutes",
+          "action_on_failure": "Alert, restart, escalate"
+        }
+      ],
+      "reporting": {
+        "interval": "10 minutes",
+        "channel": "dashboard_status"
+      }
+    },
+    "learning_capture": {
+      "mission": "Maintain complete knowledge base. Notify when learning degrades.",
+      "objectives": [
+        {
+          "id": "knowledge-completeness",
+          "priority": "critical",
+          "description": "Ensure knowledge properly stored",
+          "success_criteria": "Zero 'database locked' errors",
+          "action_on_failure": "Alert user, log remediation"
+        },
+        {
+          "id": "learning-rate",
+          "priority": "high",
+          "description": "Monitor learning rate",
+          "success_criteria": "> 1 learning/hour active",
+          "action_on_failure": "Investigate, alert if persists > 4 hours"
+        }
+      ],
+      "reporting": {
+        "interval": "1 hour",
+        "channel": "dashboard_learnings"
+      }
+    },
+    "alert_agent": {
+      "mission": "Centralize error monitoring and ensure user receives timely notifications.",
+      "objectives": [
+        {
+          "id": "error-aggregation",
+          "priority": "critical",
+          "description": "Collect all errors",
+          "success_criteria": "All errors captured < 60 seconds",
+          "action_on_failure": "Log, flag manual review"
+        },
+        {
+          "id": "user-notification",
+          "priority": "critical",
+          "description": "Notify user of critical issues",
+          "success_criteria": "Critical < 5 minutes",
+          "action_on_failure": "Retry alternative channels"
+        },
+        {
+          "id": "escalation",
+          "priority": "high",
+          "description": "Ensure escalation of unresolved issues",
+          "success_criteria": "No critical > 1 hour unresolved",
+          "action_on_failure": "Escalate via phone"
+        }
+      ],
+      "reporting": {
+        "interval": "5 minutes",
+        "channel": "all_channels"
+      }
+    }
+  },
+  "failure_handling": {
+    "silent_failure_threshold": "10 minutes",
+    "user_notification_rules": {
+      "critical_issue": "immediate (< 5 minutes)",
+      "warning_issue": "within 1 hour",
+      "info_issue": "daily summary"
+    },
+    "auto_fix_scope": [
+      "restart stuck service (3 retries)",
+      "reconnect database (5 retries)",
+      "clear temp files (> 100MB)",
+      "rotate logs (> 10MB)"
+    ]
+  }
+}

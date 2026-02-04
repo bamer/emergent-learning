@@ -16,7 +16,7 @@
   },
   "coordination": {
     "heartbeat_interval": 30,
-    "max_stale_time": 120,
+    "max_stale_time": 240,
     "communication_protocol": "blackboard",
     "failure_recovery": "automatic"
   },

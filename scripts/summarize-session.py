@@ -172,11 +172,11 @@ def call_haiku(prompt: str) -> Optional[Dict[str, Any]]:
     """
     DEPRECATED: Disabled per Golden Rule #11 (No External APIs - Subscription Only).
 
-    Calling 'claude' CLI with '--model haiku' uses the Anthropic API directly,
-    violating the subscription-only policy. Use generate_fallback_summary() instead.
+    Calling external APIs directly violates the subscription-only policy.
+    Use generate_fallback_summary() instead.
 
-    If LLM-powered summarization is needed, it should be done within a Claude Code
-    session using the Task tool with model="haiku", not via subprocess.
+    If LLM-powered summarization is needed, it should be done within an OpenCode
+    session using the Task tool with model="llama/nemotron-v3-coder", not via subprocess.
     """
     # Always return None to trigger fallback summary
     return None
@@ -251,11 +251,11 @@ def summarize_session(session_id: str, use_llm: bool = True) -> bool:
         prompt = generate_summary_prompt(session_data, session_id)
         summary = call_haiku(prompt)
         if not summary:
-            print(f"Haiku failed, using fallback summary", file=sys.stderr)
+            print(f"LLM summarization failed, using fallback summary", file=sys.stderr)
             summary = generate_fallback_summary(session_data)
             model = "fallback"
         else:
-            model = "haiku"
+            model = "llama/nemotron-v3-coder"
     else:
         summary = generate_fallback_summary(session_data)
         model = "fallback"

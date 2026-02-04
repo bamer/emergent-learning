@@ -91,27 +91,25 @@ class PatternResponseHandler:
             # Determine confidence based on pattern type
             confidence = self._estimate_confidence(pattern)
 
-            # Record as learning (proper pipeline stage)
+            # Record as heuristic (more appropriate for patterns)
             cursor.execute(
                 """
-                INSERT INTO learnings
-                (type, title, summary, domain, severity, created_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO heuristics
+                (domain, rule, explanation, source_type, confidence)
+                VALUES (?, ?, ?, ?, ?)
             """,
                 (
-                    "observation",  # type
-                    pattern,  # title
-                    "Pattern detected by Sentinel monitoring and auto-recorded",  # summary
                     "system-patterns",  # domain
-                    "medium",  # severity
-                    datetime.now().isoformat(),  # created_at
+                    pattern,  # rule
+                    "Pattern detected by Sentinel monitoring",  # explanation
+                    "auto",  # source_type
+                    confidence,  # confidence
                 ),
             )
 
             conn.commit()
             conn.close()
 
-            logger.info(f"✅ Pattern recorded as learning: {pattern}")
             return True
         except Exception as e:
             logger.error(f"❌ Failed to record pattern as heuristic: {e}")
@@ -242,7 +240,6 @@ class PatternResponseHandler:
             conn.commit()
             conn.close()
 
-            logger.info(f"✅ Pattern recorded as learning: {pattern}")
             return True
         except Exception as e:
             logger.error(f"❌ Failed to record to chronicle: {e}")

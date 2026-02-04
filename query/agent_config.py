@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 # Try to import yaml
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
@@ -43,7 +44,7 @@ def get_global_agent_config_path() -> Optional[Path]:
     """
     try:
         base = get_base_path()
-        return base / 'agent_selector' / 'config.yaml'
+        return base / "agent_selector" / "config.yaml"
     except RuntimeError as e:
         logger.warning(f"Failed to get base path for agent config: {e}")
         return None
@@ -57,7 +58,7 @@ def get_project_agent_config_path() -> Optional[Path]:
     Returns None if not found.
     """
     cwd = Path(os.getcwd())
-    project_config = cwd / '.elf' / 'agents.yaml'
+    project_config = cwd / ".elf" / "agents.yaml"
 
     if project_config.exists():
         return project_config
@@ -75,7 +76,7 @@ def load_yaml_safe(path: Path) -> Optional[Dict[str, Any]]:
         return None
 
     try:
-        with open(path, 'r', encoding='utf-8') as f:
+        with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
             return data if isinstance(data, dict) else None
     except PermissionError:
@@ -102,10 +103,10 @@ def validate_config(config: Dict[str, Any]) -> Tuple[bool, List[str]]:
 
     # Required top-level keys
     required_keys = {
-        'defaults': dict,
-        'category_weights': dict,
-        'phase_weights': dict,
-        'complexity_requirements': dict,
+        "defaults": dict,
+        "category_weights": dict,
+        "phase_weights": dict,
+        "complexity_requirements": dict,
     }
 
     # Check required keys exist with correct types
@@ -114,30 +115,36 @@ def validate_config(config: Dict[str, Any]) -> Tuple[bool, List[str]]:
             errors.append(f"Missing required key: '{key}'")
         elif not isinstance(config[key], expected_type):
             actual_type = type(config[key]).__name__
-            errors.append(f"Invalid type for '{key}': expected {expected_type.__name__}, got {actual_type}")
+            errors.append(
+                f"Invalid type for '{key}': expected {expected_type.__name__}, got {actual_type}"
+            )
 
     # Validate phase_weights structure if present
-    if 'phase_weights' in config and isinstance(config['phase_weights'], dict):
-        required_phases = ['plan', 'execute', 'review']
+    if "phase_weights" in config and isinstance(config["phase_weights"], dict):
+        required_phases = ["plan", "execute", "review"]
         for phase in required_phases:
-            if phase not in config['phase_weights']:
+            if phase not in config["phase_weights"]:
                 errors.append(f"Missing required phase in phase_weights: '{phase}'")
-            elif not isinstance(config['phase_weights'][phase], dict):
-                actual_type = type(config['phase_weights'][phase]).__name__
-                errors.append(f"Invalid type for phase_weights.{phase}: expected dict, got {actual_type}")
+            elif not isinstance(config["phase_weights"][phase], dict):
+                actual_type = type(config["phase_weights"][phase]).__name__
+                errors.append(
+                    f"Invalid type for phase_weights.{phase}: expected dict, got {actual_type}"
+                )
 
     # Validate complexity_requirements keys if present
-    if 'complexity_requirements' in config and isinstance(config['complexity_requirements'], dict):
-        required_levels = ['critical', 'high', 'medium', 'low']
+    if "complexity_requirements" in config and isinstance(
+        config["complexity_requirements"], dict
+    ):
+        required_levels = ["critical", "high", "medium", "low"]
         for level in required_levels:
-            if level not in config['complexity_requirements']:
+            if level not in config["complexity_requirements"]:
                 errors.append(f"Missing required complexity level: '{level}'")
 
     # Validate defaults structure if present
-    if 'defaults' in config and isinstance(config['defaults'], dict):
-        if 'max_agents' not in config['defaults']:
+    if "defaults" in config and isinstance(config["defaults"], dict):
+        if "max_agents" not in config["defaults"]:
             errors.append("Missing 'max_agents' in defaults")
-        if 'prefer_tier' not in config['defaults']:
+        if "prefer_tier" not in config["defaults"]:
             errors.append("Missing 'prefer_tier' in defaults")
 
     is_valid = len(errors) == 0
@@ -147,28 +154,32 @@ def validate_config(config: Dict[str, Any]) -> Tuple[bool, List[str]]:
 def get_default_agent_config() -> Dict[str, Any]:
     """Return default agent configuration when no config files exist."""
     return {
-        'defaults': {
-            'max_agents': None,
-            'prefer_tier': None,
+        "defaults": {
+            "max_agents": None,
+            "prefer_tier": None,
         },
-        'category_weights': {
-            'security': 1.5,
-            'testing': 1.2,
-            'documentation': 0.8,
+        "category_weights": {
+            "security": 1.5,
+            "testing": 1.2,
+            "documentation": 0.8,
         },
-        'disabled_agents': [],
-        'always_include': {},
-        'tier_overrides': {},
-        'phase_weights': {
-            'plan': {'opus': 2.0, 'sonnet': 1.5, 'haiku': 0.5},
-            'execute': {'opus': 1.0, 'sonnet': 1.5, 'haiku': 1.5},
-            'review': {'opus': 2.0, 'sonnet': 2.0, 'haiku': 0.5},
+        "disabled_agents": [],
+        "always_include": {},
+        "tier_overrides": {},
+        "phase_weights": {
+            "plan": {"opus": 2.0, "sonnet": 1.5, "haiku": 0.5},
+            "execute": {"opus": 1.0, "sonnet": 1.5, "haiku": 1.5},
+            "review": {"opus": 2.0, "sonnet": 2.0, "haiku": 0.5},
         },
-        'complexity_requirements': {
-            'critical': 'opus',
-            'high': 'sonnet',
-            'medium': None,
-            'low': None,
+        # Model tier mappings (OpenCode):
+        # haiku -> llama/nemotron-v3-coder
+        # sonnet -> opencode/kimi-k2.5-free
+        # opus -> nvidia/qwen/qwen3-coder-480b-a35b-instruct
+        "complexity_requirements": {
+            "critical": "nvidia/qwen/qwen3-coder-480b-a35b-instruct",
+            "high": "opencode/kimi-k2.5-free",
+            "medium": None,
+            "low": None,
         },
     }
 
@@ -227,9 +238,7 @@ def load_agent_config() -> Tuple[Dict[str, Any], str]:
 
 
 def format_config_for_context(
-    config: Dict[str, Any],
-    source: str,
-    include_metadata: bool = True
+    config: Dict[str, Any], source: str, include_metadata: bool = True
 ) -> str:
     """
     Format agent configuration for inclusion in context output.
@@ -261,7 +270,9 @@ def format_config_for_context(
     if include_metadata:
         lines.append("")
         lines.append(f"**Config Source:** {source}")
-        lines.append(f"**Loaded at:** {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}")
+        lines.append(
+            f"**Loaded at:** {datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}"
+        )
 
         # Show paths for debugging
         global_path = get_global_agent_config_path()
@@ -322,7 +333,7 @@ def get_config_value(key_path: str, default: Any = None) -> Any:
     """
     config, _ = load_agent_config()
 
-    keys = key_path.split('.')
+    keys = key_path.split(".")
     current = config
 
     for key in keys:
@@ -335,7 +346,7 @@ def get_config_value(key_path: str, default: Any = None) -> Any:
 
 
 # CLI for testing
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("=== Agent Configuration Loader ===\n")
 
     # Show paths

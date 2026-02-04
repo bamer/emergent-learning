@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Session Index - Fast indexing and retrieval of Claude session history.
+Session Index - Fast indexing and retrieval of session history.
 
 Scans ~/.opencode/projects/*/jsonl files and extracts metadata WITHOUT
 loading full content for performance. Provides lazy loading for full sessions.
@@ -155,7 +155,7 @@ class SessionIndex:
 
     def get_session_summary(self, session_id: str) -> Optional[Dict[str, Any]]:
         """
-        Get haiku-generated summary for a session from database.
+        Get AI-generated summary for a session from database.
 
         Returns:
             Summary dict or None if not summarized yet

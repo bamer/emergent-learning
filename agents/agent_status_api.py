@@ -23,9 +23,12 @@ import sys
 try:
     from flask import Flask, request, jsonify
     from flask_cors import CORS
+    CORS_AVAILABLE = True
 except ImportError:
-    print("Error: Flask not installed. Install with: pip install flask flask-cors")
-    sys.exit(1)
+    print("Warning: Flask or flask_cors not installed. Install with: pip install flask flask-cors")
+    print("CORS will be disabled.")
+    from flask import Flask, request, jsonify
+    CORS_AVAILABLE = False
 
 # Add path for local imports
 sys.path.insert(0, str(Path(__file__).parent))
@@ -39,7 +42,11 @@ logger = logging.getLogger(__name__)
 
 # Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for dashboard
+if CORS_AVAILABLE:
+    CORS(app)  # Enable CORS for dashboard
+    logger.info("CORS enabled")
+else:
+    logger.info("CORS disabled - install flask_cors for cross-origin support")
 
 # Global orchestrator instance
 orchestrator: Optional[AgentOrchestrator] = None

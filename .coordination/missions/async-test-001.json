@@ -1,0 +1,18 @@
+{
+  "taskId": "async-test-001",
+  "role": "researcher",
+  "description": "Async orchestrator test mission - should process without blocking",
+  "filesAffected": [],
+  "inputs": {
+    "test": "async processing"
+  },
+  "successCriteria": [
+    "Mission queued",
+    "Task created",
+    "Response received",
+    "Status updated"
+  ],
+  "dependsOn": [],
+  "timeoutSeconds": 120,
+  "timestamp": "2026-02-05T04:35:00.000Z"
+}

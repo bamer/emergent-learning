@@ -1,54 +1,44 @@
 #!/usr/bin/env python3
 """
-Open_ELF Scheduler - Simplified Orchestrator
+Open_ELF Scheduler - Asynchronous Orchestrator with Persistent Sessions
 =============================================
 
-Scheduler minimal qui orchestre les agents IA OpenCode.
+Asynchronous orchestrator that processes missions without blocking.
+Uses single persistent OpenCode session and background task management.
 
-Architecture simplifiée:
-- Envoie des missions aux agents OpenCode via HTTP API
-- Crée des Tasks dans ~/.opencode/tasks/ pour le dashboard
-- Intervalle: 60 secondes
-- Les agents IA (OpenCode) prennent les décisions
-
-Usage:
-    python orchestrator.py start          # Démarre le scheduler
-    python orchestrator.py status         # Affiche le statut
-    python orchestrator.py run <agent> <mission>  # Mission unique
+Features:
+- Asynchronous mission processing (no blocking)
+- Single persistent OpenCode session (no spawning)
+- Background task management
+- Proper error handling and timeouts
+- Mission file status updates
 """
 
 import json
 import logging
-import requests
 import sys
 import time
 import threading
+import asyncio
+import aiofiles
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# Configuration
-OPENCODE_SERVER = "http://localhost:4096"
-LOGS_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
-TASKS_DIR = Path.home() / ".opencode" / "tasks"
-
-# Ensure directories exist
-LOGS_DIR.mkdir(parents=True, exist_ok=True)
-TASKS_DIR.mkdir(parents=True, exist_ok=True)
-
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(LOGS_DIR / "orchestrator.log"),
-        logging.StreamHandler(sys.stdout),
-    ],
-)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("OpenELF")
 
+# Constants
+OPENCODE_SERVER = "http://localhost:4096"
+TASKS_DIR = Path.home() / ".opencode" / "tasks"
+COORDINATION_DIR = Path.home() / ".opencode" / "emergent-learning" / ".coordination"
+MISSIONS_DIR = COORDINATION_DIR / "missions"
+
+# Import optimized OpenCode client
+from opencode_client import get_opencode_client
 
 @dataclass
 class Mission:
@@ -63,7 +53,6 @@ class Mission:
     response: Optional[str] = None
     session_id: Optional[str] = None
     task_file: Optional[Path] = None
-
 
 class TaskManager:
     """Gère les tasks dans ~/.opencode/tasks/"""
@@ -143,209 +132,235 @@ class TaskManager:
         except Exception as e:
             logger.error(f"Failed to update task: {e}")
 
-
-class OpenCodeClient:
-    """Client HTTP pour l'API OpenCode."""
-
-    def __init__(self):
-        self.base_url = OPENCODE_SERVER
-        self.session = requests.Session()
-
-    def health_check(self) -> bool:
-        try:
-            response = self.session.get(f"{self.base_url}/global/health", timeout=5)
-            return response.status_code == 200
-        except:
-            return False
-
-    def create_session(self, title: str) -> Optional[str]:
-        try:
-            response = self.session.post(
-                f"{self.base_url}/session", json={"title": title}, timeout=10
-            )
-            if response.status_code in [200, 201]:
-                return response.json().get("id")
-        except Exception as e:
-            logger.error(f"Failed to create session: {e}")
-        return None
-
-    def send_message(
-        self, session_id: str, message: str, agent: Optional[str] = None
-    ) -> bool:
-        """Envoie un message. Retourne True si envoyé avec succès."""
-        try:
-            body = {"parts": [{"type": "text", "text": message}]}
-            if agent:
-                body["agent"] = [{"type": "text", "text": agent}]
-
-            response = self.session.post(
-                f"{self.base_url}/session/{session_id}/message", json=body, timeout=30
-            )
-
-            # L'API retourne 200/201 même sans body, c'est OK
-            if response.status_code in [200, 201, 204]:
-                return True
-            else:
-                logger.error(f"HTTP {response.status_code}: {response.text[:200]}")
-        except Exception as e:
-            logger.error(f"Failed to send message: {e}")
-        return False
-
-    def wait_for_response(self, session_id: str, timeout: int = 120) -> Optional[str]:
-        """Attend la réponse de l'AI en pollant."""
-        start_time = time.time()
-
-        while time.time() - start_time < timeout:
-            try:
-                response = self.session.get(
-                    f"{self.base_url}/session/{session_id}/message", timeout=10
-                )
-
-                if response.status_code == 200:
-                    messages = response.json()
-
-                    # Chercher le dernier message assistant avec contenu
-                    for msg in reversed(messages):
-                        if msg.get("info", {}).get("role") == "assistant":
-                            parts = msg.get("parts", [])
-                            text_parts = [
-                                p
-                                for p in parts
-                                if p.get("type") == "text" and p.get("text")
-                            ]
-
-                            if text_parts:
-                                return "\n".join(
-                                    [p.get("text", "") for p in text_parts]
-                                )
-
-            except Exception as e:
-                logger.warning(f"Error polling: {e}")
-
-            time.sleep(2)
-
-        return None
-
-
-class SimpleOrchestrator:
-    """Orchestrateur simplifié - juste un scheduler."""
+class AsyncOpenCodeClient:
+    """Async wrapper for optimized OpenCode client"""
 
     def __init__(self):
-        self.client = OpenCodeClient()
+        self.client = get_opencode_client()
+
+    async def health_check(self) -> bool:
+        return self.client.health_check()
+
+    async def send_message(self, message: str, agent: Optional[str] = None) -> tuple[bool, Optional[str]]:
+        """Async send message - runs in thread pool"""
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, self.client.send_message, message, agent)
+
+class AsyncOrchestrator:
+    """Asynchronous Orchestrator with background task management"""
+
+    def __init__(self):
+        self.client = AsyncOpenCodeClient()
         self.task_manager = TaskManager()
-        self.missions: Dict[str, Mission] = {}
         self.running = False
-        self.interval = 60  # 60 secondes
+        self.missions: Dict[str, Mission] = {}
+        self.processing_missions: set = set()
+        self.mission_queue: asyncio.Queue = asyncio.Queue()
 
-    def start(self):
-        """Démarre le scheduler."""
-        logger.info("=" * 70)
-        logger.info("🚀 Open_ELF Scheduler Starting (60s interval)")
-        logger.info("=" * 70)
-
-        if not self.client.health_check():
+    async def start(self):
+        """Démarre l'orchestrator asynchrone."""
+        logger.info("======================================================================")
+        logger.info("🚀 Async Open_ELF Scheduler Starting")
+        logger.info("======================================================================")
+        
+        if not await self.client.health_check():
             logger.error("❌ OpenCode server not accessible")
-            sys.exit(1)
+            return
 
         logger.info("✅ Connected to OpenCode server")
         self.running = True
 
-        # Démarrer le thread de scheduling
-        scheduler_thread = threading.Thread(target=self._scheduler_loop, daemon=True)
-        scheduler_thread.start()
-
-        # Démarrer le serveur HTTP pour le status
+        # Start status server
         self._start_status_server()
 
-    def _scheduler_loop(self):
-        """Boucle principale du scheduler - toutes les 60s."""
+        # Start mission monitoring
+        monitor_task = asyncio.create_task(self._monitor_missions())
+        logger.info("👀 Mission monitoring started")
+
+        # Start mission processor
+        processor_task = asyncio.create_task(self._process_missions())
+        logger.info("⚙️  Mission processor started")
+
+        # Main scheduler loop
         tick_count = 0
+        try:
+            while self.running:
+                tick_count += 1
+                if tick_count == 1 or tick_count % 10 == 0:
+                    logger.info(f"⏰ Scheduler tick #{tick_count} - {datetime.now().isoformat()}")
+                else:
+                    logger.debug(f"⏰ Scheduler tick #{tick_count} - {datetime.now().isoformat()}")
+
+                # Ici on peut ajouter des missions automatiques si besoin
+                await asyncio.sleep(10)  # Non-blocking sleep
+                
+        except KeyboardInterrupt:
+            logger.info("\n👋 Shutting down...")
+            self.running = False
+
+    async def _monitor_missions(self):
+        """Surveille le répertoire des missions en arrière-plan."""
+        logger.info(f"👀 Monitoring {MISSIONS_DIR} for new missions")
+        processed_missions = set()
+        
         while self.running:
-            tick_count += 1
-            if tick_count % 10 == 1:  # Log every 10 minutes instead of every minute
-                logger.info(
-                    f"⏰ Scheduler tick #{tick_count} - {datetime.now().isoformat()}"
-                )
-            else:
-                logger.debug(
-                    f"⏰ Scheduler tick #{tick_count} - {datetime.now().isoformat()}"
-                )
+            try:
+                if not MISSIONS_DIR.exists():
+                    await asyncio.sleep(10)
+                    continue
+                
+                for mission_file in MISSIONS_DIR.glob("mission-*.json"):
+                    if mission_file.name in processed_missions or mission_file.name in self.processing_missions:
+                        continue
+                    
+                    try:
+                        # Read mission file
+                        async with aiofiles.open(mission_file, 'r') as f:
+                            content = await f.read()
+                            mission_data = json.loads(content)
+                        
+                        agent_type = mission_data.get("role", "researcher")
+                        description = mission_data.get("description", "Unknown mission")
+                        task_id = mission_data.get("taskId", f"m{int(time.time())}")
+                        
+                        logger.info(f"📥 Queued mission: {mission_file.name}")
+                        
+                        # Add to processing set and queue
+                        self.processing_missions.add(mission_file.name)
+                        await self.mission_queue.put({
+                            'file': mission_file,
+                            'data': mission_data,
+                            'agent_type': agent_type,
+                            'description': description,
+                            'task_id': task_id
+                        })
+                        
+                    except Exception as e:
+                        logger.error(f"❌ Error reading mission {mission_file.name}: {e}")
+                
+                await asyncio.sleep(5)
+                
+            except Exception as e:
+                logger.error(f"❌ Error in mission monitoring: {e}")
+                await asyncio.sleep(10)
 
-            # Ici on peut ajouter des missions automatiques si besoin
-            # Par exemple: health check, monitoring, etc.
+    async def _process_missions(self):
+        """Traite les missions de la file d'attente."""
+        while self.running:
+            try:
+                # Get mission from queue (blocking but async)
+                mission_info = await self.mission_queue.get()
+                
+                # Process in background task
+                asyncio.create_task(self._execute_mission(mission_info))
+                
+                # Mark task as done
+                self.mission_queue.task_done()
+                
+            except Exception as e:
+                logger.error(f"❌ Error processing mission queue: {e}")
+                await asyncio.sleep(1)
 
-            time.sleep(self.interval)
-
-    def run_mission(self, agent_type: str, mission_text: str) -> Mission:
-        """Exécute une mission avec un agent."""
-        mission_id = f"m{int(time.time())}"
-
-        mission = Mission(
-            id=mission_id,
-            agent_type=agent_type,
-            mission=mission_text,
-            status="pending",
-            start_time=datetime.now(),
-        )
-
-        self.missions[mission_id] = mission
-
-        # Créer la task
-        self.task_manager.create_task(mission)
-
-        logger.info(f"🎯 Mission started: {agent_type} - {mission_text[:60]}...")
-
-        # Créer session et envoyer message
-        session_id = self.client.create_session(
-            f"ELF: {agent_type} - {mission_text[:50]}"
-        )
-        if not session_id:
-            mission.status = "error"
+    async def _execute_mission(self, mission_info: dict):
+        """Exécute une mission de manière asynchrone."""
+        mission_file = mission_info['file']
+        mission_data = mission_info['data']
+        agent_type = mission_info['agent_type']
+        description = mission_info['description']
+        task_id = mission_info['task_id']
+        
+        try:
+            # Create mission object
+            mission = Mission(
+                id=task_id,
+                agent_type=agent_type,
+                mission=description,
+                status="pending",
+                start_time=datetime.now(),
+            )
+            
+            self.missions[task_id] = mission
+            
+            # Create task file
+            self.task_manager.create_task(mission)
+            
+            logger.info(f"🎯 Mission started: {agent_type} - {description[:60]}...")
+            
+            # Update status to in_progress
+            mission.session_id = "persistent-session"
+            mission.status = "in_progress"
             self.task_manager.update_task(mission)
-            return mission
-
-        mission.session_id = session_id
-        mission.status = "in_progress"
-        self.task_manager.update_task(mission)
-
-        # Envoyer le message
-        message_sent = self.client.send_message(session_id, mission_text, agent_type)
-
-        if message_sent:
-            # Attendre la réponse
-            response_text = self.client.wait_for_response(session_id, timeout=120)
-
-            if response_text:
-                mission.response = response_text
-                mission.status = "completed"
-                logger.info(f"✅ Mission completed: {agent_type}")
+            
+            # Update mission file
+            mission_data["status"] = "in_progress"
+            mission_data["startedAt"] = datetime.now().isoformat()
+            async with aiofiles.open(mission_file, 'w') as f:
+                await f.write(json.dumps(mission_data, indent=2))
+            
+            # Send message via optimized client (async)
+            logger.info(f"📤 Sending message for mission {task_id}")
+            success, response_text = await self.client.send_message(description, agent_type)
+            
+            # Update mission with results
+            mission.end_time = datetime.now()
+            
+            if success:
+                if response_text:
+                    mission.response = response_text
+                    mission.status = "completed"
+                    logger.info(f"✅ Mission completed: {agent_type}")
+                else:
+                    mission.status = "error"
+                    mission.response = "No response received from agent"
+                    logger.error(f"❌ No response from {agent_type}")
             else:
                 mission.status = "error"
-                mission.response = "No response received from agent"
-                logger.error(f"❌ No response from {agent_type}")
-        else:
-            mission.status = "error"
-            mission.response = "Failed to send message to agent"
-            logger.error(f"❌ Failed to send message to {agent_type}")
-
-        mission.end_time = datetime.now()
-        self.task_manager.update_task(mission)
-
-        return mission
+                mission.response = response_text or "Failed to send message to agent"
+                logger.error(f"❌ Failed to send message to {agent_type}")
+            
+            # Update task file
+            self.task_manager.update_task(mission)
+            
+            # Update mission file
+            mission_data["status"] = mission.status
+            mission_data["completedAt"] = mission.end_time.isoformat()
+            mission_data["response"] = mission.response[:1000] if mission.response else ""
+            async with aiofiles.open(mission_file, 'w') as f:
+                await f.write(json.dumps(mission_data, indent=2))
+            
+            logger.info(f"✅ Mission {mission_file.name} processing completed")
+            
+        except Exception as e:
+            logger.error(f"❌ Error executing mission {mission_file.name}: {e}")
+            # Update with error status
+            try:
+                mission_data["status"] = "error"
+                mission_data["error"] = str(e)
+                mission_data["completedAt"] = datetime.now().isoformat()
+                async with aiofiles.open(mission_file, 'w') as f:
+                    await f.write(json.dumps(mission_data, indent=2))
+            except:
+                pass
+        finally:
+            # Remove from processing set
+            self.processing_missions.discard(mission_file.name)
 
     def _start_status_server(self):
         """Démarre un serveur HTTP simple pour exposer le status."""
+        orchestrator_self = self
 
         class StatusHandler(BaseHTTPRequestHandler):
-            def do_GET(handler_self):
-                if handler_self.path == "/status":
-                    handler_self.send_response(200)
-                    handler_self.send_header("Content-type", "application/json")
-                    handler_self.end_headers()
+            def do_GET(self):
+                if self.path == "/status":
+                    self.send_response(200)
+                    self.send_header("Content-type", "application/json")
+                    self.end_headers()
 
                     status = {
-                        "running": self.running,
-                        "missions_count": len(self.missions),
+                        "running": orchestrator_self.running,
+                        "missions_count": len(orchestrator_self.missions),
+                        "processing_count": len(orchestrator_self.processing_missions),
+                        "queue_size": orchestrator_self.mission_queue.qsize(),
                         "missions": [
                             {
                                 "id": m.id,
@@ -358,27 +373,21 @@ class SimpleOrchestrator:
                                 if m.end_time
                                 else None,
                             }
-                            for m in self.missions.values()
+                            for m in orchestrator_self.missions.values()
                         ],
                     }
-                    handler_self.wfile.write(json.dumps(status).encode())
+                    self.wfile.write(json.dumps(status).encode())
                 else:
-                    handler_self.send_response(404)
-                    handler_self.end_headers()
-
-            def log_message(self, format, *args):
-                # Suppress logs
-                pass
+                    self.send_response(404)
+                    self.end_headers()
 
         server = HTTPServer(("localhost", 9999), StatusHandler)
-        logger.info("📊 Status server started on http://localhost:9999/status")
-
         server_thread = threading.Thread(target=server.serve_forever, daemon=True)
         server_thread.start()
+        logger.info("📊 Status server started on http://localhost:9999/status")
 
-
-def main():
-    """Point d'entrée principal."""
+async def main_async():
+    """Point d'entrée asynchrone."""
     if len(sys.argv) < 2:
         print("Usage: python orchestrator.py <command> [args]")
         print("Commands:")
@@ -388,17 +397,10 @@ def main():
         sys.exit(1)
 
     command = sys.argv[1]
-    orchestrator = SimpleOrchestrator()
+    orchestrator = AsyncOrchestrator()
 
     if command == "start":
-        orchestrator.start()
-        # Keep main thread alive
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            logger.info("\n👋 Shutting down...")
-            orchestrator.running = False
+        await orchestrator.start()
 
     elif command == "run":
         if len(sys.argv) < 4:
@@ -408,48 +410,72 @@ def main():
         agent_type = sys.argv[2]
         mission_text = " ".join(sys.argv[3:])
 
-        if not orchestrator.client.health_check():
+        if not await orchestrator.client.health_check():
             print("❌ OpenCode server not accessible")
             sys.exit(1)
 
-        mission = orchestrator.run_mission(agent_type, mission_text)
+        # For single run, we'll run synchronously
+        mission = Mission(
+            id=f"m{int(time.time())}",
+            agent_type=agent_type,
+            mission=mission_text,
+            status="pending",
+            start_time=datetime.now(),
+        )
+
+        print(f"🎯 Mission started: {agent_type} - {mission_text[:60]}...")
+        
+        success, response_text = await orchestrator.client.send_message(mission_text, agent_type)
+        
+        if success:
+            if response_text:
+                mission.response = response_text
+                mission.status = "completed"
+                print(f"✅ Mission completed: {agent_type}")
+            else:
+                mission.status = "error"
+                mission.response = "No response received from agent"
+                print(f"❌ No response from {agent_type}")
+        else:
+            mission.status = "error"
+            mission.response = response_text or "Failed to send message to agent"
+            print(f"❌ Failed to send message to {agent_type}")
+
+        mission.end_time = datetime.now()
         print(f"\nStatus: {mission.status}")
         if mission.response:
             print(f"Response: {mission.response[:500]}...")
 
     elif command == "status":
         try:
+            import requests
             response = requests.get("http://localhost:9999/status", timeout=5)
             if response.status_code == 200:
                 status = response.json()
                 print(f"Running: {status['running']}")
                 print(f"Missions: {status['missions_count']}")
+                print(f"Processing: {status['processing_count']}")
+                print(f"Queue: {status['queue_size']}")
                 for m in status["missions"]:
                     print(f"  - {m['agent_type']}: {m['status']}")
             else:
                 print("❌ Scheduler not running")
-        except:
-            print("❌ Scheduler not running")
+        except Exception as e:
+            print(f"❌ Scheduler not running: {e}")
 
     else:
         print(f"Unknown command: {command}")
         sys.exit(1)
 
-
-# Alias pour compatibilité avec le backend (ancienne API)
-UnifiedOrchestrator = SimpleOrchestrator
-
-
-# Placeholders pour compatibilité (non utilisés dans la version simplifiée)
-class AgentStatus:
-    IDLE = "idle"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    ERROR = "error"
-
-
-AgentSelector = None
-MissionAnalyzer = None
+def main():
+    """Point d'entrée principal."""
+    try:
+        asyncio.run(main_async())
+    except KeyboardInterrupt:
+        logger.info("\n👋 Shutdown requested")
+    except Exception as e:
+        logger.error(f"❌ Fatal error: {e}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
