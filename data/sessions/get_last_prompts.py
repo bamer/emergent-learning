@@ -25,17 +25,17 @@ if sys.platform == 'win32':
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
 
-def get_claude_projects_dir() -> Path:
+def get_opencode_projects_dir() -> Path:
     """Get the Opencode projects directory."""
     return Path.home() / ".opencode" / "projects"
 
 
 def get_current_project_dir() -> Optional[Path]:
     """Get the project directory for emergent-learning."""
-    projects_dir = get_claude_projects_dir()
+    projects_dir = get_opencode_projects_dir()
 
     # Look for emergent-learning project
-    for pattern in ["*emergent-learning*", "*claude-emergent*"]:
+    for pattern in ["*emergent-learning*", "*opencode-emergent*"]:
         matches = list(projects_dir.glob(pattern))
         if matches:
             return matches[0]

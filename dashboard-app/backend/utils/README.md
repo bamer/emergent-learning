@@ -6,7 +6,7 @@ This module provides reusable utility functions and classes for the Emergent Lea
 
 ## Module Structure
 
-```
+```text
 utils/
 ├── __init__.py           # Barrel export - imports all utilities
 ├── database.py           # Database connection and helpers
@@ -33,6 +33,7 @@ from utils.broadcast import ConnectionManager
 ### Database Functions (`database.py`)
 
 #### `get_db()` - Context Manager
+
 ```python
 from utils import get_db
 
@@ -47,6 +48,7 @@ with get_db() as conn:
 **Auto-closes:** Yes (context manager)
 
 #### `dict_from_row(row)` - Row Converter
+
 ```python
 from utils import get_db, dict_from_row
 
@@ -62,6 +64,7 @@ with get_db() as conn:
 **Returns:** dict or None
 
 #### `escape_like(s)` - SQL LIKE Escaping
+
 ```python
 from utils import escape_like
 
@@ -77,6 +80,7 @@ cursor.execute(f"SELECT * FROM table WHERE name LIKE ? ESCAPE '\\'", (f"%{safe_i
 ### WebSocket Management (`broadcast.py`)
 
 #### `ConnectionManager` - WebSocket Broadcast
+
 ```python
 from utils import ConnectionManager
 
@@ -97,6 +101,7 @@ await manager.broadcast({"type": "update", "data": {...}})
 
 **Purpose:** Manage WebSocket connections and broadcast updates
 **Methods:**
+
 - `connect(websocket)` - Accept and register connection
 - `disconnect(websocket)` - Remove connection
 - `broadcast(message)` - Send to all connected clients
@@ -105,6 +110,7 @@ await manager.broadcast({"type": "update", "data": {...}})
 ### Repository Pattern (`repository.py`)
 
 #### `BaseRepository` - Generic CRUD Operations
+
 ```python
 from utils import get_db, BaseRepository
 
@@ -143,6 +149,7 @@ with get_db() as conn:
 
 **Purpose:** Eliminate code duplication for common database operations
 **Benefits:**
+
 - No table-specific code needed for basic CRUD
 - Consistent API across all tables
 - Built-in pagination, filtering, counting
@@ -185,17 +192,20 @@ python -c "import main; print('✅ Main module imports successfully')"
 ## Current Usage
 
 ### In main.py
+
 ```python
 from utils import get_db, dict_from_row, escape_like, ConnectionManager
 # BaseRepository available but not yet used in main.py
 ```
 
 ### In test files
+
 ```python
 from utils import get_db, BaseRepository
 ```
 
 ### In repository.py (internal)
+
 ```python
 from .database import dict_from_row  # Internal relative import
 ```
@@ -206,6 +216,7 @@ When adding a new utility:
 
 1. Create the module file in `utils/` (e.g., `utils/validation.py`)
 2. Add exports to `utils/__init__.py`:
+
    ```python
    from .validation import validate_input
 
@@ -218,6 +229,7 @@ When adding a new utility:
        'validate_input',  # New utility
    ]
    ```
+
 3. Update this README with documentation
 4. Test: `python -c "from utils import validate_input"`
 
@@ -230,7 +242,7 @@ When adding a new utility:
 
 ## File Paths
 
-```
+```text
 C:\Users\Evede\.opencode\emergent-learning\dashboard-app\backend\utils\
 ├── __init__.py           (21 lines) - Barrel export
 ├── database.py           (44 lines) - DB utilities

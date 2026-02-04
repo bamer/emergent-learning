@@ -1,12 +1,14 @@
 # 🤖 Configuration des Agents ELF
-# Fichier de configuration des rôles et missions pour chaque agent
-# Utilisé par l'orchestrateur pour assigner les bonnes tâches
+
+Fichier de configuration des rôles et missions pour chaque agent
+Utilisé par l'orchestrateur pour assigner les bonnes tâches
 
 ## 📋 Structure des Agents
 
 ### **🎯 CEO (Chief Executive Officer)**
+
 - **ID**: `ceo-agent`
-- **Modèle**: `big-pickle` 
+- **Modèle**: `big-pickle`
 - **Mission**: `Décisions stratégiques et validation finale`
 - **Responsabilités**:
   - Prendre les décisions finales sur les recommandations
@@ -14,7 +16,8 @@
   - Gérer les escalades critiques qui nécessitent une intervention humaine
   - Superviser la santé globale du système ELF
 - **Prompt Spécialisé**:
-  ```
+
+  ```markdown
   Tu es le CEO du système ELF. Ta mission est de prendre des décisions stratégiques finales.
   
   Analyse les recommandations des autres agents et valide :
@@ -36,6 +39,7 @@
 ---
 
 ### **🏗️ ARCHITECT (Architecte System)**
+
 - **ID**: `architect-agent`
 - **Modèle**: `big-pickle`
 - **Mission**: `Conception de solutions robustes et évolutives`
@@ -45,7 +49,8 @@
   - Documenter les décisions d'architecture
   - Valider la faisabilité technique des propositions
 - **Prompt Spécialisé**:
-  ```
+
+  ```markdown
   Tu es un architecte de système spécialisé dans le framework ELF.
   
   Ta mission est de concevoir des solutions robustes et évolutives.
@@ -66,8 +71,9 @@
 ---
 
 ### **🔍 RESEARCHER (Chercheur)**
+
 - **ID**: `researcher-agent`
-- **Modèle**: `big-pickle`
+- **Modèle**: `nemotron-v3-coder`
 - **Mission**: `Investigation approfondie et collecte de preuves`
 - **Responsabilités**:
   - Mener des investigations approfondies sur les problèmes complexes
@@ -75,7 +81,8 @@
   - Identifier des patterns et des tendances
   - Fournir des analyses basées sur des preuves tangibles
 - **Prompt Spécialisé**:
-  ```
+
+  ```markdown
   Tu es un chercheur spécialisé dans le framework ELF.
   
   Ta mission est de mener des investigations approfondies.
@@ -98,8 +105,9 @@
 ---
 
 ### **🎨 CREATIVE (Innovateur)**
+
 - **ID**: `creative-agent`
-- **Modèle**: `big-pickle`
+- **Modèle**: `nemotron-v3-coder`
 - **Mission**: `Génération de solutions innovantes et hors des sentiers battus`
 - **Responsabilités**:
   - Explorer des approches non conventionnelles
@@ -107,7 +115,8 @@
   - Trouver des solutions créatives aux problèmes complexes
   - Proposer des alternatives inattendues
 - **Prompt Spécialisé**:
-  ```
+
+  ```markdown
   Tu es un agent créatif spécialisé dans le framework ELF.
   
   Ta mission est de générer des solutions innovantes.
@@ -130,8 +139,9 @@
 ---
 
 ### **⚠️ SKEPTIC (Critique)**
+
 - **ID**: `skeptic-agent`
-- **Modèle**: `big-pickle`
+- **Modèle**: `nemotron-v3-coder`
 - **Mission**: `Analyse critique et identification des risques`
 - **Responsabilités**:
   - Tester les hypothèses et les propositions
@@ -139,7 +149,8 @@
   - Questionner les hypothèses optimistes
   - Valider la robustesse des solutions
 - **Prompt Spécialisé**:
-  ```
+
+  ```markdown
   Tu es un agent critique spécialisé dans le framework ELF.
   
   Ta mission est d'analyser de manière critique.
@@ -162,8 +173,9 @@
 ---
 
 ### **🧠 LEARNING EXTRACTOR (Extracteur d'Apprentissage)**
+
 - **ID**: `learning-extractor-agent`
-- **Modèle**: `big-pickle`
+- **Modèle**: `nemotron-v3-coder`
 - **Mission**: `Synthèse des apprentissages et extraction de principes`
 - **Responsabilités**:
   - Analyser les résultats des autres agents
@@ -171,7 +183,8 @@
   - Identifier les leçons apprises et les connaissances transférables
   - Mettre à jour la base de connaissances ELF
 - **Prompt Spécialisé**:
-  ```
+
+  ```markdown
   Tu es un extracteur d'apprentissage spécialisé dans le framework ELF.
   
   Ta mission est de synthétiser les apprentissages.
@@ -206,7 +219,8 @@
 
 ## 🎯 **Protocoles d'Interaction**
 
-### **🔄 Workflow Standard**:
+### **🔄 Workflow Standard**
+
 1. **Detection** → Watcher détecte un problème
 2. **Escalation** → Orchestrator reçoit l'alerte
 3. **Analyse** → Researcher investigue + Architect conçoit
@@ -214,7 +228,8 @@
 5. **Décision** → CEO valide ou escalade
 6. **Apprentissage** → Learning Extractor synthétise
 
-### **📋 Assignation Automatique**:
+### **📋 Assignation Automatique**
+
 ```python
 # L'orchestrateur utilise cette configuration pour assigner les bons agents
 agent_config = load_agent_config(issue_type)
@@ -223,18 +238,21 @@ agent_id = spawn_agent(agent_config['id'], agent_config['model'], agent_config['
 
 ## 🔧 **Paramètres de Configuration**
 
-### **Modèles Disponibles**:
-- **big-pickle**: Modèle principal pour toutes les décisions
-- **haiku**: Modèle rapide pour tâches simples
-- **sonnet**: Modèle puissant pour analyses complexes
+### **Modèles Disponibles**
 
-### **Niveaux de Confiance**:
+- **nemotron-v3-coder**: Modèle principal pour toutes les décisions
+- **nemotron-v3-coder-haiku**: Modèle rapide pour tâches simples
+- **nemotron-v3-coder-opus**: Modèle puissant pour analyses complexes
+
+### **Niveaux de Confiance**
+
 - **0.1-0.3**: Hypothèse exploratoire
 - **0.4-0.6**: Théorie supportée par quelques preuves
 - **0.7-0.8**: Conclusion bien supportée
 - **0.9-1.0**: Principe établi et validé
 
-### **Types de Décision**:
+### **Types de Décision**
+
 - **Exploratoire**: Investigation initiale
 - **Analytique**: Analyse structurée
 - **Architecturale**: Conception système
@@ -248,10 +266,13 @@ agent_id = spawn_agent(agent_config['id'], agent_config['model'], agent_config['
 ## 📝 **Intégration avec OpenCode**
 
 ### **Provider ID**: `opencode`
-### **Model ID**: `big-pickle`
+
+### **Model ID**: `nemotron`
+
 ### **Endpoint**: `/session/{id}/message`
 
-### **Exemple d'Appel**:
+### **Exemple d'Appel**
+
 ```python
 import requests
 
@@ -268,7 +289,7 @@ architect_response = requests.post(
     json={
         'model': {
             'providerID': 'opencode',
-            'modelID': 'big-pickle'
+            'modelID': 'nemotron-v3-coder'
         },
         'parts': [{'type': 'text', 'text': get_agent_prompt('architect-agent', problem)}]
     }
@@ -279,13 +300,15 @@ architect_response = requests.post(
 
 ## 🎯 **Utilisation**
 
-### **Chargement de la Configuration**:
+### **Chargement de la Configuration**
+
 ```python
 from agent_config import load_config
 config = load_config('elf-agents.json')
 ```
 
-### **Sélection Automatique**:
+### **Sélection Automatique**
+
 ```python
 def select_agent_for_issue(issue_type, severity):
     return config['agents'][get_agent_for_issue(issue_type, severity)]

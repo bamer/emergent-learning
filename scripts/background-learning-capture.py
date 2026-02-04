@@ -246,7 +246,7 @@ def capture_from_event_chronicle():
                     content += str(event["data"])
 
             heuristics = extract_heuristics_from_text(
-                content, event.get("source", "general")
+                content, event["source"] if event["source"] else "general"
             )
             for h in heuristics:
                 if record_heuristic(h):

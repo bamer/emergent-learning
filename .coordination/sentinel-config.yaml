@@ -8,13 +8,13 @@
 # Sentinel Identity
 sentinel:
   name: "Dashboard Sentinel - ELF Standard"
-  model: "haiku"  # Using Claude Haiku for efficient monitoring
+  model: "nemotron-v3-coder"  # Using OpenCode Haiku for efficient monitoring
   agent_id: "sentinel-main"
 
 # Monitoring Configuration
 monitoring:
   enabled: true
-  interval_seconds: 30  # Run monitoring cycle every 30 seconds
+  interval_seconds: 60  # Run monitoring cycle every 30 seconds
   continuous_mode: true
   
 # Event Chronicle Integration (ELF Standard)
