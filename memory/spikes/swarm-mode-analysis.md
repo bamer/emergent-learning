@@ -14,11 +14,13 @@ Swarm mode in ELF enables coordinated multi-agent execution without context exha
 ### 1. Why Swarm Mode is Important
 
 **Context Bottleneck Problem:**
+
 - Single agents: ~2000 tokens per response
 - 10 agents traditional: ~20,000 tokens = context overflow
 - Swarm protocol: ~20 tokens per agent = unlimited scaling
 
 **Production Benefits:**
+
 - Parallel execution reduces latency
 - Specialized agents increase quality
 - Fault isolation prevents cascading failures
@@ -27,6 +29,7 @@ Swarm mode in ELF enables coordinated multi-agent execution without context exha
 ### 2. Technical Implementation
 
 **Core Architecture:**
+
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Orchestrator  │───▶│  Agent Prompt    │───▶│  File Output    │
@@ -41,11 +44,13 @@ Swarm mode in ELF enables coordinated multi-agent execution without context exha
 ```
 
 **File-Based Protocol:**
+
 1. Agents write detailed output to `.coordination/swarm-results/{agent}-result.md`
 2. Agents return only: `COMPLETED: {agent_name} Results: path/to/file`
 3. Context growth: 20 tokens vs 2000 tokens per agent
 
 **Multi-Model Support:**
+
 - Claude models (sonnet, opus, haiku): Native Task tool
 - External models (gemini, codex): spawn-model.py wrapper
 - Auto-detection of available models
@@ -53,6 +58,7 @@ Swarm mode in ELF enables coordinated multi-agent execution without context exha
 ### 3. Coordination Strategies
 
 **Parallel Execution:**
+
 ```yaml
 strategy:
   mode: "parallel"
@@ -61,6 +67,7 @@ strategy:
 ```
 
 **Sequential Workflows:**
+
 ```yaml
 strategy:
   mode: "sequential"
@@ -68,6 +75,7 @@ strategy:
 ```
 
 **Communication Protocols:**
+
 - `PROJECT_CONTEXT.md`: Shared understanding
 - `INTERFACES.md`: Agent contracts
 - `AGENT_LOG.md`: Activity tracking
@@ -75,6 +83,7 @@ strategy:
 ### 4. Validation Tests Required
 
 **Basic Functionality:**
+
 ```bash
 # Test 1: Basic swarm execution
 python run-swarm.py --create-template test-swarm.yaml
@@ -83,6 +92,7 @@ python run-swarm.py --config test-swarm.yaml --generate-prompts
 ```
 
 **Stress Testing:**
+
 ```bash
 # Test 2: Context scaling (20+ agents)
 # Test 3: Model mixing (claude + gemini)
@@ -90,6 +100,7 @@ python run-swarm.py --config test-swarm.yaml --generate-prompts
 ```
 
 **Integration Testing:**
+
 ```bash
 # Test 5: Real project coordination
 # Test 6: Handoff consistency
@@ -108,6 +119,7 @@ python run-swarm.py --config test-swarm.yaml --generate-prompts
 | Model availability issues | Medium | Medium | Graceful degradation, fallbacks |
 
 **Production Readiness Checklist:**
+
 - [ ] Agent prompt validation
 - [ ] Result file format verification
 - [ ] Timeout handling
@@ -117,6 +129,7 @@ python run-swarm.py --config test-swarm.yaml --generate-prompts
 ## Implementation Recommendations
 
 ### Phase 1: Activation (Immediate)
+
 ```bash
 # 1. Initialize swarm in project
 python /home/bamer/.opencode/emergent-learning/scripts/run-swarm.py --detect-models
@@ -126,11 +139,13 @@ python /home/bamer/.opencode/emergent-learning/scripts/run-swarm.py --create-tem
 ```
 
 ### Phase 2: Integration (Next Sprint)
+
 - Integrate with existing ELF coordination protocols
 - Add swarm mode to dashboard
 - Create agent personality templates for swarm
 
 ### Phase 3: Optimization (Future)
+
 - Dynamic agent allocation
 - Load balancing across models
 - Adaptive batching strategies
