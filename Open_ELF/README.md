@@ -1,209 +1,120 @@
-# Open_ELF - Orchestrateur Unifié
+# Open_ELF - Emergent Learning Framework
 
-## Structure
+## 🏗️ Structure Complète
 
 ```
 /home/bamer/.opencode/emergent-learning/Open_ELF/
-├── orchestrator/
-│   ├── orchestrator.py      # Orchestrateur principal
-│   ├── test.py              # Tests
-│   └── __init__.py
-├── agents/
-│   └── (personas ELF)       # Personas spécifiques ELF
-├── logs/
-│   ├── orchestrator.log     # Logs principaux
-│   ├── architect.log        # Logs par agent
-│   ├── researcher.log
-│   ├── heuristics.log       # Heuristiques extraites
-│   └── ...
-└── README.md
+├── agents/                    # Personas et agents ELF
+├── config/                    # Configuration système
+├── coordinator/               # Coordination multi-agent
+├── dashboard-app/             # Application dashboard
+├── database/                  # Base de données SQLite
+├── docs/                      # Documentation
+├── golden-rules/              # Règles constitutionnelles
+├── logs/                      # Logs système
+├── memory/                    # Mémoire persistante
+├── orchestrator/              # Orchestrateur principal
+├── query/                     # Système de requête
+├── scripts/                   # Scripts utilitaires
+├── skills/                    # Compétences ELF
+├── timeline_dashboard/        # Dashboard timeline
+├── watcher/                   # Watcher système
+├── workflows/                 # Workflows TDD
+├── init.sh                    # Script d'initialisation
+├── README.md                  # Ce fichier
+└── REFACTORING_PLAN.md        # Plan de refactoring
 ```
 
-## 🚀 Fonctionnalités Clés
+## 🚀 Démarrage Rapide
 
-### 1. **Sélection Automatique d'Agent** 🤖
-
-L'orchestrateur analyse la mission et choisit automatiquement le meilleur agent :
+### Initialisation
 
 ```bash
-# Détection automatique basée sur les mots-clés
-python3 orchestrator.py auto --mission "Design a new API endpoint"
-→ Sélectionne: architect (confiance: 100%)
+# Charger l'environnement
+source /home/bamer/.opencode/emergent-learning/Open_ELF/init.sh
 
-python3 orchestrator.py auto --mission "Investigate database performance issues"
-→ Sélectionne: researcher (confiance: 100%)
+# Ou manuellement
+export ELF_ROOT="/home/bamer/.opencode/emergent-learning/Open_ELF"
 ```
 
-**Mots-clés détectés :**
-- **architect** : design, architecture, structure, pattern, blueprint
-- **researcher** : investigate, research, analyze, explore, debug
-- **skeptic** : review, audit, security, risk, validate, test
-- **creative** : innovate, creative, brainstorm, new feature, ui, ux
-- **ceo** : decide, strategy, prioritize, plan, coordinate
-
-### 2. **Mode Swarm (Multi-Agents Parallèles)** 🐝
-
-Déclenché automatiquement par les mots-clés `swarm`, `parallel`, `multi-agent` :
+### Commandes Essentielles
 
 ```bash
-# Détection automatique du mode swarm
-python3 orchestrator.py smart --mission "swarm: Design and implement authentication"
+# Interroger le building
+python3 query/query.py --context
 
-# Ou forcer le mode swarm
-python3 orchestrator.py swarm --mission "Parallel analysis of the codebase"
+# Enregistrer un échec
+scripts/record-failure.sh "Titre" "domaine"
+
+# Enregistrer une heuristique
+python3 scripts/record-heuristic.py "Règle" "domaine"
+
+# Auto-test
+scripts/self-test.sh
+
+# Métriques d'apprentissage
+scripts/learning-metrics.sh
 ```
 
-**Processus :**
-1. Décompose la mission en sous-tâches
-2. Assigne chaque sous-tâche à l'agent approprié
-3. Exécute toutes les sous-tâches en parallèle
-4. Synthétise les résultats avec le CEO
-
-**Exemple de décomposition :**
-```
-Mission: "Design and implement a new feature"
-→ Sous-tâche 1: [architect] Design phase
-→ Sous-tâche 2: [creative] Implementation planning
-→ Sous-tâche 3: [skeptic] Validation
-```
-
-### 3. **Mode Smart (Auto-Detection)** 🎯
-
-Analyse la mission et choisit automatiquement entre :
-- **Mode Swarm** : Si mots-clés swarm/parallel détectés
-- **Mode Single Agent** : Sinon, avec sélection automatique
+## 🧪 Tests
 
 ```bash
-# Détection intelligente du mode
-python3 orchestrator.py smart --mission "Your mission here"
+# Vérifier l'installation
+python3 query/query.py --context
+
+# Tester les scripts
+scripts/self-test.sh --quick
+
+# Test complet
+cd /home/bamer/.opencode/emergent-learning/Open_ELF
+find . -name "test*.py" -exec python3 {} \;
 ```
 
-## Architecture
+## 📝 Migration depuis l'ancienne structure
 
-L'orchestrateur utilise l'**API OpenCode** (HTTP sur port 4096) pour :
-
-1. **Créer des sessions** pour chaque agent (architect, researcher, etc.)
-2. **Envoyer des missions** comme messages aux sessions
-3. **Récupérer les réponses** de l'IA (Claude, etc.)
-4. **Logger tout** dans le système unifié
-5. **Extraire les heuristiques** des réponses
-6. **Gérer l'escalade** au CEO si nécessaire
-
-## Utilisation
-
-### Démarrer l'orchestrateur
+Si vous utilisiez l'ancienne structure à la racine :
 
 ```bash
-cd /home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator
-python3 orchestrator.py start
+# Anciens chemins → Nouveaux chemins
+~/query/query.py              → ~/Open_ELF/query/query.py
+~/scripts/record-failure.sh   → ~/Open_ELF/scripts/record-failure.sh
+~/memory/                     → ~/Open_ELF/memory/
+~/skills/                     → ~/Open_ELF/skills/
 ```
 
-### Voir le statut
+## 🔧 Développement
 
-```bash
-python3 orchestrator.py status
-```
+### Ajouter un nouveau skill
 
-### Exécuter une mission (mode manuel)
+1. Créer un répertoire dans `skills/`
+2. Ajouter un fichier `SKILL.md`
+3. Tester avec `python3 query/query.py --domain votre-domaine`
 
-```bash
-python3 orchestrator.py run --agent architect --mission "Design API auth"
-```
+### Modifier l'orchestrateur
 
-### Exécuter avec sélection automatique
+1. Éditer `orchestrator/orchestrator.py`
+2. Tester avec `python3 orchestrator/orchestrator.py status`
+3. Valider avec les tests unitaires
 
-```bash
-python3 orchestrator.py auto --mission "Investigate slow queries"
-```
-
-### Mode Swarm (multi-agents)
-
-```bash
-python3 orchestrator.py swarm --mission "swarm: Design and implement new feature"
-```
-
-### Mode Smart (auto-détection)
-
-```bash
-python3 orchestrator.py smart --mission "Your mission here"
-```
-
-### Exécution parallèle (dans le code)
-
-```python
-from orchestrator import UnifiedOrchestrator
-
-orch = UnifiedOrchestrator()
-orch.start()
-
-# Missions en parallèle
-missions = [
-    ("researcher", "Investigate the database schema"),
-    ("architect", "Design the API structure"),
-    ("skeptic", "Review security implications"),
-]
-
-results = orch.run_parallel_missions(missions)
-```
-
-## Logs Unifiés
-
-Tous les logs sont centralisés dans `/Open_ELF/logs/` :
-
-- `orchestrator.log` - Logs principaux
-- `architect.log` - Réponses de l'agent architect
-- `researcher.log` - Réponses de l'agent researcher
-- `heuristics.log` - Heuristiques extraites automatiquement
-
-## Extraction d'Heuristiques
-
-Les patterns suivants sont automatiquement extraits des réponses :
+## 📊 Architecture
 
 ```
-[LEARNED:architecture] Always validate user input
-[HEURISTIC:security] Use parameterized queries
-[PATTERN:performance] Cache frequently accessed data
+┌─────────────────────────────────────┐
+│           Open_ELF                  │
+├─────────────────────────────────────┤
+│  orchestrator/  │  agents/          │
+│  query/         │  coordinator/     │
+│  scripts/       │  dashboard-app/   │
+├─────────────────────────────────────┤
+│  memory/  │  skills/  │  docs/      │
+│  database/│  config/  │  workflows/ │
+└─────────────────────────────────────┘
 ```
 
-## Différence avec l'ancien système
+## 🤝 Contribution
 
-| Ancien | Nouveau |
-|--------|---------|
-| Processus Python vides | Sessions OpenCode avec IA réelle |
-| Pas de traitement de mission | Missions envoyées comme messages |
-| Logs dispersés | Logs unifiés dans Open_ELF/logs/ |
-| Pas d'extraction | Heuristiques extraites automatiquement |
-| Pas d'escalade | Escalade au CEO intégrée |
-| Pas de sélection auto | Sélection automatique par mots-clés |
-| Pas de parallélisme | Mode swarm multi-agents |
+Voir `REFACTORING_PLAN.md` pour l'historique du refactoring.
 
-## Intégration Dashboard
+## 📄 Licence
 
-L'orchestrateur expose une API simple que le dashboard peut utiliser :
-
-```python
-# Dashboard → Orchestrateur
-orch = UnifiedOrchestrator()
-status = orch.get_status()  # Statut de tous les agents
-
-# Mode smart (auto-détection)
-result = orch.run_smart("Your mission here")
-
-# Mode swarm explicite
-result = orch.execute_swarm_mission("swarm: Complex mission")
-```
-
-## Tests
-
-```bash
-cd /home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator
-python3 test.py
-```
-
-## Prochaines étapes de migration
-
-1. [ ] Connecter le dashboard au nouvel orchestrateur
-2. [ ] Créer les personas ELF spécifiques (fichiers .md)
-3. [ ] Implémenter le système de tâches persistantes
-4. [ ] Ajouter la visualisation temps réel (SSE)
-5. [ ] Supprimer l'ancien orchestrateur une fois stable
+MIT - Emergent Learning Framework
