@@ -19,6 +19,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
   const [trailConnected, setTrailConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'agents' | 'tasks'>('agents')
+  const [watcherStatus, setWatcherStatus] = useState<{running: boolean; state?: string}>({running: false})
 
   const taskEventSourceRef = useRef<EventSource | null>(null)
   const trailEventSourceRef = useRef<EventSource | null>(null)
@@ -188,11 +189,37 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
       if (response.ok) {
         const data = await response.json();
         console.info('Watcher launched:', data.message || 'Started');
+        // Refresh status after launching
+        setTimeout(fetchWatcherStatus, 1000);
       }
     } catch (err) {
       console.error('Failed to launch watcher:', err);
     }
   }, [apiBaseUrl])
+
+  // Fetch watcher status
+  const fetchWatcherStatus = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/monitoring/watcher/status`);
+      if (response.ok) {
+        const data = await response.json();
+        setWatcherStatus({
+          running: data.status?.running || false,
+          state: data.status?.state || 'unknown'
+        });
+      }
+    } catch (err) {
+      console.debug('Failed to fetch watcher status:', err);
+      setWatcherStatus({running: false, state: 'unknown'});
+    }
+  }, [apiBaseUrl]);
+
+  // Poll watcher status every 5 seconds
+  useEffect(() => {
+    fetchWatcherStatus();
+    const interval = setInterval(fetchWatcherStatus, 5000);
+    return () => clearInterval(interval);
+  }, [fetchWatcherStatus]);
   
   const isConnected = taskConnected && trailConnected
   
@@ -252,16 +279,23 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
           )}
         </div>
 
-        {/* Launch Watcher button - visible in Tasks view */}
+        {/* Watcher status/button - visible in Tasks view */}
         {viewMode === 'tasks' && (
-          <button
-            onClick={handleLaunchWatcher}
-            className="flex items-center gap-1.5 px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-medium transition-colors"
-            title="Launch Log Watcher"
-          >
-            <Play className="w-3.5 h-3.5" />
-            <span className="ml-1">Launch Watcher</span>
-          </button>
+          watcherStatus.running ? (
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-medium border border-emerald-500/20">
+              <Activity className="w-3.5 h-3.5 animate-pulse" />
+              <span>Watcher {watcherStatus.state || 'Running'}</span>
+            </div>
+          ) : (
+            <button
+              onClick={handleLaunchWatcher}
+              className="flex items-center gap-1.5 px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-medium transition-colors"
+              title="Launch Log Watcher"
+            >
+              <Play className="w-3.5 h-3.5" />
+              <span className="ml-1">Launch Watcher</span>
+            </button>
+          )
         )}
 
         {/* Stats for tasks view */}

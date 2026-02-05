@@ -28,4 +28,9 @@ metrics_operation_end() {
     return 0
 }
 
+metrics_record() {
+    # Stub function for backward compatibility
+    return 0
+}
+
 return 0

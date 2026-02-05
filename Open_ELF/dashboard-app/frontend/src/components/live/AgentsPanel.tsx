@@ -302,6 +302,20 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
     return () => clearInterval(interval);
   }, [fetchAgents]);
 
+  // Listen for openNewMissionModal event from LivePanel
+  useEffect(() => {
+    const handleOpenModal = () => {
+      setSelectedAgent(null);
+      setExecutionMode('smart');
+      setMissionText('');
+      setLastResult(null);
+      setShowMissionModal(true);
+    };
+    
+    window.addEventListener('openNewMissionModal', handleOpenModal);
+    return () => window.removeEventListener('openNewMissionModal', handleOpenModal);
+  }, []);
+
   const handleStartAgent = async (agent: Agent) => {
     setStartingAgentKey(getAgentKey(agent));
     try {

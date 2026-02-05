@@ -559,7 +559,7 @@ domain_escaped=$(escape_sql "$domain")
 
 # Insert into database with retry logic for concurrent access
 if ! LAST_ID=$(sqlite_with_retry "$DB_PATH" <<SQL
-INSERT INTO learnings (type, filepath, title, summary, tags, domain, severity)
+INSERT INTO learnings (type, filepath, title, summary, tags, domain, severity, created_at, updated_at)
 VALUES (
     'failure',
     '$relative_path',
@@ -567,7 +567,9 @@ VALUES (
     '$summary_escaped',
     '$tags_escaped',
     '$domain_escaped',
-    CAST($severity AS INTEGER)
+    '$severity_num',
+    '$now',
+    '$now'
 );
 SELECT last_insert_rowid();
 SQL
