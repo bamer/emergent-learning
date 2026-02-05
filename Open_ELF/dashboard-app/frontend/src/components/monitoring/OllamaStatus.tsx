@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Brain, CheckCircle, XCircle, AlertCircle, RefreshCw, Zap, Database } from 'lucide-react';
 
 interface OllamaStatusData {
@@ -22,9 +22,19 @@ export function OllamaStatus({ apiBaseUrl = '' }: OllamaStatusProps) {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
+  const isMountedRef = useRef(true);
+  const isInitialLoadRef = useRef(true);
+
   const fetchStatus = async () => {
+    if (!isMountedRef.current) return;
+    
+    const isInitialLoad = isInitialLoadRef.current;
+    
     try {
-      setLoading(true);
+      if (isInitialLoad) {
+        setLoading(true);
+      }
+      
       setError(null);
       
       const response = await fetch(`${apiBaseUrl}/api/v1/monitoring/ollama/status`);
@@ -38,6 +48,11 @@ export function OllamaStatus({ apiBaseUrl = '' }: OllamaStatusProps) {
       if (data.status === 'ok' || data.status === 'error') {
         setStatus(data);
         setLastUpdate(new Date());
+        
+        // Mark initial load as complete
+        if (isInitialLoadRef.current) {
+          isInitialLoadRef.current = false;
+        }
       } else {
         throw new Error(data.error || 'Unknown error');
       }
@@ -45,17 +60,26 @@ export function OllamaStatus({ apiBaseUrl = '' }: OllamaStatusProps) {
       console.error('Failed to fetch Ollama status:', err);
       setError(err instanceof Error ? err.message : 'Failed to load status');
     } finally {
-      setLoading(false);
+      if (!isMountedRef.current) return;
+      if (isInitialLoadRef.current) {
+        setLoading(false);
+        isInitialLoadRef.current = false;
+      }
     }
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
+    
     fetchStatus();
     
     // Refresh every 30 seconds
     const interval = setInterval(fetchStatus, 30000);
     
-    return () => clearInterval(interval);
+    return () => {
+      isMountedRef.current = false;
+      clearInterval(interval);
+    };
   }, [apiBaseUrl]);
 
   const getServiceStatusIcon = (running: boolean) => {

@@ -84,7 +84,7 @@ except Exception:
 
 router = APIRouter(prefix="/api/v1", tags=["monitoring"])
 
-# Database path
+# Database path - Production database (restored with 6885 records)
 DB_PATH = Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
 EVENT_CHRONICLE_DIR = (
     Path.home() / ".opencode" / "emergent-learning" / "event_chronicle"
@@ -237,99 +237,105 @@ async def get_chronicle_events(
     source: Optional[str] = None,
     limit: int = Query(default=50, le=1000),
 ):
-    """Query events from the event chronicle."""
+    """Query events from the event chronicle (from SQL database)."""
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Build query
+        where_clause = "WHERE 1=1"
+        params = []
+
+        if event_type:
+            where_clause += " AND event_type = ?"
+            params.append(event_type)
+
+        if source:
+            where_clause += " AND source = ?"
+            params.append(source)
+
+        # Get recent events from database (use 'id' not 'event_id')
+        query = f"""
+        SELECT id, timestamp, event_type, source, data, summary
+        FROM event_chronicle
+        {where_clause}
+        ORDER BY timestamp DESC
+        LIMIT ?
+        """
+
+        cursor.execute(query, params + [limit])
+
         events = []
-
-        # Get chronicle files (most recent first)
-        chronicle_files = sorted(EVENT_CHRONICLE_DIR.rglob("*.jsonl"), reverse=True)
-
-        for chronicle_file in chronicle_files:
-            if len(events) >= limit:
-                break
-
+        for row in cursor.fetchall():
             try:
-                with open(chronicle_file, "r", encoding="utf-8") as f:
-                    for line in f:
-                        if len(events) >= limit:
-                            break
+                data = json.loads(row[4]) if row[4] else {}
+            except:
+                data = {}
 
-                        try:
-                            event = json.loads(line.strip())
+            events.append(
+                {
+                    "event_id": row[0],
+                    "timestamp": row[1],
+                    "event_type": row[2],
+                    "source": row[3],
+                    "data": data,
+                    "summary": row[5],
+                }
+            )
 
-                            # Apply filters
-                            if event_type and event.get("event_type") != event_type:
-                                continue
-                            if source and event.get("source") != source:
-                                continue
-
-                            events.append(event)
-
-                        except json.JSONDecodeError:
-                            continue
-
-            except FileNotFoundError:
-                continue
-
-        return {"status": "ok", "events": events, "count": len(events)}
+        return {"events": events, "count": len(events)}
 
     except Exception as e:
-        logger.error(f"Error fetching chronicle events: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error fetching chronicle events from DB: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Error querying chronicle: {str(e)}"
+        )
 
 
 @router.get("/chronicle/stats")
 async def get_chronicle_stats():
-    """Get event chronicle statistics."""
+    """Get event chronicle statistics (from SQL database)."""
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get total events count
+        cursor.execute("SELECT COUNT(*) FROM event_chronicle")
+        total_events = cursor.fetchone()[0]
+
+        # Get event types distribution
+        cursor.execute("""
+            SELECT event_type, COUNT(*) as count
+            FROM event_chronicle
+            GROUP BY event_type
+        """)
+        event_types = {row[0]: row[1] for row in cursor.fetchall()}
+
+        # Get sources distribution
+        cursor.execute("""
+            SELECT source, COUNT(*) as count
+            FROM event_chronicle
+            GROUP BY source
+        """)
+        sources = {row[0]: row[1] for row in cursor.fetchall()}
+
+        # Get date range
+        cursor.execute("""
+            SELECT 
+                MIN(timestamp) as earliest,
+                MAX(timestamp) as latest
+            FROM event_chronicle
+        """)
+        date_range_row = cursor.fetchone()
+
+        date_range = {"earliest": date_range_row[0], "latest": date_range_row[1]}
+
         stats = {
-            "total_events": 0,
-            "event_types": {},
-            "sources": {},
-            "date_range": {"earliest": None, "latest": None},
+            "total_events": total_events,
+            "event_types": event_types,
+            "sources": sources,
+            "date_range": date_range,
         }
-
-        chronicle_files = list(EVENT_CHRONICLE_DIR.rglob("*.jsonl"))
-
-        for chronicle_file in chronicle_files:
-            try:
-                with open(chronicle_file, "r", encoding="utf-8") as f:
-                    for line in f:
-                        try:
-                            event = json.loads(line.strip())
-                            stats["total_events"] += 1
-
-                            # Count event types
-                            event_type = event.get("event_type", "unknown")
-                            stats["event_types"][event_type] = (
-                                stats["event_types"].get(event_type, 0) + 1
-                            )
-
-                            # Count sources
-                            source = event.get("source", "unknown")
-                            stats["sources"][source] = (
-                                stats["sources"].get(source, 0) + 1
-                            )
-
-                            # Track date range
-                            event_time = event.get("timestamp")
-                            if event_time:
-                                if (
-                                    not stats["date_range"]["earliest"]
-                                    or event_time < stats["date_range"]["earliest"]
-                                ):
-                                    stats["date_range"]["earliest"] = event_time
-                                if (
-                                    not stats["date_range"]["latest"]
-                                    or event_time > stats["date_range"]["latest"]
-                                ):
-                                    stats["date_range"]["latest"] = event_time
-
-                        except json.JSONDecodeError:
-                            continue
-
-            except FileNotFoundError:
-                continue
 
         return stats
 
@@ -784,8 +790,9 @@ async def get_watcher_status():
         )
 
         row = cursor.fetchone()
-        last_check = row["last_check"] if row else None
-        escalations = row["escalations"] if row else 0
+        last_check = row["last_check"] if row and row["last_check"] else None
+        escalations = row["escalations"] if row and row["escalations"] else 0
+        total_cycles = row["count"] if row and row["count"] else 0
 
         conn.close()
 
@@ -800,7 +807,7 @@ async def get_watcher_status():
             "last_check": last_check or datetime.now().isoformat(),
             "next_check": (datetime.now() + timedelta(seconds=30)).isoformat(),
             "check_interval_seconds": 30,
-            "total_checks": row["count"] if row else 0,
+            "total_checks": total_cycles,
             "escalations_count": escalations,
             "current_status": "healthy"
             if escalations == 0

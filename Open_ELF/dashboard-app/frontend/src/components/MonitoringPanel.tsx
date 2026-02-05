@@ -129,30 +129,36 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
               <div className="min-h-[400px]">
                 <OllamaStatus apiBaseUrl={apiBaseUrl} />
               </div>
+              <div className="h-[500px] overflow-hidden">
+                <EventChronicleViewer apiBaseUrl={apiBaseUrl} />
+              </div>
             </div>
           ) : (
             /* List Layout - Stacked */
             <div className="space-y-4">
-              <div className="h-[500px]">
+              <div className="h-[400px]">
                 <SentinelMonitorPanel apiBaseUrl={apiBaseUrl} />
               </div>
-              <div className="h-[500px]">
+              <div className="h-[400px]">
                 <SystemHealthPanel apiBaseUrl={apiBaseUrl} />
               </div>
-              <div className="h-[500px]">
+              <div className="h-[400px]">
                 <EventBridgeStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
-              <div className="h-[500px]">
+              <div className="h-[400px]">
                 <WatcherStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
-              <div className="h-[500px]">
+              <div className="h-[400px]">
                 <OrchestratorStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
-              <div className="h-[500px]">
+              <div className="h-[400px]">
                 <CeoStatusPanel apiBaseUrl={apiBaseUrl} />
               </div>
-              <div className="h-[500px]">
+              <div className="h-[400px]">
                 <OllamaStatus apiBaseUrl={apiBaseUrl} />
+              </div>
+              <div className="h-[500px] overflow-hidden">
+                <EventChronicleViewer apiBaseUrl={apiBaseUrl} />
               </div>
             </div>
           )

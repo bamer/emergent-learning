@@ -305,14 +305,14 @@ export function OrchestratorStatusPanel({
                   {/* Event Stats */}
                   <div className="flex items-center gap-4 mt-3 mb-3 text-xs bg-slate-700/30 p-2 rounded-lg">
                     <div className="flex items-center gap-1 text-slate-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-message-circle w-3 h-3 text-orange-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle w-3 h-3 text-orange-400">
                         <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"></path>
                       </svg>
                       <span>Questions:</span>
                       <span className="text-orange-400 font-medium">{questionCount}</span>
                     </div>
                     <div className="flex items-center gap-1 text-slate-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-check-circle w-3 h-3 text-green-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check-circle w-3 h-3 text-green-400">
                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                         <path d="m9 11 3 3L22 4"></path>
                       </svg>
@@ -320,7 +320,7 @@ export function OrchestratorStatusPanel({
                       <span className="text-green-400 font-medium">{responseCount}</span>
                     </div>
                     <div className="flex items-center gap-1 text-slate-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-message-square w-3 h-3 text-slate-500">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square w-3 h-3 text-slate-500">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                       </svg>
                       <span>Total:</span>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   User, Inbox, AlertTriangle, CheckCircle, Clock, 
   RefreshCw, Play, Square, ChevronRight, ChevronDown,
@@ -114,10 +114,24 @@ export function CeoStatusPanel({
   const [ceoRunning, setCeoRunning] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'overview' | 'items' | 'history' | 'actions'>('overview');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  
+  // Refs to prevent race conditions
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
+  const isInitialLoadRef = useRef(true); // Track if this is the first load
 
   const fetchCeoStatus = useCallback(async () => {
-    try {
+    // Prevent updates if component is unmounted
+    if (!isMountedRef.current) return;
+    
+    const isInitialLoad = isInitialLoadRef.current;
+    
+    // Only show loading state on initial load, not background refreshes
+    if (isInitialLoad) {
       setLoading(true);
+    }
+    
+    try {
       setError(null);
       
       // Fetch CEO inbox items
@@ -127,6 +141,10 @@ export function CeoStatusPanel({
       }
       
       const inboxData = await inboxResponse.json();
+      
+      // Only update state if still mounted
+      if (!isMountedRef.current) return;
+      
       setItems(inboxData || []);
       
       // Calculate metrics
@@ -141,6 +159,11 @@ export function CeoStatusPanel({
         total: inboxData.length
       };
       setMetrics(metrics);
+      
+      // Mark initial load as complete on successful data load
+      if (isInitialLoadRef.current) {
+        isInitialLoadRef.current = false;
+      }
       
       // Generate analysis based on metrics
       let status: 'active' | 'idle' | 'overloaded' = 'idle';
@@ -179,10 +202,16 @@ export function CeoStatusPanel({
       
       setLastUpdate(new Date());
     } catch (err) {
+      if (!isMountedRef.current) return;
       console.error('Failed to fetch CEO status:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch CEO status');
     } finally {
-      setLoading(false);
+      // Only stop loading state on initial load
+      if (!isMountedRef.current) return;
+      if (isInitialLoadRef.current) {
+        setLoading(false);
+        isInitialLoadRef.current = false;
+      }
     }
   }, [apiBaseUrl]);
 
@@ -217,19 +246,43 @@ Please check the ceo-inbox directory and process any pending items. For each ite
       }
       
       setCeoRunning(true);
-      setTimeout(fetchCeoStatus, 2000);
+      // Refresh status after spawning (without showing loading state)
+      fetchCeoStatus();
     } catch (err) {
       console.error('Failed to spawn CEO agent:', err);
       setError(err instanceof Error ? err.message : 'Failed to spawn CEO agent');
     }
-  }, [apiBaseUrl, metrics, fetchCeoStatus]);
+  }, [apiBaseUrl]); // metrics not needed here (read at call time), fetchCeoStatus is stable
 
   useEffect(() => {
+    isMountedRef.current = true;
+    
+    // Initial fetch
     fetchCeoStatus();
-    if (!autoRefresh) return;
-    const interval = setInterval(fetchCeoStatus, refreshInterval);
-    return () => clearInterval(interval);
-  }, [fetchCeoStatus, autoRefresh, refreshInterval]);
+    
+    // Setup auto-refresh
+    if (autoRefresh) {
+      intervalRef.current = setInterval(fetchCeoStatus, refreshInterval);
+    }
+    
+    return () => {
+      isMountedRef.current = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [autoRefresh, refreshInterval]);
+
+  // Cleanup on unmount (extra safety)
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   const toggleItemExpansion = (filename: string) => {
     setExpandedItems(prev => {
