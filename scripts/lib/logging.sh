@@ -59,4 +59,9 @@ log_error() {
     echo "[ERROR] $message" >&2
 }
 
+log_debug() {
+    local message="$1"
+    echo "[DEBUG] $message" >&2
+}
+
 return 0

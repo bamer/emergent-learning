@@ -129,11 +129,18 @@ const isSystemAgent = (agent: Agent): boolean => {
 };
 
 const isHiddenAgent = (agent: Agent): boolean => {
+  const name = (agent.name?.toLowerCase() || '');
+  const displayName = (agent.display_name?.toLowerCase() || '');
+  const description = (agent.description?.toLowerCase() || '');
+  
+  // Check for hidden directory patterns (paths containing /. or starting with .)
+  const hasHiddenDirectory = name.includes('/.') || /^\./.test(name);
+  
   return HIDDEN_PATTERNS.some(pattern => 
-    (agent.name?.toLowerCase() || '').includes(pattern) || 
-    (agent.description?.toLowerCase() || '').includes('hidden') ||
-    (agent.display_name?.toLowerCase() || '').includes('background')
-  );
+    name.includes(pattern) || 
+    description.includes('hidden') ||
+    displayName.includes('background')
+  ) || hasHiddenDirectory;
 };
 
 export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
@@ -890,7 +897,7 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
                           )}
                         </h3>
                          <p className="text-xs text-slate-400">
-                           {((agent.is_primary !== undefined && agent.is_primary !== null) ? (agent.is_primary ? 'Primary' : 'Secondary') : 'Unknown')} • {agent.system === 'elf' ? 'ELF Agent' : 'OpenCode Agent'}
+                           {agent.is_hidden ? '👻 Hidden' : ((agent.is_primary !== undefined && agent.is_primary !== null) ? (agent.is_primary ? 'Primary' : 'Secondary') : 'Unknown')} • {agent.system === 'elf' ? 'ELF Agent' : 'OpenCode Agent'}
                          </p>
                       </div>
                     </div>
