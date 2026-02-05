@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Install ELF hooks into Claude Code settings.
+Install ELF hooks into Opencode settings.
 
 This script:
 1. Locates hook sources in the current ELF base
-2. Updates Claude Code settings.json to register the hooks
+2. Updates Opencode settings.json to register the hooks
 3. Only runs once (creates a marker file)
 
 Run manually: python scripts/install-hooks.py
@@ -60,7 +60,7 @@ def install_hooks():
 
 
 def update_settings():
-    """Update Claude Code settings to register hooks."""
+    """Update Opencode settings to register hooks."""
     if not SETTINGS_FILE.exists():
         print("Claude settings.json not found - skipping hook registration")
         return False

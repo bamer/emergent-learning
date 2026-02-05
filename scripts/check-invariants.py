@@ -25,7 +25,7 @@ def _resolve_base_path() -> Path:
             sys.path.insert(0, str(parent / "src"))
             try:
                 from elf_paths import get_base_path
-                return get_base_path()
+                return get_base_path(parent)
             except ImportError:
                 break
 

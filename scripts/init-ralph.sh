@@ -260,7 +260,7 @@ create_progress_file() {
 # Ralph Loop Progress Tracking
 
 This file is append-only. Each iteration adds its learnings here.
-It serves as the institutional memory bridging fresh Claude Code sessions.
+It serves as the institutional memory bridging fresh Opencode sessions.
 
 ## How to Use
 

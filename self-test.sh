@@ -1,0 +1,1 @@
+/home/bamer/.opencode/emergent-learning/scripts/self-test.sh

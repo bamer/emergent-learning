@@ -49,18 +49,18 @@ log() {
 
 pass() {
     echo -e "${GREEN}✓ PASS${NC}: $*" | tee -a "$LOG_FILE"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 }
 
 fail() {
     echo -e "${RED}✗ FAIL${NC}: $*" | tee -a "$LOG_FILE"
-    ((TESTS_FAILED++))
+    TESTS_FAILED=$((TESTS_FAILED + 1))
     FAILURE_DETAILS+=("$*")
 }
 
 warn() {
     echo -e "${YELLOW}⚠ WARN${NC}: $*" | tee -a "$LOG_FILE"
-    ((TESTS_WARNINGS++))
+    TESTS_WARNINGS=$((TESTS_WARNINGS + 1))
 }
 
 info() {

@@ -16,7 +16,7 @@ Welcome to the ELF documentation. This wiki contains detailed guides for all fea
 | Page | Description |
 |------|-------------|
 | [Installation](Installation) | Prerequisites, install options, troubleshooting |
-| [Configuration](Configuration) | CLAUDE.md, settings.json, hooks setup |
+| [Configuration](Configuration) | AGENTS.md, settings.json, hooks setup |
 | [Dashboard](Dashboard) | Visual monitoring, tabs, themes |
 | [Swarm](Swarm) | Multi-agent coordination, personas |
 | [CLI Reference](CLI-Reference) | All query commands |
@@ -27,7 +27,7 @@ Welcome to the ELF documentation. This wiki contains detailed guides for all fea
 
 ## The Core Concept
 
-Claude Code is stateless - every session starts from zero. This framework bridges that gap by giving Claude access to your project's history:
+Opencode is stateless - every session starts from zero. This framework bridges that gap by giving Claude access to your project's history:
 
 - **Before each task:** Query the building for relevant knowledge
 - **After each task:** Record outcomes automatically
@@ -58,7 +58,7 @@ installation = """# Installation Guide
 
 - Python 3.8+
 - Node.js 18+ or Bun (recommended)
-- Claude Code CLI installed
+- Opencode CLI installed
 
 **Verify prerequisites:**
 
@@ -75,7 +75,7 @@ The installer has three components:
 
 | Component | What it does |
 |-----------|-------------|
-| **Core** | Query system, hooks, golden rules, CLAUDE.md |
+| **Core** | Query system, hooks, golden rules, AGENTS.md |
 | **Dashboard** | React UI for monitoring (localhost:3001) |
 | **Swarm** | Multi-agent conductor, agent personas |
 
@@ -97,7 +97,7 @@ The installer has three components:
 
 ```
 ~/.opencode/
-├── CLAUDE.md                    # Agent instructions
+├── AGENTS.md                    # Agent instructions
 ├── settings.json                # Hook configurations
 ├── emergent-learning/
 │   ├── query/query.py          # Query system
@@ -135,7 +135,7 @@ cat ~/.opencode/settings.json | grep learning-loop
 **Database errors:**
 ```bash
 # Validate database
-python /query/query.py --validate
+python src/query/query.py --validate
 ```
 
 **Dashboard won't start:**
@@ -153,9 +153,9 @@ cd apps/dashboard
 # Configuration.md
 configuration = """# Configuration
 
-## CLAUDE.md
+## AGENTS.md
 
-The `~/.opencode/CLAUDE.md` file contains instructions Claude follows. The framework installs a template that:
+The `~/.opencode/AGENTS.md` file contains instructions Claude follows. The framework installs a template that:
 
 - Requires querying the building before tasks
 - Lists the golden rules
@@ -190,7 +190,7 @@ Hook configuration in `~/.opencode/settings.json`:
 
 ## Key Phrases
 
-The CLAUDE.md template teaches Claude to respond to:
+The AGENTS.md template teaches Claude to respond to:
 
 | Phrase | What It Does |
 |--------|--------------|
@@ -270,7 +270,7 @@ swarm = """# Swarm: Multi-Agent Coordination
 
 ## What It Does
 
-The conductor coordinates multiple Claude Code subagents with distinct personas:
+The conductor coordinates multiple Opencode subagents with distinct personas:
 
 | Agent | Role | When to Use |
 |-------|------|-------------|
@@ -355,25 +355,25 @@ cli_ref = """# CLI Reference
 
 ```bash
 # Build full context (what agents see)
-python /query/query.py --context
+python src/query/query.py --context
 
 # Query by domain
-python /query/query.py --domain testing
+python src/query/query.py --domain testing
 
 # Query by tags
-python /query/query.py --tags api,error
+python src/query/query.py --tags api,error
 
 # Get recent learnings
-python /query/query.py --recent 10
+python src/query/query.py --recent 10
 
 # View statistics
-python /query/query.py --stats
+python src/query/query.py --stats
 
 # Validate database
-python /query/query.py --validate
+python src/query/query.py --validate
 
 # Export learnings
-python /query/query.py --export > backup.json
+python src/query/query.py --export > backup.json
 ```
 
 ## Recording Scripts
@@ -432,7 +432,7 @@ Golden Rules are constitutional principles all agents follow.
 - Applies broadly to your project
 - Saves significant time when followed
 
-**Step 2:** Add to CLAUDE.md
+**Step 2:** Add to AGENTS.md
 ```markdown
 ## 6. Always Use Retry Logic for External APIs
 > Any call to external services must include exponential backoff
@@ -448,7 +448,7 @@ When a heuristic has proven itself (confidence > 0.9, validations > 10):
 
 1. Check confidence: `python query.py --context | grep "pattern"`
 2. Edit `src/memory/golden-rules.md`
-3. Update CLAUDE.md to reference it
+3. Update AGENTS.md to reference it
 
 ## Best Practices
 
@@ -472,7 +472,7 @@ This adds tokens to usage. Here's the breakdown:
 
 ## Per-Session Costs
 
-- **CLAUDE.md load:** ~1,500 tokens (once per session)
+- **AGENTS.md load:** ~1,500 tokens (once per session)
 - **Golden rules injection:** ~500 tokens (every session)
 
 ## Per-Task Costs
@@ -510,11 +510,11 @@ This adds tokens to usage. Here's the breakdown:
 # Migration.md
 migration = """# Migration Guide
 
-## From Plain Claude Code
+## From Plain Opencode
 
 **Step 1: Backup**
 ```bash
-cp ~/.opencode/CLAUDE.md ~/.opencode/CLAUDE.md.backup
+cp ~/.opencode/AGENTS.md ~/.opencode/AGENTS.md.backup
 cp ~/.opencode/settings.json ~/.opencode/settings.json.backup
 ```
 
@@ -524,13 +524,13 @@ cp ~/.opencode/settings.json ~/.opencode/settings.json.backup
 ```
 
 **Step 3: Merge custom instructions**
-Add your custom CLAUDE.md content AFTER the ELF section.
+Add your custom AGENTS.md content AFTER the ELF section.
 
 **Step 4: Test**
 ```bash
 claude
 # Say "check in" - should query building
-python /query/query.py --stats
+python src/query/query.py --stats
 ```
 
 ## Upgrading Versions
@@ -546,7 +546,7 @@ cd /path/to/ELF-repo && git pull
 ./install.sh
 
 # 4. Validate
-python /query/query.py --validate
+python src/query/query.py --validate
 ```
 
 ## Team Setup
@@ -561,7 +561,7 @@ python query.py --import-heuristics team-heuristics.json
 ```
 
 **Option 2: Project golden rules**
-- Create `.opencode/CLAUDE.md` in project repo
+- Create `.opencode/AGENTS.md` in project repo
 - Team members include project rules
 
 ## Rollback
@@ -569,7 +569,7 @@ python query.py --import-heuristics team-heuristics.json
 **Full uninstall:**
 1. Remove hooks from settings.json
 2. Delete `<elf-repo>/` directory
-3. Restore CLAUDE.md.backup
+3. Restore AGENTS.md.backup
 
 **Partial disable:**
 - Remove learning-loop from settings.json
@@ -583,7 +583,7 @@ architecture = """# Architecture
 
 ```
 +---------------------------------------------------------------+
-|                      Claude Code Session                      |
+|                      Opencode Session                      |
 +---------------------------------------------------------------+
 |                                                               |
 |   +--------------+    +--------------+    +--------------+    |
@@ -622,10 +622,10 @@ architecture = """# Architecture
 
 | Path | Purpose |
 |------|---------|
-| `~/.opencode/CLAUDE.md` | Agent instructions |
+| `~/.opencode/AGENTS.md` | Agent instructions |
 | `~/.opencode/settings.json` | Hook configurations |
 | `src/memory/index.db` | SQLite database |
-| `/query/query.py` | Query system |
+| `src/query/query.py` | Query system |
 | `src/hooks/learning-loop/` | Hook scripts |
 | `apps/dashboard/` | React dashboard |
 | `src/conductor/` | Swarm orchestration |

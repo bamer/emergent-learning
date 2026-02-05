@@ -13,14 +13,14 @@ set -e
 
 # Find the Python script
 ELF_HOME="${HOME}/.opencode/emergent-learning"
-CHECKIN_PY="${ELF_HOME}/query/checkin.py"
+CHECKIN_PY="${ELF_HOME}/src/query/checkin.py"
 
 # Fallback location if standard location doesn't exist
-if [ ! -f "CHECKIN_PY" ]; then
+if [ ! -f "$CHECKIN_PY" ]; then
     # Try project-relative location
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-    CHECKIN_PY="${PROJECT_ROOT}/query/checkin.py"
+    CHECKIN_PY="${PROJECT_ROOT}/src/query/checkin.py"
 fi
 
 # Ensure we can find Python

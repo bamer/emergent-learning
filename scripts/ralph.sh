@@ -2,7 +2,7 @@
 #
 # Ralph Loop: Autonomous AI task executor
 #
-# Spawns fresh Claude Code sessions to complete stories from prd.json
+# Spawns fresh Opencode sessions to complete stories from prd.json
 # Each iteration: read PRD → find incomplete → spawn session → update PRD → repeat
 #
 # Usage:
@@ -56,7 +56,7 @@ check_prerequisites() {
 
     if ! command -v claude-code &> /dev/null; then
         echo "⚠️  claude-code not found in PATH"
-        echo "   Ralph Loop needs Claude Code CLI to spawn sessions"
+        echo "   Ralph Loop needs Opencode CLI to spawn sessions"
     fi
 }
 
@@ -306,7 +306,7 @@ main() {
 
         LOG_FILE="${ELF_SESSION_DIR}/loop_${SESSION_ID}_${ITERATION}.log"
 
-        echo "🔄 Spawning fresh Claude Code session..."
+        echo "🔄 Spawning fresh Opencode session..."
         echo "   → Reading: $PROMPT_FILE"
         echo "   → Will update: progress.txt"
         echo "   → Logging to: $LOG_FILE"

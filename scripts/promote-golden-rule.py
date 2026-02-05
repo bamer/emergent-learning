@@ -23,7 +23,7 @@ Usage:
     # Interactive mode
     python promote-golden-rule.py
 
-When run by Claude Code, Claude acts as the categorizing agent by analyzing
+When run by Opencode, Claude acts as the categorizing agent by analyzing
 the rule content and existing categories to suggest the best fit.
 """
 

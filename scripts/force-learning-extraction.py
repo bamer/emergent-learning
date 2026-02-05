@@ -149,19 +149,20 @@ def record_learning_to_db(learning):
             # Insert new
             cursor.execute(
                 """
-                INSERT INTO heuristics 
-                (domain, rule, explanation, confidence, source_type, times_validated, created_at)
-                VALUES (?, ?, ?, ?, 'auto-extracted', 1, ?)
-                """,
+                            INSERT INTO heuristics 
+                            (domain, rule, explanation, confidence, source_type, times_validated, times_violated, is_golden, created_at, updated_at)
+                            VALUES (?, ?, ?, ?, 'auto-extracted', 1, 0, 0, ?, ?)
+                            """,
                 (
                     learning["domain"],
                     learning["rule"],
                     f"Auto-extracted on {datetime.now().isoformat()}",
                     learning["confidence"],
                     datetime.now().isoformat(),
+                    datetime.now().isoformat(),
                 ),
             )
-            return "inserted"
+        return "inserted"
 
         conn.commit()
         conn.close()

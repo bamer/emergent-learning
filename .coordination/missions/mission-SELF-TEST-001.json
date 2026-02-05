@@ -16,7 +16,7 @@
   "timeoutSeconds": 30,
   "timestamp": "2026-02-05T01:06:28.886883",
   "status": "in_progress",
-  "completedAt": "2026-02-05T02:31:50.783351",
-  "response": "Mission processed successfully by minimal orchestrator",
-  "startedAt": "2026-02-05T04:49:24.194868"
+  "completedAt": "2026-02-05T12:50:50.701454",
+  "response": "HTTPConnectionPool(host='localhost', port=4096): Read timed out. (read timeout=300)",
+  "startedAt": "2026-02-05T12:50:52.140440"
 }

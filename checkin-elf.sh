@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
-"""
-ELF OpenCode - Script de Check-in Complet
-
-Effectue un check-in complet du système ELF OpenCode:
-1. Vérifie l'état de tous les services
-2. Teste la connectivité
-3. Vérifie les hooks et le learning system
-4. Affiche un rapport de santé
-
-Usage:
-    ./checkin-elf.sh
-"""
+# ELF OpenCode - Script de Check-in Complet
+#
+# Effectue un check-in complet du système ELF OpenCode:
+# 1. Vérifie l'état de tous les services
+# 2. Teste la connectivité
+# 3. Vérifie les hooks et le learning system
+# 4. Affiche un rapport de santé
+#
+# Usage:
+#     ./checkin-elf.sh
 
 set -euo pipefail
 

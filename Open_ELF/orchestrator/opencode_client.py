@@ -137,35 +137,49 @@ class OptimizedOpenCodeClient:
             return False, str(e)
     
     def _wait_for_response(self, timeout: int = 300) -> Optional[str]:
-        """Wait for AI response by polling"""
+        """Wait for AI response by polling."""
         start_time = time.time()
         poll_interval = 5  # Poll every 5 seconds
-        
+
         while time.time() - start_time < timeout:
             try:
                 response = self.http_session.get(
                     f"{self.base_url}/session/{self.opencode_session_id}/message",
-                    timeout=30
+                    timeout=30,
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
-                    messages = data.get("messages", [])
-                    
-                    # Look for the latest response
+                    if isinstance(data, list):
+                        messages = data
+                    else:
+                        messages = data.get("messages", []) if isinstance(data, dict) else []
+
+                    # Look for the latest assistant response
                     for msg in reversed(messages):
-                        if msg.get("role") == "assistant":
-                            content = msg.get("content", "")
-                            if content:
-                                logger.info(f"📥 Response received ({len(content)} chars)")
-                                return content
-                
+                        if not isinstance(msg, dict):
+                            continue
+                        role = msg.get("role") or msg.get("info", {}).get("role")
+                        if role != "assistant":
+                            continue
+                        content = msg.get("content", "")
+                        if not content:
+                            parts = msg.get("parts", []) or []
+                            content = "".join(
+                                part.get("text", "")
+                                for part in parts
+                                if isinstance(part, dict) and part.get("type") == "text"
+                            )
+                        if content:
+                            logger.info(f"📥 Response received ({len(content)} chars)")
+                            return content
+
                 time.sleep(poll_interval)
-                
+
             except Exception as e:
                 logger.warning(f"⚠️ Response polling error: {e}")
                 time.sleep(poll_interval)
-        
+
         logger.warning("⏰ Response wait timeout")
         return None
     

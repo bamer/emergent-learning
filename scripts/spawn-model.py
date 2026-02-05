@@ -304,9 +304,9 @@ Examples:
                 print(f"Confidence: {suggestion['confidence']:.0%}", file=sys.stderr)
                 print("---", file=sys.stderr)
         else:
-            model = 'opencode'
+            model = 'claude'
             if not args.quiet:
-                print("Auto-detection unavailable, defaulting to opencode/big-pickle", file=sys.stderr)
+                print("Auto-detection unavailable, defaulting to claude", file=sys.stderr)
 
     # Build full prompt with file contents if provided
     full_prompt = prompt
@@ -326,13 +326,13 @@ Examples:
         result = run_gemini(full_prompt, args.timeout)
     elif model == 'codex':
         result = run_codex(full_prompt, args.timeout, args.mode)
-    elif model == 'opencode':
-        # OpenCode/big-pickle is the primary orchestrator
+    elif model == 'claude':
+        # Claude is the current session - just return the prompt for it to handle
         result = {
             'success': True,
-            'output': f"[Route to OpenCode/big-pickle - primary orchestrator]\n\nTask: {prompt}",
+            'output': f"[Route to Claude - current session]\n\nTask: {prompt}",
             'error': None,
-            'model': 'opencode'
+            'model': 'claude'
         }
     else:
         result = {
