@@ -28,6 +28,10 @@ MANIFEST
 .pytest_cache/
 .coverage
 htmlcov/
+**/event-bridge-heartbeat.json*
+event-bridge-heartbeat.json
+*event-bridge-heartbeat.json*
+
 
 # Virtual environments
 .venv
@@ -88,4 +92,5 @@ Thumbs.db
 .coordination/event-bridge-heartbeat.json
 .gitignore
 .coordination/watcher-log.md
+.coordination/event-bridge-heartbeat.json
 .coordination/event-bridge-heartbeat.json
