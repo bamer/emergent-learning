@@ -31,7 +31,7 @@ class OpenCodeLauncher:
 
         # Check if already running
         try:
-            resp = requests.get(f"{self.server_url}/global/health", timeout=2)
+            resp = requests.get(f"{self.server_url}/", timeout=2)
             if resp.status_code == 200:
                 health_data = resp.json()
                 version = health_data.get("version", "unknown")
@@ -120,7 +120,7 @@ class OpenCodeLauncher:
             # Wait for server
             for i in range(30):
                 try:
-                    resp = requests.get(f"{self.server_url}/global/health", timeout=2)
+                    resp = requests.get(f"{self.server_url}/", timeout=2)
                     if resp.status_code == 200:
                         print("[OpenCode] ✅ Server started successfully")
                         return True

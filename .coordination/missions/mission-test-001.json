@@ -1,0 +1,14 @@
+{
+  "taskId": "test-001",
+  "role": "researcher",
+  "description": "Test mission to verify orchestrator API integration",
+  "inputs": {
+    "test_data": "This is a test mission"
+  },
+  "status": "in_progress",
+  "createdAt": "2026-02-05T19:36:00",
+  "completedAt": "2026-02-05T21:43:24.716153",
+  "response": "Failed to establish OpenCode session",
+  "response_type": "mission_accepted",
+  "startedAt": "2026-02-05T21:43:29.718728"
+}

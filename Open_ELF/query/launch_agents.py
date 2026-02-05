@@ -58,7 +58,7 @@ class AgentLauncher:
         while time.time() - start < timeout:
             try:
                 resp = requests.get(
-                    f"{self.server_url}/global/health",
+                    f"{self.server_url}/",
                     timeout=2
                 )
                 if resp.status_code == 200:
@@ -238,7 +238,7 @@ read -p "Appuyez sur Entrée pour fermer..."
         logger.info("")
         logger.info("📊 Monitoring:")
         logger.info(f"  - Serveur: {self.server_url}")
-        logger.info(f"  - Health: {self.server_url}/global/health")
+        logger.info(f"  - Health: {self.server_url}/")
         logger.info(f"  - API Docs: {self.server_url}/doc")
         logger.info("")
         logger.info("🤖 Agents actifs:")

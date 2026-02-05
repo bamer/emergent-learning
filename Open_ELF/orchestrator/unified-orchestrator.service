@@ -1,0 +1,20 @@
+[Unit]
+Description=Unified OpenCode Orchestrator
+After=network.target
+
+[Service]
+Type=simple
+User=bamer
+WorkingDirectory=/home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator
+ExecStart=/home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator/start_unified_orchestrator.sh
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=unified-orchestrator
+
+[Install]
+WantedBy=multi-user.target

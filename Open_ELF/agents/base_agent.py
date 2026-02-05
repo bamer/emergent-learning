@@ -65,7 +65,7 @@ class BaseAgent(ABC):
         """Verify OpenCode server is accessible."""
         try:
             resp = requests.get(
-                f"{self.server_url}/global/health",
+                f"{self.server_url}/",
                 timeout=5
             )
             if resp.status_code == 200:

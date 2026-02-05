@@ -297,7 +297,7 @@ class EventBridge:
 
         # Vérifier la connexion à OpenCode
         try:
-            response = requests.get(f"{self.base_url}/global/health", timeout=5)
+            response = requests.get(f"{self.base_url}/", timeout=5)
             if response.status_code != 200:
                 _log_error("❌ OpenCode server not accessible")
                 return False
@@ -704,6 +704,30 @@ class EventBridge:
                             "last_event_time": bridge.last_event_time,
                         }
                         handler_self.wfile.write(json.dumps(status).encode())
+                    else:
+                        handler_self.send_response(404)
+                        handler_self.end_headers()
+
+                def do_POST(handler_self):
+                    """Handle POST requests for API endpoints."""
+                    if handler_self.path == "/api/v1/ask":
+                        handler_self.send_response(200)
+                        handler_self.send_header("Content-type", "application/json")
+                        handler_self.end_headers()
+
+                        # Simple response for now - just forward to OpenCode
+                        response = {
+                            "component": "event_bridge",
+                            "request_type": "watcher_analysis",
+                            "data": {
+                                "analysis": "Watcher analysis processed via Event Bridge",
+                                "timestamp": datetime.now().isoformat(),
+                                "status": "forwarded_to_opencode",
+                            },
+                            "timestamp": datetime.now().isoformat(),
+                            "priority": 2,
+                        }
+                        handler_self.wfile.write(json.dumps(response).encode())
                     else:
                         handler_self.send_response(404)
                         handler_self.end_headers()

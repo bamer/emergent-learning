@@ -23,9 +23,9 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ELF_DIR="${SCRIPT_DIR}"
+ELF_DIR="${SCRIPT_DIR}/Open_ELF"
 OPENCODE_DIR="${HOME}/.opencode"
-LOGS_DIR="${ELF_DIR}/Open_ELF/logs"
+LOGS_DIR="${ELF_DIR}/logs"
 
 # Create logs directory
 mkdir -p "${LOGS_DIR}"
