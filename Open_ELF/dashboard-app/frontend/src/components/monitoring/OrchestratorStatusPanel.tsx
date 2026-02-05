@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Cpu, Activity, CheckCircle, AlertTriangle, RefreshCw,
   ChevronRight, ChevronDown, Clock, Play, Square, FolderOpen,
@@ -72,13 +72,24 @@ export function OrchestratorStatusPanel({
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
   const [isLaunching, setIsLaunching] = useState(false);
   
+  // Refs to prevent race conditions
+  const isMountedRef = useRef(true);
+  const isInitialLoadRef = useRef(true);
+  
   // Event stats
   const [questionCount, setQuestionCount] = useState(0);
   const [responseCount, setResponseCount] = useState(0);
   const [totalEvents, setTotalEvents] = useState(0);
 
   const fetchStatus = useCallback(async () => {
+    if (!isMountedRef.current) return;
+    
+    const isInitialLoad = isInitialLoadRef.current;
+    
     try {
+      if (isInitialLoad) {
+        setLoading(true);
+      }
       // Fetch status
       const statusResponse = await fetch(`${apiBaseUrl}/api/v1/orchestrator/status`);
       if (!statusResponse.ok) throw new Error(`HTTP ${statusResponse.status}`);
@@ -109,11 +120,20 @@ export function OrchestratorStatusPanel({
       }
       
       setError(null);
+      
+      // Mark initial load as complete
+      if (isInitialLoadRef.current) {
+        isInitialLoadRef.current = false;
+      }
     } catch (err) {
+      if (!isMountedRef.current) return;
       console.error('Failed to fetch orchestrator status:', err);
       setError(err instanceof Error ? err.message : 'Failed to connect');
     } finally {
-      setLoading(false);
+      if (!isMountedRef.current) return;
+      if (isInitialLoad) {
+        setLoading(false);
+      }
     }
   }, [apiBaseUrl]);
 
@@ -141,11 +161,22 @@ export function OrchestratorStatusPanel({
   }, [apiBaseUrl, fetchStatus]);
 
   useEffect(() => {
+    isMountedRef.current = true;
+    
     fetchStatus();
-    if (!autoRefresh) return;
-    const interval = setInterval(fetchStatus, refreshInterval);
-    return () => clearInterval(interval);
-  }, [fetchStatus, autoRefresh, refreshInterval]);
+    
+    if (autoRefresh) {
+      const interval = setInterval(fetchStatus, refreshInterval);
+      return () => {
+        isMountedRef.current = false;
+        clearInterval(interval);
+      };
+    }
+    
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [autoRefresh, refreshInterval]);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => {

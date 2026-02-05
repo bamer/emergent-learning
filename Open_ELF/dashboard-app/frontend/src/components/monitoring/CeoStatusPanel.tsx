@@ -208,9 +208,8 @@ export function CeoStatusPanel({
     } finally {
       // Only stop loading state on initial load
       if (!isMountedRef.current) return;
-      if (isInitialLoadRef.current) {
+      if (isInitialLoad) {
         setLoading(false);
-        isInitialLoadRef.current = false;
       }
     }
   }, [apiBaseUrl]);

@@ -61,9 +61,8 @@ export function OllamaStatus({ apiBaseUrl = '' }: OllamaStatusProps) {
       setError(err instanceof Error ? err.message : 'Failed to load status');
     } finally {
       if (!isMountedRef.current) return;
-      if (isInitialLoadRef.current) {
+      if (isInitialLoad) {
         setLoading(false);
-        isInitialLoadRef.current = false;
       }
     }
   };
