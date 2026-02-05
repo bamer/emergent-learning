@@ -37,6 +37,7 @@ log() {
 # Source observability libraries
 if [ -f "$SCRIPT_DIR/lib/logging.sh" ]; then
     source "$SCRIPT_DIR/lib/logging.sh"
+    source "$SCRIPT_DIR/lib/error-handling.sh" 2>/dev/null || true
     source "$SCRIPT_DIR/lib/metrics.sh" 2>/dev/null || true
     source "$SCRIPT_DIR/lib/alerts.sh" 2>/dev/null || true
 
