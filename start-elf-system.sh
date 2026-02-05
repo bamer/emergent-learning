@@ -230,7 +230,7 @@ start_backend() {
 start_event_bridge() {
     log "🚀 Démarrage de l'Event Bridge (port 9998)..."
     
-    local orchestrator_dir="${ELF_DIR}/Open_ELF/orchestrator"
+    local orchestrator_dir="${ELF_DIR}/orchestrator"
     
     # Vérifier que le répertoire existe
     if [[ ! -d "${orchestrator_dir}" ]]; then
@@ -557,6 +557,8 @@ main() {
         
         # Boucle principale corrigée - vérifie les processus et répond à Ctrl+C
         log "🔄 Surveillance des services (Ctrl+C pour arrêter)..."
+        
+        # Vérifier les processus toutes les 5 secondes mais répondre aux signaux
         while [[ $RUNNING == true ]]; do
             # Vérifier si les processus sont encore en vie
             if ! all_services_running; then
@@ -564,9 +566,13 @@ main() {
                 show_status
             fi
             
-            # Attendre mais vérifier régulièrement les signaux
-            sleep 5 &
-            wait $! 2>/dev/null || true
+            # Attendre 5 secondes mais interrompre si signal reçu
+            if ! timeout 5 sleep 5; then
+                # Si timeout interrompu, c'est probablement un signal
+                if [[ $RUNNING == false ]]; then
+                    break
+                fi
+            fi
         done
         
         # Sortie normale
