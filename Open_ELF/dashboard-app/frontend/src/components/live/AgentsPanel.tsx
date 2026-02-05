@@ -164,6 +164,11 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
   const [filterPrimaryOnly, setFilterPrimaryOnly] = useState(true); // Default to showing primary agents only
   const [agentModalKey, setAgentModalKey] = useState(0); // Force modal remount on close
   const [searchQuery, setSearchQuery] = useState(''); // Search query for filtering agents
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [agentsPerPage, setAgentsPerPage] = useState(20);
+  const agentsPerPageOptions = [10, 20, 50, 100];
 
   // Fetch available models
   const fetchModels = useCallback(async () => {
@@ -458,6 +463,32 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
     return defaultModel?.id || availableModels[0]?.id || '';
   };
 
+  // Filter and paginate agents
+  const filteredAgents = allAgents.filter(agent => {
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        (agent.display_name && typeof agent.display_name === 'string' && agent.display_name.toLowerCase().includes(query)) ||
+        (agent.name && typeof agent.name === 'string' && agent.name.toLowerCase().includes(query)) ||
+        (agent.description && typeof agent.description === 'string' && agent.description.toLowerCase().includes(query)) ||
+        (agent.type && typeof agent.type === 'string' && agent.type.toLowerCase().includes(query)) ||
+        (agent.role && typeof agent.role === 'string' && agent.role.toLowerCase().includes(query));
+      if (!matchesSearch) return false;
+    }
+    
+    // Apply other filters
+    if (!showSystemAgents && agent.is_system) return false;
+    if (!showHiddenAgents && agent.is_hidden) return false;
+    if (filterPrimaryOnly && !agent.is_primary) return false;
+    return true;
+  });
+
+  const paginatedAgents = filteredAgents.slice(
+    (currentPage - 1) * agentsPerPage,
+    currentPage * agentsPerPage
+  );
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-slate-900/30 rounded-lg border border-slate-700/50">
@@ -664,7 +695,7 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
             <div className="flex items-center gap-1.5">
               <span className="text-slate-500">Running:</span>
               <span className="text-emerald-400 font-semibold">
-                {allAgents.filter(a => a.status && (a.status === 'running' || a.status === 'busy' || a.status === 'ready')).length}
+                {allAgents.filter(a => a.system === 'elf' && a.status === 'running').length}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -774,28 +805,61 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
             </div>
           </div>
         ) : allAgents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {allAgents
-              .filter(agent => {
-                // Apply search filter
-                if (searchQuery.trim()) {
-                  const query = searchQuery.toLowerCase();
-                  const matchesSearch = 
-                    (agent.display_name && typeof agent.display_name === 'string' && agent.display_name.toLowerCase().includes(query)) ||
-                    (agent.name && typeof agent.name === 'string' && agent.name.toLowerCase().includes(query)) ||
-                    (agent.description && typeof agent.description === 'string' && agent.description.toLowerCase().includes(query)) ||
-                    (agent.type && typeof agent.type === 'string' && agent.type.toLowerCase().includes(query)) ||
-                    (agent.role && typeof agent.role === 'string' && agent.role.toLowerCase().includes(query));
-                  if (!matchesSearch) return false;
-                }
-                
-                // Apply other filters
-                if (!showSystemAgents && agent.is_system) return false;
-                if (!showHiddenAgents && agent.is_hidden) return false;
-                if (filterPrimaryOnly && !agent.is_primary) return false;
-                return true;
-              })
-              .map((agent, index) => {
+          <>
+            {/* Pagination Info */}
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-4 text-xs text-slate-400">
+                <span>Showing {Math.min((currentPage - 1) * agentsPerPage + 1, filteredAgents.length)} - {Math.min(currentPage * agentsPerPage, filteredAgents.length)} of {filteredAgents.length} agents</span>
+                <select
+                  value={agentsPerPage}
+                  onChange={(e) => {
+                    setAgentsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="bg-slate-700/50 border border-slate-600/50 rounded px-2 py-1 text-slate-200 focus:outline-none focus:border-violet-500/50"
+                >
+                  {agentsPerPageOptions.map(option => (
+                    <option key={option} value={option}>{option} per page</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                  className="px-2 py-1 bg-slate-700/50 hover:bg-slate-600/50 disabled:opacity-50 disabled:cursor-not-allowed rounded text-xs text-slate-200"
+                >
+                  First
+                </button>
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-2 py-1 bg-slate-700/50 hover:bg-slate-600/50 disabled:opacity-50 disabled:cursor-not-allowed rounded text-xs text-slate-200"
+                >
+                  Previous
+                </button>
+                <span className="text-xs text-slate-400 px-2">
+                  Page {currentPage} of {Math.ceil(filteredAgents.length / agentsPerPage)}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredAgents.length / agentsPerPage), p + 1))}
+                  disabled={currentPage >= Math.ceil(filteredAgents.length / agentsPerPage)}
+                  className="px-2 py-1 bg-slate-700/50 hover:bg-slate-600/50 disabled:opacity-50 disabled:cursor-not-allowed rounded text-xs text-slate-200"
+                >
+                  Next
+                </button>
+                <button
+                  onClick={() => setCurrentPage(Math.ceil(filteredAgents.length / agentsPerPage))}
+                  disabled={currentPage >= Math.ceil(filteredAgents.length / agentsPerPage)}
+                  className="px-2 py-1 bg-slate-700/50 hover:bg-slate-600/50 disabled:opacity-50 disabled:cursor-not-allowed rounded text-xs text-slate-200"
+                >
+                  Last
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {paginatedAgents.map((agent, index) => {
               const IconComponent = getIconComponent(agent);
               const statusClass = STATUS_COLORS[agent.status || 'unknown'] || STATUS_COLORS.stopped;
               const statusDisplay = STATUS_DISPLAY[agent.status || 'unknown'] || { text: agent.status || 'Unknown', emoji: '⚪' };
@@ -917,6 +981,7 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
               );
             })}
           </div>
+        </>
         ) : (
           <div className="text-center text-slate-500">No agents available.</div>
         )}
