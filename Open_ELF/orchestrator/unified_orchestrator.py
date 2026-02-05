@@ -8,7 +8,7 @@ import json
 import logging
 import asyncio
 import aiohttp
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -23,6 +23,18 @@ logger = logging.getLogger("UnifiedOrchestrator")
 # Constants
 OPENCODE_SERVER = "http://localhost:4096"
 ORCHESTRATOR_PORT = 9999
+
+# Import event logger for database logging
+try:
+    from utils.event_logger import log_orchestrator_event
+
+    EVENT_LOGGER_AVAILABLE = True
+    logger.info("✓ Event logger imported successfully")
+except ImportError:
+    EVENT_LOGGER_AVAILABLE = False
+    logger.warning(
+        "⚠ Event logger not available, events will not be logged to database"
+    )
 
 
 @dataclass
@@ -158,6 +170,41 @@ class UnifiedOrchestrator:
                 event.processed = True
                 event.action = await self._decide(event)
                 self.events.append(event)
+
+                # Log event to database if available
+                if EVENT_LOGGER_AVAILABLE and event.type == "tool.start":
+                    event_category = "question"
+                    summary = f"Tool execution started: {event.data.get('tool_name', 'unknown')}"
+                    log_orchestrator_event(
+                        event_type="question_received",
+                        event_category=event_category,
+                        summary=summary,
+                        details=event.data,
+                    )
+                elif EVENT_LOGGER_AVAILABLE and event.type == "tool.finish":
+                    event_category = "response"
+                    summary = f"Tool execution finished: {event.data.get('tool_name', 'unknown')}"
+                    log_orchestrator_event(
+                        event_type="response_sent",
+                        event_category=event_category,
+                        summary=summary,
+                        details=event.data,
+                    )
+                elif EVENT_LOGGER_AVAILABLE:
+                    event_category = "action" if event.action != "LOG" else "decision"
+                    log_orchestrator_event(
+                        event_type="orchestrator_action",
+                        event_category=event_category,
+                        summary=f"{event.type}: {event.action}",
+                        details={
+                            "event_type": event.type,
+                            "severity": event.severity,
+                            "action": event.action,
+                            "source": event.source,
+                            "event_data": event.data,
+                        },
+                    )
+
                 logger.info(f"✅ {event.type} -> {event.action}")
                 self.event_queue.task_done()
             except Exception as e:

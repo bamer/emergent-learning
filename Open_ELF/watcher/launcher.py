@@ -76,6 +76,18 @@ except ImportError:
         "opencode_client not available, will not be able to call OpenCode"
     )
 
+# Import event logger for database logging
+try:
+    from utils.event_logger import log_watcher_check, log_file_event
+
+    EVENT_LOGGER_AVAILABLE = True
+    watcher_logger.info("✓ Event logger imported successfully")
+except ImportError:
+    EVENT_LOGGER_AVAILABLE = False
+    watcher_logger.warning(
+        "⚠ Event logger not available, events will not be logged to database"
+    )
+
 # Paths
 COORDINATION_DIR = ELF_DIR / ".coordination"
 WATCHER_LOG = COORDINATION_DIR / "watcher-log.md"
@@ -265,6 +277,14 @@ async def run_tier1_async() -> Tuple[int, str]:
 
     if not success:
         watcher_logger.error(f"[TIER 1 ERROR] {response}")
+        # Log failed check to database if available
+        if EVENT_LOGGER_AVAILABLE:
+            log_watcher_check(
+                tier=1,
+                status="error",
+                summary=f"Event Bridge call failed",
+                details={"error": response},
+            )
         return EXIT_ERROR, response
 
     # Log response
@@ -274,6 +294,27 @@ async def run_tier1_async() -> Tuple[int, str]:
     # Parse exit code from summary
     exit_code = parse_exit_code_from_summary(response)
     watcher_logger.info(f"[TIER 1] Exit code: {exit_code}")
+
+    # Log successful check to database if available
+    if EVENT_LOGGER_AVAILABLE:
+        status_map = {0: "success", 1: "warning", 2: "error"}
+        summary_map = {
+            0: "System operating normally",
+            1: "Escalation detected, intervention needed",
+            2: "Error detected, retry required",
+        }
+        log_watcher_check(
+            tier=1,
+            status=status_map.get(exit_code, "warning"),
+            summary=summary_map.get(
+                exit_code, f"Check completed with exit code {exit_code}"
+            ),
+            details={
+                "exit_code": exit_code,
+                "response_length": len(response),
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
 
     return exit_code, response
 
@@ -297,6 +338,14 @@ async def run_tier2_async(escalation_context: str) -> int:
 
     if not success:
         watcher_logger.error(f"[TIER 2 ERROR] {response}")
+        # Log failed tier 2 check to database if available
+        if EVENT_LOGGER_AVAILABLE:
+            log_watcher_check(
+                tier=2,
+                status="error",
+                summary=f"Tier 2 deep analysis call failed",
+                details={"error": response},
+            )
         return EXIT_ERROR
 
     # Log response
@@ -304,6 +353,22 @@ async def run_tier2_async(escalation_context: str) -> int:
     print(response)  # Full response to stdout
 
     watcher_logger.info("[TIER 2] Deep analysis complete")
+
+    # Log successful tier 2 check to database if available
+    if EVENT_LOGGER_AVAILABLE:
+        log_watcher_check(
+            tier=2,
+            status="warning",
+            summary=f"Deep analysis completed: escalation handled",
+            details={
+                "escalation_context": escalation_context[:100] + "..."
+                if len(escalation_context) > 100
+                else escalation_context,
+                "response_length": len(response),
+                "timestamp": datetime.now().isoformat(),
+            },
+        )
+
     return EXIT_NORMAL
 
 

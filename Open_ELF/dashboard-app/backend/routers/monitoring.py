@@ -994,11 +994,11 @@ async def get_watcher_events():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get recent file monitoring events
+        # Get recent watcher events (watcher_check, watcher_status, file changes)
         cursor.execute("""
             SELECT id, timestamp, event_type, source, summary, data
             FROM event_chronicle 
-            WHERE event_type IN ('file_change', 'file_creation', 'file_deletion', 'watcher_status')
+            WHERE event_type IN ('watcher_check', 'watcher_status', 'file_change', 'file_creation', 'file_deletion')
             ORDER BY timestamp DESC 
             LIMIT 20
         """)
@@ -1039,7 +1039,7 @@ async def get_orchestrator_events():
         cursor.execute("""
             SELECT id, timestamp, event_type, source, summary, data
             FROM event_chronicle 
-            WHERE event_type IN ('agent_question', 'agent_response', 'orchestrator_action', 'question_received', 'response_sent')
+            WHERE event_type IN ('agent_question', 'agent_response', 'orchestrator_action', 'question_received', 'response_sent', 'orchestrator_decided')
             ORDER BY timestamp DESC 
             LIMIT 20
         """)
