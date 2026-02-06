@@ -19,20 +19,47 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 
-# Import OpenCode client
+# Import Event Bridge client
 try:
-    from opencode_client import OpenCodeClient
+    from event_bridge_client import EventBridgeClient
 except ImportError:
-    # Fallback: define minimal client
-    class OpenCodeClient:
+    # Fallback: define minimal client that uses Event Bridge API
+    import requests
+    import json
+    class EventBridgeClient:
         def __init__(self, model="nvidia/z-ai/glm4.7"):
             self.model = model
-        def call(self, prompt, timeout=120):
-            result = subprocess.run(
-                ["opencode", "--model", self.model, "--prompt", prompt],
-                capture_output=True, text=True, timeout=timeout
-            )
-            return result.stdout.strip() if result.returncode == 0 else None
+            self.server_url = "http://localhost:9998"
+        def call(self, prompt, timeout=120, agent=None):
+            try:
+                payload = {
+                    "component": "experiment_analyzer",
+                    "request_type": "experiment_analysis",
+                    "data": {
+                        "prompt": prompt,
+                        "agent": agent or "researcher",
+                        "model": self.model,
+                        "timestamp": datetime.now().isoformat(),
+                    },
+                    "priority": 2,
+                }
+                resp = requests.post(
+                    f"{self.server_url}/api/v1/ask",
+                    json=payload,
+                    timeout=timeout,
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    if "data" in data and "analysis" in data["data"]:
+                        return data["data"]["analysis"]
+                    elif "data" in data and "ai_analysis" in data["data"]:
+                        return data["data"]["ai_analysis"]
+                    else:
+                        return json.dumps(data)
+                return None
+            except Exception as e:
+                print(f"Error calling Event Bridge: {e}", file=sys.stderr)
+                return None
 
 def get_elf_base() -> Path:
     """Get ELF base path."""
@@ -44,11 +71,11 @@ def get_elf_base() -> Path:
         return Path(__file__).parent.parent
 
 class ExperimentAnalyzer:
-    """AI-powered experiment analysis using opencode/big-pickle."""
+    """AI-powered experiment analysis using nvidia/z-ai/glm4.7."""
     
-    def __init__(self, model: str = "opencode/big-pickle"):
+    def __init__(self, model: str = "nvidia/z-ai/glm4.7"):
         self.model = model
-        self.client = OpenCodeClient(model=model)
+        self.client = EventBridgeClient(model=model)
         self.elf_base = get_elf_base()
         self.db_path = self.elf_base / "memory" / "index.db"
         self.manager_path = Path(__file__).parent.parent / "scripts" / "lib" / "experiment_manager.py"
