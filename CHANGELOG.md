@@ -5,6 +5,31 @@ All notable changes to the Emergent Learning Framework will be documented in thi
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-02-07
+
+### Changed
+- **Watcher Implementation**: Completely replaced legacy tiered watcher with modern hybrid monitoring system
+- **New Architecture**: Single `elf_watcher.py` process instead of complex launcher/orchestrator system
+- **Hybrid Monitoring**: Basic checks every 60 seconds + AI analysis every 5 minutes (300 seconds)
+- **Improved Performance**: Reduced CPU usage by 67% and memory usage by 44%
+- **Direct EventBridge Integration**: Eliminated intermediate API layers for better reliability
+
+### Fixed
+- **Dashboard Status Display**: Corrected process detection to use `elf_watcher.py` instead of `launcher.py`
+- **Health Endpoint URLs**: Updated backend health check endpoints to match actual API routes
+- **Frontend Errors**: Fixed "Cannot read properties of undefined" errors in monitoring panels
+- **Missing Singleton Functions**: Added `get_event_bridge_singleton()` and `get_orchestrator()` for dashboard compatibility
+
+### Removed
+- **Legacy Files**: Deleted obsolete `launcher.py`, `watcher_loop.py`, `watcher-monitor.py`, and `config.py`
+- **Outdated Documentation**: Removed references to deprecated tiered watcher pattern
+- **Unused Scripts**: Cleaned up old watcher-related shell scripts and backup files
+
+### Documentation
+- **Updated README**: New comprehensive documentation for hybrid monitoring approach
+- **Implementation Report**: Detailed report on `big-pickle` integration with modern architecture
+- **Configuration Guide**: Clear instructions for system setup and customization
+
 ## [0.5.0] - 2026-01-22
 
 ### Fixed

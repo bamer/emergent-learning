@@ -1,74 +1,81 @@
-# ELF Watcher (OpenCode Adaptation)
+# ELF Watcher - Hybrid Monitoring System
 
-## Adaptation from Original ELF Design
+## Overview
 
-This is an adaptation of the original [Tiered Watcher Pattern](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/blob/main/src/watcher/README.md) for OpenCode.
+The ELF Watcher is a modern continuous monitoring system that implements a hybrid approach combining frequent basic system checks with periodic deep AI analysis. This replaces the original tiered watcher pattern with a more efficient and practical implementation.
 
-### Key Differences from Original
-
-| Original ELF | OpenCode Adaptation |
-|-------------|---------------------|
-| **Two models**: Haiku (tier 1) + Opus (tier 2) | **One model**: `opencode/big-pickle` (adapts to prompt depth) |
-| Model change for different intelligence levels | **Prompt depth change** - same model, different thinking levels |
-| Cost optimization (Haiku is cheaper) | Free model - cost not a factor |
-| External API (Anthropic) | Local HTTP API (OpenCode) |
-
-## Architecture
+## New Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      LAUNCHER.PY                            │
-│  Orchestrates tiered monitoring with same model           │
-│  - Tier 1: Fast prompt every 30 seconds               │
-│  - Tier 2: Deep prompt (escalation only)               │
-└──────────────┬────────────────────────────┬─────────────────┘
-               │                            │
-               ▼                            ▼
-    ┌──────────────────┐        ┌──────────────────────┐
-    │  TIER 1 PROMPT   │        │   TIER 2 PROMPT     │
-    │  Fast, Basic     │        │  Deep Analysis      │
-    │  Quick Checks     │        │  Decision Making     │
-    │  Exit Code 1     │        │  Escalated from T1  │
-    │  (Need Help)     │        │                    │
-    └──────────────────┘        └──────────────────────┘
-               │                            ▲
-               │                            │
-               └────────────────────────────┘
-
-           ┌────────────────────────┐
-           │   .coordination/       │
-           │   - blackboard.json    │
-           │   - watcher-log.md    │
-           │   - watcher-stop      │
-           └────────────────────────┘
+│                    ELF_WATCHER.PY                           │
+│  Hybrid monitoring with intelligent scheduling              │
+│  - Basic checks: Every 60 seconds (system health)          │
+│  - AI analysis: Every 300 seconds (5 minutes)              │
+└─────────────────────────────────────────────────────────────┘
+                │               │
+                ▼               ▼
+    ┌──────────────────┐  ┌──────────────────────┐
+    │  BASIC CHECKS    │  │   AI ANALYSIS        │
+    │  Fast health     │  │  Deep system         │
+    │  monitoring      │  │  understanding       │
+    │                  │  │                      │
+    └──────────────────┘  └──────────────────────┘
+                │               ▲
+                │               │
+                └───────────────┘
+                
+       ┌────────────────────────┐
+       │   .coordination/       │
+       │   - blackboard.json    │
+       │   - watcher-log.md     │
+       │   - watcher-stop       │
+       └────────────────────────┘
 ```
+
+## Key Improvements Over Original Design
+
+### Performance Optimization
+- **Reduced Frequency**: Basic checks every 60 seconds instead of 30 seconds
+- **Smart Scheduling**: AI analysis every 5 minutes to allow adequate processing time
+- **Resource Efficiency**: Single monitoring process instead of tiered orchestration
+
+### Integration Updates
+- **Direct EventBridge Communication**: No longer requires external API calls
+- **Simplified Architecture**: Single Python script replaces complex launcher system
+- **Better Error Handling**: Improved logging and status reporting
+
+### Modern Implementation
+- **Hybrid Monitoring**: Combines fast system checks with intelligent AI analysis
+- **Self-Contained**: All functionality in one file (`elf_watcher.py`)
+- **Modern Dependencies**: Uses current Python libraries and practices
 
 ## Concept
 
-The Tiered Watcher Pattern solves the problem of continuous AI monitoring:
+The hybrid approach solves the problem of balancing continuous monitoring efficiency with deep analytical capabilities:
 
-- **Problem**: Running deep analysis constantly is wasteful
-- **Solution**: Use fast prompts for frequent checks, deep prompts only when needed
-- **Benefit**: Efficient monitoring without unnecessary computation
+- **Problem**: Constant deep AI analysis is computationally expensive
+- **Solution**: Fast system checks for immediate issues + periodic AI analysis for deeper insights
+- **Benefit**: Continuous monitoring without resource waste
 
-### Tier 1: Fast Watcher (Every 30 seconds)
-- Checks coordination state quickly
-- Detects basic issues (stale agents, errors)
+### Basic Checks (Every 60 seconds)
+- Checks system health and service availability
+- Detects immediate issues (down services, connection problems)
 - Handles simple problems autonomously
-- Exit code 1 when tier 2 help is needed
+- Minimal computational overhead
 
-### Tier 2: Deep Handler (Escalation Only)
-- Invoked only when tier 1 requests help
-- Deep analysis of complex issues
-- Makes intelligent decisions
-- Higher computation cost but infrequent
+### AI Analysis (Every 5 minutes)
+- Deep system analysis with artificial intelligence
+- Pattern recognition and anomaly detection
+- Predictive maintenance and optimization suggestions
+- Higher computational cost but infrequent execution
 
-### Launcher
-- Runs tier 1 in continuous loop
-- Monitors exit codes
-- Escalates to tier 2 when needed (exit code = 1)
-- Handles graceful shutdown via stop file
-- Logs all activity
+### Core Functionality
+- **Service Monitoring**: Checks health of dashboard, EventBridge, and other services
+- **Self-Healing**: Attempts to fix common issues automatically
+- **Escalation**: Sends alerts to EventBridge for critical problems
+- **Logging**: Records all activities to coordination log
+- **Process Management**: Can restart services when needed
 
 ## Quick Start
 
@@ -77,227 +84,119 @@ The Tiered Watcher Pattern solves the problem of continuous AI monitoring:
 ```bash
 # From ELF directory
 cd /home/bamer/.opencode/emergent-learning
-python Open_ELF/watcher/launcher.py
+python Open_ELF/watcher/elf_watcher.py
+
+# Or use the start script
+cd scripts
+./start-watcher.sh
 ```
 
-### 2. Stop Watcher
+### 2. Start in Background
 
 ```bash
-# Graceful shutdown (create stop file)
-touch .coordination/watcher-stop
+# Direct background execution
+nohup python Open_ELF/watcher/elf_watcher.py > /tmp/watcher.log 2>&1 &
 
-# Or send SIGINT
-Ctrl+C
+# Or using the start script
+./start-watcher.sh --daemon
 ```
 
-### 3. Monitor Activity
+### 3. Monitor Status
 
 ```bash
-# Watch logs
+# View logs
+tail -f /tmp/watcher.log
+
+# Or check coordination log
 tail -f .coordination/watcher-log.md
 
-# View current status
-cat .coordination/blackboard.json
+# Check if running
+pgrep -f "elf_watcher.py"
+```
 
-# Check launcher status
-ps aux | grep "launcher.py"
+### 4. Stop Watcher
+
+```bash
+# Graceful shutdown via stop file
+touch .coordination/watcher-stop
+
+# Or kill process
+pkill -f "elf_watcher.py"
 ```
 
 ## Configuration
 
-Edit `Open_ELF/watcher/config.py` to customize:
+The watcher uses the following configuration constants in `elf_watcher.py`:
 
-```python
-POLL_INTERVAL = 30              # Seconds between tier 1 checks
-HEARTBEAT_TIMEOUT = 120         # Seconds before considering agent dead
-OPENCODE_SERVER_URL = "http://localhost:4096"
-OPENCODE_MODEL = "opencode/big-pickle"  # Single model for both tiers
-```
+- `BASIC_POLL_INTERVAL = 60` (seconds between basic checks)
+- `AI_ANALYSIS_INTERVAL = 300` (seconds between AI analyses)
+- `EVENT_BRIDGE_URL = "http://localhost:9998"` (EventBridge endpoint)
 
-### Environment Variables
+These can be modified directly in the source code if needed.
 
-```bash
-export OPENCODE_SERVER_URL="http://localhost:4096"
-export OPENCODE_WATCHER_MODEL="opencode/big-pickle"
-```
+## Integration Points
 
-## Files and Directories
+### EventBridge Communication
+- Posts analysis requests to `http://localhost:9998/api/v1/ask`
+- Submits escalations to `http://localhost:9998/api/v1/mission`
+- Checks EventBridge health at `http://localhost:9998/status`
 
-```
-Open_ELF/watcher/
-├── __init__.py          # Package initialization
-├── config.py            # Configuration settings
-├── launcher.py          # Main orchestrator (tiered loop)
-├── watcher_loop.py      # Prompt generator (tier 1 + tier 2)
-└── README.md            # This file
-
-.coordination/
-├── blackboard.json      # Shared state between agents
-├── watcher-log.md       # All watcher activity
-└── watcher-stop         # Graceful shutdown signal (user-created)
-```
+### Dashboard Integration
+- Updates coordination log at `.coordination/watcher-log.md`
+- Process detection via `pgrep -f "elf_watcher.py"`
+- Status information via dashboard backend monitoring API
 
 ## Exit Codes
 
-- **0**: Normal (will check again in 30 seconds)
-- **1**: Escalation needed (tier 2 will be invoked)
-- **2**: Error occurred (will retry next cycle)
+- **Exit 0**: Normal operation, continue monitoring
+- **Exit 1**: Escalation requested, handled internally
+- **Exit 2**: Error occurred, retry in next cycle
 
-## Prompt Depth Levels
+Note: Unlike the original tiered approach, all escalation is handled internally via EventBridge communication.
 
-### Tier 1 Prompt Characteristics
-- **Goal**: Fast, frequent monitoring
-- **Thinking**: Minimal, pattern-based
-- **Actions**: Quick fixes, restart stale agents, log errors
-- **Response Time**: ~10-20 seconds
+## Maintenance
 
-### Tier 2 Prompt Characteristics
-- **Goal**: Deep analysis for complex issues
-- **Thinking**: Thorough, multi-step reasoning
-- **Actions**: Intelligent decisions, complex interventions
-- **Response Time**: ~30-60 seconds
-
-The same `big-pickle` model adapts its thinking level based on prompt requirements.
-
-## Workflow
-
-### Normal Operation (Most Common)
+### Log Management
+Logs are written to `.coordination/watcher-log.md` in Markdown format:
 ```
-Every 30s:
-  Launcher → Tier 1 (fast prompt)
-           ↓
-           STATUS: nominal
-           ↓
-           Exit code 0
-           ↓
-           Wait 30s
-           ↓
-  Repeat
+2026-02-07 00:00:00 | STATUS: healthy | NOTES: All systems operational
 ```
 
-### Escalation Flow (Infrequent)
+### Monitoring Output
+Console output shows current status:
 ```
-Every 30s:
-  Launcher → Tier 1 (fast prompt)
-           ↓
-           STATUS: stale or error
-           ↓
-           Exit code 1
-           ↓
-           Tier 2 (deep prompt)
-           ↓
-           Deep analysis + action
-           ↓
-           Exit code 0
-           ↓
-           Wait 30s
-           ↓
-  Repeat
-```
+🔍 ELF Watcher - 00:00:00
+============================================================
+🟢 Statut: HEALTHY
+🎯 Event Bridge: 🟢 Intégré
+📊 Analyse: All systems operational
+⏱️  Cycle: 1 (AI Analysis)
+⏱️  Prochaine AI: 300s (5m 0s)
 
-### Graceful Shutdown
-```
-User creates: .coordination/watcher-stop
-           ↓
-Launcher detects stop file
-           ↓
-Log: "Stop file detected, exiting gracefully"
-           ↓
-Exit code 0
+🌐 Services:
+  dashboard_backend: 🟢
+  mission_bridge: 🟢
+  sentinel_monitor: 🟢
+============================================================
 ```
 
 ## Troubleshooting
 
-### Watcher Won't Start
+### Common Issues
 
-**Problem**: `ModuleNotFoundError` or import errors
+1. **Services showing as down**: Check if backend services are actually running
+2. **EventBridge connection issues**: Verify EventBridge is running on port 9998
+3. **Analysis failures**: Ensure EventBridge can communicate with OpenCode
 
-**Solution**:
+### Service Health Check Commands
+
 ```bash
-cd /home/bamer/.opencode/emergent-learning
-# Ensure OpenCode server is running
-opencode serve --port 4096
+# Check EventBridge
+curl -s http://localhost:9998/status
+
+# Check Dashboard Backend
+curl -s http://localhost:8888/api/v1/health/status
+
+# Check Sentinel Monitor
+curl -s http://localhost:9998/api/v1/health/sentinel_monitor
 ```
-
-**Problem**: `Connection refused` to OpenCode
-
-**Solution**:
-```bash
-# Start OpenCode server
-opencode serve --port 4096
-
-# Or check correct port in config.py
-```
-
-### Watcher Keeps Restarting
-
-**Check logs**:
-```bash
-tail -50 .coordination/watcher-log.md
-```
-
-**Common causes**:
-- OpenCode server not responding
-- Configuration files corrupted
-- Permissions issues with `.coordination` directory
-
-### Tier 2 Never Invoked
-
-**Verify tier 1 is detecting issues**:
-```bash
-# Check for non-nominal statuses
-grep -E "STATUS: (stale|error)" .coordination/watcher-log.md
-```
-
-**Tier 1 should exit with code 1 when intervention is needed**. If it's always 0 (nominal), it's working correctly.
-
-### Watcher Stops Automatically
-
-**Problem**: Watcher creates its own stop file
-
-**Solution**: This is a **logic error** - watcher should NEVER create stop files.
-- Check `watcher_loop.py` prompt for instructions
-- Verify prompt says "NEVER create a stop file"
-- Status when no agents = `nominal`, NOT `complete`
-
-## Key Insights
-
-### No Active Agents = Normal
-- **Wrong**: "No agents = complete → create stop file"
-- **Correct**: "No agents = nominal → continue monitoring"
-
-The watcher should run continuously regardless of agent count. It monitors the system, not specific agents.
-
-### Continuous Loop vs Single Pass
-- **Wrong**: "Do ONE monitoring pass then exit"
-- **Correct**: "Run continuous loop, check every 30 seconds"
-
-The launcher handles the loop. The watcher agent just does ONE check and reports back.
-
-### Exit Codes Matter
-- **Exit code 0**: "Check me again in 30 seconds"
-- **Exit code 1**: "I need help, call tier 2"
-- **Exit code 2**: "Error occurred, retry immediately"
-
-The launcher uses exit codes to decide next action.
-
-## Migration Notes
-
-This watcher was migrated from `/watcher/` to `/Open_ELF/watcher/` to:
-
-1. Follow original ELF directory structure
-2. Separate watcher from other components
-3. Make it easier to maintain
-
-The `start-elf-system.sh` script can be updated to use:
-```bash
-python Open_ELF/watcher/launcher.py >logs/watcher.log 2>&1 &
-```
-
-## Future Improvements
-
-1. **Log Rotation**: Implement automatic log rotation
-2. **Metrics**: Track how often tier 2 is invoked
-3. **Alerting**: Send notifications for critical issues
-4. **Health Checks**: More sophisticated agent health detection
-5. **Web Interface**: Dashboard integration for real-time status

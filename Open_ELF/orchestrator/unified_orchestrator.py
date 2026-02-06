@@ -384,14 +384,16 @@ class UnifiedOrchestrator:
         """
         try:
             # Kill existing
-            subprocess.run(["pkill", "-f", "watcher/launcher.py"], capture_output=True)
+            subprocess.run(
+                ["pkill", "-f", "watcher/elf_watcher.py"], capture_output=True
+            )
             import time
 
             time.sleep(2)
 
             # Start new
             process = subprocess.Popen(
-                ["python3", "watcher/launcher.py"],
+                ["python3", "watcher/elf_watcher.py"],
                 cwd=str(OPEN_ELF_DIR),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -401,7 +403,9 @@ class UnifiedOrchestrator:
 
             # Verify
             check = subprocess.run(
-                ["pgrep", "-f", "watcher/launcher.py"], capture_output=True, text=True
+                ["pgrep", "-f", "watcher/elf_watcher.py"],
+                capture_output=True,
+                text=True,
             )
             if check.returncode == 0:
                 logger.info("✅ Watcher restarted successfully")
@@ -456,7 +460,9 @@ class UnifiedOrchestrator:
         # Watcher (pgrep)
         try:
             result = subprocess.run(
-                ["pgrep", "-f", "watcher/launcher.py"], capture_output=True, text=True
+                ["pgrep", "-f", "watcher/elf_watcher.py"],
+                capture_output=True,
+                text=True,
             )
             health_status["watcher"] = result.returncode == 0
             if result.returncode == 0:
@@ -555,3 +561,15 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+# Singleton accessor for dashboard backend compatibility
+_orchestrator_instance = None
+
+
+def get_orchestrator():
+    """Get singleton instance of UnifiedOrchestrator for dashboard backend compatibility."""
+    global _orchestrator_instance
+    if _orchestrator_instance is None:
+        _orchestrator_instance = UnifiedOrchestrator()
+    return _orchestrator_instance

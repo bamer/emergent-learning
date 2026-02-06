@@ -12,7 +12,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ELF_DIR="$(dirname "$SCRIPT_DIR")"
 WATCHER_DIR="$ELF_DIR/watcher"
-LAUNCHER_SCRIPT="$WATCHER_DIR/launcher.py"
+LAUNCHER_SCRIPT="$WATCHER_DIR/elf_watcher.py"
 
 # Detect Python command
 if command -v python3 &> /dev/null; then
@@ -52,7 +52,7 @@ if [ "$DAEMON" = true ]; then
     nohup $PYTHON_CMD "$LAUNCHER_SCRIPT" > /dev/null 2>&1 &
     PID=$!
     echo "Watcher started with PID: $PID"
-    echo "Monitor logs at: $ELF_DIR/.coordination/launcher.log"
+    echo "Monitor logs at: $ELF_DIR/.coordination/watcher-log.md"
     echo "Stop with: kill $PID"
 else
     echo "Starting watcher (Ctrl+C to stop)..."

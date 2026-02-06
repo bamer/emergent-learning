@@ -258,7 +258,7 @@ start_event_bridge() {
 start_watcher() {
     log "👁️ Démarrage du Watcher..."
     
-    local watcher_script="${ELF_DIR}/Open_ELF/watcher/launcher.py"
+    local watcher_script="${ELF_DIR}/watcher/elf_watcher.py"
     
     # Vérifier que le script existe
     if [[ ! -f "${watcher_script}" ]]; then
@@ -268,7 +268,7 @@ start_watcher() {
     
     # Tuer tout processus watcher existant avant de lancer (force restart)
     log "🔄 Arrêt des anciennes instances du watcher..."
-    pkill -f "Open_ELF/watcher/launcher.py" 2>/dev/null || true
+    pkill -f "Open_ELF/watcher/elf_watcher.py" 2>/dev/null || true
     sleep 1  # Attendre que les processus se terminent
     
     # Démarrer le watcher en arrière-plan
@@ -294,7 +294,7 @@ start_watcher() {
 start_learning_capture() {
     log "🧠 Démarrage du Learning Capture Service..."
     
-    local capture_script="${ELF_DIR}/scripts/background-learning-capture.py"
+    local capture_script="${SCRIPT_DIR}/scripts/background-learning-capture.py"
     
     # Vérifier que le script existe
     if [[ ! -f "${capture_script}" ]]; then

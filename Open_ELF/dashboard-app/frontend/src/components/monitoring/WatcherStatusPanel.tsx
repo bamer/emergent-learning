@@ -158,9 +158,31 @@ export function WatcherStatusPanel({
     });
   };
 
-  // Format timestamp
+  // Format timestamp with relative time
   const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString();
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    const timeStr = date.toLocaleTimeString();
+
+    // Show relative time if recent
+    if (diffMins < 1) return `${timeStr} (just now)`;
+    if (diffMins < 60) return `${timeStr} (${diffMins}m ago)`;
+    if (diffHours < 24) return `${timeStr} (${diffHours}h ago)`;
+    return `${timeStr} (${diffDays}d ago)`;
+  };
+
+  // Check if logs are stale (older than 30 minutes)
+  const areLogsStale = () => {
+    if (logs.length === 0) return true;
+    const lastLog = logs[0];
+    const diffMs = new Date().getTime() - new Date(lastLog.timestamp).getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    return diffMins > 30;
   };
 
   // Format duration
@@ -411,48 +433,121 @@ export function WatcherStatusPanel({
             )}
 
             {/* Recent Logs */}
-            {logs.length > 0 && (
-              <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden">
-                <button
-                  onClick={() => toggleSection('logs')}
-                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Terminal className="w-4 h-4 text-slate-400" />
-                    <span className="font-medium text-slate-200">Recent Logs</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500">{logs.length} entries</span>
-                    {expandedSections.has('logs') ? (
-                      <ChevronDown className="w-4 h-4 text-slate-400" />
+            <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden">
+              <button
+                onClick={() => toggleSection('logs')}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Terminal className="w-4 h-4 text-slate-400" />
+                  <span className="font-medium text-slate-200">Recent Logs</span>
+                  {areLogsStale() && (
+                    <AlertTriangle className="w-4 h-4 text-amber-400 animate-pulse" />
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-slate-500">{logs.length} entries</span>
+                  {areLogsStale() && (
+                    <span className="text-xs text-amber-400">Logs are stale</span>
+                  )}
+                  {expandedSections.has('logs') ? (
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  )}
+                </div>
+              </button>
+
+              {expandedSections.has('logs') && (
+                <div className="border-t border-slate-700/50">
+                  {/* Log Status Banner */}
+                  {logs.length === 0 ? (
+                    <div className="p-4 bg-amber-500/10 border-b border-amber-500/20">
+                      <div className="flex items-center gap-3">
+                        <AlertTriangle className="w-5 h-5 text-amber-400" />
+                        <div>
+                          <div className="text-amber-400 font-medium text-sm">No logs found</div>
+                          <div className="text-slate-400 text-xs">Watcher may not be logging to the database. Check if the unified logger is being used.</div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : areLogsStale() ? (
+                    <div className="p-3 bg-amber-500/10 border-b border-amber-500/20">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-amber-400" />
+                        <div className="text-xs text-amber-300">
+                          Last log is more than 30 minutes old. The watcher may not be using the unified ELF logger properly.
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-emerald-500/10 border-b border-emerald-500/20">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-emerald-400" />
+                        <div className="text-xs text-emerald-300">
+                          Logs are current (last entry within 30 minutes)
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Log Entries */}
+                  <div className="max-h-64 overflow-y-auto">
+                    {logs.length === 0 ? (
+                      <div className="p-8 text-center">
+                        <Terminal className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                        <div className="text-slate-400 text-sm">No log entries available</div>
+                        <div className="text-slate-500 text-xs mt-2">
+                          The watcher may need to be configured to use the unified ELF logger.
+                        </div>
+                      </div>
                     ) : (
-                      <ChevronRight className="w-4 h-4 text-slate-400" />
-                    )}
-                  </div>
-                </button>
-                
-                {expandedSections.has('logs') && (
-                  <div className="border-t border-slate-700/50">
-                    <div className="max-h-64 overflow-y-auto">
-                      {logs.map((log, index) => {
+                      logs.map((log, index) => {
                         const levelConfig = LOG_LEVEL_CONFIG[log.level];
                         
                         return (
                           <div
                             key={index}
-                            className={`px-4 py-2 border-b border-slate-700/30 last:border-0 hover:bg-slate-700/20 ${levelConfig.borderColor}`}
+                            className={`px-4 py-3 border-b border-slate-700/30 last:border-0 hover:bg-slate-700/20 ${levelConfig.borderColor}`}
                           >
                             <div className="flex items-start gap-3">
-                              <span className={`text-xs font-mono ${levelConfig.color} flex-shrink-0 w-16`}>
-                                {log.level.toUpperCase()}
-                              </span>
+                                {/* Level Badge */}
+                                <span className={`flex-shrink-0 px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 ${
+                                  log.level === 'error' ? 'bg-red-500/20 text-red-400' :
+                                  log.level === 'warning' ? 'bg-amber-500/20 text-amber-400' :
+                                  'bg-slate-600/30 text-slate-400'
+                                }`}>
+                                  {log.level === 'error' && <AlertTriangle className="w-3 h-3" />}
+                                  {log.level === 'warning' && <AlertTriangle className="w-3 h-3" />}
+                                  {log.level === 'info' && <CheckCircle className="w-3 h-3" />}
+                                  {log.level.toUpperCase()}
+                                </span>
+                              
+                              {/* Message */}
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm text-slate-300">{log.message}</p>
-                                <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                                <p className="text-sm text-slate-300 mb-1">{log.message}</p>
+                                
+                                {/* Metadata */}
+                                <div className="flex items-center gap-3 text-xs text-slate-500">
+                                  <Clock className="w-3 h-3" />
                                   <span>{formatTime(log.timestamp)}</span>
+                                  
                                   {log.tier && (
-                                    <span className={`px-1.5 py-0.5 rounded ${TIER_CONFIG[log.tier as keyof typeof TIER_CONFIG]?.bgColor || 'bg-slate-700'}`}>
-                                      {log.tier}
+                                    <>
+                                      <Shield className="w-3 h-3" />
+                                      <span className={
+                                        log.tier === 'tier1' ? 'text-blue-300' :
+                                        log.tier === 'tier2' ? 'text-violet-300' :
+                                        'text-slate-400'
+                                      }>
+                                        {TIER_CONFIG[log.tier as keyof typeof TIER_CONFIG]?.label || log.tier}
+                                      </span>
+                                    </>
+                                  )}
+                                  
+                                  {log.context && Object.keys(log.context).length > 0 && (
+                                    <span className="text-slate-600">
+                                      {Object.keys(log.context).length} context items
                                     </span>
                                   )}
                                 </div>
@@ -460,12 +555,12 @@ export function WatcherStatusPanel({
                             </div>
                           </div>
                         );
-                      })}
-                    </div>
+                      })
+                    )}
                   </div>
-                )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </>
         )}
       </div>

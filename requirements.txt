@@ -10,6 +10,9 @@ aiofiles>=23.0.0
 # Async HTTP client (for Ollama embeddings)
 aiohttp>=3.8.0
 
+# HTTP client (for OpenCode API)
+requests>=2.30.0
+
 # Numerical operations (for embeddings and statistics)
 numpy>=1.21.0
 scipy>=1.7.0

@@ -99,6 +99,39 @@ const STATUS_CONFIG = {
     icon: AlertTriangle,
     label: 'Critical',
     emoji: '🔴'
+  },
+  // Watcher-specific statuses
+  nominal: {
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/10',
+    borderColor: 'border-emerald-500/20',
+    icon: CheckCircle,
+    label: 'Nominal',
+    emoji: '🟢'
+  },
+  stale: {
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/10',
+    borderColor: 'border-amber-500/20',
+    icon: AlertTriangle,
+    label: 'Stale',
+    emoji: '🟡'
+  },
+  error: {
+    color: 'text-red-400',
+    bgColor: 'bg-red-500/10',
+    borderColor: 'border-red-500/20',
+    icon: AlertTriangle,
+    label: 'Error',
+    emoji: '🔴'
+  },
+  stopped: {
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-500/10',
+    borderColor: 'border-slate-500/20',
+    icon: Pause,
+    label: 'Stopped',
+    emoji: '⏹️'
   }
 };
 
@@ -202,7 +235,7 @@ export function SentinelMonitorPanel({
   }
 
   const status = currentCycle?.analysis?.status || 'healthy';
-  const statusConfig = STATUS_CONFIG[status];
+  const statusConfig = STATUS_CONFIG[status] || STATUS_CONFIG.healthy;
   const StatusIcon = statusConfig.icon;
 
   return (
@@ -457,7 +490,7 @@ export function SentinelMonitorPanel({
                 ) : (
                   cycleHistory.map((cycle, index) => {
                     const cycleStatus = cycle.analysis?.status || 'healthy';
-                    const cycleConfig = STATUS_CONFIG[cycleStatus];
+                    const cycleConfig = STATUS_CONFIG[cycleStatus] || STATUS_CONFIG.healthy;
                     const isExpanded = expandedCycles.has(index);
                     
                     return (

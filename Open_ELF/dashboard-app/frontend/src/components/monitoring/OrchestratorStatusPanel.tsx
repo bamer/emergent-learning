@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Cpu, Activity, CheckCircle, AlertTriangle, RefreshCw,
   ChevronRight, ChevronDown, Clock, Play, Square, FolderOpen,
-  TrendingUp, Server, MessageCircle, MessageSquare
+  TrendingUp, Server, MessageCircle, MessageSquare, BookOpen
 } from 'lucide-react';
 
 interface OrchestratorStatusData {
@@ -14,6 +14,15 @@ interface OrchestratorStatusData {
   opencode_server?: string;
   opencode_status?: string;
   uptime_seconds?: number;
+  services?: {
+    learning_capture?: {
+      active: boolean;
+      running: boolean;
+      pid?: string;
+    };
+    watcher?: boolean;
+    event_bridge?: boolean;
+  };
 }
 
 interface OrchestratorMission {
@@ -69,13 +78,13 @@ export function OrchestratorStatusPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview', 'services']));
   const [isLaunching, setIsLaunching] = useState(false);
-  
+
   // Refs to prevent race conditions
   const isMountedRef = useRef(true);
   const isInitialLoadRef = useRef(true);
-  
+
   // Event stats
   const [questionCount, setQuestionCount] = useState(0);
   const [responseCount, setResponseCount] = useState(0);
@@ -86,7 +95,7 @@ export function OrchestratorStatusPanel({
     
     const isInitialLoad = isInitialLoadRef.current;
     
-    try {
+      try {
       if (isInitialLoad) {
         setLoading(true);
       }
@@ -94,12 +103,20 @@ export function OrchestratorStatusPanel({
       const statusResponse = await fetch(`${apiBaseUrl}/api/v1/orchestrator/status`);
       if (!statusResponse.ok) throw new Error(`HTTP ${statusResponse.status}`);
       const data: OrchestratorStatusResponse = await statusResponse.json();
-      setStatus(data.status_data || null);
+
+      // Merge services from API with status_data
+      const statusData = data.status_data || {};
+      const mergedStatusData = {
+        ...statusData,
+        services: data.status_data?.services || data.services || {}
+      };
+
+      setStatus(mergedStatusData);
       setMissions(data.missions || []);
-      
+
       // Add to history (keep last 20 entries)
       setHistory(prev => {
-        const newHistory = [{ ...(data.status_data || {}), last_check: new Date().toISOString() }, ...prev];
+        const newHistory = [{ ...mergedStatusData, last_check: new Date().toISOString() }, ...prev];
         return newHistory.slice(0, 20);
       });
       
@@ -421,10 +438,43 @@ export function OrchestratorStatusPanel({
                           Service uptime
                         </div>
                       </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
 
-                  {/* Last Update */}
+                    {/* Learning Capture Service */}
+                    <div className="p-3 bg-slate-700/30 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <BookOpen className="w-4 h-4 text-slate-400" />
+                        <span className="text-xs text-slate-400">Learning Capture</span>
+                      </div>
+                      {status.services?.learning_capture?.running ? (
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-5 h-5 text-emerald-400" />
+                          <div className="flex-1">
+                            <div className="text-lg font-bold text-emerald-400">Running</div>
+                            {status.services.learning_capture.pid && (
+                              <div className="text-xs text-slate-500">
+                                PID: {status.services.learning_capture.pid}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <AlertTriangle className={`w-5 h-5 ${status.services?.learning_capture?.active ? 'text-amber-400' : 'text-red-400'}`} />
+                          <div className="flex-1">
+                            <div className={`text-lg font-bold ${status.services?.learning_capture?.active ? 'text-amber-400' : 'text-red-400'}`}>
+                              {status.services?.learning_capture?.active ? 'Stopped' : 'Inactive'}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              Service status
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Last Update */}
                   <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
                     <Clock className="w-3 h-3" />
                     Last check: {formatTime(status.last_check)}

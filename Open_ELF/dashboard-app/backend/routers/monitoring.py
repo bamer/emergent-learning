@@ -464,7 +464,7 @@ async def get_orchestrator_status():
     # Check Watcher
     try:
         result = subprocess.run(
-            ["pgrep", "-f", "watcher/launcher.py"], capture_output=True, text=True
+            ["pgrep", "-f", "watcher/elf_watcher.py"], capture_output=True, text=True
         )
         services_health["watcher"] = result.returncode == 0
     except:
@@ -821,9 +821,43 @@ async def get_watcher_status():
                 }
             )
 
+        # Check watchdog.log file for additional logs
+        watchdog_log_path = ELF_DIR / "logs" / "watcher.log"
+        if watchdog_log_path.exists():
+            try:
+                # Read last 50 lines from watcher.log
+                with open(watchdog_log_path, "r") as f:
+                    lines = f.readlines()
+                    recent_lines = lines[-50:] if len(lines) > 50 else lines
+
+                # Parse log lines
+                import re
+
+                # Log format: 2026-02-06 17:58:00 - elf.watcher - INFO - Message
+                log_pattern = re.compile(
+                    r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (elf\.\w+) - (INFO|WARNING|ERROR) - (.+)"
+                )
+
+                for line in recent_lines:
+                    match = log_pattern.match(line.strip())
+                    if match:
+                        timestamp_str, source, level, message = match.groups()
+                        logs.append(
+                            {
+                                "timestamp": timestamp_str + ".000000",
+                                "level": level.lower(),
+                                "message": message,
+                                "tier": "tier1",
+                            }
+                        )
+            except Exception as log_err:
+                _log_error(f"Error reading watcher.log: {log_err}")
+        else:
+            _log_debug(f"Watcher log file not found: {watchdog_log_path}")
+
         # Check if watcher process is actually running
         result = subprocess.run(
-            ["pgrep", "-f", "watcher/launcher.py"], capture_output=True, text=True
+            ["pgrep", "-f", "watcher/elf_watcher.py"], capture_output=True, text=True
         )
         is_running = result.returncode == 0
 
@@ -930,7 +964,9 @@ async def control_watcher(request: WatcherControlRequest):
 
             # Check if already running
             result = subprocess.run(
-                ["pgrep", "-f", "watcher/launcher.py"], capture_output=True, text=True
+                ["pgrep", "-f", "watcher/elf_watcher.py"],
+                capture_output=True,
+                text=True,
             )
             if result.returncode == 0:
                 _log_info("Watcher already running")
@@ -953,7 +989,7 @@ async def control_watcher(request: WatcherControlRequest):
                 )
                 time.sleep(1)
                 check = subprocess.run(
-                    ["pgrep", "-f", "watcher/launcher.py"],
+                    ["pgrep", "-f", "watcher/elf_watcher.py"],
                     capture_output=True,
                     text=True,
                 )
@@ -982,7 +1018,9 @@ async def control_watcher(request: WatcherControlRequest):
 
             # Also try to kill the process directly
             result = subprocess.run(
-                ["pkill", "-f", "watcher/launcher.py"], capture_output=True, text=True
+                ["pkill", "-f", "watcher/elf_watcher.py"],
+                capture_output=True,
+                text=True,
             )
             _log_info("Watcher stop signal sent")
 
@@ -995,7 +1033,9 @@ async def control_watcher(request: WatcherControlRequest):
         elif request.action == "restart":
             # Stop first
             STOP_FILE.touch() if not STOP_FILE.exists() else None
-            subprocess.run(["pkill", "-f", "watcher/launcher.py"], capture_output=True)
+            subprocess.run(
+                ["pkill", "-f", "watcher/elf_watcher.py"], capture_output=True
+            )
 
             # Wait a moment
             time.sleep(1)
