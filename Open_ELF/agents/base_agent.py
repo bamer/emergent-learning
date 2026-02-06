@@ -15,7 +15,7 @@ import json
 import sys
 import logging
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Callable
 from abc import ABC, abstractmethod
 import requests
 
@@ -34,9 +34,9 @@ class BaseAgent(ABC):
         name: str,
         role: str = "assistant",
         server_url: str = "http://localhost:4096",
-        model: str = "big-pickle",
-        provider: str = "opencode",
-        timeout: int = 300,
+        model: str = "z-ai/glm4.7",
+        provider: str = "nvidia",
+        timeout: int = 30000,
     ):
         """
         Initialize agent with HTTP API configuration.
@@ -45,10 +45,10 @@ class BaseAgent(ABC):
             name: Agent name (e.g., "Researcher", "Architect")
             role: Agent role description
             server_url: OpenCode server URL (default: http://localhost:4096)
-            model: Model ID (default: big-pickle)
-            provider: Provider ID (default: opencode)
+            model: Model ID (default: z-ai/glm4.7)
+            provider: Provider ID (default: nvidia)
             timeout: Request timeout in seconds
-        """
+        """ 
         self.name = name
         self.role = role
         self.server_url = server_url
@@ -217,7 +217,7 @@ class BaseAgent(ABC):
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
-        on_chunk: Optional[callable] = None
+        on_chunk: Optional[Callable[..., Any]] = None
     ) -> Optional[str]:
         """
         Call with streaming (if server supports it).

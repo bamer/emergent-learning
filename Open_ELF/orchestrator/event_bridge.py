@@ -1087,27 +1087,78 @@ class EventBridge:
 
                 def do_POST(handler_self):
                     """Handle POST requests for API endpoints."""
-                    if handler_self.path == "/api/v1/ask":
-                        handler_self.send_response(200)
-                        handler_self.send_header("Content-type", "application/json")
-                        handler_self.end_headers()
+                    try:
+                        if handler_self.path == "/api/v1/ask":
+                            # Parse the request data
+                            content_length = int(
+                                handler_self.headers.get("Content-Length", 0)
+                            )
+                            request_data = {}
+                            if content_length > 0:
+                                try:
+                                    post_data = handler_self.rfile.read(content_length)
+                                    request_data = json.loads(post_data.decode("utf-8"))
+                                except (json.JSONDecodeError, UnicodeDecodeError):
+                                    # If we can't parse the request, use empty dict
+                                    pass
 
-                        # Simple response for now - just forward to OpenCode
-                        response = {
-                            "component": "event_bridge",
-                            "request_type": "watcher_analysis",
-                            "data": {
-                                "analysis": "Watcher analysis processed via Event Bridge",
-                                "timestamp": datetime.now().isoformat(),
-                                "status": "forwarded_to_opencode",
-                            },
-                            "timestamp": datetime.now().isoformat(),
-                            "priority": 2,
-                        }
-                        handler_self.wfile.write(json.dumps(response).encode())
-                    else:
-                        handler_self.send_response(404)
-                        handler_self.end_headers()
+                            # Check if this is a watcher request that needs special handling
+                            component = request_data.get("component", "")
+                            request_type = request_data.get("request_type", "")
+
+                            handler_self.send_response(200)
+                            handler_self.send_header("Content-type", "application/json")
+                            handler_self.end_headers()
+
+                            # Return format expected by watcher
+                            if (
+                                component == "watcher"
+                                and request_type == "watcher_analysis"
+                            ):
+                                response = {
+                                    "response_type": "coordination_result",
+                                    "data": {
+                                        "ai_analysis": "Watcher analysis processed via Event Bridge",
+                                        "timestamp": datetime.now().isoformat(),
+                                        "status": "forwarded_to_opencode",
+                                    },
+                                    "timestamp": datetime.now().isoformat(),
+                                    "priority": request_data.get("priority", 2),
+                                }
+                            else:
+                                # Default response for other components
+                                response = {
+                                    "component": "event_bridge",
+                                    "request_type": request_type or "generic_request",
+                                    "data": {
+                                        "analysis": "Request processed via Event Bridge",
+                                        "timestamp": datetime.now().isoformat(),
+                                        "status": "forwarded_to_opencode",
+                                    },
+                                    "timestamp": datetime.now().isoformat(),
+                                    "priority": request_data.get("priority", 2),
+                                }
+                            handler_self.wfile.write(json.dumps(response).encode())
+                        else:
+                            handler_self.send_response(404)
+                            handler_self.end_headers()
+                    except Exception as e:
+                        # Log error but don't crash the server
+                        _log_error(f"Error in POST handler: {e}")
+                        try:
+                            handler_self.send_response(500)
+                            handler_self.send_header("Content-type", "application/json")
+                            handler_self.end_headers()
+                            error_response = {
+                                "error": "Internal server error",
+                                "message": str(e),
+                            }
+                            handler_self.wfile.write(
+                                json.dumps(error_response).encode()
+                            )
+                        except:
+                            # If we can't even send an error response, just close
+                            pass
 
                 def log_message(self, format, *args):
                     pass

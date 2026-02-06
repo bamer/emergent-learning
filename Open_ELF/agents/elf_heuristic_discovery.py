@@ -49,8 +49,10 @@ class ELFHeuristicManager:
         interaction_types = [
             interaction.get("type") for interaction in interaction_data
         ]
+        # Filter out None values to avoid type errors
+        valid_interaction_types = [itype for itype in interaction_types if itype is not None]
         type_counts = {
-            itype: interaction_types.count(itype) for itype in set(interaction_types)
+            itype: valid_interaction_types.count(itype) for itype in set(valid_interaction_types)
         }
 
         # Find most successful patterns
@@ -257,7 +259,7 @@ class ELFHeuristicManager:
             """)
 
             golden_rules = []
-            for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+            for row in cursor.fetchall():
                 golden_rules.append(
                     {
                         "rule": row[0],
@@ -306,10 +308,10 @@ class ELFHeuristicManager:
 
         # Analyze knowledge gaps
         cursor.execute("SELECT domain, COUNT(*) FROM heuristics GROUP BY domain")
-        domain_coverage = dict(cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
+        domain_coverage = dict(cursor.fetchall())
 
         cursor.execute("SELECT type, COUNT(*) FROM learnings GROUP BY type")
-        learning_coverage = dict(cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
+        learning_coverage = dict(cursor.fetchall())
 
         recommendations = []
 

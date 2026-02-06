@@ -25,7 +25,7 @@ try:
 except ImportError:
     # Fallback: define minimal client
     class OpenCodeClient:
-        def __init__(self, model="opencode/big-pickle"):
+        def __init__(self, model="nvidia/z-ai/glm4.7"):
             self.model = model
         def call(self, prompt, timeout=120):
             result = subprocess.run(
@@ -163,7 +163,7 @@ Provide a structured analysis in JSON format:
             cursor = conn.cursor()
             
             cursor.execute("SELECT id FROM experiments WHERE status = 'active' ORDER BY created_at DESC")
-            ids = [row['id'] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            ids = [row['id'] for row in cursor.fetchall()]
             conn.close()
         except Exception as e:
             return {"error": str(e), "analyses": []}

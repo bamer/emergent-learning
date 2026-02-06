@@ -40,9 +40,9 @@ except ImportError as e:
 
 # Use centralized logging
 try:
-    from logger import setup_logger, log_critical_error
+    from elf_logging import get_logger, log_critical
 
-    logger = setup_logger("sentinel_monitor")
+    logger = get_logger("sentinel_monitor")
 except ImportError:
     # Fallback to basic logging if logger module not available yet
     logging.basicConfig(

@@ -18,17 +18,17 @@ import json
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from opencode_client import OpenCodeClient
+from event_bridge_client import EventBridgeClient
 
 logger = logging.getLogger(__name__)
 
 
 class AgentExecutionEngine:
-    """Execute real agent workflows through OpenCode API."""
+    """Execute real agent workflows through Event Bridge API."""
 
-    def __init__(self, server_url: str = "http://localhost:4096"):
+    def __init__(self, server_url: str = "http://localhost:9998"):
         self.server_url = server_url
-        self.client = OpenCodeClient(server_url=server_url)
+        self.client = EventBridgeClient(server_url=server_url)
         self.execution_log = []
 
     def execute_pattern_response(

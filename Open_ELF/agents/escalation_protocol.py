@@ -5,7 +5,7 @@ Defines clear escalation paths and responsibilities for all agents.
 """
 
 from enum import Enum
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from dataclasses import dataclass
 from datetime import datetime
 import json
@@ -20,9 +20,9 @@ if str(AGENTS_DIR) not in sys.path:
 
 # Import centralized logger
 try:
-    from logger import setup_logger, log_critical_error
+    from elf_logging import get_logger, log_critical
 
-    escalation_logger = setup_logger("escalation")
+    escalation_logger = get_logger("escalation")
 except ImportError:
     import logging
 
@@ -144,7 +144,7 @@ class EscalationProtocol:
 
         return elapsed > cooldown
 
-    def escalate(self, rule_name: str, details: Dict[str, any]) -> bool:
+    def escalate(self, rule_name: str, details: Dict[str, Any]) -> bool:
         """Process an escalation request."""
         # Find the rule
         rule = next((r for r in self.rules if r.name == rule_name), None)
@@ -181,7 +181,7 @@ class EscalationProtocol:
         return True
 
     def _handle_critical_escalation(
-        self, rule: EscalationRule, details: Dict[str, any]
+        self, rule: EscalationRule, details: Dict[str, Any]
     ):
         """Handle critical escalations that may require system halt."""
         self.logger.critical(f"CRITICAL ESCALATION: {rule.name}")
@@ -194,9 +194,10 @@ class EscalationProtocol:
         # 4. Possibly shut down the system
 
         # For now, we'll just log it as critical
-        log_critical_error("escalation", f"Critical escalation {rule.name}: {details}")
+        # Use self.logger.critical instead of log_critical_error to ensure we have a defined logger
+        self.logger.critical(f"Critical escalation {rule.name}: {json.dumps(details, indent=2)}")
 
-    def _handle_ceo_escalation(self, rule: EscalationRule, details: Dict[str, any]):
+    def _handle_ceo_escalation(self, rule: EscalationRule, details: Dict[str, Any]):
         """Handle escalations to CEO agent."""
         self.logger.info(f"Escalating to CEO: {rule.name}")
 
@@ -232,7 +233,7 @@ Please review and provide decision.
         self.logger.info(f"Created CEO escalation ticket: {filename}")
 
     def _handle_orchestrator_escalation(
-        self, rule: EscalationRule, details: Dict[str, any]
+        self, rule: EscalationRule, details: Dict[str, Any]
     ):
         """Handle escalations to Orchestrator."""
         self.logger.info(f"Escalating to Orchestrator: {rule.name}")
@@ -247,7 +248,7 @@ Please review and provide decision.
             f"Orchestrator escalation details: {json.dumps(details, indent=2)}"
         )
 
-    def _handle_local_escalation(self, rule: EscalationRule, details: Dict[str, any]):
+    def _handle_local_escalation(self, rule: EscalationRule, details: Dict[str, Any]):
         """Handle local escalations within the same agent."""
         self.logger.info(f"Local escalation: {rule.name}")
 
