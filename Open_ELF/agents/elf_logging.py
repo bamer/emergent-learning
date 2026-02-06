@@ -25,6 +25,8 @@ from typing import Optional
 # Central log directory - ALL logs go here
 LOGS_DIR = Path("/home/bamer/.opencode/emergent-learning/logs")
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
+# Alias for backward compatibility with old logger.py
+LOG_DIR = LOGS_DIR
 
 # Crash log file for critical errors
 CRASH_LOG = LOGS_DIR / "CRASH.log"

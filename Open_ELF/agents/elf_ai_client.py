@@ -5,7 +5,7 @@ ELF AI Client - Uses the ELF backend to call AI
 The ELF backend (localhost:8888) has built-in AI integration.
 We can use it to analyze experiments.
 
-Since ELF uses opencode/big-pickle, we interface through the backend.
+Since ELF uses llama/nemotron-v3-coder, we interface through the backend.
 """
 
 import requests
@@ -16,7 +16,7 @@ import sys
 class ELFAIClient:
     """Client for ELF backend AI access."""
     
-    def __init__(self, backend_url: str = "http://localhost:8888", model: str = "opencode/big-pickle"):
+    def __init__(self, backend_url: str = "http://localhost:8888", model: str = "llama/nemotron-v3-coder"):
         self.backend_url = backend_url
         self.model = model
         self.available = self._check_backend()
@@ -40,7 +40,7 @@ class ELFAIClient:
         """
         Call ELF backend with a prompt.
         
-        Since ELF has opencode/big-pickle integrated, we can query it directly.
+        Since ELF has llama/nemotron-v3-coder integrated, we can query it directly.
         """
         if not self.available:
             print("Error: ELF backend not available at " + self.backend_url, file=sys.stderr)
@@ -93,7 +93,7 @@ class ELFAIClient:
             "model": self.model
         }
 
-def call_elf_ai(prompt: str, model: str = "opencode/big-pickle", timeout: int = 120) -> Optional[str]:
+def call_elf_ai(prompt: str, model: str = "llama/nemotron-v3-coder", timeout: int = 120) -> Optional[str]:
     """Simple function to call ELF AI."""
     client = ELFAIClient(model=model)
     return client.call(prompt, timeout)
@@ -104,7 +104,7 @@ if __name__ == "__main__":
         sys.exit(1)
     
     prompt = sys.argv[1]
-    model = sys.argv[2] if len(sys.argv) > 2 else "opencode/big-pickle"
+    model = sys.argv[2] if len(sys.argv) > 2 else "llama/nemotron-v3-coder"
     timeout = int(sys.argv[3]) if len(sys.argv) > 3 else 120
     
     client = ELFAIClient(model=model)

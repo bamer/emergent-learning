@@ -5,6 +5,7 @@ import {
   HelpCircle, Building, Info, X, MessageSquare, Sparkles, Brain, Bot,
   FileSearch, PlusCircle, Users, Zap, Cpu
 } from 'lucide-react';
+import { MissionModal } from './MissionModal';
 
 interface Agent {
   id: string;
@@ -49,16 +50,6 @@ interface ModelInfo {
   provider_id: string;
   is_default: boolean;
   status: string;
-}
-
-interface MissionResult {
-  status: string;
-  mode: string;
-  agent_type?: string;
-  mission: string;
-  response_preview?: string;
-  heuristics_count: number;
-  execution_time_ms: number;
 }
 
 interface AgentsPanelProps {
@@ -106,16 +97,6 @@ const STATUS_DISPLAY: Record<string, { text: string; emoji: string }> = {
   unknown: { text: 'Unknown', emoji: '❓' },
 };
 
-// Mission templates
-const MISSION_TEMPLATES = [
-  { label: 'Clear', icon: X, text: '' },
-  { label: 'Analysis', icon: FileSearch, text: 'Analyze current system state and identify areas for improvement. Provide detailed findings and recommendations.' },
-  { label: 'Investigation', icon: Search, text: 'Investigate recent issues or anomalies in system. Find root causes and propose solutions.' },
-  { label: 'New Feature', icon: PlusCircle, text: 'Design and plan a new feature for system. Include architecture, implementation steps, and potential challenges.' },
-  { label: 'Brainstorming', icon: Brain, text: 'Generate creative ideas and innovative approaches for current challenges. Think outside box and propose unconventional solutions.' },
-  { label: 'Swarm', icon: Users, text: 'swarm: Design and implement a complete solution with multi-agent collaboration' },
-];
-
 // Agent classification helpers
 const SYSTEM_AGENTS = ['agent-title', 'agent-helper', 'agent-utility'];
 const HIDDEN_PATTERNS = ['hidden', 'internal', 'background'];
@@ -156,46 +137,19 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
   // Helper to generate unique key for each agent (using name which is unique per agent)
   const getAgentKey = (agent: Agent) => `${agent.name}-${agent.system}`;
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
-  const [missionText, setMissionText] = useState('');
   const [showMissionModal, setShowMissionModal] = useState(false);
-  const [executionMode, setExecutionMode] = useState<'smart' | 'auto' | 'swarm' | 'manual'>('smart');
-  const [availableModels, setAvailableModels] = useState<ModelInfo[]>([]);
-  const [selectedModel, setSelectedModel] = useState('');
-  const [isExecuting, setIsExecuting] = useState(false);
-  const [lastResult, setLastResult] = useState<MissionResult | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // New states for filtering and organization
   const [showSystemAgents, setShowSystemAgents] = useState(false);
   const [showHiddenAgents, setShowHiddenAgents] = useState(false);
   const [filterPrimaryOnly, setFilterPrimaryOnly] = useState(true); // Default to showing primary agents only
-  const [agentModalKey, setAgentModalKey] = useState(0); // Force modal remount on close
   const [searchQuery, setSearchQuery] = useState(''); // Search query for filtering agents
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [agentsPerPage, setAgentsPerPage] = useState(20);
   const agentsPerPageOptions = [10, 20, 50, 100];
-
-  // Fetch available models
-  const fetchModels = useCallback(async () => {
-    try {
-      const response = await fetch(`${apiBaseUrl}/api/v1/agents/models`);
-      if (response.ok) {
-        const data = await response.json();
-        const models = data.models || [];
-        setAvailableModels(models);
-        
-        // Set default model if none selected
-        if (!selectedModel && models.length > 0) {
-          const defaultModel = models.find((m: ModelInfo) => m.is_default) || models[0];
-          setSelectedModel(defaultModel.id);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch models:', err);
-    }
-  }, [apiBaseUrl, selectedModel]);
 
   // Fetch all agents (ELF + OpenCode)
   const fetchAgents = useCallback(async (silent = false) => {
@@ -291,8 +245,7 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
   // Initial load
   useEffect(() => {
     fetchAgents(false);
-    fetchModels();
-  }, [fetchAgents, fetchModels]);
+  }, [fetchAgents]);
 
   // Silent refresh every 5 seconds (no loading state)
   useEffect(() => {
@@ -399,62 +352,12 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
     }
   };
 
-  const executeMission = async () => {
-    if (!missionText.trim()) return;
-    
-    setIsExecuting(true);
-    setLastResult(null);
-    
-    try {
-      const mode = executionMode === 'manual' && selectedAgent ? 'manual' : executionMode;
-      
-      const response = await fetch(`${apiBaseUrl}/api/v1/agents/run`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mission: missionText,
-          mode: mode,
-          agent_type: selectedAgent?.type,
-          model: selectedModel,
-        }),
-      });
-      
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      
-      const result: MissionResult = await response.json();
-      setLastResult(result);
-      fetchAgents(true);
-      
-      // Auto-close modal after successful execution
-      if (result.status === 'success' || result.status === 'completed') {
-        setShowMissionModal(false);
-        setMissionText('');
-        // Increment modal key to force remount on next open
-        setAgentModalKey(prev => prev + 1);
-      }
-    } catch (err) {
-      console.error('Execution failed:', err);
-      setError(err instanceof Error ? err.message : 'Execution failed');
-    } finally {
-      setIsExecuting(false);
-    }
-  };
-
   const handleStartClick = (agent?: Agent) => {
     if (agent) {
       setSelectedAgent(agent);
-      setExecutionMode('manual');
-      // Set default model for this agent
-      const agentDefaultModel = getDefaultModelForAgent(agent);
-      if (agentDefaultModel && agentDefaultModel !== selectedModel) {
-        setSelectedModel(agentDefaultModel);
-      }
     } else {
       setSelectedAgent(null);
-      setExecutionMode('smart');
     }
-    setMissionText('');
-    setLastResult(null);
     setShowMissionModal(true);
   };
 
@@ -523,166 +426,16 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
 
   return (
     <div className="h-full flex flex-col bg-slate-900/30 rounded-lg border border-slate-700/50">
-       {/* Mission Modal */}
-       {showMissionModal && (
-         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-           <div key={agentModalKey} className="bg-slate-800 rounded-lg border border-slate-700 p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Zap className="w-5 h-5 text-violet-400" />
-                New Mission
-                {selectedAgent && (
-                  <span className="text-sm px-2 py-0.5 bg-violet-500/20 text-violet-400 rounded">
-                    {selectedAgent.display_name}
-                  </span>
-                )}
-              </h3>
-              <button onClick={() => setShowMissionModal(false)} className="text-slate-400 hover:text-slate-200">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            {/* Mode Selection */}
-            <div className="mb-4">
-              <label className="block text-sm text-slate-400 mb-2">Execution Mode</label>
-              <div className="flex gap-2 flex-wrap">
-                {[
-                  { id: 'smart', label: 'Smart', desc: 'Auto-detect if swarm needed' },
-                  { id: 'auto', label: 'Auto', desc: 'Select best single agent' },
-                  { id: 'swarm', label: 'Swarm', desc: 'Multi-agent parallel' },
-                  { id: 'manual', label: 'Manual', desc: 'Specific agent' },
-                ].map((mode) => (
-                  <button
-                    key={mode.id}
-                    onClick={() => setExecutionMode(mode.id as any)}
-                    disabled={mode.id === 'manual' && !selectedAgent}
-                    className={`px-3 py-1.5 rounded text-sm ${
-                      executionMode === mode.id
-                        ? 'bg-violet-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                    } disabled:opacity-50`}
-                  >
-                    {mode.label}
-                    <span className="text-xs opacity-70 ml-1">({mode.desc})</span>
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-slate-500 mt-2">
-                <strong>Smart:</strong> Analyzes mission complexity and auto-selects single agent or swarm mode.<br/>
-                <strong>Auto:</strong> Always selects the best single agent for the mission.
-              </p>
-            </div>
-
-            {/* Model Selection */}
-            <div className="mb-4">
-              <label className="block text-sm text-slate-400 mb-2 flex items-center gap-2">
-                <Cpu className="w-4 h-4" />
-                Model ({availableModels.length} available)
-              </label>
-              <div className="relative">
-                <select
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200 appearance-none cursor-pointer"
-                >
-                  {availableModels.length === 0 && (
-                    <option value="">Loading models...</option>
-                  )}
-                  {availableModels.map((model) => (
-                    <option key={`${model.provider_id}-${model.id}`} value={model.id}>
-                      {model.name} {model.is_default ? '(default)' : ''} - {model.provider}
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                  <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Select which AI model will execute this mission
-                {selectedAgent && ` (Default for ${selectedAgent.display_name}: ${getDefaultModelForAgent(selectedAgent) || 'System default'})`}
-              </p>
-            </div>
-            
-            {/* Mission Templates */}
-            <div className="mb-4">
-              <label className="block text-sm text-slate-400 mb-2">Quick Templates</label>
-              <div className="grid grid-cols-3 gap-2">
-                {MISSION_TEMPLATES.map((template) => {
-                  const IconComponent = template.icon;
-                  return (
-                    <button
-                      key={template.label}
-                      onClick={() => setMissionText(template.text)}
-                      className="flex items-center gap-2 p-2 bg-slate-700 hover:bg-slate-600 rounded text-xs transition-colors"
-                    >
-                      <IconComponent className="w-4 h-4" />
-                      <span>{template.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            
-            {/* Mission Input */}
-            <div className="mb-4">
-              <label className="block text-sm text-slate-400 mb-2">Mission</label>
-              <textarea
-                value={missionText}
-                onChange={(e) => setMissionText(e.target.value)}
-                placeholder="Describe what you want the agent(s) to do..."
-                className="w-full h-32 bg-slate-900 border border-slate-700 rounded p-3 text-sm text-slate-200 placeholder-slate-500 resize-none"
-              />
-            </div>
-            
-            {/* Last Result */}
-            {lastResult && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded">
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-400 font-medium">Execution Complete</span>
-                </div>
-                <div className="text-xs text-slate-400 space-y-1">
-                  <p>Mode: {lastResult.mode}</p>
-                  {lastResult.agent_type && <p>Agent: {lastResult.agent_type}</p>}
-                  <p>Heuristics: {lastResult.heuristics_count} extracted</p>
-                  <p>Time: {(lastResult.execution_time_ms / 1000).toFixed(1)}s</p>
-                </div>
-                {lastResult.response_preview && (
-                  <div className="mt-2 p-2 bg-slate-800 rounded text-xs text-slate-300 max-h-32 overflow-y-auto">
-                    <strong>Response:</strong>
-                    <p className="mt-1">{lastResult.response_preview}...</p>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {/* Action Buttons */}
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setShowMissionModal(false)}
-                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded text-sm"
-              >
-                Close
-              </button>
-              <button
-                onClick={executeMission}
-                disabled={!missionText.trim() || isExecuting}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-sm flex items-center gap-2 disabled:opacity-50"
-              >
-                {isExecuting ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Play className="w-4 h-4" />
-                )}
-                {isExecuting ? 'Executing...' : 'Execute'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Mission Modal */}
+      <MissionModal
+        isOpen={showMissionModal}
+        onClose={() => {
+          setShowMissionModal(false);
+          setSelectedAgent(null);
+        }}
+        apiBaseUrl={apiBaseUrl}
+        selectedAgentName={selectedAgent?.display_name}
+      />
 
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">

@@ -4,6 +4,7 @@ import { TaskKanban, Task, TaskSessions } from './TaskKanban'
 import { TrailFeed, Trail } from './TrailFeed'
 import { SignalInput } from './SignalInput'
 import { AgentsPanel } from './AgentsPanel'
+import { MissionModal } from './MissionModal'
 
 interface LivePanelProps {
   apiBaseUrl?: string
@@ -20,6 +21,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'agents' | 'tasks'>('agents')
   const [watcherStatus, setWatcherStatus] = useState<{running: boolean; state?: string}>({running: false})
+  const [showMissionModal, setShowMissionModal] = useState(false)
 
   const taskEventSourceRef = useRef<EventSource | null>(null)
   const trailEventSourceRef = useRef<EventSource | null>(null)
@@ -183,7 +185,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
 
   const handleLaunchWatcher = useCallback(async () => {
     try {
-      const response = await fetch(`${apiBaseUrl}/api/v1/monitoring/watcher/start`, {
+      const response = await fetch(`${apiBaseUrl}/api/v1/watcher/control`, {
         method: 'POST',
       })
       if (response.ok) {
@@ -200,7 +202,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
   // Fetch watcher status
   const fetchWatcherStatus = useCallback(async () => {
     try {
-      const response = await fetch(`${apiBaseUrl}/api/v1/monitoring/watcher/status`);
+      const response = await fetch(`${apiBaseUrl}/api/v1/watcher/status`);
       if (response.ok) {
         const data = await response.json();
         setWatcherStatus({
@@ -318,13 +320,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
             
             {/* New Mission Button for Tasks View */}
             <button
-              onClick={() => {
-                // Switch to agents view and open mission modal
-                setViewMode('agents')
-                // The AgentsPanel will need to handle opening the modal
-                // We'll dispatch a custom event
-                window.dispatchEvent(new CustomEvent('openNewMissionModal'))
-              }}
+              onClick={() => setShowMissionModal(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded text-xs font-medium transition-colors"
             >
               <PlusCircle className="w-3.5 h-3.5" />
@@ -383,6 +379,13 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
           </div>
         )}
       </div>
+
+      {/* Mission Modal for Tasks View */}
+      <MissionModal
+        isOpen={showMissionModal}
+        onClose={() => setShowMissionModal(false)}
+        apiBaseUrl={apiBaseUrl}
+      />
 
       {/* Error Toast */}
       {error && (

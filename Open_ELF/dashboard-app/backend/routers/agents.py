@@ -20,22 +20,28 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-# Try to import orchestrator (may not be available in simplified mode)
-try:
-    # Add agents directory to path
-    agents_dir = Path(__file__).parent.parent.parent.parent / "agents"
-    if str(agents_dir) not in sys.path:
-        sys.path.insert(0, str(agents_dir))
+# Import EventBridge and UnifiedOrchestrator (REQUIRED - will fail if not available)
+openelf_dir = Path(__file__).parent.parent.parent.parent
+if str(openelf_dir) not in sys.path:
+    sys.path.insert(0, str(openelf_dir))
 
-    from unified_orchestrator import get_orchestrator, AgentType
+from orchestrator.event_bridge import get_event_bridge_singleton
+from orchestrator.unified_orchestrator import get_orchestrator
 
-    HAS_ORCHESTRATOR = True
-except ImportError:
-    HAS_ORCHESTRATOR = False
+HAS_ORCHESTRATOR = True
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def get_bridge():
+    """Get EventBridge singleton. Fails hard if not available."""
+    bridge = get_event_bridge_singleton()
+    if bridge is None:
+        raise RuntimeError("EventBridge is required but not available. Start it first.")
+    return bridge
+
 
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
 
@@ -243,7 +249,10 @@ def record_heuristic_to_building(heuristic: Dict[str, str], task_id: str) -> boo
 
 
 def create_task(
-    mission_text: str, agent_type: str, session_id: str
+    mission_text: str,
+    agent_type: str,
+    session_id: str,
+    agent_name: Optional[str] = None,
 ) -> tuple[str, Path]:
     """Create a task file for the dashboard to monitor."""
     # Create session directory
@@ -251,15 +260,21 @@ def create_task(
     session_dir = TASKS_DIR / session_name
     session_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate task ID
+    # Normalize agent_type - "unknown" should be "auto"
+    display_agent = agent_type if agent_type and agent_type != "unknown" else "auto"
+
+    # Use agent_name for display if provided, otherwise the agent_type
+    display_name = agent_name if agent_name else display_agent
+
+    # Generate task ID (always use agent_type for filtering)
     timestamp = int(time.time())
-    task_id = f"{agent_type}_m{timestamp}"
+    task_id = f"{display_agent}_m{timestamp}"
     task_file = session_dir / f"{task_id}.json"
 
     # Create task data
     task_data = {
         "id": task_id,
-        "subject": f"[{agent_type.upper()}] {mission_text[:80]}{'...' if len(mission_text) > 80 else ''}",
+        "subject": f"[{display_name}] {mission_text[:80]}{'...' if len(mission_text) > 80 else ''}",
         "description": mission_text,
         "status": "in_progress",
         "session_id": session_name,
@@ -363,18 +378,7 @@ def call_learning_extractor(
 ) -> List[Dict[str, Any]]:
     """Call learning-extractor agent to analyze response and extract learnings."""
     try:
-        # Create a session for the learning-extractor
-        session_resp = requests.post(
-            f"{OPENCODE_SERVER}/session",
-            json={"title": f"Extract learnings from task"},
-            timeout=10,
-        )
-
-        if session_resp.status_code != 200:
-            logger.warning("Failed to create session for learning-extractor")
-            return []
-
-        session_id = session_resp.json().get("id")
+        bridge = get_bridge()
 
         # Build the extraction prompt
         extraction_prompt = f"""Analyze this agent response and extract any valuable learnings, patterns, or insights that should be saved to the knowledge base.
@@ -399,25 +403,13 @@ Only include learnings that are:
 
 Return your extractions in [LEARNED:] format. If no valuable learnings found, return empty."""
 
-        # Send message to learning-extractor
-        msg_resp = requests.post(
-            f"{OPENCODE_SERVER}/session/{session_id}/message",
-            json={
-                "parts": [{"type": "text", "text": extraction_prompt}],
-                "agent": "learning-extractor",
-            },
-            timeout=30,
+        # Send message via EventBridge
+        success, extraction_response = bridge.send_message(
+            message=extraction_prompt, agent="learning-extractor", timeout=60
         )
 
-        if msg_resp.status_code != 200:
-            logger.warning("Failed to send message to learning-extractor")
-            return []
-
-        # Wait for response (shorter timeout for extraction)
-        extraction_response = wait_for_response(session_id, timeout=60)
-
-        if not extraction_response:
-            logger.warning("No response from learning-extractor")
+        if not success or not extraction_response:
+            logger.warning("Failed to get learning-extractor response")
             return []
 
         # Extract heuristics from learning-extractor response
@@ -607,57 +599,38 @@ async def list_available_models():
 async def run_mission(request: MissionRequest):
     """Execute a mission."""
     try:
-        logger.info(f"Creating session for mission: {request.mission[:50]}...")
-
-        # Create a session
-        session_response = requests.post(
-            f"{OPENCODE_SERVER}/session",
-            json={"title": f"ELF Mission: {request.mission[:50]}"},
-            timeout=30,
-        )
-
-        if session_response.status_code not in [200, 201]:
-            error_msg = f"Failed to create session: {session_response.status_code}"
-            logger.error(error_msg)
-            return {
-                "status": "error",
-                "message": error_msg,
-                "mode": request.mode,
-                "mission": request.mission,
-            }
-
-        session_id = session_response.json().get("id")
-        logger.info(f"Session created with ID: {session_id}")
-
+        bridge = get_bridge()
         agent_type = request.agent_type or "auto"
+
+        # Use EventBridge for session management
+        logger.info(f"🌉 Using EventBridge for mission: {request.mission[:50]}...")
+
+        session_id = bridge.opencode_session_id
+        logger.info(f"✅ Using EventBridge session {session_id[:8]}...")
 
         task_id, task_file = create_task(request.mission, agent_type, session_id)
 
-        logger.info(f"Sending message to session {session_id}...")
-        message_payload: Dict[str, Any] = {
-            "parts": [{"type": "text", "text": request.mission}],
-        }
+        # Determine agent
+        agent = None
         if (
             request.mode == "manual"
             and request.agent_type
             and is_valid_agent_type(request.agent_type)
         ):
-            message_payload["agent"] = request.agent_type
+            agent = request.agent_type
 
-        message_response = requests.post(
-            f"{OPENCODE_SERVER}/session/{session_id}/message",
-            json=message_payload,
-            timeout=120,
+        # Send message via EventBridge
+        success, response = bridge.send_message(
+            message=request.mission, agent=agent, timeout=120
         )
 
-        message_sent = message_response.status_code in [200, 201]
-        logger.info(f"Message sent: {message_sent}")
+        logger.info(f"Message sent: {success}")
 
-        if not message_sent:
-            logger.error(
-                f"Failed to send message: {message_response.status_code} - {message_response.text}"
+        if not success:
+            logger.error(f"Failed to send message via EventBridge: {response}")
+            update_task_status(
+                task_file, "error", f"Failed to send message: {response}"
             )
-            update_task_status(task_file, "error", "Failed to send message to agent")
         else:
             monitor_thread = threading.Thread(
                 target=monitor_mission,
@@ -667,13 +640,13 @@ async def run_mission(request: MissionRequest):
             monitor_thread.start()
 
         return {
-            "status": "started" if message_sent else "error",
+            "status": "started" if success else "error",
             "mode": request.mode,
             "agent_type": request.agent_type or "auto-selected",
             "mission": request.mission,
             "session_id": session_id,
             "task_id": task_id,
-            "message_sent": message_sent,
+            "message_sent": success,
             "heuristics_count": 0,
             "execution_time_ms": 0,
         }
@@ -707,52 +680,26 @@ async def spawn_agent_direct(request: Dict[str, Any]):
                 status_code=400, detail=f"Invalid agent type: {agent_type}"
             )
 
-        # Create a session for the agent
-        session_response = requests.post(
-            f"{OPENCODE_SERVER}/session",
-            json={"title": f"Agent: {agent_name}"},
-            timeout=30,
-        )
+        bridge = get_bridge()
 
-        if session_response.status_code not in [200, 201]:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to create session: {session_response.status_code}",
-            )
-
-        session_data = session_response.json()
-        session_id = session_data.get("id") if session_data else None
-
-        if not session_id:
-            raise HTTPException(
-                status_code=500, detail="Failed to get session ID from response"
-            )
-
-        logger.info(f"Created session {session_id} for agent {agent_name}")
+        # Use EventBridge session
+        logger.info(f"🌉 Using EventBridge for agent {agent_name}...")
+        session_id = bridge.opencode_session_id
+        logger.info(f"✅ Using EventBridge session {session_id[:8]}...")
 
         # Send initialization mission to agent
-        message_payload = {
-            "parts": [{"type": "text", "text": mission}],
-            "agent": agent_type,
-        }
-
-        if model:
-            message_payload["model"] = model
-
-        message_response = requests.post(
-            f"{OPENCODE_SERVER}/session/{session_id}/message",
-            json=message_payload,
-            timeout=120,
+        success, response = bridge.send_message(
+            message=mission, agent=agent_type, timeout=120
         )
 
-        if message_response.status_code not in [200, 201]:
+        if not success:
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to initialize agent: {message_response.status_code}",
+                detail=f"Failed to initialize agent: {response}",
             )
 
         # Start background monitoring
-        task_id, task_file = create_task(mission, agent_type, session_id)
+        task_id, task_file = create_task(mission, agent_type, session_id, agent_name)
 
         monitor_thread = threading.Thread(
             target=monitor_mission,
@@ -897,64 +844,35 @@ async def run_swarm(request: SwarmRequest):
             except Exception as e:
                 logger.error(f"Error running swarm with orchestrator: {e}")
 
-        # Fallback to simplified swarm using OpenCode directly
-        try:
-            # Create a session for the swarm
-            session_response = requests.post(
-                f"{OPENCODE_SERVER}/session",
-                json={"title": f"Swarm: {request.task[:50]}"},
-                timeout=30,
-            )
+        # Use EventBridge
+        bridge = get_bridge()
+        logger.info(f"🌉 Using EventBridge for swarm: {request.task[:50]}...")
 
-            if session_response.status_code not in [200, 201]:
-                return {
-                    "status": "error",
-                    "error": f"Failed to create session: {session_response.status_code}",
-                    "task": request.task,
-                    "mode": request.mode,
-                }
+        # Send swarm instruction via EventBridge
+        swarm_prompt = f"""[SWARM] Execute task with multiple agents in {request.mode} mode.
 
-            session_id = session_response.json().get("id")
-
-            # Send swarm instruction to OpenCode
-            swarm_prompt = f"""[SWARM] Execute task with multiple agents in {request.mode} mode.
-            
 Task: {request.task}
 
 Context: {request.context}
 
 Coordinate multiple agents to work together on this task and provide a comprehensive response."""
 
-            message_response = requests.post(
-                f"{OPENCODE_SERVER}/session/{session_id}/message",
-                json={
-                    "parts": [{"type": "text", "text": swarm_prompt}],
-                    "agent": "multi-agent-coordinator",
-                },
-                timeout=120,
-            )
+        success, response = bridge.send_message(
+            message=swarm_prompt, agent="multi-agent-coordinator", timeout=120
+        )
 
-            if message_response.status_code not in [200, 201]:
-                return {
-                    "status": "error",
-                    "error": f"Failed to send swarm message: {message_response.status_code}",
-                    "task": request.task,
-                    "mode": request.mode,
-                }
-
-            # Return success
+        if success:
+            session_id = bridge.opencode_session_id
             return {
                 "status": "started",
                 "task": request.task,
                 "mode": request.mode,
                 "session_id": session_id,
             }
-
-        except Exception as e:
-            logger.error(f"Error running simplified swarm: {e}")
+        else:
             return {
                 "status": "error",
-                "error": f"Simplified swarm failed: {str(e)}",
+                "error": f"EventBridge swarm failed: {response}",
                 "task": request.task,
                 "mode": request.mode,
             }

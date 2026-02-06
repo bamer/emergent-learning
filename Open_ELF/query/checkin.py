@@ -1,22 +1,23 @@
-#!/usr/bin/env python3
 """
 Emergent Learning Framework - Checkin Workflow Orchestrator
 
-Steps:
+Steps (Updated for New Architecture):
 1. Display ELF Banner
 2. Verify hooks
 3. Load building context
 4. Display golden rules & heuristics
-5. Prompt dashboard (Claude tracks per-session)
-6. Prompt model selection (Claude tracks per-session)
-7. Check CEO decisions
-8. Ready status
+5. Check and display architecture status (EventBridge, UnifiedOrchestrator, Watcher, Learning Capture)
+6. Prompt dashboard (Claude tracks per-session)
+7. Prompt model selection (Claude tracks per-session)
+8. Check CEO decisions
+9. Ready status
 """
 
 import os
 import sys
 import io
 import time
+import requests
 from pathlib import Path
 from typing import Dict, Any, Optional
 import subprocess
@@ -61,42 +62,37 @@ class CheckinOrchestrator:
 
         self.elf_home = self._resolve_elf_home()
         self.selected_model = os.environ.get("ELF_MODEL", "claude")
+        self.architecture_ports = {
+            "event_bridge": 9998,
+            "unified_orchestrator": 9999,
+            "dashboard_backend": 8888,
+            "dashboard_frontend": 5173,
+            "opencode_server": 4096,
+        }
 
     def _resolve_elf_home(self) -> Path:
-        """Resolve ELF home using centralized elf_paths or fallback."""
-        # Add parent directory (src) to sys.path to find elf_paths
-        try:
-            current_dir = Path(__file__).resolve().parent
-            src_dir = current_dir.parent
-            if str(src_dir) not in sys.path:
-                sys.path.insert(0, str(src_dir))
-
-            from elf_paths import get_base_path
-
-            return get_base_path()
-        except ImportError:
-            # Fallback path discovery
-            return self._find_elf_home_fallback()
-
-    def _find_elf_home_fallback(self) -> Path:
-        """Find the ELF home directory by checking multiple locations (Legacy)."""
-        # Try 1: ELF_BASE_PATH env var
+        """Resolve ELF home directory directly - simplified for new architecture."""
+        # Check for ELF_BASE_PATH env var first
         if os.environ.get("ELF_BASE_PATH"):
             return Path(os.environ["ELF_BASE_PATH"]).expanduser().resolve()
 
-        # Try 2: ~/.opencode/emergent-learning (global install)
+        # Try current directory if it's the ELF root
+        current_dir = Path.cwd()
+        if (current_dir / "Open_ELF").exists():
+            return current_dir
+
+        # Look for Open_ELF directory
+        for parent in [Path.cwd().parent, Path.cwd().parent.parent]:
+            if (parent / "Open_ELF").exists():
+                return parent
+
+        # Fallback to global location for backward compatibility
         global_elf = Path.home() / ".opencode" / "emergent-learning"
         if global_elf.exists():
             return global_elf
 
-        # Try 3: Parent directories from current script location
-        current_file = Path(__file__).resolve()
-        for parent in [current_file.parent.parent, current_file.parent.parent.parent]:
-            if (parent / "query" / "query.py").exists():
-                return parent
-
-        # Fallback to global location (will error if not found)
-        return global_elf
+        # Last resort: use current directory
+        return Path.cwd()
 
     def verify_hooks(self):
         """Step 1b: Verify and install required hooks (auto-sync, observability, etc)."""
@@ -123,6 +119,159 @@ class CheckinOrchestrator:
         except Exception as e:
             print(f"[WARN] Hook verification failed: {e} (continuing)")
 
+    def check_architecture_status(self) -> Dict[str, str]:
+        """Check status of architecture components."""
+        print("[*] Checking Architecture Status...")
+
+        status = {
+            "opencode_server": "unknown",
+            "event_bridge": "unknown",
+            "unified_orchestrator": "unknown",
+            "dashboard_backend": "unknown",
+            "dashboard_frontend": "unknown",
+            "watcher": "unknown",
+            "learning_capture": "unknown",
+        }
+
+        # Check OpenCode Server
+        try:
+            response = requests.get(
+                f"http://localhost:{self.architecture_ports['opencode_server']}/session",
+                timeout=3,
+            )
+            status["opencode_server"] = (
+                "running" if response.status_code == 200 else "stopped"
+            )
+        except:
+            status["opencode_server"] = "stopped"
+
+        # Check EventBridge
+        try:
+            response = requests.get(
+                f"http://localhost:{self.architecture_ports['event_bridge']}/status",
+                timeout=3,
+            )
+            if response.status_code == 200:
+                eb_data = response.json()
+                status["event_bridge"] = (
+                    "running" if eb_data.get("running") else "stopped"
+                )
+            else:
+                status["event_bridge"] = "stopped"
+        except:
+            status["event_bridge"] = "stopped"
+
+        # Check UnifiedOrchestrator
+        try:
+            response = requests.get(
+                "http://localhost:8888/api/v1/orchestrator/status", timeout=3
+            )
+            if response.status_code == 200:
+                api_data = response.json()
+                status["unified_orchestrator"] = api_data.get("status_data", {}).get(
+                    "running", "stopped"
+                )
+            else:
+                status["unified_orchestrator"] = "stopped"
+        except:
+            status["unified_orchestrator"] = "stopped"
+
+        # Check Dashboard Backend
+        try:
+            response = requests.get(
+                f"http://localhost:{self.architecture_ports['dashboard_backend']}/api/v1/stats",
+                timeout=3,
+            )
+            status["dashboard_backend"] = (
+                "running" if response.status_code == 200 else "stopped"
+            )
+        except:
+            status["dashboard_backend"] = "stopped"
+
+        # Check Dashboard Frontend
+        try:
+            response = requests.get(
+                f"http://localhost:{self.architecture_ports['dashboard_frontend']}",
+                timeout=3,
+            )
+            status["dashboard_frontend"] = (
+                "running" if response.status_code == 200 else "stopped"
+            )
+        except:
+            status["dashboard_frontend"] = "stopped"
+
+        # Check Watcher
+        try:
+            result = subprocess.run(
+                ["pgrep", "-f", "watcher/launcher.py"], capture_output=True, text=True
+            )
+            status["watcher"] = "running" if result.returncode == 0 else "stopped"
+
+            # Also check API for detailed status
+            try:
+                response = requests.get(
+                    "http://localhost:8888/api/v1/watcher/status", timeout=3
+                )
+                if response.status_code == 200:
+                    watcher_data = response.json()
+                    status["watcher"] = (
+                        "running"
+                        if watcher_data.get("status_data", {}).get("is_running")
+                        else "stopped"
+                    )
+            except:
+                pass
+        except:
+            status["watcher"] = "stopped"
+
+        # Check Learning Capture
+        try:
+            result = subprocess.run(
+                ["pgrep", "-f", "background-learning-capture.py"],
+                capture_output=True,
+                text=True,
+            )
+            status["learning_capture"] = (
+                "running" if result.returncode == 0 else "inactive"
+            )
+        except:
+            status["learning_capture"] = "inactive"
+
+        return status
+
+    def display_architecture_status(self, status: Dict[str, str]):
+        """Display architecture status with visual indicators."""
+        print("\n[=] Architecture Status")
+        print("    " + "-" * 50)
+
+        services = [
+            ("OpenCode Server", status["opencode_server"]),
+            ("EventBridge", status["event_bridge"]),
+            ("UnifiedOrchestrator", status["unified_orchestrator"]),
+            ("Dashboard Backend", status["dashboard_backend"]),
+            ("Dashboard Frontend", status["dashboard_frontend"]),
+            ("Watcher", status["watcher"]),
+            ("Learning Capture", status["learning_capture"]),
+        ]
+
+        for name, state in services:
+            icon = "🟢" if state in ["running", "active"] else "🔴"
+            print(f"    {icon} {name:25} [{state}]")
+
+        print("    " + "-" * 50)
+        print()
+
+        # Warnings for stopped services
+        stopped_services = [
+            name for name, state in services if state not in ["running", "active"]
+        ]
+        if stopped_services:
+            print(
+                f"[!] Warning: {len(stopped_services)} services stopped: {', '.join(stopped_services)}\n"
+            )
+
+        return status
+
     def display_banner(self):
         """Step 1: Display the ELF ASCII banner."""
         print(self.BANNER)
@@ -132,18 +281,23 @@ class CheckinOrchestrator:
         print("[*] Loading Building Context...")
 
         try:
+            # Determine correct query.py path
+            query_path = self.elf_home / "query" / "query.py"
+            if not query_path.exists():
+                query_path = Path(__file__).parent / "query.py"
+
             # Call query.py --context to get the data
             result = subprocess.run(
                 [
                     sys.executable,
-                    str(self.elf_home / "src" / "query" / "query.py"),
+                    str(query_path),
                     "--context",
                 ],
                 capture_output=True,
                 text=True,
                 timeout=30,
                 encoding="utf-8",
-                errors="replace",  # Replace problematic chars instead of failing
+                errors="replace",
             )
 
             if result.returncode == 0:
@@ -383,6 +537,10 @@ class CheckinOrchestrator:
 
         # Step 1b: Verify and install hooks
         self.verify_hooks()
+
+        # Step 2b: Check architecture status (NEW for new architecture)
+        architecture_status = self.check_architecture_status()
+        self.display_architecture_status(architecture_status)
 
         # Step 2: Load building context
         context = self.load_building_context()

@@ -422,33 +422,83 @@ async def get_event_bridge_status():
 
 @router.get("/orchestrator/status")
 async def get_orchestrator_status():
-    """Return orchestrator status from the Open_ELF status server."""
-    status_url = "http://localhost:9999/status"
-    status_payload = {
-        "running": False,
-        "missions_count": 0,
-        "missions": [],
+    """Return orchestrator status including services health."""
+    # Check services health via Orchestrator
+    import subprocess
+
+    services_health = {
+        "learning_capture": {"active": False, "running": False},
+        "watcher": False,
+        "event_bridge": False,
     }
 
+    # Check EventBridge
     try:
-        response = requests.get(status_url, timeout=3)
+        response = requests.get("http://localhost:9998/status", timeout=2)
         if response.status_code == 200:
-            status_payload = response.json()
+            eb_status = response.json()
+            services_health["event_bridge"] = eb_status.get("running", False)
+
+            # Check if Learning Capture info is in EventBridge status
+            if "services" in eb_status:
+                services_health.update(eb_status["services"])
         else:
-            _log_error(f"Orchestrator status check failed: HTTP {response.status_code}")
+            _log_error(f"EventBridge health check failed: HTTP {response.status_code}")
     except Exception as e:
-        _log_error(f"Orchestrator status check failed: {e}")
+        _log_error(f"EventBridge health check failed: {e}")
+
+    # Check Learning Capture directly
+    try:
+        result = subprocess.run(
+            ["pgrep", "-f", "background-learning-capture.py"],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            services_health["learning_capture"]["active"] = True
+            services_health["learning_capture"]["running"] = True
+            services_health["learning_capture"]["pid"] = result.stdout.strip()
+    except:
+        pass
+
+    # Check Watcher
+    try:
+        result = subprocess.run(
+            ["pgrep", "-f", "watcher/launcher.py"], capture_output=True, text=True
+        )
+        services_health["watcher"] = result.returncode == 0
+    except:
+        services_health["watcher"] = False
 
     return {
         "status": "ok",
         "status_data": {
-            "running": bool(status_payload.get("running")),
-            "missions_count": int(status_payload.get("missions_count", 0)),
+            "running": services_health["event_bridge"],
+            "uptime_seconds": services_health.get("uptime_seconds", 0),
+            "services": services_health,
             "last_check": datetime.now().isoformat(),
-            "status_url": status_url,
         },
-        "missions": status_payload.get("missions", []),
     }
+
+    # try:
+    #     response = requests.get(status_url_forwards, timeout=3)
+    #     if response.status_code == 200:
+    #         status_payload = response.json()
+    #     else:
+    #         _log_error(f"Orchestrator status check failed: HTTP {response.status_code}")
+    # except Exception as e:
+    #     _log_error(f"Orchestrator status check failed: {e}")
+
+    # return {
+    #     "status": "ok",
+    #     "status_data": {
+    #         "running": bool(status_payload.get("running")),
+    #         "missions_count": int(status_payload.get("missions_count", 0)),
+    #         "last_check": datetime.now().isoformat(),
+    #         "status_url": status_url,
+    #     },
+    #     "missions": status_payload.get("missions", []),
+    # }
 
 
 @router.post("/orchestrator/control")

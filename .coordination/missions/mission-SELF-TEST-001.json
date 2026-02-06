@@ -16,7 +16,7 @@
   "timeoutSeconds": 30,
   "timestamp": "2026-02-05T01:06:28.886883",
   "status": "in_progress",
-  "completedAt": "2026-02-05T21:43:24.717158",
-  "response": "Failed to establish OpenCode session",
-  "startedAt": "2026-02-05T21:43:29.723835"
+  "completedAt": "2026-02-06T17:07:52.895232",
+  "response": "HTTPConnectionPool(host='localhost', port=4096): Read timed out. (read timeout=300)",
+  "startedAt": "2026-02-06T17:07:55.504502"
 }

@@ -18,7 +18,7 @@ import subprocess
 import threading
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # Configuration
@@ -46,6 +46,7 @@ LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Setup logging (unified + local)
 sys.path.insert(0, str(ELF_DIR / "agents"))
+sys.path.insert(0, str(ELF_DIR / "Open_ELF" / "utils"))
 try:
     from elf_logging import get_logger, log_info, log_error
 
@@ -73,6 +74,21 @@ except Exception:
 
     def _log_error(message: str):
         logger.error(message)
+
+
+# Import event_logger for database logging (NEW)
+EVENT_LOGGER_AVAILABLE = False
+EVENT_LOGGER = None
+try:
+    from event_logger import log_event
+
+    EVENT_LOGGER_AVAILABLE = True
+    EVENT_LOGGER = log_event
+    _log_info("Event logger imported for database logging")
+except ImportError as e:
+    logger.warning(
+        f"Event logger not available, events will not be logged to database: {e}"
+    )
 
 
 class HookManager:
@@ -183,6 +199,9 @@ class EventBridge:
         self.event_summary_interval = logging_config.get("summary_interval", 10)
         self.max_details_length = logging_config.get("max_details_length", 100)
 
+        # Event listener system for components like UnifiedOrchestrator
+        self._listeners = []  # List of registered listeners: [{id, callback, event_types}]
+
         COORDINATION_DIR.mkdir(parents=True, exist_ok=True)
 
     def _load_config(self) -> Dict:
@@ -232,6 +251,32 @@ class EventBridge:
         except Exception as e:
             logger.warning(f"Failed to write heartbeat: {e}")
             # Note: Don't fail completely, but log the error for visibility
+
+    def register_listener(
+        self, listener_id: str, callback: callable, event_types: List[str]
+    ):
+        """Register a listener for specific event types.
+
+        Args:
+            listener_id: Unique identifier for this listener
+            callback: Function to call when event is received (callback(event_data))
+            event_types: List of event types to listen for
+        """
+        listener = {"id": listener_id, "callback": callback, "event_types": event_types}
+        self._listeners.append(listener)
+        logger.info(f"🎧 Listener registered: {listener_id} for events: {event_types}")
+
+    def _notify_listeners(self, event_type: str, event_data: Dict[str, Any]):
+        """Notify all registered listeners for a specific event type."""
+        for listener in self._listeners:
+            if event_type in listener.get("event_types", []):
+                try:
+                    listener["callback"](event_data)
+                    logger.debug(
+                        f"📨 Notified listener {listener['id']} for event {event_type}"
+                    )
+                except Exception as e:
+                    logger.error(f"❌ Error notifying listener {listener['id']}: {e}")
 
     def _record_event(self, event_type: str = "unknown", details: str = ""):
         """Increment counters and update heartbeat for any event with smart logging."""
@@ -289,6 +334,45 @@ class EventBridge:
 
             self.last_log_time[event_type] = current_time
 
+            # Log event to database if available
+            if EVENT_LOGGER_AVAILABLE:
+                try:
+                    # Extract severity from event type for classification
+                    severity = "info"
+                    if "error" in event_type.lower() or "failure" in event_type.lower():
+                        severity = "error"
+                    elif "warning" in event_type.lower():
+                        severity = "warning"
+                    elif "critical" in event_type.lower():
+                        severity = "critical"
+
+                    # Build summary from log_message
+                    summary = log_message.replace("📡", "").strip()
+                    if details:
+                        summary = f"{summary} - {details[:50]}..."
+
+                    # Create structured data payload
+                    event_data = {
+                        "event_type": event_type,
+                        "source": "event_bridge",
+                        "component": "opencodess",
+                        "details": details,
+                        "severity": severity,
+                        "session_id": getattr(self, "opencode_session_id", None),
+                        "timestamp": self.last_event_time,
+                    }
+
+                    # Log to database
+                    EVENT_LOGGER(
+                        event_type=event_type,
+                        source="event_bridge",
+                        summary=summary,
+                        data=event_data,
+                        status="success",
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to log event to database: {e}")
+
     def start(self):
         """Démarre le bridge d'événements."""
         _log_info("=" * 70)
@@ -306,6 +390,10 @@ class EventBridge:
             return False
 
         _log_info("✅ Connected to OpenCode server")
+
+        # Initialize OpenCode session for EventBridge
+        self._initialize_session()
+
         self.running = True
         self.started_at = datetime.now()
         self._write_heartbeat()
@@ -330,6 +418,51 @@ class EventBridge:
             self.status_server_running = True
 
         return True
+
+    def _initialize_session(self):
+        """Initialize or retrieve OpenCode session for EventBridge."""
+        try:
+            # First, try to find an existing ELF session
+            response = requests.get(f"{self.base_url}/session", timeout=10)
+            if response.status_code == 200:
+                sessions = response.json()
+                # Look for an existing ELF EventBridge session
+                for session in sessions:
+                    if "EventBridge" in session.get(
+                        "title", ""
+                    ) or "event_bridge" in session.get("slug", ""):
+                        self.opencode_session_id = session.get("id")
+                        _log_info(
+                            f"✅ Found existing EventBridge session: {self.opencode_session_id[:8]}..."
+                        )
+                        return
+
+            # If no existing session, create a new one
+            _log_info("🆕 Creating new EventBridge session...")
+            create_response = requests.post(
+                f"{self.base_url}/session",
+                json={
+                    "title": "ELF EventBridge Session",
+                    "directory": str(ELF_DIR),
+                },
+                timeout=10,
+            )
+
+            if create_response.status_code in [200, 201]:
+                session_data = create_response.json()
+                self.opencode_session_id = session_data.get("id")
+                _log_info(
+                    f"✅ Created EventBridge session: {self.opencode_session_id[:8]}..."
+                )
+            else:
+                _log_error(
+                    f"❌ Failed to create session: {create_response.status_code}"
+                )
+                self.opencode_session_id = None
+
+        except Exception as e:
+            _log_error(f"❌ Error initializing session: {e}")
+            self.opencode_session_id = None
 
     def _listen_events(self):
         """Écoute le stream SSE des événements OpenCode."""
@@ -390,6 +523,8 @@ class EventBridge:
 
                 sessions = response.json()
 
+                total_tools_found = 0
+
                 for session in sessions:
                     session_id = session.get("id")
                     if not session_id:
@@ -413,7 +548,9 @@ class EventBridge:
                     for msg in messages:
                         msg_id = msg.get("info", {}).get("id")
                         if not msg_id or msg_id in seen_messages[session_id]:
-                            continue
+                            # Vérifier quand même si des parties ont été ajoutées
+                            # en comparant le nombre de parties
+                            pass
 
                         seen_messages[session_id].add(msg_id)
 
@@ -423,8 +560,11 @@ class EventBridge:
                             if part.get("type") == "tool_use":
                                 tool_name = part.get("tool", "unknown")
                                 tool_input = part.get("input", {})
+                                total_tools_found += 1
 
-                                _log_info(f"🔧 Tool detected via polling: {tool_name}")
+                                _log_info(
+                                    f"🔧 Tool detected via polling: {tool_name} in session {session_id[:8]}"
+                                )
 
                                 # Déclencher le hook
                                 hook_data = {
@@ -443,12 +583,17 @@ class EventBridge:
                                 )
                                 self.hook_manager.run_hook("PostToolUse", hook_data)
 
-                # Attendre avant le prochain poll
-                time.sleep(30)
+                if total_tools_found > 0:
+                    _log_info(
+                        f"✅ Poll complete: {total_tools_found} tools found across {len(sessions)} sessions"
+                    )
+
+                # Attendre avant le prochain poll (5s pour capturer plus d'outils)
+                time.sleep(5)
 
             except Exception as e:
                 _log_error(f"❌ Error polling sessions: {e}")
-                time.sleep(30)
+                time.sleep(5)
 
     def _process_sse_line(self, line: str):
         """Traite une ligne SSE."""
@@ -470,26 +615,100 @@ class EventBridge:
         event_type = event.get("type", "unknown")
         event_properties = event.get("properties", {})
 
-        # Extract useful details for logging
+        # Extract useful details for logging BEFORE any early returns
         details = ""
         if event_type == "tool":
             tool_name = event_properties.get("tool", "unknown")
             session_id = event_properties.get("session_id", "")
-            details = f"Tool: {tool_name} | Session: {session_id[:8] if session_id else 'N/A'}"
+            input_preview = str(event_properties.get("input", {}))[:100]
+            details = f"Tool: {tool_name} | Input: {input_preview}... | Session: {session_id[:8] if session_id else 'N/A'}"
+        elif event_type == "message.part.updated":
+            # Extract details from message part
+            part = event_properties.get("part", {})
+            part_type = part.get("type", "")
+            session_id = event_properties.get("session_id", "")
+
+            if part_type == "tool_use":
+                tool_name = part.get("tool", "unknown")
+                input_data = part.get("input", {})
+                input_preview = str(input_data)[:100]
+                details = f"Tool: {tool_name} | Input: {input_preview}... | Session: {session_id[:8] if session_id else 'N/A'}"
+            elif part_type == "text":
+                text_content = part.get("text", "")
+                preview = text_content[:50] if text_content else "empty"
+                details = f"Text: {preview}... | Session: {session_id[:8] if session_id else 'N/A'}"
+            elif part_type == "thinking":
+                thoughts = part.get("thinking", "")
+                preview = thoughts[:50] if thoughts else "empty"
+                details = f"Thinking: {preview}... | Session: {session_id[:8] if session_id else 'N/A'}"
+            else:
+                details = f"Part type: {part_type} | Session: {session_id[:8] if session_id else 'N/A'}"
         elif event_type == "message":
             content_preview = event_properties.get("content", "")[:50]
-            details = f"Content: {content_preview}..."
+            session_id = event_properties.get("session_id", "")
+            details = f"Content: {content_preview}... | Session: {session_id[:8] if session_id else 'N/A'}"
         elif event_type == "error":
             error_msg = event_properties.get("error", "Unknown error")
             details = f"Error: {error_msg[:100]}"
+        elif event_type == "server.heartbeat":
+            uptime = event_properties.get("uptime", "unknown")
+            active_sessions = event_properties.get("active_sessions", "unknown")
+            details = f"Heartbeat | Uptime: {uptime} | Sessions: {active_sessions}"
+        elif event_type == "session.created":
+            session_id = event_properties.get("id", "")
+            details = f"Session created: {session_id[:8]}..."
+        elif event_type == "session.updated":
+            session_id = event_properties.get("id", "")
+            status = event_properties.get("status", "")
+            details = f"Session updated: {session_id[:8]}... | Status: {status}"
+        elif event_type == "failure":
+            failure_type = event_properties.get("failure_type", "unknown")
+            details = f"Failure: {failure_type}"
+        else:
+            # Generic details for unknown event types - extract some useful info
+            keys = list(event_properties.keys())
+            if keys:
+                details = f"Properties: {', '.join(keys[:5])}"
+            else:
+                details = "No properties"
 
+        # Log event to database with details
         self._record_event(event_type, details)
+
+        # Notify registered listeners (e.g., UnifiedOrchestrator)
+        self._notify_listeners(event_type, event)
+
+        logger.debug(f"📡 Processing event #{self.event_count}: {event_type}")
+
+        # Handle tool usage embedded in message.part.updated events
+        if event_type == "message.part.updated":
+            part = event_properties.get("part", {})
+            if part.get("type") == "tool_use":
+                # Synthesize a tool event for processing
+                tool_event = {
+                    "type": "tool",
+                    "properties": {
+                        "tool": part.get("tool", "unknown"),
+                        "input": part.get("input", {}),
+                        "output": {},  # Will be populated later
+                        "session_id": event_properties.get("session_id", ""),
+                        "success": True,
+                    },
+                }
+                # Process as a regular tool event
+                self._handle_event(tool_event)
+                return  # Already processed
+
+        # Notify registered listeners (e.g., UnifiedOrchestrator)
+        self._notify_listeners(event_type, event)
 
         logger.debug(f"📡 Processing event #{self.event_count}: {event_type}")
 
         # Mapper les événements OpenCode aux hooks ELF
         if event_type == "message":
             self._handle_message_event(event)
+        elif event_type == "message.updated":
+            self._handle_message_updated_event(event)
         elif event_type == "tool":
             self._handle_tool_event(event)
         elif event_type == "error":
@@ -498,6 +717,14 @@ class EventBridge:
             self._handle_failure_event(event)
         elif event_type == "session.created":
             self._handle_session_created(event)
+        elif event_type == "session.updated":
+            self._handle_session_updated_event(event)
+        elif event_type == "session.status":
+            self._handle_session_status_event(event)
+        elif event_type == "session.idle":
+            self._handle_session_idle_event(event)
+        elif event_type == "session.diff":
+            self._handle_session_diff_event(event)
         elif event_type == "thinking":
             self._handle_thinking_event(event)
 
@@ -603,6 +830,115 @@ class EventBridge:
                 "start_time": time.time(),
             }
 
+        # Hook PreSession (équivalent à UserPromptSubmit avant toute session)
+        pre_session_data = {
+            "event_type": "UserPromptSubmit",
+            "session_id": session_id,
+            "session_status": "created",
+            "timestamp": datetime.now().isoformat(),
+        }
+        self.hook_manager.run_hook("UserPromptSubmit", pre_session_data)
+
+    def _handle_message_updated_event(self, event: Dict[str, Any]):
+        """Gère un event de message (final message envoyé)."""
+        props = event.get("properties", {})
+        role = props.get("role", "unknown")
+        content = props.get("content", "")
+        session_id = props.get("session_id")
+
+        if role == "user":
+            logger.info(f"👤 User message submitted")
+
+            # Hook UserPromptSubmit (pre_session compact)
+            hook_data = {
+                "event_type": "UserPromptSubmit",
+                "session_id": session_id,
+                "message": content,
+                "timestamp": datetime.now().isoformat(),
+            }
+            self.hook_manager.run_hook("UserPromptSubmit", hook_data)
+
+        elif role == "assistant":
+            logger.info(f"🤖 Assistant message sent")
+
+            # Hook MessageSendCompleted
+            hook_data = {
+                "event_type": "MessageSendCompleted",
+                "session_id": session_id,
+                "content": content,
+                "timestamp": datetime.now().isoformat(),
+            }
+            self.hook_manager.run_hook("MessageSendCompleted", hook_data)
+
+    def _handle_session_updated_event(self, event: Dict[str, Any]):
+        """Gère les mises à jour de session (post_session)."""
+        props = event.get("properties", {})
+        session_id = props.get("id")
+        status = props.get("status", "unknown")
+
+        logger.info(f"📁 Session updated: {session_id} -> {status}")
+
+        # Si session terminée/fermée, déclencher hook post-session
+        if status.lower() in ["closed", "completed", "finished", "ended", "archived"]:
+            logger.info(f"🏁 Session ended: {session_id}")
+
+            # Hook SessionEnded
+            hook_data = {
+                "event_type": "SessionEnded",
+                "session_id": session_id,
+                "final_status": status,
+                "timestamp": datetime.now().isoformat(),
+            }
+            self.hook_manager.run_hook("SessionEnded", hook_data)
+
+            # Cleanup session tracking
+            if session_id in self.session_tools:
+                tools_used = self.session_tools[session_id].get("tools_used", [])
+                logger.info(f"📊 Session {session_id} used {len(tools_used)} tools")
+                del self.session_tools[session_id]
+
+    def _handle_session_status_event(self, event: Dict[str, Any]):
+        """Gère les événements de statut de session."""
+        props = event.get("properties", {})
+        session_id = props.get("id")
+        status = props.get("status", "unknown")
+
+        logger.debug(f"📋 Session status: {session_id} -> {status}")
+
+    def _handle_session_idle_event(self, event: Dict[str, Any]):
+        """Gère les événements de session idle."""
+        props = event.get("properties", {})
+        session_id = props.get("id")
+        idle_duration = props.get("idle_duration", "unknown")
+
+        logger.info(f"⏸️  Session idle: {session_id} for {idle_duration}")
+
+        # Hook pour session idle
+        hook_data = {
+            "event_type": "SessionIdle",
+            "session_id": session_id,
+            "idle_duration": idle_duration,
+            "timestamp": datetime.now().isoformat(),
+        }
+        self.hook_manager.run_hook("SessionIdle", hook_data)
+
+    def _handle_session_diff_event(self, event: Dict[str, Any]):
+        """Gère les événements de diff de session (changements)."""
+        props = event.get("properties", {})
+        session_id = props.get("id")
+        diff_data = props.get("diff", "unknown")
+
+        logger.debug(f"📝 Session diff: {session_id}")
+
+        # Hook pour tracking des changements
+        hook_data = {
+            "event_type": "SessionDiff",
+            "session_id": session_id,
+            "diff": diff_data,
+            "timestamp": datetime.now().isoformat(),
+        }
+        self.hook_manager.run_hook("SessionDiff", hook_data)
+
     def _handle_thinking_event(self, event: Dict[str, Any]):
         """Gère un event de thinking (pour la mémoire sémantique)."""
         props = event.get("properties", {})
@@ -697,6 +1033,9 @@ class EventBridge:
                             "events_processed": bridge.event_count,
                             "hooks_dir": str(bridge.hook_manager.hooks_dir),
                             "opencode_server": bridge.base_url,
+                            "opencode_session_id": getattr(
+                                bridge, "opencode_session_id", None
+                            ),
                             "started_at": bridge.started_at.isoformat()
                             if bridge.started_at
                             else None,

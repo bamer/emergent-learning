@@ -1,0 +1,350 @@
+# EventBridge Architecture
+
+## Overview
+
+The **EventBridge** is the central event processing system for the Emergent Learning Framework (ELF). It connects the OpenCode agent execution environment with the ELF learning and monitoring systems.
+
+**Key Function:** Capture agent activities (tool usage, messages, sessions) and trigger learning hooks to record heuristics, trails, and pheromones.
+
+---
+
+## Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    OpenCode Environment                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+│  │   Agent 1    │  │   Agent 2    │  │   Agent N    │     │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
+│         │                 │                 │              │
+│         └─────────────────┼─────────────────┘              │
+│                           │                                │
+│                    ┌──────▼──────┐                         │
+│                    │ OpenCode    │                         │
+│                    │ API Server  │                         │
+│                    │ :4096       │                         │
+│                    └──────┬──────┘                         │
+└───────────────────────────┼─────────────────────────────────┘
+                            │
+           ┌────────────────┼────────────────┐
+           │                │                │
+           ▼                ▼                ▼
+   ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+   │   SSE Stream │ │   Sessions   │ │   Messages   │
+   │   /event     │ │   /session   │ │   /message   │
+   └──────┬───────┘ └──────┬───────┘ └──────┬───────┘
+          │                │                │
+          └────────────────┼────────────────┘
+                           │
+               ┌───────────▼───────────┐
+               │     EventBridge       │
+               │   event_bridge.py     │
+               │                       │
+               │  ┌─────────────────┐  │
+               │  │  HookManager    │  │
+               │  │  - PreToolUse   │  │
+               │  │  - PostToolUse  │  │
+               │  └─────────────────┘  │
+               └───────────┬───────────┘
+                           │
+           ┌───────────────┼───────────────┐
+           │               │               │
+           ▼               ▼               ▼
+   ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+   │ Heuristics   │ │   Trails     │ │ Pheromones   │
+   │   Engine     │ │   System     │ │   System     │
+   └──────────────┘ └──────────────┘ └──────────────┘
+```
+
+---
+
+## Event Sources
+
+### 1. SSE Stream (Primary)
+
+**Endpoint:** `http://localhost:4096/event`
+
+**Event Types Captured:**
+- `message` - Agent messages
+- `message.part.updated` - Message content updates
+- `session.updated` - Session state changes
+- `server.heartbeat` - Server health
+- `session.status` - Session status changes
+
+**Limitation:** OpenCode does NOT emit `tool` type events via SSE.
+
+### 2. Session Polling (Secondary)
+
+**Endpoint:** `http://localhost:4096/session/{id}/message`
+
+**Purpose:** Detect tool usage by polling session messages
+
+**Frequency:** Every 5 seconds (previously 30 seconds)
+
+**Logic:**
+1. Query all active sessions
+2. For each session, fetch all messages
+3. Check message parts for `type: "tool_use"`
+4. Trigger PostToolUse hooks for detected tools
+
+**Advantage:** Catches tools that SSE misses
+
+### 3. Message Inspection
+
+**Process:**
+```python
+for session in sessions:
+    messages = fetch_messages(session.id)
+    for msg in messages:
+        for part in msg.parts:
+            if part.type == "tool_use":
+                trigger_hook(part.tool, part.input)
+```
+
+---
+
+## Hook System
+
+### Hook Types
+
+#### PreToolUse
+**Triggered:** Before tool execution
+**Purpose:** Prepare context, load semantic memory
+**Script:** `hooks/PreToolUse/semantic-memory.py`
+
+#### PostToolUse
+**Triggered:** After tool execution completes
+**Purpose:** Record heuristics, trails, pheromones
+**Scripts:**
+- `hooks/learning-loop/post_tool_learning.py` - Heuristics
+- `hooks/learning-loop/record_pheromone.py` - Pheromones
+- `hooks/post_tool_use/sync-golden-rules.py` - Golden rules
+
+### Hook Data Format
+
+```json
+{
+  "event_type": "PostToolUse",
+  "tool_name": "read_file",
+  "tool_input": {"file_path": "/path/to/file"},
+  "tool_output": {"content": "..."},
+  "success": true,
+  "session_id": "session-uuid",
+  "timestamp": "2026-02-06T08:30:00Z",
+  "user_message": "Original user request",
+  "tools_used": [...]
+}
+```
+
+---
+
+## Configuration
+
+### EventBridge Config File
+
+**Location:** `Open_ELF/orchestrator/event_bridge_config.json`
+
+```json
+{
+  "logging": {
+    "throttle_seconds": 5,
+    "important_events": ["message", "tool", "error", "session"],
+    "summary_interval": 10,
+    "max_details_length": 100
+  },
+  "status_server": {
+    "default_port": 9998,
+    "fallback_port": 9999
+  }
+}
+```
+
+### Hook Directories
+
+- `~/.opencode/hooks/PostToolUse/` - Post-tool execution hooks
+- `~/.opencode/hooks/learning-loop/` - Learning system hooks
+- `~/.opencode/hooks/PreToolUse/` - Pre-tool execution hooks
+
+---
+
+## Monitoring & Health
+
+### Heartbeat File
+
+**Location:** `.coordination/event-bridge-heartbeat.json`
+
+**Content:**
+```json
+{
+  "started_at": "2026-02-06T07:19:03",
+  "last_event_time": "2026-02-06T08:50:41",
+  "events_processed": 15990,
+  "running": true,
+  "health": "healthy",
+  "event_stats": {
+    "total_types": 10,
+    "top_events": {
+      "message.part.updated": 15059,
+      "message.updated": 335
+    }
+  }
+}
+```
+
+### Logs
+
+**Location:** `Open_ELF/logs/event_bridge.log`
+
+**Key Log Messages:**
+- `🔧 Tool detected via polling: {tool_name}` - Tool captured
+- `✅ Poll complete: {count} tools found` - Polling summary
+- `❌ Error polling sessions: {error}` - Connection issues
+
+### Health Check
+
+**Command:**
+```bash
+python3 scripts/diagnose_event_pipeline.py
+```
+
+---
+
+## Usage
+
+### Starting EventBridge
+
+```bash
+# Start the bridge
+python3 Open_ELF/orchestrator/event_bridge.py start
+
+# Check status
+python3 Open_ELF/orchestrator/event_bridge.py status
+
+# Stop the bridge
+pkill -f event_bridge.py
+```
+
+### Monitoring Real-time
+
+```bash
+# Watch logs
+tail -f Open_ELF/logs/event_bridge.log
+
+# Watch for tool detection
+grep "Tool detected" Open_ELF/logs/event_bridge.log
+
+# Check heartbeat
+cat .coordination/event-bridge-heartbeat.json
+```
+
+---
+
+## Troubleshooting
+
+### No Tool Events Captured
+
+**Symptoms:**
+- Dashboard shows no heuristics
+- No trails created
+- No pheromones deposited
+
+**Diagnosis:**
+```bash
+# 1. Check if EventBridge is running
+cat .coordination/event-bridge-heartbeat.json
+
+# 2. Check logs for errors
+tail -50 Open_ELF/logs/event_bridge.log
+
+# 3. Run diagnostic
+python3 scripts/diagnose_event_pipeline.py
+```
+
+**Solutions:**
+1. **Restart EventBridge:**
+   ```bash
+   pkill -f event_bridge.py
+   python3 Open_ELF/orchestrator/event_bridge.py start
+   ```
+
+2. **Verify OpenCode API:**
+   ```bash
+   curl http://localhost:4096/session
+   ```
+
+3. **Check hook permissions:**
+   ```bash
+   ls -la ~/.opencode/hooks/learning-loop/
+   ```
+
+### High Latency
+
+**Issue:** Tools detected with delay
+
+**Cause:** Default 30s polling interval too slow
+
+**Fix:** Edit `event_bridge.py`:
+```python
+# Change from:
+time.sleep(30)
+# To:
+time.sleep(5)
+```
+
+### Memory Issues
+
+**Issue:** EventBridge consuming too much memory
+
+**Solution:** The `seen_messages` tracker can grow large. Restart periodically:
+```bash
+# Add to crontab for daily restart
+0 0 * * * pkill -f event_bridge.py && python3 /path/to/event_bridge.py start
+```
+
+---
+
+## Architecture History
+
+### Previous Architecture (DEPRECATED)
+
+**Plugin-based approach:**
+```
+OpenCode → ELF_superpowers.js → Direct Python hooks
+```
+
+**Issues:**
+- Required manual plugin installation
+- Version compatibility problems
+- Complex configuration
+
+### Current Architecture (ACTIVE)
+
+**API-based approach:**
+```
+OpenCode → SSE/REST API → EventBridge → Hooks
+```
+
+**Advantages:**
+- No plugin installation required
+- Works with any OpenCode version
+- More reliable and maintainable
+- Better observability
+
+---
+
+## Future Improvements
+
+1. **WebSocket Support:** Real-time bidirectional communication
+2. **Database Direct Logging:** Bypass hooks for critical events
+3. **Event Replay:** Store raw events for debugging
+4. **Auto-recovery:** Restart on failure detection
+5. **Metrics Export:** Prometheus/Grafana integration
+
+---
+
+## References
+
+- **EventBridge Code:** `Open_ELF/orchestrator/event_bridge.py`
+- **Hook Manager:** `Open_ELF/orchestrator/event_bridge.py:94` (HookManager class)
+- **Diagnostic Script:** `scripts/diagnose_event_pipeline.py`
+- **Incident Report:** `docs/INCIDENT-event-pipeline-failure-2026-02-06.md`

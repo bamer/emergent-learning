@@ -7,8 +7,8 @@
   },
   "status": "in_progress",
   "createdAt": "2026-02-05T19:36:00",
-  "completedAt": "2026-02-05T21:43:24.716153",
-  "response": "Failed to establish OpenCode session",
+  "completedAt": "2026-02-06T17:07:52.894051",
+  "response": "HTTPConnectionPool(host='localhost', port=4096): Read timed out. (read timeout=300)",
   "response_type": "mission_accepted",
-  "startedAt": "2026-02-05T21:43:29.718728"
+  "startedAt": "2026-02-06T17:07:55.501840"
 }

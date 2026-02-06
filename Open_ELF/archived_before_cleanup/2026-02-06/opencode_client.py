@@ -16,7 +16,7 @@ class OpenCodeClient:
 
     def __init__(
         self,
-        model: str = "opencode/big-pickle",
+        model: str = "llama/nemotron-v3-coder",
         server_url: str = "http://localhost:4096",
         prefer_cli: bool = True,
     ):
@@ -46,7 +46,7 @@ class OpenCodeClient:
 
 
 def call_opencode(
-    prompt: str, model: str = "opencode/big-pickle", timeout: int = 120
+    prompt: str, model: str = "llama/nemotron-v3-coder", timeout: int = 120
 ) -> Optional[str]:
     """Simple function to call OpenCode using the shared client."""
     client = OpenCodeClient(model=model)

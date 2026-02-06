@@ -123,12 +123,12 @@ class BaseAgent(ABC):
                 f"{self.server_url}/session/{session_id}/message",
                 json={
                     "model": {
-                        "provider": self.provider,
+                    "provider": self.provider,
                         "providerID": self.provider,
                         "modelID": self.model
                     },
                     "parts": [{"type": "text", "text": full_prompt}]
-                },
+                    },
                 timeout=self.timeout
             )
             

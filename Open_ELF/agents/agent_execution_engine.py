@@ -213,7 +213,7 @@ PRIORITY: [Critical/High/Medium/Low]
 """
 
             logger.debug("Calling CEO for decision...")
-            response = self.client.call(prompt, agent="general", timeout=90)
+            response = self.client.call(prompt, agent="CEO", timeout=90)
 
             if response:
                 logger.debug(f"CEO response: {response[:200]}...")
