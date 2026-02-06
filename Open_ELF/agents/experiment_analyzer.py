@@ -20,46 +20,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 
 # Import Event Bridge client
-try:
-    from event_bridge_client import EventBridgeClient
-except ImportError:
-    # Fallback: define minimal client that uses Event Bridge API
-    import requests
-    import json
-    class EventBridgeClient:
-        def __init__(self, model="nvidia/z-ai/glm4.7"):
-            self.model = model
-            self.server_url = "http://localhost:9998"
-        def call(self, prompt, timeout=120, agent=None):
-            try:
-                payload = {
-                    "component": "experiment_analyzer",
-                    "request_type": "experiment_analysis",
-                    "data": {
-                        "prompt": prompt,
-                        "agent": agent or "researcher",
-                        "model": self.model,
-                        "timestamp": datetime.now().isoformat(),
-                    },
-                    "priority": 2,
-                }
-                resp = requests.post(
-                    f"{self.server_url}/api/v1/ask",
-                    json=payload,
-                    timeout=timeout,
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    if "data" in data and "analysis" in data["data"]:
-                        return data["data"]["analysis"]
-                    elif "data" in data and "ai_analysis" in data["data"]:
-                        return data["data"]["ai_analysis"]
-                    else:
-                        return json.dumps(data)
-                return None
-            except Exception as e:
-                print(f"Error calling Event Bridge: {e}", file=sys.stderr)
-                return None
+from event_bridge_client import EventBridgeClient
 
 def get_elf_base() -> Path:
     """Get ELF base path."""
@@ -73,16 +34,22 @@ def get_elf_base() -> Path:
 class ExperimentAnalyzer:
     """AI-powered experiment analysis using nvidia/z-ai/glm4.7."""
     
-    def __init__(self, model: str = "nvidia/z-ai/glm4.7"):
+    def __init__(self, model: str = "nvidia/z-ai/glm4.7", server_url: str = "http://localhost:9998"):
         self.model = model
-        self.client = EventBridgeClient(model=model)
+        self.client = EventBridgeClient(server_url=server_url)
         self.elf_base = get_elf_base()
         self.db_path = self.elf_base / "memory" / "index.db"
         self.manager_path = Path(__file__).parent.parent / "scripts" / "lib" / "experiment_manager.py"
     
     def call_opencode(self, prompt: str) -> Optional[str]:
         """Call opencode using server API or CLI."""
-        return self.client.call(prompt, timeout=120)
+        return self.client.call(
+            prompt,
+            timeout=120,
+            agent="researcher",
+            component="experiment_analyzer",
+            request_type="experiment_analysis"
+        )
     
     def get_experiment_data(self, exp_id: int) -> Optional[Dict[str, Any]]:
         """Get experiment data from database."""
@@ -164,16 +131,21 @@ Provide a structured analysis in JSON format:
             return {"error": "Failed to get AI analysis"}
         
         # Parse response
+        analysis = {}
         try:
             # Try to extract JSON from response
             start = response.find('{')
             end = response.rfind('}') + 1
             if start >= 0 and end > start:
-                analysis = json.loads(response[start:end])
+                parsed = json.loads(response[start:end])
+                if isinstance(parsed, dict):
+                    analysis.update(parsed)
+                else:
+                    analysis["raw_response"] = response
             else:
-                analysis = {"raw_response": response}
+                analysis["raw_response"] = response
         except json.JSONDecodeError:
-            analysis = {"raw_response": response}
+            analysis["raw_response"] = response
         
         analysis["experiment_id"] = exp_id
         analysis["experiment_name"] = exp['name']
