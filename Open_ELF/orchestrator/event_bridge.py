@@ -24,8 +24,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 # Configuration
 OPENCODE_SERVER = "http://localhost:4096"
 LOGS_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
-HOOKS_DIR = Path.home() / ".opencode" / "hooks"
 ELF_DIR = Path("/home/bamer/.opencode/emergent-learning")
+HOOKS_DIR = ELF_DIR / "hooks"
 COORDINATION_DIR = ELF_DIR / ".coordination"
 EVENT_BRIDGE_HEARTBEAT = COORDINATION_DIR / "event-bridge-heartbeat.json"
 EVENT_BRIDGE_CONFIG = ELF_DIR / "Open_ELF/orchestrator/event_bridge_config.json"
@@ -102,14 +102,28 @@ class HookManager:
     def run_hook(self, hook_type: str, event_data: Dict[str, Any]) -> bool:
         """Exécute tous les hooks d'un type donné."""
         hook_dir = self.hooks_dir / hook_type
-        if not hook_dir.exists():
-            logger.debug(f"Hook directory not found: {hook_dir}")
-            return False
 
-        # Trouver tous les hooks Python dans ce répertoire
-        hook_files = list(hook_dir.glob("*.py"))
+        # Try exact match first (e.g., PostToolUse)
+        hook_files = []
+        if hook_dir.exists():
+            hook_files = list(hook_dir.glob("*.py"))
+
+        # If exact match is empty, try lowercase variant (e.g., posttooluse)
         if not hook_files:
-            logger.debug(f"No hooks found in {hook_dir}")
+            hook_dir = self.hooks_dir / hook_type.lower()
+            if hook_dir.exists():
+                hook_files = list(hook_dir.glob("*.py"))
+
+        # If still empty, try snake_case variant (e.g., post_tool_use)
+        if not hook_files:
+            import re
+
+            snake_case = re.sub(r"(?<!^)(?=[A-Z])", "_", hook_type).lower()
+            hook_dir = self.hooks_dir / snake_case
+            if hook_dir.exists():
+                hook_files = list(hook_dir.glob("*.py"))
+
+        if not hook_files:
             return False
 
         success = False
@@ -142,29 +156,29 @@ class HookManager:
                 stdout, stderr = proc.communicate(input=hook_input.encode(), timeout=30)
 
                 if proc.returncode == 0:
-                    logger.info(f"✅ Hook executed: {hook_type}/{hook_file.name}")
+                    _log_info(f"✅ Hook executed: {hook_type}/{hook_file.name}")
                     if stdout:
                         try:
                             result = json.loads(stdout.decode())
-                            logger.debug(f"Hook result: {result}")
+                            _log_info(f"Hook result: {result}")
                         except Exception as e:
-                            logger.error(
+                            _log_error(
                                 f"Failed to parse hook result from {hook_file.name}: {e}"
                             )
                             # Continue with other hooks but log the error
                     success = True
                 else:
-                    logger.warning(
+                    _log_error(
                         f"⚠️ Hook failed: {hook_type}/{hook_file.name} (exit {proc.returncode})"
                     )
                     if stderr:
-                        logger.debug(f"Hook stderr: {stderr.decode()[:200]}")
+                        _log_error(f"Hook stderr: {stderr.decode()[:200]}")
 
             except subprocess.TimeoutExpired:
-                logger.error(f"⏱️ Hook timeout: {hook_type}/{hook_file.name}")
+                _log_error(f"⏱️ Hook timeout: {hook_type}/{hook_file.name}")
                 proc.kill()
             except Exception as e:
-                logger.error(f"❌ Hook error: {hook_type}/{hook_file.name}: {e}")
+                _log_error(f"❌ Hook error: {hook_type}/{hook_file.name}: {e}")
 
         return success
 
@@ -557,13 +571,15 @@ class EventBridge:
                         # Vérifier si c'est un message avec des outils
                         parts = msg.get("parts", [])
                         for part in parts:
-                            if part.get("type") == "tool_use":
+                            # Check for both "tool_use" and "tool" part types
+                            part_type = part.get("type")
+                            if part_type in ["tool_use", "tool"]:
                                 tool_name = part.get("tool", "unknown")
                                 tool_input = part.get("input", {})
                                 total_tools_found += 1
 
                                 _log_info(
-                                    f"🔧 Tool detected via polling: {tool_name} in session {session_id[:8]}"
+                                    f"🔧 Tool detected via polling: {tool_name} ({part_type}) in session {session_id[:8]}"
                                 )
 
                                 # Déclencher le hook
@@ -615,38 +631,36 @@ class EventBridge:
         event_type = event.get("type", "unknown")
         event_properties = event.get("properties", {})
 
-        # Extract useful details for logging BEFORE any early returns
+        # NEW: Handle tool usage embedded in message.part.updated events
+        if event_type == "message.part.updated":
+            part = event_properties.get("part", {})
+            part_type = part.get("type")
+            # Check for both "tool_use" and "tool" part types
+            if part_type in ["tool_use", "tool"]:
+                # Synthesize a tool event for processing
+                tool_event = {
+                    "type": "tool",
+                    "properties": {
+                        "tool": part.get("tool", "unknown"),
+                        "input": part.get("input", {}),
+                        "output": {},  # Will be populated later
+                        "session_id": event_properties.get("session_id", ""),
+                        "success": True,
+                    },
+                }
+                # Process as a regular tool event
+                self._handle_event(tool_event)
+                return  # Already processed
+
+        # Extract useful details for logging
         details = ""
         if event_type == "tool":
             tool_name = event_properties.get("tool", "unknown")
             session_id = event_properties.get("session_id", "")
-            input_preview = str(event_properties.get("input", {}))[:100]
-            details = f"Tool: {tool_name} | Input: {input_preview}... | Session: {session_id[:8] if session_id else 'N/A'}"
-        elif event_type == "message.part.updated":
-            # Extract details from message part
-            part = event_properties.get("part", {})
-            part_type = part.get("type", "")
-            session_id = event_properties.get("session_id", "")
-
-            if part_type == "tool_use":
-                tool_name = part.get("tool", "unknown")
-                input_data = part.get("input", {})
-                input_preview = str(input_data)[:100]
-                details = f"Tool: {tool_name} | Input: {input_preview}... | Session: {session_id[:8] if session_id else 'N/A'}"
-            elif part_type == "text":
-                text_content = part.get("text", "")
-                preview = text_content[:50] if text_content else "empty"
-                details = f"Text: {preview}... | Session: {session_id[:8] if session_id else 'N/A'}"
-            elif part_type == "thinking":
-                thoughts = part.get("thinking", "")
-                preview = thoughts[:50] if thoughts else "empty"
-                details = f"Thinking: {preview}... | Session: {session_id[:8] if session_id else 'N/A'}"
-            else:
-                details = f"Part type: {part_type} | Session: {session_id[:8] if session_id else 'N/A'}"
+            details = f"Tool: {tool_name} | Session: {session_id[:8] if session_id else 'N/A'}"
         elif event_type == "message":
             content_preview = event_properties.get("content", "")[:50]
-            session_id = event_properties.get("session_id", "")
-            details = f"Content: {content_preview}... | Session: {session_id[:8] if session_id else 'N/A'}"
+            details = f"Content: {content_preview}..."
         elif event_type == "error":
             error_msg = event_properties.get("error", "Unknown error")
             details = f"Error: {error_msg[:100]}"
@@ -678,7 +692,7 @@ class EventBridge:
         # Notify registered listeners (e.g., UnifiedOrchestrator)
         self._notify_listeners(event_type, event)
 
-        logger.debug(f"📡 Processing event #{self.event_count}: {event_type}")
+        logger.info(f"📡 Processing event #{self.event_count}: {event_type}")
 
         # Handle tool usage embedded in message.part.updated events
         if event_type == "message.part.updated":
@@ -709,6 +723,8 @@ class EventBridge:
             self._handle_message_event(event)
         elif event_type == "message.updated":
             self._handle_message_updated_event(event)
+        elif event_type == "message.part.updated":
+            self._handle_message_part_updated_event(event)
         elif event_type == "tool":
             self._handle_tool_event(event)
         elif event_type == "error":
@@ -869,6 +885,28 @@ class EventBridge:
                 "timestamp": datetime.now().isoformat(),
             }
             self.hook_manager.run_hook("MessageSendCompleted", hook_data)
+
+    def _handle_message_part_updated_event(self, event: Dict[str, Any]):
+        """Gère les parties de message mises à jour (progressive)."""
+        props = event.get("properties", {})
+        part = props.get("part", {})
+        part_type = part.get("type", "")
+        session_id = props.get("session_id", "")
+
+        logger.debug(
+            f"📝 Message part updated: {part_type} | Session: {session_id[:8]}..."
+        )
+
+        if part_type == "tool_use":
+            # Already handled via tool_event synthesis earlier
+            pass
+        elif part_type == "text":
+            text_content = part.get("text", "")
+            logger.debug(f"Text part: {len(text_content)} chars")
+            # Could trigger hooks here if needed for streaming text
+        elif part_type == "thinking":
+            thoughts = part.get("thinking", "")
+            logger.debug(f"Thinking part: {len(thoughts)} chars")
 
     def _handle_session_updated_event(self, event: Dict[str, Any]):
         """Gère les mises à jour de session (post_session)."""
