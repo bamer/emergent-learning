@@ -165,22 +165,33 @@ class ElfWatcher:
             "escalation_count": self.escalation_count,
         }
 
-        # Vérifier les services clés
+        # Vérifier les services clés qui existent réellement
         services_to_check = [
             ("dashboard_backend", "http://localhost:8888/api/v1/health/status"),
-            ("mission_bridge", "http://localhost:9998/api/v1/health/mission_bridge"),
-            (
-                "sentinel_monitor",
-                "http://localhost:9998/api/v1/health/sentinel_monitor",
-            ),
+            ("event_bridge", "http://localhost:9998/status"),
         ]
 
         for service_name, health_url in services_to_check:
             try:
                 response = requests.get(health_url, timeout=3)
                 state["services"][service_name] = response.status_code == 200
-            except:
+                logger.debug(f"Service {service_name}: {response.status_code}")
+            except Exception as e:
                 state["services"][service_name] = False
+                logger.debug(f"Service {service_name} check failed: {e}")
+
+        # Vérifier le service Learning Capture via process
+        try:
+            import subprocess
+
+            result = subprocess.run(
+                ["pgrep", "-f", "background-learning-capture.py"],
+                capture_output=True,
+                text=True,
+            )
+            state["services"]["learning_capture"] = result.returncode == 0
+        except Exception as e:
+            state["services"]["learning_capture"] = False
 
         return state
 

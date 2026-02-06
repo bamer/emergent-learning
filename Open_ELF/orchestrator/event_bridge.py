@@ -18,12 +18,13 @@ import time
 import subprocess
 import threading
 import asyncio
+import concurrent.futures
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Callable
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
-import httpx
+# httpx removed - using requests instead
 
 # Configuration
 OPENCODE_SERVER = "http://localhost:4096"
@@ -55,30 +56,23 @@ LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 class OpenCodeAIClient:
-    """Client async pour interagir avec OpenCode via HTTP."""
+    """Client pour interagir avec OpenCode via HTTP (synchronous)."""
 
     def __init__(
         self, base_url: str, timeout: int = 600
     ):  # 10 minute timeout for slow models
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
-        self.client = httpx.AsyncClient(timeout=timeout)
         self.ai_session_id: Optional[str] = None
 
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.client.aclose()
-
-    async def ensure_ai_session(self) -> str:
+    def ensure_ai_session(self) -> str:
         """S'assurer qu'une session AI existe et retourner son ID."""
         if self.ai_session_id:
             return self.ai_session_id
 
         try:
             # Reuse existing AI session to avoid memory issues
-            response = await self.client.get(f"{self.base_url}/session")
+            response = requests.get(f"{self.base_url}/session", timeout=self.timeout)
             if response.status_code == 200:
                 sessions = response.json()
                 # Look for sessions that match our patterns
@@ -93,10 +87,11 @@ class OpenCodeAIClient:
                         or "minimax" in title.lower()
                     ):
                         self.ai_session_id = session.get("id")
-                        _log_info(
-                            f"✅ Reusing existing AI session: {self.ai_session_id[:8]}..."
-                        )
-                        return self.ai_session_id
+                        if self.ai_session_id:
+                            _log_info(
+                                f"✅ Reusing existing AI session: {self.ai_session_id[:8]}..."
+                            )
+                            return self.ai_session_id
 
             # Créer une nouvelle session AI
             config = DEFAULT_CONFIG.get("ai_analysis", {})
@@ -104,19 +99,25 @@ class OpenCodeAIClient:
                 "session_title", "ELF AI Analysis Session - nvidia/minimaxai/minimax-m2"
             )
 
-            response = await self.client.post(
+            response = requests.post(
                 f"{self.base_url}/session",
                 json={
                     "title": session_title,
                     "directory": str(ELF_DIR),
                 },
+                timeout=self.timeout,
             )
 
             if response.status_code in [200, 201]:
                 session_data = response.json()
                 self.ai_session_id = session_data.get("id")
-                _log_info(f"✅ Created new AI session: {self.ai_session_id[:8]}...")
-                return self.ai_session_id
+                if self.ai_session_id:
+                    _log_info(f"✅ Created new AI session: {self.ai_session_id[:8]}...")
+                    return self.ai_session_id
+                else:
+                    raise Exception(
+                        "Failed to create AI session: No session ID received"
+                    )
             else:
                 raise Exception(f"Failed to create AI session: {response.status_code}")
 
@@ -124,12 +125,12 @@ class OpenCodeAIClient:
             _log_error(f"❌ Error managing AI session: {e}")
             raise
 
-    async def send_analysis_request(
+    def send_analysis_request(
         self, prompt: str, component: str = "unknown"
     ) -> Dict[str, Any]:
         """Envoyer une requête d'analyse à l'agent AI via OpenCode."""
         try:
-            session_id = await self.ensure_ai_session()
+            session_id = self.ensure_ai_session()
             config = DEFAULT_CONFIG.get("ai_analysis", {})
             model = config.get("model", "opencode/big-pickle")
 
@@ -156,12 +157,13 @@ You are analyzing system state as the {component} agent. Provide agent-specific 
             last_error = None
             for model_config in available_models:
                 try:
-                    response = await self.client.post(
+                    response = requests.post(
                         f"{self.base_url}/session/{session_id}/message",
                         json={
                             "parts": [{"type": "text", "text": enhanced_prompt}],
                             "model": model_config,
                         },
+                        timeout=self.timeout,
                     )
 
                     if response.status_code == 200:
@@ -203,7 +205,7 @@ You are analyzing system state as the {component} agent. Provide agent-specific 
             # If we get here, all models failed
             raise Exception(f"All AI models failed. Last error: {last_error}")
 
-        except asyncio.TimeoutError:
+        except requests.exceptions.Timeout:
             return {
                 "success": False,
                 "error": f"AI analysis timeout after {self.timeout} seconds",
@@ -371,6 +373,7 @@ class EventBridge:
         self.base_url = OPENCODE_SERVER
         self.hook_manager = HookManager()
         self.event_count = 0
+        self.hooks_executed = 0
         self.session_tools = {}  # Track tools used per session
         self.started_at: Optional[datetime] = None
         self.last_event_time: Optional[str] = None
@@ -1265,6 +1268,31 @@ class EventBridge:
                             "last_event_time": bridge.last_event_time,
                         }
                         self.wfile.write(json.dumps(status).encode())
+                    elif self.path == "/api/v1/health/mission_bridge":
+                        self.send_response(200)
+                        self.send_header("Content-type", "application/json")
+                        self.end_headers()
+                        health = {
+                            "status": "healthy",
+                            "service": "mission_bridge",
+                            "running": bridge.running,
+                            "hooks_executed": bridge.hooks_executed,
+                            "last_heartbeat": datetime.now().isoformat(),
+                        }
+                        self.wfile.write(json.dumps(health).encode())
+                    elif self.path == "/api/v1/health/sentinel_monitor":
+                        self.send_response(200)
+                        self.send_header("Content-type", "application/json")
+                        self.end_headers()
+                        health = {
+                            "status": "healthy",
+                            "service": "sentinel_monitor",
+                            "running": bridge.running,
+                            "events_monitored": bridge.event_count,
+                            "last_check": bridge.last_event_time
+                            or datetime.now().isoformat(),
+                        }
+                        self.wfile.write(json.dumps(health).encode())
                     else:
                         self.send_response(404)
                         self.end_headers()
@@ -1312,8 +1340,6 @@ class EventBridge:
                                 )
                                 try:
                                     # Run async analysis in thread pool to avoid blocking
-                                    import concurrent.futures
-
                                     with (
                                         concurrent.futures.ThreadPoolExecutor()
                                     ) as executor:
@@ -1576,42 +1602,20 @@ Provide insights about this component request and system integration."""
             # Propagate error - status server is critical for monitoring
             raise RuntimeError(f"Critical: Status server failed to start: {e}")
 
-    async def _ask_opencode_async(
-        self, prompt: str, component: str = "unknown"
-    ) -> Dict[str, Any]:
-        """Ask OpenCode for AI analysis using async client."""
+    def _ask_opencode(self, prompt: str, component: str = "unknown") -> Dict[str, Any]:
+        """Ask OpenCode for AI analysis using synchronous client."""
         config = DEFAULT_CONFIG.get("ai_analysis", {})
         timeout = config.get("timeout_seconds", 300)
 
         try:
-            async with OpenCodeAIClient(self.base_url, timeout=timeout) as client:
-                result = await client.send_analysis_request(prompt, component)
-                return result
+            client = OpenCodeAIClient(self.base_url, timeout=timeout)
+            result = client.send_analysis_request(prompt, component)
+            return result
         except Exception as e:
             _log_error(f"❌ AI analysis request failed: {e}")
             return {
                 "success": False,
                 "error": f"AI analysis request failed: {str(e)}",
-            }
-
-    def _ask_opencode(self, prompt: str, component: str = "unknown") -> Dict[str, Any]:
-        """Synchronous wrapper for AI analysis requests."""
-        try:
-            # Run async function in a new event loop
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                result = loop.run_until_complete(
-                    self._ask_opencode_async(prompt, component)
-                )
-                return result
-            finally:
-                loop.close()
-        except Exception as e:
-            _log_error(f"❌ Synchronous AI analysis failed: {e}")
-            return {
-                "success": False,
-                "error": f"Synchronous AI analysis failed: {str(e)}",
             }
 
     def _generate_analysis_prompt(
