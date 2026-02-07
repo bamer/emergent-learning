@@ -112,6 +112,7 @@ class Mission:
         steps: Étapes d'exécution
         is_critical: Si la mission est critique
         escalated_to_ceo: Si escaladée au CEO
+        live_tab_visible: Si visible dans le Live Tab
     """
     title: str
     description: str
