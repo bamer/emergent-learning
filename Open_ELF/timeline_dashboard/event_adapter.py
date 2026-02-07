@@ -10,6 +10,7 @@ import os
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 from datetime import datetime
+import sqlite3
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -36,6 +37,36 @@ except ImportError:
             return str(data)
 
 
+# Event type mapping: operational types → timeline-friendly types
+EVENT_TYPE_MAPPING: Dict[str, str] = {
+    "agent_started": "task_start",
+    "agent_stopped": "task_end",
+    "heuristic_created": "heuristic_consulted",
+    "heuristic_validated": "heuristic_validated",
+    "heuristic_violated": "heuristic_violated",
+    "tool_poll": "task_start",
+    "message.updated": "task_start",
+    "message.part.updated": "task_start",
+    "message.created": "task_start",
+    "session.updated": "task_start",
+    "session.status": "task_end",
+    "session.idle": "task_end",
+    "session.ended": "task_end",
+    "session.started": "task_start",
+    "server.heartbeat": "task_start",
+    "watcher_check": "task_start",
+    "sentinel_cycle": "task_start",
+    "checkin": "task_start",
+    "checkout": "task_end",
+    "swarm_execution": "task_start",
+    "workflow_started": "task_start",
+    "workflow_completed": "task_end",
+    "error_logged": "failure_recorded",
+    "golden_promoted": "golden_promoted",
+    "unknown": "task_start",
+}
+
+
 def convert_chronicle_event_to_timeline_event(
     chronicle_event: Dict[str, Any],
 ) -> Dict[str, Any]:
@@ -51,13 +82,20 @@ def convert_chronicle_event_to_timeline_event(
     # Extract basic fields
     event_id = chronicle_event.get("event_id", "")
     timestamp = chronicle_event.get("timestamp", "")
-    event_type = chronicle_event.get("event_type", "unknown")
+    original_event_type = chronicle_event.get("event_type", "unknown")
     source = chronicle_event.get("source", "")
     data = chronicle_event.get("data", {})
     metadata = chronicle_event.get("metadata", {})
+    summary = chronicle_event.get("summary", "")
 
-    # Format description
-    description = format_event_description(event_type, data)
+    # Map operational event type to timeline-friendly type
+    event_type = EVENT_TYPE_MAPPING.get(original_event_type, "task_start")
+
+    # Use summary field if available, otherwise format description
+    if summary:
+        description = summary
+    else:
+        description = format_event_description(event_type, data)
 
     # Extract file path and line number if available
     file_path = data.get("file_path") or metadata.get("file_path")
@@ -71,6 +109,7 @@ def convert_chronicle_event_to_timeline_event(
         "id": event_id,
         "timestamp": timestamp,
         "event_type": event_type,
+        "original_event_type": original_event_type,  # Preserve for reference
         "description": description,
         "metadata": metadata,
         "source": source,
@@ -92,78 +131,112 @@ def get_chronicle_events(
     source: Optional[str] = None,
     limit: int = 50,
     chronicle_dir: Optional[Path] = None,
+    days_back: int = 7,
 ) -> List[Dict[str, Any]]:
     """
-    Retrieve events from Event Chronicle, converted to timeline format.
+    Retrieve events from Event Chronicle database, converted to timeline format.
 
     Args:
         event_type: Filter by event type
         source: Filter by source component
         limit: Maximum number of events to return
-        chronicle_dir: Path to chronicle directory (defaults to standard location)
+        chronicle_dir: Deprecated parameter (kept for compatibility)
+        days_back: Number of days to look back (default 7)
 
     Returns:
         List of timeline events
     """
-    if chronicle_dir is None:
-        # Standard ELF event chronicle location
-        elf_base = Path(__file__).parent.parent.parent
-        chronicle_dir = elf_base / "event_chronicle"
+    # Get ELF base directory
+    elf_base = Path(__file__).parent.parent.parent
+    db_path = elf_base / "memory" / "index.db"
 
     events = []
 
-    # Get chronicle files (most recent first)
-    if chronicle_dir.exists():
-        chronicle_files = sorted(chronicle_dir.rglob("*.jsonl"), reverse=True)
+    # Query the database
+    try:
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
 
-        for chronicle_file in chronicle_files:
-            if len(events) >= limit:
-                break
+        # Build query
+        query = """
+            SELECT id, timestamp, event_type, source, source_id, status, summary, data
+            FROM event_chronicle
+            WHERE 1=1
+        """
+        params = []
 
-            try:
-                with open(chronicle_file, "r", encoding="utf-8") as f:
-                    for line in f:
-                        if len(events) >= limit:
-                            break
+        # Add time filter
+        if days_back > 0:
+            query += " AND timestamp > datetime('now', '-{} days')".format(days_back)
 
-                        try:
-                            event = json.loads(line.strip())
+        # Add source filter
+        if source:
+            query += " AND source = ?"
+            params.append(source)
 
-                            # Apply filters
-                            if event_type and event.get("event_type") != event_type:
-                                continue
-                            if source and event.get("source") != source:
-                                continue
+        # Add event type filter
+        if event_type:
+            query += " AND event_type = ?"
+            params.append(event_type)
 
-                            # Convert to timeline format
-                            timeline_event = convert_chronicle_event_to_timeline_event(
-                                event
-                            )
-                            events.append(timeline_event)
+        # Order and limit
+        query += " ORDER BY timestamp DESC LIMIT ?"
+        params.append(limit)
 
-                        except json.JSONDecodeError:
-                            continue
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
 
-            except FileNotFoundError:
-                continue
+        for row in rows:
+            # Parse JSON data
+            data = {}
+            if row["data"]:
+                try:
+                    data = json.loads(row["data"])
+                except:
+                    data = {}
+
+            # Create chronicle event format
+            chronicle_event = {
+                "event_id": str(row["id"]),
+                "timestamp": row["timestamp"],
+                "event_type": row["event_type"],
+                "source": row["source"],
+                "source_id": row["source_id"],
+                "status": row["status"],
+                "summary": row["summary"],
+                "data": data,
+                "metadata": {},  # Column doesn't exist in database
+            }
+
+            # Convert to timeline format
+            timeline_event = convert_chronicle_event_to_timeline_event(chronicle_event)
+            events.append(timeline_event)
+
+        conn.close()
+
+    except Exception as e:
+        print(f"Error querying database: {e}")
 
     return events
 
 
-def get_chronicle_stats(chronicle_dir: Optional[Path] = None) -> Dict[str, Any]:
+def get_chronicle_stats(
+    chronicle_dir: Optional[Path] = None, days_back: int = 7
+) -> Dict[str, Any]:
     """
-    Get Event Chronicle statistics.
+    Get Event Chronicle statistics from database.
 
     Args:
-        chronicle_dir: Path to chronicle directory (defaults to standard location)
+        chronicle_dir: Deprecated parameter (kept for compatibility)
+        days_back: Number of days to look back (default 7)
 
     Returns:
         Statistics about the chronicle
     """
-    if chronicle_dir is None:
-        # Standard ELF event chronicle location
-        elf_base = Path(__file__).parent.parent.parent
-        chronicle_dir = elf_base / "event_chronicle"
+    # Get ELF base directory
+    elf_base = Path(__file__).parent.parent.parent
+    db_path = elf_base / "memory" / "index.db"
 
     stats = {
         "total_events": 0,
@@ -172,47 +245,56 @@ def get_chronicle_stats(chronicle_dir: Optional[Path] = None) -> Dict[str, Any]:
         "date_range": {"earliest": None, "latest": None},
     }
 
-    if chronicle_dir.exists():
-        chronicle_files = list(chronicle_dir.rglob("*.jsonl"))
+    try:
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
 
-        for chronicle_file in chronicle_files:
-            try:
-                with open(chronicle_file, "r", encoding="utf-8") as f:
-                    for line in f:
-                        try:
-                            event = json.loads(line.strip())
-                            stats["total_events"] += 1
+        # Build query
+        query = """
+            SELECT id, timestamp, event_type, source
+            FROM event_chronicle
+            WHERE 1=1
+        """
+        params = []
 
-                            # Count event types
-                            event_type = event.get("event_type", "unknown")
-                            stats["event_types"][event_type] = (
-                                stats["event_types"].get(event_type, 0) + 1
-                            )
+        # Add time filter
+        if days_back > 0:
+            query += " AND timestamp > datetime('now', '-{} days')".format(days_back)
 
-                            # Count sources
-                            source = event.get("source", "unknown")
-                            stats["sources"][source] = (
-                                stats["sources"].get(source, 0) + 1
-                            )
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
 
-                            # Track date range
-                            event_time = event.get("timestamp")
-                            if event_time:
-                                if (
-                                    not stats["date_range"]["earliest"]
-                                    or event_time < stats["date_range"]["earliest"]
-                                ):
-                                    stats["date_range"]["earliest"] = event_time
-                                if (
-                                    not stats["date_range"]["latest"]
-                                    or event_time > stats["date_range"]["latest"]
-                                ):
-                                    stats["date_range"]["latest"] = event_time
+        for row in rows:
+            stats["total_events"] += 1
 
-                        except json.JSONDecodeError:
-                            continue
+            # Count event types
+            event_type = row["event_type"] or "unknown"
+            stats["event_types"][event_type] = (
+                stats["event_types"].get(event_type, 0) + 1
+            )
 
-            except FileNotFoundError:
-                continue
+            # Count sources
+            source = row["source"] or "unknown"
+            stats["sources"][source] = stats["sources"].get(source, 0) + 1
+
+            # Track date range
+            event_time = row["timestamp"]
+            if event_time:
+                if (
+                    not stats["date_range"]["earliest"]
+                    or event_time < stats["date_range"]["earliest"]
+                ):
+                    stats["date_range"]["earliest"] = event_time
+                if (
+                    not stats["date_range"]["latest"]
+                    or event_time > stats["date_range"]["latest"]
+                ):
+                    stats["date_range"]["latest"] = event_time
+
+        conn.close()
+
+    except Exception as e:
+        print(f"Error querying database stats: {e}")
 
     return stats
