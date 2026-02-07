@@ -1,35 +1,21 @@
 #!/usr/bin/env python3
 """
-Background Learning Capture Service
-Runs continuously to capture learnings from ELF system activity.
-This is a PERMANENT FIX for the learning extraction problem.
+Direct test of learning capture functions
 """
 
 import json
 import sqlite3
 import re
-import time
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-import requests
-import threading
 
 # Configuration
 ELF_DIR = Path.home() / ".opencode" / "emergent-learning"
 DB_PATH = ELF_DIR / "memory" / "index.db"
-LOG_FILE = ELF_DIR / ".coordination" / "learning-capture.log"
-
-# OpenCode paths
-OPENCODE_DIR = Path.home() / ".local" / "share" / "opencode"
-OPENCODE_SESSIONS_DIR = OPENCODE_DIR / "storage" / "session"
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()],
-)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Heuristic extraction patterns
@@ -143,6 +129,12 @@ def extract_heuristics_from_metrics(
         activity = metrics_data.get("activity", {})
         quality = metrics_data.get("quality", {})
 
+        logger.debug(
+            f"Processing metrics data - data keys: {list(data.keys()) if data else 'None'}"
+        )
+        logger.debug(f"Activity data: {activity}")
+        logger.debug(f"Quality data: {quality}")
+
         # Heuristic: Low activity might indicate a problem
         if "activity_score" in activity and activity["activity_score"] == 0:
             heuristics.append(
@@ -154,6 +146,7 @@ def extract_heuristics_from_metrics(
                     "timestamp": datetime.now().isoformat(),
                 }
             )
+            logger.debug("Found low activity heuristic")
 
         # Heuristic: High confidence heuristics indicate mature system
         if (
@@ -169,6 +162,7 @@ def extract_heuristics_from_metrics(
                     "timestamp": datetime.now().isoformat(),
                 }
             )
+            logger.debug("Found high confidence heuristic")
 
         # Heuristic: Quality score threshold
         if "quality_score" in quality and quality["quality_score"] < 0.6:
@@ -181,15 +175,17 @@ def extract_heuristics_from_metrics(
                     "timestamp": datetime.now().isoformat(),
                 }
             )
+            logger.debug("Found quality score heuristic")
 
     except Exception as e:
         logger.debug(f"Error extracting heuristics from metrics: {e}")
 
+    logger.debug(f"Extracted {len(heuristics)} heuristics from metrics")
     return heuristics
 
 
 def record_heuristic(heuristic: dict) -> bool:
-    """Record a heuristic to the database with embedding."""
+    """Record a heuristic to the database."""
     try:
         conn = get_db()
         if not conn:
@@ -231,31 +227,13 @@ def record_heuristic(heuristic: dict) -> bool:
             (
                 heuristic["domain"],
                 heuristic["rule"],
-                f"Auto-captured by background service on {heuristic['timestamp']}",
+                f"Auto-captured by direct test on {heuristic['timestamp']}",
                 heuristic["confidence"],
                 heuristic["source"],
                 heuristic["timestamp"],
                 heuristic["timestamp"],
             ),
         )
-
-        heuristic_id = cursor.lastrowid
-
-        # Also create embedding via API
-        try:
-            embedding_text = f"{heuristic['domain']}: {heuristic['rule']}"
-            requests.post(
-                "http://localhost:8888/api/v1/persistence/heuristics",
-                json={
-                    "domain": heuristic["domain"],
-                    "rule": heuristic["rule"],
-                    "confidence": heuristic["confidence"],
-                    "source_type": "auto-capture",
-                },
-                timeout=5,
-            )
-        except:
-            pass  # Non-critical, heuristic is already saved
 
         conn.commit()
         conn.close()
@@ -279,23 +257,26 @@ def capture_from_event_chronicle():
 
         cursor = conn.cursor()
 
-        # Get recent events with summaries
+        # Get recent events with summaries (last 24 hours to ensure we find metrics data)
         cursor.execute("""
             SELECT id, timestamp, event_type, source, summary, data
             FROM event_chronicle
-            WHERE timestamp > datetime('now', '-1 hour')
+            WHERE timestamp > datetime('now', '-24 hours')
+            AND data LIKE '%metrics%'
             AND (summary IS NOT NULL OR data IS NOT NULL)
             ORDER BY timestamp DESC
-            LIMIT 100
+            LIMIT 10
         """)
 
         events = cursor.fetchall()
         conn.close()
 
-        logger.debug(f"Found {len(events)} events to process")
+        logger.info(f"Found {len(events)} recent events to process")
 
         captured = 0
         for event in events:
+            logger.debug(f"Processing event {event['id']} ({event['event_type']})")
+
             content = ""
             if event["summary"]:
                 content += event["summary"] + " "
@@ -310,7 +291,7 @@ def capture_from_event_chronicle():
                 )
                 heuristics.extend(text_heuristics)
                 logger.debug(
-                    f"Event {event['id']}: Found {len(text_heuristics)} text heuristics"
+                    f"  Text extraction found {len(text_heuristics)} heuristics"
                 )
 
             # Extract from structured data (JSON)
@@ -327,9 +308,10 @@ def capture_from_event_chronicle():
                             )
                             heuristics.extend(metrics_heuristics)
                             logger.debug(
-                                f"Event {event['id']}: Found {len(metrics_heuristics)} metrics heuristics"
+                                f"  Metrics extraction found {len(metrics_heuristics)} heuristics"
                             )
-                except json.JSONDecodeError:
+                except json.JSONDecodeError as e:
+                    logger.debug(f"  JSON decode error: {e}")
                     content += str(event["data"])
                     # Still try to extract heuristics from text
                     text_heuristics = extract_heuristics_from_text(
@@ -338,26 +320,25 @@ def capture_from_event_chronicle():
                     )
                     heuristics.extend(text_heuristics)
                     logger.debug(
-                        f"Event {event['id']}: Found {len(text_heuristics)} data text heuristics"
+                        f"  Text extraction from data found {len(text_heuristics)} heuristics"
                     )
 
-            logger.debug(f"Event {event['id']}: Total {len(heuristics)} heuristics")
+            logger.debug(f"  Total heuristics for event: {len(heuristics)}")
 
             for h in heuristics:
                 if record_heuristic(h):
                     captured += 1
                     logger.debug(
-                        f"Recorded heuristic: [{h['domain']}] {h['rule'][:50]}..."
+                        f"    Recorded heuristic: [{h['domain']}] {h['rule'][:50]}..."
                     )
 
         if captured > 0:
             logger.info(f"📝 Captured {captured} heuristics from {len(events)} events")
         elif len(events) > 0:
-            logger.debug(f"🔍 Processed {len(events)} events but captured 0 heuristics")
+            logger.info(f"🔍 Processed {len(events)} events but captured 0 heuristics")
 
     except Exception as e:
         logger.error(f"Error capturing from event chronicle: {e}")
-        logger.exception(e)
 
 
 def capture_from_watcher_log():
@@ -365,10 +346,13 @@ def capture_from_watcher_log():
     try:
         watcher_log = ELF_DIR / ".coordination" / "watcher-log.md"
         if not watcher_log.exists():
+            logger.info("Watcher log not found")
             return
 
         # Read last hour of entries
         content = watcher_log.read_text()
+        logger.debug(f"Watcher log content length: {len(content)}")
+
         heuristics = extract_heuristics_from_text(content, "watcher")
 
         captured = 0
@@ -379,59 +363,19 @@ def capture_from_watcher_log():
         if captured > 0:
             logger.info(f"👁️  Captured {captured} heuristics from watcher log")
         else:
-            logger.debug(f"👁️  Processed watcher log but captured 0 heuristics")
+            logger.info(f"👁️  Processed watcher log but captured 0 heuristics")
 
     except Exception as e:
         logger.error(f"Error capturing from watcher log: {e}")
 
 
-def run_capture_loop():
-    """Main capture loop - runs continuously."""
-    logger.info("=" * 60)
-    logger.info("BACKGROUND LEARNING CAPTURE SERVICE STARTED")
-    logger.info("=" * 60)
-    logger.info("✅ Auto-capturing heuristics from system activity")
-    logger.info("📊 Checking every 60 seconds")
-    logger.info("📝 Press Ctrl+C to stop")
-    logger.info("=" * 60)
-
-    cycle = 0
-    while True:
-        try:
-            cycle += 1
-
-            # Capture from multiple sources
-            capture_from_event_chronicle()
-            capture_from_watcher_log()
-
-            # Every 10 cycles, log status
-            if cycle % 10 == 0:
-                conn = get_db()
-                if conn:
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        "SELECT COUNT(*) FROM heuristics WHERE source_type = 'auto-capture'"
-                    )
-                    auto_count = cursor.fetchone()[0]
-                    cursor.execute(
-                        "SELECT COUNT(*) FROM heuristics WHERE date(created_at) = date('now')"
-                    )
-                    today_count = cursor.fetchone()[0]
-                    conn.close()
-                    logger.info(
-                        f"📊 Status: {today_count} heuristics today, {auto_count} auto-captured total"
-                    )
-
-            # Wait before next cycle
-            time.sleep(60)
-
-        except KeyboardInterrupt:
-            logger.info("\n👋 Stopping learning capture service...")
-            break
-        except Exception as e:
-            logger.error(f"Error in capture loop: {e}")
-            time.sleep(60)
-
-
 if __name__ == "__main__":
-    run_capture_loop()
+    print("Running direct test of learning capture functions...")
+
+    print("\n=== Testing Event Chronicle Capture ===")
+    capture_from_event_chronicle()
+
+    print("\n=== Testing Watcher Log Capture ===")
+    capture_from_watcher_log()
+
+    print("\nDone.")
