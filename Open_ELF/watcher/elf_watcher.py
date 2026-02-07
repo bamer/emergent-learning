@@ -355,17 +355,18 @@ class ElfWatcher:
                 manager = get_agent_manager()
 
                 # Construire le prompt d'analyse
-                prompt = f"""Analyze this watcher escalation:
+                prompt = f"""@Unified-Orchestrator Analyze this watcher escalation:
 
 System State: {json.dumps(escalation_data.get("system_state", {}), indent=2)}
 Analysis: {json.dumps(escalation_data.get("analysis", {}), indent=2)}
 
 Please:
-1. Analyze the severity and root causes
-2. Recommend immediate actions
-3. If critical, explain what should be escalated to CEO
+1. Analyze the severity of the issue
+2. Identify root causes
+3. Depend of severity take or Recommend immediate actions
+4. Create an escalation file in ceo-inbox/ if critical
 
-Provide a detailed analysis."""
+Do your mission then Respond with a detailed analysis."""
 
                 # Appeler l'agent unified-orchestrator
                 response = manager.ask_agent("unified-orchestrator", prompt)

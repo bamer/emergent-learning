@@ -6,6 +6,18 @@ import {
 } from 'lucide-react';
 
 // Types
+interface Escalation {
+  id: string;
+  agent: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  message: string;
+  context?: Record<string, any>;
+  timestamp: string;
+  response?: string;
+  action_taken?: string;
+  status: 'pending' | 'acknowledged' | 'resolved';
+}
+
 interface WatcherStatus {
   is_running: boolean;
   tier: 'tier1' | 'tier2' | 'idle';
@@ -83,6 +95,7 @@ export function WatcherStatusPanel({
   const [status, setStatus] = useState<WatcherStatus | null>(null);
   const [logs, setLogs] = useState<WatcherLog[]>([]);
   const [config, setConfig] = useState<WatcherConfig | null>(null);
+  const [escalations, setEscalations] = useState<Escalation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -105,6 +118,19 @@ export function WatcherStatusPanel({
       setError(err instanceof Error ? err.message : 'Failed to connect');
     } finally {
       setLoading(false);
+    }
+  }, [apiBaseUrl]);
+
+  // Fetch escalations
+  const fetchEscalations = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/escalations?agent=watcher&limit=10`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const data = await response.json();
+      setEscalations(data.escalations || []);
+    } catch (err) {
+      console.error('Failed to fetch escalations:', err);
     }
   }, [apiBaseUrl]);
 
@@ -138,12 +164,16 @@ export function WatcherStatusPanel({
   // Initial load and auto-refresh
   useEffect(() => {
     fetchStatus();
+    fetchEscalations();
     
     if (!autoRefresh) return;
     
-    const interval = setInterval(fetchStatus, refreshInterval);
+    const interval = setInterval(() => {
+      fetchStatus();
+      fetchEscalations();
+    }, refreshInterval);
     return () => clearInterval(interval);
-  }, [fetchStatus, autoRefresh, refreshInterval]);
+  }, [fetchStatus, fetchEscalations, autoRefresh, refreshInterval]);
 
   // Toggle section expansion
   const toggleSection = (section: string) => {

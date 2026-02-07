@@ -34,15 +34,16 @@ try:
     logger = get_logger("agent_manager")
 except ImportError:
     import logging
-    import logging
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("agent_manager")
 
+import logging  # Import here for class type hints
+
 # Chemins par défaut
 DEFAULT_AGENTS_DIR = Path("/home/bamer/.opencode/agents/OPC_ELF_System_Agents")
 DEFAULT_OPENCODE_URL = "http://localhost:4096"
-DEFAULT_MODEL = "nvidia/minimaxai/minimax-m2"  # Modèle rapide et gratuit
+DEFAULT_MODEL = "llama/nemotron-v3-coder"  # Modèle rapide et gratuit
 
 
 class AgentConfig:
@@ -251,8 +252,9 @@ class AgentManager:
             response = requests.post(
                 f"{self.opencode_url}/session",
                 json={
-                    "title": f"ELF {agent_config.name.title()} Agent Session",
+                    "title": f"ELF {agent_config.name.title()} Agent Session Bamer Test",
                     "directory": str(Path.home() / ".opencode" / "emergent-learning"),
+                    "agent": agent_config.name,
                 },
                 timeout=self.timeout,
             )
@@ -306,6 +308,8 @@ class AgentManager:
 
     def _is_session_valid(self, session_id: str) -> bool:
         """Vérifie si une session est toujours valide"""
+        # test debug on recree une session juste pour debut le truc de l'agent
+        return False
         try:
             response = requests.get(
                 f"{self.opencode_url}/session/{session_id}", timeout=10

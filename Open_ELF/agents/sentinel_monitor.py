@@ -160,17 +160,17 @@ class SentinelMonitor:
 
                 # Construire le prompt selon le type de mission
                 if mission_type == "sentinel_monitoring":
-                    prompt = f"""Analyze this sentinel monitoring data:
+                    prompt = f"""@sentinel Analyze this sentinel monitoring data:
 
 {json.dumps(data, indent=2)}
 
 Please:
-1. Analyze system health and metrics
-2. Detect any anomalies or patterns
-3. Recommend actions if issues found
-4. If critical, create an escalation
+1. Analyze the severity of the issue
+2. Identify root causes
+3. Depend of severity take or Recommend immediate actions
+4. Create an escalation file in ceo-inbox/ if critical
 
-Provide detailed analysis."""
+Do your mission then Respond with a detailed analysis."""
 
                     response = self.agent_manager.ask_agent("sentinel", prompt)
 

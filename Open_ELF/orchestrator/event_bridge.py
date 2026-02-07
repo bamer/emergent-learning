@@ -1199,17 +1199,17 @@ class EventBridge:
 
                                 # Build analysis prompt based on mission type
                                 if mission_type == "watcher_escalation":
-                                    prompt = f"""Analyze this watcher escalation from component '{component}':
+                                    prompt = f"""@Unified-Orchestrator Analyze this watcher escalation from component '{component}':
 
 Data: {json.dumps(data, indent=2)}
 
 Please:
 1. Analyze the severity of the issue
 2. Identify root causes
-3. Recommend immediate actions
+3. Depend of severity take or Recommend immediate actions
 4. Create an escalation file in ceo-inbox/ if critical
 
-Respond with a detailed analysis."""
+Do your mission then Respond with a detailed analysis."""
 
                                     # Run agent analysis in background thread to not block HTTP response
                                     def run_analysis():

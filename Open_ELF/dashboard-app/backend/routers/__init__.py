@@ -12,6 +12,8 @@ Each router handles a specific domain of the API:
 - fraud: Fraud reports and review
 - workflows: Workflow management
 - context: Project context and scope information
+- agents: Agent management and mission execution
+- missions: Mission Engine for creating and executing missions
 """
 
 from .analytics import router as analytics_router

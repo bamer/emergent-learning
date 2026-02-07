@@ -24,8 +24,8 @@ openelf_dir = Path(__file__).parent.parent.parent.parent
 if str(openelf_dir) not in sys.path:
     sys.path.insert(0, str(openelf_dir))
 
-from orchestrator.event_bridge import get_event_bridge_singleton
 from orchestrator.unified_orchestrator import get_orchestrator
+from agents.agent_manager import get_agent_manager
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
@@ -41,12 +41,13 @@ except ImportError:
 HAS_ORCHESTRATOR = True
 
 
-def get_bridge():
-    """Get EventBridge singleton. Fails hard if not available."""
-    bridge = get_event_bridge_singleton()
-    if bridge is None:
-        raise RuntimeError("EventBridge is required but not available. Start it first.")
-    return bridge
+def get_agent_manager_instance():
+    """Get AgentManager singleton. Fails gracefully if not available."""
+    try:
+        return get_agent_manager()
+    except Exception as e:
+        logger.warning(f"AgentManager not available: {e}")
+        return None
 
 
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
@@ -81,12 +82,15 @@ VALID_AGENT_TYPES = {
     "reviewer",
     "scribe",
     "sentinel",
+    "sentinel-agent",
     "sisyphus",
     "sisyphus-junior",
     "skeptic",
     "summary",
     "swarm-orchestrator",
     "title",
+    "unified-orchestrator",
+    "watcher",
 }
 
 
@@ -384,7 +388,10 @@ def call_learning_extractor(
 ) -> List[Dict[str, Any]]:
     """Call learning-extractor agent to analyze response and extract learnings."""
     try:
-        bridge = get_bridge()
+        manager = get_agent_manager_instance()
+        if not manager:
+            logger.warning("AgentManager not available for learning-extractor")
+            return []
 
         # Build the extraction prompt
         extraction_prompt = f"""Analyze this agent response and extract any valuable learnings, patterns, or insights that should be saved to the knowledge base.
@@ -409,14 +416,16 @@ Only include learnings that are:
 
 Return your extractions in [LEARNED:] format. If no valuable learnings found, return empty."""
 
-        # Send message via EventBridge
-        success, extraction_response = bridge.send_message(
-            message=extraction_prompt, agent="learning-extractor", timeout=60
-        )
+        # Use AgentManager to query learning-extractor agent
+        result = manager.ask_agent("learning-extractor", extraction_prompt)
 
-        if not success or not extraction_response:
-            logger.warning("Failed to get learning-extractor response")
+        if not result.get("success"):
+            logger.warning(
+                f"Failed to get learning-extractor response: {result.get('error')}"
+            )
             return []
+
+        extraction_response = result.get("response", "")
 
         # Extract heuristics from learning-extractor response
         heuristics = extract_heuristics(extraction_response)
@@ -605,56 +614,68 @@ async def list_available_models():
 async def run_mission(request: MissionRequest):
     """Execute a mission."""
     try:
-        bridge = get_bridge()
+        manager = get_agent_manager_instance()
+        if not manager:
+            return {
+                "status": "error",
+                "message": "AgentManager not available. Start OpenCode server.",
+                "mode": request.mode,
+                "mission": request.mission,
+            }
+
         agent_type = request.agent_type or "auto"
-
-        # Use EventBridge for session management
-        logger.info(f"🌉 Using EventBridge for mission: {request.mission[:50]}...")
-
-        session_id = bridge.opencode_session_id
-        logger.info(f"✅ Using EventBridge session {session_id[:8]}...")
-
-        task_id, task_file = create_task(request.mission, agent_type, session_id)
-
-        # Determine agent
-        agent = None
-        if (
-            request.mode == "manual"
-            and request.agent_type
-            and is_valid_agent_type(request.agent_type)
-        ):
-            agent = request.agent_type
-
-        # Send message via EventBridge
-        success, response = bridge.send_message(
-            message=request.mission, agent=agent, timeout=120
+        agent = (
+            agent_type
+            if agent_type != "auto" and is_valid_agent_type(agent_type)
+            else None
         )
 
-        logger.info(f"Message sent: {success}")
+        logger.info(f"🤖 Executing mission via AgentManager: {request.mission[:50]}...")
 
-        if not success:
-            logger.error(f"Failed to send message via EventBridge: {response}")
-            update_task_status(
-                task_file, "error", f"Failed to send message: {response}"
-            )
+        # Use AgentManager to query the agent
+        if agent:
+            result = manager.ask_agent(agent, request.mission)
         else:
-            monitor_thread = threading.Thread(
-                target=monitor_mission,
-                args=(session_id, task_file, agent_type, request.mission),
-                daemon=True,
-            )
-            monitor_thread.start()
+            # Use auto agent or a general-purpose agent
+            result = manager.ask_agent("general", request.mission)
+
+        if not result.get("success"):
+            logger.error(f"Failed to execute mission: {result.get('error')}")
+            return {
+                "status": "error",
+                "message": result.get("error", "Unknown error"),
+                "mode": request.mode,
+                "agent_type": agent_type,
+                "mission": request.mission,
+            }
+
+        session_id = result.get("session_id", "unknown")
+        logger.info(f"✅ Mission started with session {session_id[:8]}...")
+
+        # Create task file
+        task_id, task_file = create_task(request.mission, agent_type, session_id)
+
+        # Start background monitoring
+        monitor_thread = threading.Thread(
+            target=monitor_mission,
+            args=(session_id, task_file, agent_type, request.mission),
+            daemon=True,
+        )
+        monitor_thread.start()
+
+        response_text = result.get("response", "")
 
         return {
-            "status": "started" if success else "error",
+            "status": "started",
             "mode": request.mode,
-            "agent_type": request.agent_type or "auto-selected",
+            "agent_type": agent_type,
             "mission": request.mission,
             "session_id": session_id,
             "task_id": task_id,
-            "message_sent": success,
+            "message_sent": True,
             "heuristics_count": 0,
             "execution_time_ms": 0,
+            "response_preview": response_text[:200] if response_text else "",
         }
     except Exception as e:
         logger.error(f"Exception in run_mission: {str(e)}", exc_info=True)
@@ -686,27 +707,28 @@ async def spawn_agent_direct(request: Dict[str, Any]):
                 status_code=400, detail=f"Invalid agent type: {agent_type}"
             )
 
-        bridge = get_bridge()
+        manager = get_agent_manager_instance()
+        if not manager:
+            raise HTTPException(status_code=503, detail="AgentManager not available")
 
-        # Use EventBridge session
-        logger.info(f"🌉 Using EventBridge for agent {agent_name}...")
-        session_id = bridge.opencode_session_id
-        logger.info(f"✅ Using EventBridge session {session_id[:8]}...")
+        logger.info(f"🤖 Spawning agent {agent_name} via AgentManager...")
 
-        # Send initialization mission to agent
-        success, response = bridge.send_message(
-            message=mission, agent=agent_type, timeout=120
-        )
+        # Use AgentManager to initialize the agent
+        result = manager.ask_agent(agent_type, mission)
 
-        if not success:
+        if not result.get("success"):
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to initialize agent: {response}",
+                detail=f"Failed to initialize agent: {result.get('error')}",
             )
 
-        # Start background monitoring
+        session_id = result.get("session_id", "unknown")
+        logger.info(f"✅ Agent {agent_name} spawned with session {session_id[:8]}...")
+
+        # Create task file
         task_id, task_file = create_task(mission, agent_type, session_id, agent_name)
 
+        # Start background monitoring
         monitor_thread = threading.Thread(
             target=monitor_mission,
             args=(session_id, task_file, agent_type, mission),
@@ -837,10 +859,8 @@ async def run_swarm(request: SwarmRequest):
                 orchestrator = get_orchestrator()
 
                 if not orchestrator.running:
-                    # Try to start the orchestrator
                     orchestrator.start()
 
-                # Run the swarm
                 result = orchestrator.run_swarm(
                     task=request.task, mode=request.mode, context=request.context
                 )
@@ -850,11 +870,19 @@ async def run_swarm(request: SwarmRequest):
             except Exception as e:
                 logger.error(f"Error running swarm with orchestrator: {e}")
 
-        # Use EventBridge
-        bridge = get_bridge()
-        logger.info(f"🌉 Using EventBridge for swarm: {request.task[:50]}...")
+        # Use AgentManager for swarm
+        manager = get_agent_manager_instance()
+        if not manager:
+            return {
+                "status": "error",
+                "error": "AgentManager not available",
+                "task": request.task,
+                "mode": request.mode,
+            }
 
-        # Send swarm instruction via EventBridge
+        logger.info(f"🤖 Running swarm via AgentManager: {request.task[:50]}...")
+
+        # Use multi-agent-coordinator agent
         swarm_prompt = f"""[SWARM] Execute task with multiple agents in {request.mode} mode.
 
 Task: {request.task}
@@ -863,12 +891,10 @@ Context: {request.context}
 
 Coordinate multiple agents to work together on this task and provide a comprehensive response."""
 
-        success, response = bridge.send_message(
-            message=swarm_prompt, agent="multi-agent-coordinator", timeout=120
-        )
+        result = manager.ask_agent("multi-agent-coordinator", swarm_prompt)
 
-        if success:
-            session_id = bridge.opencode_session_id
+        if result.get("success"):
+            session_id = result.get("session_id", "unknown")
             return {
                 "status": "started",
                 "task": request.task,
@@ -878,7 +904,7 @@ Coordinate multiple agents to work together on this task and provide a comprehen
         else:
             return {
                 "status": "error",
-                "error": f"EventBridge swarm failed: {response}",
+                "error": f"AgentManager swarm failed: {result.get('error')}",
                 "task": request.task,
                 "mode": request.mode,
             }

@@ -118,8 +118,8 @@ def _load_tasks_from_dir() -> Dict[str, List[Dict[str, Any]]]:
                 match = re.search(r"m(\d+)", str(task_id))
                 if match:
                     return int(match.group(1))
-                # Fallback to string comparison
-                return str(task_id)
+                # Fallback to a very large number for non-matching IDs (put them at the end)
+                return 999999999999
 
             tasks.sort(key=lambda t: extract_numeric_id(t.get("id", "")))
             sessions[session_id] = tasks

@@ -117,7 +117,7 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
     
     const fetchModels = async () => {
       try {
-        const response = await fetch(`${apiBaseUrl}/api/v1/models`);
+        const response = await fetch(`${apiBaseUrl}/api/v1/agents/models`);
         if (response.ok) {
           const data = await response.json();
           setAvailableModels(data.models || []);
@@ -165,14 +165,13 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
     setLastResult(null);
     
     try {
-      const response = await fetch(`${apiBaseUrl}/api/v1/missions/execute`, {
+      const response = await fetch(`${apiBaseUrl}/api/v1/agents/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mission: missionText,
           mode: executionMode,
-          model: selectedModel,
-          agent: selectedAgentName || undefined,
+          agent_type: selectedAgentName || undefined,
         }),
       });
       
@@ -194,8 +193,8 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-      <div key={modalKey} className="bg-slate-800 rounded-lg border border-slate-700 p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto m-auto shadow-2xl">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-hidden">
+      <div key={modalKey} className="bg-slate-800 rounded-lg border border-slate-700 p-6 w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Zap className="w-5 h-5 text-violet-400" />
