@@ -38,6 +38,14 @@ except ImportError as e:
     AgentExecutionEngine = None
     PatternResponseHandler = None
 
+# Import AgentManager (NOUVEAU SYSTÈME)
+try:
+    from agent_manager import AgentManager, get_agent_manager
+    AGENT_MANAGER_AVAILABLE = True
+except ImportError:
+    logging.error("❌ AgentManager not available - falling back to basic mode")
+    AGENT_MANAGER_AVAILABLE = False
+
 # Use centralized logging
 try:
     from elf_logging import get_logger, log_critical
@@ -87,6 +95,15 @@ class SentinelMonitor:
         self.pattern_handler = (
             PatternResponseHandler() if PatternResponseHandler else None
         )
+        
+        # NOUVEAU : Initialiser AgentManager
+        self.agent_manager = None
+        if AGENT_MANAGER_AVAILABLE:
+            try:
+                self.agent_manager = get_agent_manager()
+                logger.info("✅ AgentManager initialized successfully in Sentinel")
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize AgentManager in Sentinel: {e}")
 
     def ask_orchestrator(self, request_type: str, data: dict) -> dict:
         """Ask the unified orchestrator for decisions and guidance."""
@@ -241,80 +258,150 @@ class SentinelMonitor:
             return {"error": str(e), "timestamp": datetime.now().isoformat()}
 
     def analyze_with_ai(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
-        """Use unified orchestrator for intelligent analysis of metrics."""
-        # First try to use the orchestrator
-        orchestrator_response = self.ask_orchestrator(
-            "sentinel_analysis",
-            {
-                "metrics": metrics,
-                "analysis_type": "dashboard_health",
-                "timestamp": datetime.now().isoformat(),
-            },
-        )
-
-        if "error" not in orchestrator_response:
-            # Orchestrator provided analysis
-            return orchestrator_response.get("data", {})
-
-        # Fallback to local AI analysis if orchestrator is unavailable
-        if not Task:
+        """
+        NOUVEAU : Analyser les métriques via AgentManager.
+        
+        Utilise le vrai prompt système du fichier sentinel.md
+        au lieu de prompts hardcodés ou de l'orchestrator HTTP.
+        """
+        if not self.agent_manager:
+            logger.warning("AgentManager not available, using fallback analysis")
             return self.fallback_analysis(metrics)
 
         try:
-            # Prepare analysis prompt for Claude Haiku
-            prompt = f"""
-You are the Dashboard Sentinel AI, monitoring the Emergent Learning Framework dashboard.
+            # Préparer le contexte pour l'agent Sentinel
+            context = {
+                "metrics": metrics,
+                "analysis_type": "dashboard_health",
+                "timestamp": datetime.now().isoformat(),
+            }
 
-Current metrics:
-{json.dumps(metrics, indent=2)}
-
-Your tasks:
-1. Analyze the health and patterns in this data
-2. Identify any anomalies or concerns
-3. Suggest improvements or actions
-4. Detect patterns in the activity
-5. Provide a concise status assessment
-
-Respond with JSON format:
-{{
-    "status": "healthy|warning|critical",
-    "analysis": "brief analysis of current state",
-    "anomalies": ["list of detected anomalies"],
-    "recommendations": ["list of suggestions"],
-    "patterns": ["observed patterns"],
-    "priority_actions": ["most important actions to take"]
-}}
-"""
-
-            # Use Task tool with Claude Haiku
-            task_result = Task(
-                description="Analyze dashboard metrics",
-                prompt=prompt,
-                subagent_type="general-purpose",
-                session_id="sentinel_analysis",
+            logger.info("🤖 Sending analysis request to Sentinel agent via AgentManager...")
+            
+            # Appeler l'agent Sentinel avec son vrai prompt système
+            result = self.agent_manager.sentinel(
+                request="Analyze the current system metrics and provide a comprehensive health assessment. "
+                       "Focus on: 1) Overall system status, 2) Anomalies detected, 3) Security concerns, "
+                       "4) Performance issues, 5) Recommended actions with priorities.",
+                context=context
             )
 
-            # Parse AI response
-            if hasattr(task_result, "result"):
-                analysis = json.loads(task_result.result)
-                return analysis
+            if result.get("success"):
+                logger.info(f"✅ Sentinel analysis completed (session: {result.get('session_id', 'unknown')[:8]}...)")
+                
+                # Parser la réponse de l'agent
+                ai_response = result.get("response", "")
+                
+                return {
+                    "status": self._parse_status_from_response(ai_response),
+                    "analysis": ai_response,
+                    "anomalies": self._extract_anomalies(ai_response),
+                    "recommendations": self._extract_recommendations(ai_response),
+                    "patterns": self._extract_patterns(ai_response),
+                    "priority_actions": self._extract_priority_actions(ai_response),
+                    "ai_processed": True,
+                    "session_id": result.get("session_id"),
+                    "model_used": result.get("model_used")
+                }
             else:
-                return self.fallback_analysis(metrics)
+                error_msg = result.get("error", "Unknown error")
+                logger.error(f"❌ Sentinel agent failed: {error_msg}")
+                return self.fallback_analysis(metrics, error_msg)
 
         except Exception as e:
-            logger.error(f"AI analysis failed: {e}")
-            return self.fallback_analysis(metrics)
+            logger.error(f"❌ Error calling AgentManager in Sentinel: {e}")
+            return self.fallback_analysis(metrics, str(e))
 
-    def fallback_analysis(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
+    def _parse_status_from_response(self, response: str) -> str:
+        """Extraire le statut de la réponse de l'agent."""
+        response_lower = response.lower()
+        if any(word in response_lower for word in ["critical", "severe", "down", "failure", "corruption"]):
+            return "critical"
+        elif any(word in response_lower for word in ["warning", "degraded", "issue", "problem", "alert"]):
+            return "warning"
+        else:
+            return "healthy"
+
+    def _extract_anomalies(self, response: str) -> List[str]:
+        """Extraire les anomalies détectées de la réponse."""
+        anomalies = []
+        lines = response.split('\n')
+        in_anomalies_section = False
+        
+        for line in lines:
+            lower_line = line.lower()
+            if 'anomal' in lower_line or 'issue' in lower_line or 'concern' in lower_line:
+                in_anomalies_section = True
+            elif in_anomalies_section and (line.strip().startswith('-') or line.strip().startswith('*')):
+                anomalies.append(line.strip()[1:].strip())
+            elif in_anomalies_section and line.strip() == '':
+                in_anomalies_section = False
+                
+        return anomalies
+
+    def _extract_recommendations(self, response: str) -> List[str]:
+        """Extraire les recommandations de la réponse."""
+        recommendations = []
+        lines = response.split('\n')
+        in_recommendations_section = False
+        
+        for line in lines:
+            lower_line = line.lower()
+            if 'recommend' in lower_line or 'suggestion' in lower_line or 'action' in lower_line:
+                in_recommendations_section = True
+            elif in_recommendations_section and (line.strip().startswith('-') or line.strip().startswith('*')):
+                recommendations.append(line.strip()[1:].strip())
+            elif in_recommendations_section and line.strip() == '':
+                in_recommendations_section = False
+                
+        return recommendations
+
+    def _extract_patterns(self, response: str) -> List[str]:
+        """Extraire les patterns détectés de la réponse."""
+        patterns = []
+        lines = response.split('\n')
+        in_patterns_section = False
+        
+        for line in lines:
+            lower_line = line.lower()
+            if 'pattern' in lower_line or 'trend' in lower_line:
+                in_patterns_section = True
+            elif in_patterns_section and (line.strip().startswith('-') or line.strip().startswith('*')):
+                patterns.append(line.strip()[1:].strip())
+            elif in_patterns_section and line.strip() == '':
+                in_patterns_section = False
+                
+        return patterns
+
+    def _extract_priority_actions(self, response: str) -> List[str]:
+        """Extraire les actions prioritaires de la réponse."""
+        actions = []
+        lines = response.split('\n')
+        in_priority_section = False
+        
+        for line in lines:
+            lower_line = line.lower()
+            if 'priority' in lower_line or 'immediate' in lower_line or 'urgent' in lower_line:
+                in_priority_section = True
+            elif in_priority_section and (line.strip().startswith('-') or line.strip().startswith('*')):
+                actions.append(line.strip()[1:].strip())
+            elif in_priority_section and line.strip() == '':
+                in_priority_section = False
+                
+        return actions
+
+    def fallback_analysis(self, metrics: Dict[str, Any], error_msg: str = "") -> Dict[str, Any]:
         """Fallback analysis when AI is not available."""
         if "error" in metrics:
             return {
                 "status": "critical",
-                "analysis": f"Monitoring system error: {metrics['error']}",
+                "analysis": f"Monitoring system error: {metrics['error']}. {error_msg}",
                 "anomalies": ["Monitoring failure"],
                 "recommendations": ["Check monitoring system"],
                 "patterns": [],
                 "priority_actions": ["Fix monitoring system"],
+                "ai_processed": False,
+                "fallback": True
             }
 
         # Simple rule-based analysis
@@ -323,13 +410,13 @@ Respond with JSON format:
 
         if not services_ok:
             status = "critical"
-            analysis = "Service health issues detected"
+            analysis = f"Service health issues detected. {error_msg}"
         elif activity_score == 0:
             status = "warning"
-            analysis = "No recent activity detected"
+            analysis = f"No recent activity detected. {error_msg}"
         else:
             status = "healthy"
-            analysis = "All systems operational"
+            analysis = f"All systems operational (basic check - AI unavailable: {error_msg})"
 
         return {
             "status": status,
@@ -338,6 +425,8 @@ Respond with JSON format:
             "recommendations": [],
             "patterns": [],
             "priority_actions": [],
+            "ai_processed": False,
+            "fallback": True
         }
 
     def learn_user_patterns(self, metrics: Dict[str, Any]) -> Dict[str, Any]:

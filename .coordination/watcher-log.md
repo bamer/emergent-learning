@@ -1452,3 +1452,11 @@
 2026-02-07 15:49:19 | STATUS: critical | NOTES: Event Bridge non disponible
 2026-02-07 15:50:22 | STATUS: critical | NOTES: Event Bridge non disponible
 2026-02-07 15:51:26 | STATUS: critical | NOTES: Event Bridge non disponible
+2026-02-07 15:52:26 | STATUS: critical | NOTES: Event Bridge non disponible
+2026-02-07 15:53:26 | STATUS: critical | NOTES: Event Bridge non disponible
+2026-02-07 15:54:26 | STATUS: critical | NOTES: Event Bridge non disponible
+2026-02-07 15:55:26 | STATUS: critical | NOTES: Event Bridge non disponible
+2026-02-07 15:56:27 | STATUS: critical | NOTES: Event Bridge non disponible
+2026-02-07 15:57:29 | STATUS: critical | NOTES: Event Bridge non disponible
+2026-02-07 15:58:36 | STATUS: critical | NOTES: Event Bridge non disponible
+2026-02-07 15:59:36 | STATUS: critical | NOTES: Event Bridge non disponible
