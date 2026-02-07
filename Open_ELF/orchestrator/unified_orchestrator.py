@@ -29,9 +29,11 @@ from dataclasses import dataclass
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
     from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
     logger = get_logger("unified_orchestrator")
 except ImportError:
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("unified_orchestrator")
 
@@ -46,7 +48,8 @@ LEARNING_CAPTURE_SCRIPT = ELF_DIR / "scripts/background-learning-capture.py"
 LEARNING_CAPTURE_LOG = OPEN_ELF_DIR / "logs/learning-capture.log"
 
 # Setup logging
-s - %(name)s - %(levelname)s - %(message)s"
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("UnifiedOrchestrator")
 
@@ -59,6 +62,7 @@ try:
     logger.info("✓ Database logging available")
 except ImportError:
     logger.warning("⚠ Database logging unavailable")
+
 
 @dataclass
 class Event:
@@ -83,6 +87,7 @@ class Event:
     timestamp: datetime
     processed: bool = False
     action: Optional[str] = None
+
 
 class UnifiedOrchestrator:
     """Unified Orchestrator manages system services and processes events.
@@ -461,7 +466,7 @@ class UnifiedOrchestrator:
             response = requests.get(f"{EVENT_BRIDGE_URL}/status", timeout=2)
             health_status["event_bridge"] = response.status_code == 200
         except:
-            logger.error(f"❌ Failed health_status[\"event_bridge\"]")
+            logger.error(f'❌ Failed health_status["event_bridge"]')
             pass
 
         # Watcher (pgrep)
@@ -475,7 +480,7 @@ class UnifiedOrchestrator:
             if result.returncode == 0:
                 self.watcher_pid = result.stdout.strip()
         except:
-            logger.error(f"❌ Failed health_status[\"watcher\"]")
+            logger.error(f'❌ Failed health_status["watcher"]')
             pass
 
         # Learning Capture (pgrep)
@@ -493,7 +498,7 @@ class UnifiedOrchestrator:
                 self.learning_capture_active = False
                 self.learning_capture_pid = None
         except:
-            logger.error(f"❌ Failed health_status[\"learning_capture\"]")
+            logger.error(f'❌ Failed health_status["learning_capture"]')
             pass
 
         self._services_health = health_status
@@ -555,6 +560,7 @@ class UnifiedOrchestrator:
             else None,
         }
 
+
 async def main():
     """Entry point for running orchestrator."""
     import sys
@@ -566,11 +572,13 @@ async def main():
     orchestrator = UnifiedOrchestrator()
     await orchestrator._start_async()
 
+
 if __name__ == "__main__":
     asyncio.run(main())
 
 # Singleton accessor for dashboard backend compatibility
 _orchestrator_instance = None
+
 
 def get_orchestrator():
     """Get singleton instance of UnifiedOrchestrator for dashboard backend compatibility."""
