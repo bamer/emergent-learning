@@ -202,7 +202,42 @@ for session in sessions:
 
 ### Health Check
 
-**Command:**
+**HTTP Status Server:**
+- **Default Port:** 9998 (fallback to 9999)
+- **Endpoint:** `http://localhost:9998`
+
+**Available Endpoints:**
+- `GET /` - Main status page (HTML)
+- `GET /health` - Overall health check (JSON)
+- `GET /health/event_bridge` - EventBridge instance health
+- `GET /health/mission_bridge` - Mission bridge health with hooks_executed counter
+- `GET /health/sentinel_monitor` - Sentinel monitor health with events_monitored counter
+
+**Response Examples:**
+
+Mission Bridge:
+```json
+{
+  "status": "healthy",
+  "service": "mission_bridge",
+  "running": true,
+  "hooks_executed": 63345,
+  "last_heartbeat": "2026-02-07T06:06:32.018314"
+}
+```
+
+Sentinel Monitor:
+```json
+{
+  "status": "healthy",
+  "service": "sentinel_monitor",
+  "running": true,
+  "events_monitored": 28311,
+  "last_check": "2026-02-07T06:06:31.893360"
+}
+```
+
+**Diagnostic Script:**
 ```bash
 python3 scripts/diagnose_event_pipeline.py
 ```

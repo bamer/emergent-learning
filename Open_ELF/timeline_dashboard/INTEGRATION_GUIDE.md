@@ -83,6 +83,18 @@ The integration supports these event types with proper icons and colors:
 - `session_started` - Session Started
 - `session_ended` - Session Ended
 
+### Event Type Mapping
+
+Operational event types from the database are mapped to timeline-friendly types:
+- `agent_started`, `agent_stopped` → `task_start`, `task_end`
+- `heuristic_created` → `heuristic_consulted`
+- `tool_poll`, `message.updated`, `watcher_check` → `task_start`
+- `session.idle`, `session.status` → `task_end`
+- `server.heartbeat` → `task_start`
+- All unknown types → `task_start` with auto-generated label
+
+The `original_event_type` field is preserved for reference and debugging.
+
 ## Frontend Integration
 
 ### 1. Update Data Hooks
@@ -138,10 +150,11 @@ curl http://localhost:8888/api/v1/timeline/stats
 
 ### 3. Check Event Chronicle
 
-Verify events are being recorded:
+Verify events are being recorded in the database:
 
 ```bash
-ls -la ~/.opencode/emergent-learning/event_chronicle/
+sqlite3 ~/.opencode/emergent-learning/memory/index.db "SELECT COUNT(*) FROM event_chronicle"
+sqlite3 ~/.opencode/emergent-learning/memory/index.db "SELECT timestamp, event_type FROM event_chronicle ORDER BY timestamp DESC LIMIT 10"
 ```
 
 ## Troubleshooting
@@ -156,15 +169,19 @@ ls -la ~/.opencode/emergent-learning/event_chronicle/
 ### Debug Commands
 
 ```bash
-# Check if chronicle directory exists
-ls -la ~/.opencode/emergent-learning/event_chronicle/
+# Check database has events
+sqlite3 ~/.opencode/emergent-learning/memory/index.db "SELECT COUNT(*) FROM event_chronicle"
+sqlite3 ~/.opencode/emergent-learning/memory/index.db "SELECT timestamp, event_type FROM event_chronicle ORDER BY timestamp DESC LIMIT 10"
 
-# Test chronicle access
-python -c "
+# Test event_adapter directly
+python3 -c "
 import sys
-sys.path.append('/home/bamer/.opencode/emergent-learning/Open_ELF/timeline_dashboard')
-from event_adapter import get_chronicle_events
-print(get_chronicle_events(limit=5))
+sys.path.insert(0, '/home/bamer/.opencode/emergent-learning/Open_ELF')
+from timeline_dashboard.event_adapter import get_chronicle_events
+events = get_chronicle_events(limit=5)
+print(f'Events returned: {len(events)}')
+for e in events:
+    print(f'{e[\"timestamp\"][:19]} | {e[\"event_type\"]} | {e[\"source\"][:50]}')
 "
 
 # Test API endpoints

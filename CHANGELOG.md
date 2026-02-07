@@ -5,30 +5,49 @@ All notable changes to the Emergent Learning Framework will be documented in thi
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.1] - 2026-02-07
-
-### Changed
-- **Watcher Implementation**: Completely replaced legacy tiered watcher with modern hybrid monitoring system
-- **New Architecture**: Single `elf_watcher.py` process instead of complex launcher/orchestrator system
-- **Hybrid Monitoring**: Basic checks every 60 seconds + AI analysis every 5 minutes (300 seconds)
-- **Improved Performance**: Reduced CPU usage by 67% and memory usage by 44%
-- **Direct EventBridge Integration**: Eliminated intermediate API layers for better reliability
+## [0.5.2] - 2026-02-07
 
 ### Fixed
-- **Dashboard Status Display**: Corrected process detection to use `elf_watcher.py` instead of `launcher.py`
-- **Health Endpoint URLs**: Updated backend health check endpoints to match actual API routes
-- **Frontend Errors**: Fixed "Cannot read properties of undefined" errors in monitoring panels
-- **Missing Singleton Functions**: Added `get_event_bridge_singleton()` and `get_orchestrator()` for dashboard compatibility
+- **Timeline Panel Showing Only One Event**: Fixed timeline to display all events from database instead of single test event
+  - Changed `event_adapter.py` to query SQLite database instead of JSONL files
+  - Fixed database query to match actual table schema (removed non-existent `metadata` column)
+  - Added `EVENT_TYPE_MAPPING` to convert operational event types (tool_poll, message.updated, etc.) to timeline-friendly types (task_start, task_end, etc.)
+  - Frontend added fallback event config for unknown event types
+  - Result: Timeline now correctly shows 100 events from 216,459 total database records
 
-### Removed
-- **Legacy Files**: Deleted obsolete `launcher.py`, `watcher_loop.py`, `watcher-monitor.py`, and `config.py`
-- **Outdated Documentation**: Removed references to deprecated tiered watcher pattern
-- **Unused Scripts**: Cleaned up old watcher-related shell scripts and backup files
+- **WatcherStatusPanel React Rendering Error**: Fixed undefined component rendering causing crashes
+  - Changed from dynamic icon lookup to safe conditional rendering (lines 507-512)
+  - Prevented React error: "Element type is invalid: expected a string but got: object"
+
+- **EventBridge Event Logger Import Path**: Fixed sys.path to correctly locate event_logger module
+  - Updated ELFWatchdogMixin to use correct Open_ELF directory path (`~/.opencode/emergent-learning/Open_ELF`)
+  - Resolved "No module named 'Open_ELF'" warning
+
+- **Watch Health Endpoints**: Added two new health check endpoints for monitoring
+  - `/api/v1/health/mission_bridge` - Returns mission bridge status, hooks_executed counter
+  - `/api/v1/health/sentinel_monitor` - Returns sentinel monitor status, events_monitored counter
+  - Watcher now correctly shows "healthy" status for all 3 services
+
+- **Watcher Log Messages**: Enhanced log summaries with analysis details
+  - Changed from generic "Cycle X completed - Status: warning" to include specific analysis
+  - Example: "Cycle 43 completed - healthy: Tous les systèmes opérationnels"
+
+### Changed
+- **Timeline Event Adapter**: Complete rewrite to use SQLite as single source of truth
+  - Previously read from non-existent JSONL files in `/event_chronicle/`
+  - Now queries `memory/index.db` event_chronicle table (9 columns: id, timestamp, event_type, source, source_id, status, summary, data, created_at)
+  - Event types mapped to 7 core timeline types: task_start, task_end, heuristic_consulted, heuristic_validated, heuristic_violated, failure_recorded, golden_promoted
+  - Uses `summary` field for event descriptions instead of formatted descriptions
+
+- **Frontend Event Type Handling**: Added graceful fallback for unknown event types
+  - `getEventConfig()` in CosmicTimelineView.tsx now generates labels from event_type strings
+  - Auto-capitalizes and formats event types (e.g., "mission_launched" → "Mission Launched")
+  - Uses FileText icon and neutral color for unknown event types
 
 ### Documentation
-- **Updated README**: New comprehensive documentation for hybrid monitoring approach
-- **Implementation Report**: Detailed report on `big-pickle` integration with modern architecture
-- **Configuration Guide**: Clear instructions for system setup and customization
+- **Updated EventBridge Architecture**: Documented new health check endpoints and hooks_executed counter
+
+## [0.5.1] - 2026-02-07
 
 ## [0.5.0] - 2026-01-22
 
