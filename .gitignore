@@ -85,6 +85,7 @@ Thumbs.db
 *~
 *.db-shm
 *.db-wal
+memory/index.db.pre-*
 
 # Environment files
 .env
