@@ -280,12 +280,14 @@ class AgentManager:
         """
         try:
             # Le premier message établit le contexte système
+
+            provider_id, _, model_id =  agent_config.model.partition('/') 
             response = requests.post(
                 f"{self.opencode_url}/session/{session_id}/message",
                 json={
                     "model": {
-                        "providerID": "nvidia",
-                        "modelID":  agent_config.model
+                        "providerID": provider_id,
+                        "modelID":  model_id
                     },
                     "parts": [{
                         "type": "text",
@@ -371,14 +373,16 @@ class AgentManager:
                 message = f"Context:\n{context_str}\n\nRequest:\n{user_request}"
             
             self.logger.info(f"🤖 {agent_name}: Envoi requête ({len(message)} chars)")
+
             
+            provider_id, _, model_id =  agent_config.model.partition('/')   # simplest, no error‑prone unpacking
             # Envoyer la requête à OpenCode
             response = requests.post(
                 f"{self.opencode_url}/session/{session_id}/message",
                 json={
                     "model": {
-                        "providerID": "nvidia",
-                        "modelID": agent_config.model
+                        "providerID": provider_id,
+                        "modelID": model_id
                     },
                     "parts": [{"type": "text", "text": message}]
                 },
