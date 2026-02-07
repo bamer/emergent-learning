@@ -30,16 +30,16 @@ from orchestrator.unified_orchestrator import get_orchestrator
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
     from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
     logger = get_logger("agents")
 except ImportError:
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("agents")
 
 HAS_ORCHESTRATOR = True
 
-# Configure logging
-logger = logging.getLogger(__name__)
 
 def get_bridge():
     """Get EventBridge singleton. Fails hard if not available."""
@@ -47,6 +47,7 @@ def get_bridge():
     if bridge is None:
         raise RuntimeError("EventBridge is required but not available. Start it first.")
     return bridge
+
 
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
 
@@ -88,9 +89,11 @@ VALID_AGENT_TYPES = {
     "title",
 }
 
+
 def is_valid_agent_type(agent_type: str) -> bool:
     """Check if the agent type is valid."""
     return agent_type in VALID_AGENT_TYPES
+
 
 def extract_heuristics(text: str) -> List[Dict[str, str]]:
     """Extract learning patterns from agent response text.
@@ -205,6 +208,7 @@ def extract_heuristics(text: str) -> List[Dict[str, str]]:
 
     return heuristics
 
+
 def record_heuristic_to_building(heuristic: Dict[str, str], task_id: str) -> bool:
     """Record a heuristic to the ELF building knowledge base."""
     try:
@@ -248,6 +252,7 @@ def record_heuristic_to_building(heuristic: Dict[str, str], task_id: str) -> boo
         logger.error(f"Error recording heuristic: {e}")
 
     return False
+
 
 def create_task(
     mission_text: str,
@@ -296,6 +301,7 @@ def create_task(
     logger.info(f"📝 Task created: {task_file.name}")
     return task_id, task_file
 
+
 def update_task_status(
     task_file: Path, status: str, response_text: Optional[str] = None
 ):
@@ -338,6 +344,7 @@ def update_task_status(
     except Exception as e:
         logger.error(f"Failed to update task {task_file}: {e}")
 
+
 def wait_for_response(session_id: str, timeout: int = 120) -> Optional[str]:
     """Wait for response from OpenCode session by polling."""
     start_time = time.time()
@@ -370,6 +377,7 @@ def wait_for_response(session_id: str, timeout: int = 120) -> Optional[str]:
         time.sleep(2)
 
     return None
+
 
 def call_learning_extractor(
     agent_response: str, task_context: str
@@ -420,6 +428,7 @@ Return your extractions in [LEARNED:] format. If no valuable learnings found, re
         logger.error(f"Error calling learning-extractor: {e}")
         return []
 
+
 def monitor_mission(
     session_id: str, task_file: Path, agent_type: str, mission_text: str
 ):
@@ -468,12 +477,14 @@ def monitor_mission(
         update_task_status(task_file, "error", f"Error monitoring mission: {str(e)}")
         logger.error(f"❌ Error monitoring mission for session {session_id}: {e}")
 
+
 class MissionRequest(BaseModel):
     """Request to execute a mission."""
 
     mission: str
     mode: str = "smart"
     agent_type: Optional[str] = None
+
 
 class SwarmRequest(BaseModel):
     """Request to run a swarm mission."""
@@ -482,6 +493,7 @@ class SwarmRequest(BaseModel):
     mode: str = "all"  # analysis, design, implementation, learning, all
     context: str = ""
     custom_agents: Optional[List[str]] = None
+
 
 @router.get("/status")
 async def get_agents_status():
@@ -515,6 +527,7 @@ async def get_agents_status():
             "error": str(e),
         }
 
+
 @router.get("/list")
 async def list_agents():
     """List all available agents."""
@@ -537,10 +550,12 @@ async def list_agents():
     except Exception as e:
         return {"agents": [], "error": str(e)}
 
+
 @router.get("/opencode/list")
 async def list_opencode_agents():
     """List OpenCode agents."""
     return await list_agents()
+
 
 @router.get("/models")
 async def list_available_models():
@@ -584,6 +599,7 @@ async def list_available_models():
         }
     except Exception as e:
         return {"models": [], "error": str(e)}
+
 
 @router.post("/run")
 async def run_mission(request: MissionRequest):
@@ -648,6 +664,7 @@ async def run_mission(request: MissionRequest):
             "mode": request.mode,
             "mission": request.mission,
         }
+
 
 @router.post("/spawn_direct")
 async def spawn_agent_direct(request: Dict[str, Any]):
@@ -714,6 +731,7 @@ async def spawn_agent_direct(request: Dict[str, Any]):
         logger.error(f"Error spawning agent directly: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/spawn")
 async def spawn_agent_legacy(request: Dict[str, Any]):
     """Legacy: Start an agent."""
@@ -726,6 +744,7 @@ async def spawn_agent_legacy(request: Dict[str, Any]):
         "message": f"Agent {request['agent_type']} is ready",
     }
 
+
 @router.post("/kill")
 async def kill_agent_legacy(request: Dict[str, Any]):
     """Legacy: Kill an agent."""
@@ -733,6 +752,7 @@ async def kill_agent_legacy(request: Dict[str, Any]):
         "status": "ok",
         "message": "Session management is automatic",
     }
+
 
 @router.post("/test")
 async def test_agent_legacy(request: Dict[str, Any]):
@@ -745,10 +765,12 @@ async def test_agent_legacy(request: Dict[str, Any]):
         }
     raise HTTPException(status_code=400, detail="Invalid request")
 
+
 @router.get("/logs/{agent_type}")
 async def get_agent_logs(agent_type: str, lines: int = 50):
     """Get agent logs."""
     return {"logs": f"Logs for {agent_type} not available in simplified mode"}
+
 
 @router.get("/heuristics")
 async def get_heuristics():
@@ -794,6 +816,7 @@ async def get_heuristics():
         logger.error(f"Error retrieving heuristics: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/analyze")
 async def analyze_mission(request: MissionRequest):
     """Analyze a mission without executing."""
@@ -802,6 +825,7 @@ async def analyze_mission(request: MissionRequest):
         "mission": request.mission,
         "analysis": "Analysis not available in simplified mode",
     }
+
 
 @router.post("/swarm")
 async def run_swarm(request: SwarmRequest):
@@ -868,6 +892,7 @@ Coordinate multiple agents to work together on this task and provide a comprehen
             "mode": request.mode,
         }
 
+
 @router.get("/tasks/{task_id}")
 async def get_task_details(task_id: str):
     """Get details of a specific task by ID."""
@@ -891,6 +916,7 @@ async def get_task_details(task_id: str):
     except Exception as e:
         logger.error(f"Error retrieving task {task_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/tasks")
 async def list_tasks(session_id: Optional[str] = None, status: Optional[str] = None):
@@ -929,6 +955,7 @@ async def list_tasks(session_id: Optional[str] = None, status: Optional[str] = N
     except Exception as e:
         logger.error(f"Error listing tasks: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/logs")
 async def get_mission_logs(limit: int = 50):

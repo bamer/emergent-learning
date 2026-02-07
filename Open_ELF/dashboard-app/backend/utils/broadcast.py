@@ -14,13 +14,14 @@ from fastapi import WebSocket
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
     from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
     logger = get_logger("broadcast")
 except ImportError:
     import logging
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("broadcast")
 
-logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("broadcast")
+
 
 class ConnectionManager:
     def __init__(self):
@@ -57,8 +58,6 @@ class ConnectionManager:
                         self.active_connections.remove(conn)
 
     async def broadcast_update(self, update_type: str, data: dict):
-        await self.broadcast({
-            "type": update_type,
-            "timestamp": datetime.now().isoformat(),
-            "data": data
-        })
+        await self.broadcast(
+            {"type": update_type, "timestamp": datetime.now().isoformat(), "data": data}
+        )

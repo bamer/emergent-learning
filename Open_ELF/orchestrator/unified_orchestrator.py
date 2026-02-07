@@ -17,7 +17,7 @@ Dependencies:
 """
 
 import asyncio
-
+import logging
 import subprocess
 import threading
 import requests
@@ -25,17 +25,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
-
-# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
-try:
-    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
-
-    logger = get_logger("unified_orchestrator")
-except ImportError:
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("unified_orchestrator")
 
 # Constants
 OPENCODE_SERVER = "http://localhost:4096"

@@ -442,7 +442,7 @@ export function OrchestratorStatusPanel({
                     </div>
 
                     {/* Learning Capture Service */}
-                    <div className="p-3 bg-slate-700/30 rounded-lg">
+                    <div className="p-3 bg-slate-700/30 rounded-lg mt-4">
                       <div className="flex items-center gap-2 mb-2">
                         <BookOpen className="w-4 h-4 text-slate-400" />
                         <span className="text-xs text-slate-400">Learning Capture</span>

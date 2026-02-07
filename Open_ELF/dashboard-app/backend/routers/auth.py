@@ -17,13 +17,13 @@ from utils.database import get_db
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
     from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
     logger = get_logger("auth")
 except ImportError:
     import logging
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("auth")
 
-logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("auth")
 audit_logger = logging.getLogger(f"{__name__}.audit")
 
 # Router
@@ -43,6 +43,7 @@ GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET")
 
 USE_OAUTH_WORKER = not GITHUB_CLIENT_SECRET
 
+
 async def get_oauth_config():
     """Get OAuth config - from env or worker"""
     global GITHUB_CLIENT_ID
@@ -53,6 +54,7 @@ async def get_oauth_config():
         data = resp.json()
         GITHUB_CLIENT_ID = data.get("client_id")
         return GITHUB_CLIENT_ID
+
 
 # Session encryption key - auto-generate if not set
 SESSION_ENCRYPTION_KEY = os.environ.get("SESSION_ENCRYPTION_KEY")
@@ -71,6 +73,7 @@ SESSION_IDLE_TIMEOUT = int(os.environ.get("SESSION_IDLE_TIMEOUT", "86400"))
 
 async_redis_client = None
 USE_REDIS = False
+
 
 async def init_redis():
     """Initialize async Redis client during FastAPI startup"""
@@ -97,6 +100,7 @@ async def init_redis():
             f"Redis unavailable - using in-memory sessions: {type(e).__name__}"
         )
         USE_REDIS = False
+
 
 class InMemorySessionStore:
     """Thread-safe in-memory session storage with TTL, idle timeout, and automatic expiration."""
@@ -197,9 +201,11 @@ class InMemorySessionStore:
             f"Purged {purge_count} oldest in-memory sessions due to capacity limit"
         )
 
+
 # Initialize in-memory session store with max age and idle timeout
 IN_MEMORY_SESSIONS = InMemorySessionStore(SESSION_MAX_AGE, SESSION_IDLE_TIMEOUT)
 SESSIONS = IN_MEMORY_SESSIONS
+
 
 class SessionData(BaseModel):
     """Validated session data structure"""
@@ -228,12 +234,14 @@ class SessionData(BaseModel):
             raise ValueError("Avatar URL must be HTTP(S)")
         return v[:2048]
 
+
 class User(BaseModel):
     id: int
     github_id: int
     username: str
     avatar_url: Optional[str]
     is_authenticated: bool = True
+
 
 async def create_session(user_data: SessionData) -> str:
     """Create encrypted session with async Redis"""
@@ -257,6 +265,7 @@ async def create_session(user_data: SessionData) -> str:
         )
 
     return token
+
 
 async def get_session(token: str) -> Optional[SessionData]:
     """Retrieve and decrypt session with async Redis"""
@@ -294,6 +303,7 @@ async def get_session(token: str) -> Optional[SessionData]:
         logger.error(f"Session retrieval error: {type(e).__name__}: {e}")
         return None
 
+
 async def delete_session(token: str) -> bool:
     """Delete session from storage"""
     if not token:
@@ -313,6 +323,7 @@ async def delete_session(token: str) -> bool:
         logger.error(f"Session deletion error: {type(e).__name__}")
         return False
 
+
 async def get_user_id(request: Request) -> Optional[int]:
     """Get user ID from session (async)"""
     token = request.cookies.get("session_token")
@@ -321,12 +332,14 @@ async def get_user_id(request: Request) -> Optional[int]:
     user = await get_session(token)
     return user.id if user else None
 
+
 async def require_auth(request: Request) -> int:
     """Require authentication (async)"""
     user_id = await get_user_id(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="Authentication required")
     return user_id
+
 
 @router.get("/login")
 @limiter.limit("10/minute")
@@ -339,6 +352,7 @@ async def login(request: Request):
     return RedirectResponse(
         url=f"https://github.com/login/oauth/authorize?client_id={client_id}&redirect_uri={redirect_uri}&scope=read:user"
     )
+
 
 async def exchange_code_for_token(code: str, redirect_uri: str) -> dict:
     """Exchange OAuth code for access token - via worker or direct."""
@@ -361,6 +375,7 @@ async def exchange_code_for_token(code: str, redirect_uri: str) -> dict:
                 },
             )
             return resp.json()
+
 
 @router.get("/callback")
 @limiter.limit("5/minute")
@@ -407,6 +422,7 @@ async def callback(request: Request, code: str, response: Response):
             f"OAuth callback error from {client_ip}: {type(e).__name__}: {e}"
         )
         raise HTTPException(status_code=400, detail="OAuth authentication failed")
+
 
 async def handle_login(
     response: Response,
@@ -481,6 +497,7 @@ async def handle_login(
         )
         raise
 
+
 @router.get("/me")
 async def get_current_user(request: Request) -> Dict[str, Any]:
     """Get current session user."""
@@ -497,6 +514,7 @@ async def get_current_user(request: Request) -> Dict[str, Any]:
         f"Session validated for user_id={user.id} username={user.username}"
     )
     return {**user.model_dump(), "is_authenticated": True}
+
 
 @router.post("/logout")
 async def logout(response: Response, request: Request) -> Dict[str, bool]:

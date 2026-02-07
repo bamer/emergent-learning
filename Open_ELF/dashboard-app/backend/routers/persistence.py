@@ -22,9 +22,11 @@ from pydantic import BaseModel
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
     from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
     logger = get_logger("persistence")
 except ImportError:
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("persistence")
 
@@ -53,11 +55,11 @@ EMBEDDING_MODEL = "nomic-embed-text"
 event_chronicle = EventChronicle() if HAS_EVENT_CHRONICLE else None
 
 router = APIRouter(prefix="/api/v1/persistence", tags=["persistence"])
-logger = logging.getLogger(__name__)
 
 # ==============================================================================
 # Models
 # ==============================================================================
+
 
 class TrailCreate(BaseModel):
     location: str
@@ -68,6 +70,7 @@ class TrailCreate(BaseModel):
     message: Optional[str] = None
     session_id: Optional[str] = None
 
+
 class HeuristicCreate(BaseModel):
     domain: str
     rule: str
@@ -76,12 +79,14 @@ class HeuristicCreate(BaseModel):
     source_type: str = "auto"  # 'auto', 'manual', 'ceo', 'agent'
     is_golden: bool = False
 
+
 class TimelineEventCreate(BaseModel):
     event_type: str
     source: str
     summary: Optional[str] = None
     data: Optional[Dict[str, Any]] = None
     status: str = "info"
+
 
 class LearningCreate(BaseModel):
     title: str
@@ -90,9 +95,11 @@ class LearningCreate(BaseModel):
     confidence: float = 0.5
     source: str = "dashboard"
 
+
 # ==============================================================================
 # Trails Endpoints
 # ==============================================================================
+
 
 @router.post("/trails")
 async def create_trail(trail: TrailCreate):
@@ -132,6 +139,7 @@ async def create_trail(trail: TrailCreate):
         logger.error(f"Error creating trail: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/trails/batch")
 async def create_trails_batch(trails: List[TrailCreate]):
     """Create multiple trails in a batch."""
@@ -168,9 +176,11 @@ async def create_trails_batch(trails: List[TrailCreate]):
         logger.error(f"Error creating trails batch: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # ==============================================================================
 # Embedding Functions
 # ==============================================================================
+
 
 def generate_embedding(text: str) -> Optional[List[float]]:
     """Generate embedding using Ollama nomic-embed-text model."""
@@ -189,6 +199,7 @@ def generate_embedding(text: str) -> Optional[List[float]]:
     except Exception as e:
         logger.warning(f"Failed to generate embedding: {e}")
         return None
+
 
 def save_embedding(
     conn, source_id: int, source_type: str, text: str, metadata: Optional[Dict] = None
@@ -222,9 +233,11 @@ def save_embedding(
         logger.error(f"Error saving embedding: {e}")
         return False
 
+
 # ==============================================================================
 # Heuristics Endpoints
 # ==============================================================================
+
 
 @router.post("/heuristics")
 async def create_heuristic(
@@ -295,6 +308,7 @@ async def create_heuristic(
     except Exception as e:
         logger.error(f"Error creating heuristic: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/heuristics/batch")
 async def create_heuristics_batch(heuristics: List[HeuristicCreate]):
@@ -370,9 +384,11 @@ async def create_heuristics_batch(heuristics: List[HeuristicCreate]):
         logger.error(f"Error creating heuristics batch: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # ==============================================================================
 # Timeline Events Endpoints
 # ==============================================================================
+
 
 @router.post("/timeline/events")
 async def create_timeline_event(event: TimelineEventCreate):
@@ -413,6 +429,7 @@ async def create_timeline_event(event: TimelineEventCreate):
         logger.error(f"Error creating timeline event: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/timeline/events/batch")
 async def create_timeline_events_batch(events: List[TimelineEventCreate]):
     """Create multiple timeline events in a batch."""
@@ -450,9 +467,11 @@ async def create_timeline_events_batch(events: List[TimelineEventCreate]):
         logger.error(f"Error creating timeline events batch: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # ==============================================================================
 # Learnings Endpoints
 # ==============================================================================
+
 
 @router.post("/learnings")
 async def create_learning(learning: LearningCreate):
@@ -508,6 +527,7 @@ async def create_learning(learning: LearningCreate):
     except Exception as e:
         logger.error(f"Error creating learning: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/learnings/batch")
 async def create_learnings_batch(learnings: List[LearningCreate]):

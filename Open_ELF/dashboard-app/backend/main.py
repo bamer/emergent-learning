@@ -13,7 +13,7 @@ Run: uvicorn main:app --reload --port 8888
 """
 
 import asyncio
-
+import logging
 import sys
 import os
 from datetime import datetime
@@ -33,6 +33,7 @@ from pathlib import Path
 env_local = Path(__file__).parent / ".env.local"
 env_file = env_local if env_local.exists() else Path(__file__).parent / ".env"
 load_dotenv(env_file)
+
 
 # Path import helpers
 def _import_get_base_path() -> Optional[callable]:
@@ -57,6 +58,7 @@ def _import_get_base_path() -> Optional[callable]:
             continue
     return None
 
+
 # Add Open_ELF to Python path for timeline dashboard integration
 def _add_open_elf_to_path():
     current = Path(__file__).resolve()
@@ -65,6 +67,7 @@ def _add_open_elf_to_path():
         if open_elf_path.exists():
             sys.path.insert(0, str(open_elf_path))
             break
+
 
 def get_base_path() -> Path:
     imported = _import_get_base_path()
@@ -80,6 +83,7 @@ def get_base_path() -> Path:
         if (parent / ".coordination").exists() or (parent / ".git").exists():
             return parent
     return Path.home() / ".opencode" / "emergent-learning"
+
 
 # Ensure src is in python path for models and utils
 current_dir = Path(__file__).resolve().parent
@@ -128,9 +132,11 @@ from routers import (
 )
 from routers.auth import init_redis
 
+
 # Timeline Dashboard Integration (now handled directly in analytics router)
 def integrate_timeline_dashboard(app):
     pass
+
 
 # Configure logging - Console + File in .coordination/
 LOG_DIR = EMERGENT_LEARNING_PATH / ".coordination"
@@ -151,7 +157,10 @@ file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(formatter)
 
 # Configure root logger
-s - %(name)s - %(levelname)s - %(message)s",
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[console_handler, file_handler],
 )
 
 logger = logging.getLogger(__name__)
@@ -166,6 +175,7 @@ app = FastAPI(
 # ==============================================================================
 # Background Task: Auto-Summarizer
 # ==============================================================================
+
 
 async def run_auto_summarizer():
     """Background task to automatically summarize completed sessions."""
@@ -218,6 +228,7 @@ async def run_auto_summarizer():
         # Run every 10 minutes (600s) + execution time
         await asyncio.sleep(600)
 
+
 # CORS - restricted to local development origins only
 # SECURITY: Since backend is localhost-only, this primarily prevents
 # malicious websites from making requests if user visits them
@@ -244,6 +255,7 @@ app.add_middleware(
 # Request Size Limit Middleware
 # ==============================================================================
 
+
 class LimitUploadSize(BaseHTTPMiddleware):
     """Limit request body size to prevent DoS"""
 
@@ -263,6 +275,7 @@ class LimitUploadSize(BaseHTTPMiddleware):
                     )
         response = await call_next(request)
         return response
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to all HTTP responses."""
@@ -289,6 +302,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         return response
 
+
 app.add_middleware(LimitUploadSize, max_upload_size=10 * 1024 * 1024)
 
 app.add_middleware(SecurityHeadersMiddleware)
@@ -311,10 +325,9 @@ from routers.workflows import set_paths as set_workflows_paths
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
     from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
     logger = get_logger("main")
 except ImportError:
-    import logging
-    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("main")
 
 set_heuristics_manager(manager)
@@ -410,6 +423,7 @@ ALLOWED_TABLE_CONFIGS = {
 
 MAX_QUERY_LIMIT = 1000
 
+
 def _validate_query_params(
     table: str, columns: str, order_by: str, limit: int
 ) -> tuple:
@@ -452,9 +466,11 @@ def _validate_query_params(
 
     return table, columns, order_by, limit
 
+
 # ==============================================================================
 # Background Task: Monitor for Changes
 # ==============================================================================
+
 
 def _get_db_change_counts():
     """Synchronous DB operations for monitor_changes (runs in dedicated thread)."""
@@ -492,6 +508,7 @@ def _get_db_change_counts():
             "invariants": invariants_count,
         }
 
+
 def _get_recent_data(table: str, columns: str, order_by: str, limit: int = 5):
     """
     Fetch recent data from a table with SQL injection protection.
@@ -508,6 +525,7 @@ def _get_recent_data(table: str, columns: str, order_by: str, limit: int = 5):
         query = f"SELECT {columns} FROM {table} ORDER BY {order_by} DESC LIMIT ?"
         cursor.execute(query, (limit,))
         return [dict_from_row(r) for r in cursor.fetchall()]
+
 
 async def monitor_changes():
     """Monitor database for changes and broadcast updates."""
@@ -625,6 +643,7 @@ async def monitor_changes():
 
         await asyncio.sleep(2)  # Check every 2 seconds
 
+
 @app.on_event("startup")
 async def startup_event():
     logger.info("Startup event handler called")
@@ -667,8 +686,10 @@ async def startup_event():
     asyncio.create_task(auto_capture.start())
     logger.info("Auto-capture background job started")
 
+
 # Timeline Dashboard routes are now integrated directly in analytics router
 logger.info("Using direct timeline routes from analytics router")
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -676,9 +697,11 @@ async def shutdown_event():
     auto_capture.stop()
     logger.info("Auto-capture background job stopped")
 
+
 # ==============================================================================
 # WebSocket Endpoint
 # ==============================================================================
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -709,6 +732,7 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.error(f"WebSocket error: {e}")
     finally:
         await manager.disconnect(websocket)
+
 
 # ==============================================================================
 # Serve Frontend (Production)

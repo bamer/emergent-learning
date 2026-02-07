@@ -19,9 +19,11 @@ from pydantic import BaseModel
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
     from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
     logger = get_logger("orchestrator")
 except ImportError:
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("orchestrator")
 
@@ -33,6 +35,7 @@ router = APIRouter(prefix="/api/v1/orchestrator", tags=["orchestrator"])
 # Enhanced Event Bridge Orchestrator API
 ORCHESTRATOR_API_URL = "http://localhost:9999"
 
+
 class OrchestratorRequest(BaseModel):
     """Request model for orchestrator API calls."""
 
@@ -40,6 +43,7 @@ class OrchestratorRequest(BaseModel):
     request_type: str
     data: Dict[str, Any]
     priority: int = 1
+
 
 class OrchestratorResponse(BaseModel):
     """Response model from orchestrator API."""
@@ -50,6 +54,7 @@ class OrchestratorResponse(BaseModel):
     timestamp: str
     confidence: float
 
+
 class MissionSubmission(BaseModel):
     """Mission submission model."""
 
@@ -58,10 +63,12 @@ class MissionSubmission(BaseModel):
     task_id: Optional[str] = None
     source: str = "dashboard"
 
+
 class HealthCheck(BaseModel):
     """Health check model."""
 
     component: str
+
 
 async def call_orchestrator(request: OrchestratorRequest) -> OrchestratorResponse:
     """Make a request to the orchestrator API."""
@@ -90,6 +97,7 @@ async def call_orchestrator(request: OrchestratorRequest) -> OrchestratorRespons
             detail=f"Cannot connect to orchestrator: {e}",
         )
 
+
 async def submit_mission(mission: MissionSubmission) -> OrchestratorResponse:
     """Submit a mission to the orchestrator."""
     try:
@@ -111,6 +119,7 @@ async def submit_mission(mission: MissionSubmission) -> OrchestratorResponse:
             status_code=503,
             detail=f"Cannot submit mission to orchestrator: {e}",
         )
+
 
 @router.get("/health/{component}")
 async def get_health(component: str):
@@ -134,15 +143,18 @@ async def get_health(component: str):
             detail=f"Cannot connect to orchestrator for health check: {e}",
         )
 
+
 @router.post("/ask")
 async def ask_orchestrator(request: OrchestratorRequest):
     """Ask the orchestrator for a decision or coordination."""
     return await call_orchestrator(request)
 
+
 @router.post("/mission")
 async def submit_mission_endpoint(mission: MissionSubmission):
     """Submit a mission to the orchestrator."""
     return await submit_mission(mission)
+
 
 @router.get("/status")
 async def get_orchestrator_status():
@@ -166,6 +178,7 @@ async def get_orchestrator_status():
             detail=f"Cannot connect to orchestrator: {e}",
         )
 
+
 @router.get("/agents")
 async def get_available_agents():
     """Get list of available agents from orchestrator."""
@@ -183,11 +196,13 @@ async def get_available_agents():
         "status": "success",
     }
 
+
 @router.post("/agents/{agent_type}/run")
 async def run_agent(agent_type: str, mission: MissionSubmission):
     """Run an agent via orchestrator."""
     mission.agent_type = agent_type
     return await submit_mission(mission)
+
 
 # Register this router in the main app
 # Add this line to main.py:

@@ -13,19 +13,19 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+import logging
+
 try:
     from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
     logger = get_logger("event_logger")
 except ImportError:
-    import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("event_logger")
 
 # Setup paths and database connection
 ELF_BASE = Path.home() / ".opencode" / "emergent-learning"
 DB_PATH = ELF_BASE / "memory" / "index.db"
-
-logger = logging.getLogger(__name__)
 
 # Common event types
 EVENT_TYPES = {
@@ -46,6 +46,7 @@ EVENT_TYPES = {
     "system_check": "System health check",
     "service_status": "Service status update",
 }
+
 
 def log_event(
     event_type: str,
@@ -107,6 +108,7 @@ def log_event(
         logger.error(f"Error logging event to database: {e}")
         return None
 
+
 def log_watcher_check(
     tier: int, status: str, summary: str, details: Optional[Dict[str, Any]] = None
 ) -> Optional[int]:
@@ -137,6 +139,7 @@ def log_watcher_check(
         data=data,
         status=status,
     )
+
 
 def log_file_event(
     action: str,  # 'change', 'creation', 'deletion'
@@ -178,6 +181,7 @@ def log_file_event(
         status="success",
     )
 
+
 def log_orchestrator_event(
     event_type: str,  # 'question_received', 'response_sent', 'orchestrator_action', 'orchestrator_decided'
     event_category: str,  # 'question', 'response', 'action', 'decision'
@@ -209,6 +213,7 @@ def log_orchestrator_event(
         data=data,
         status="success",
     )
+
 
 def get_recent_events(
     event_type_filter: Optional[str] = None,
@@ -275,6 +280,7 @@ def get_recent_events(
     except Exception as e:
         logger.error(f"Error fetching events from database: {e}")
         return []
+
 
 if __name__ == "__main__":
     # Test the event logger

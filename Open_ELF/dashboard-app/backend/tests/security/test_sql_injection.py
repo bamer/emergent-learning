@@ -18,13 +18,16 @@ if str(backend_path) not in sys.path:
 class TestSQLInjectionPrevention:
     """Test SQL injection attack prevention."""
 
-    @pytest.mark.parametrize("payload", [
-        "admin' OR '1'='1",
-        "'; DROP TABLE users; --",
-        "admin'--",
-        "' OR 1=1--",
-        "1' UNION SELECT NULL--",
-    ])
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            "admin' OR '1'='1",
+            "'; DROP TABLE users; --",
+            "admin'--",
+            "' OR 1=1--",
+            "1' UNION SELECT NULL--",
+        ],
+    )
     def test_sql_injection_in_username(self, security_db, payload):
         """SQL injection in username should be prevented."""
         # Attempt to use malicious username
@@ -40,11 +43,14 @@ class TestSQLInjectionPrevention:
         # Should safely handle the input (no results unless exact match)
         # Most importantly, should NOT drop tables or cause errors
 
-    @pytest.mark.parametrize("payload", [
-        "' OR '1'='1",
-        "admin'; DROP TABLE users; --",
-        "1' OR '1'='1' --",
-    ])
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            "' OR '1'='1",
+            "admin'; DROP TABLE users; --",
+            "1' OR '1'='1' --",
+        ],
+    )
     def test_sql_injection_in_github_id(self, security_db, payload):
         """SQL injection in numeric fields should be prevented."""
         cursor = security_db.cursor()
@@ -88,7 +94,7 @@ class TestSQLInjectionPrevention:
 
         special_chars = [
             "user'; --",
-            "user\" OR",
+            'user" OR',
             "user/* comment */",
             "user\x00",  # Null byte
         ]
@@ -97,7 +103,7 @@ class TestSQLInjectionPrevention:
             # Insert with special characters
             cursor.execute(
                 "INSERT INTO users (github_id, username) VALUES (?, ?)",
-                (999999, char_input)
+                (999999, char_input),
             )
             security_db.commit()
 
@@ -127,20 +133,26 @@ class TestORMSafety:
 
         # Check for dangerous patterns
         # These indicate raw SQL with potential user input
-        assert 'execute("' not in source or '?' in source, "Raw SQL should use parameters"
+        assert 'execute("' not in source or "?" in source, (
+            "Raw SQL should use parameters"
+        )
 
 
 class TestBlindSQLInjection:
     """Test blind SQL injection prevention."""
 
-    @pytest.mark.parametrize("payload", [
-        "1' AND SLEEP(5)--",
-        "1' WAITFOR DELAY '00:00:05'--",
-        "1' AND (SELECT COUNT(*) FROM users) > 0--",
-    ])
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            "1' AND SLEEP(5)--",
+            "1' WAITFOR DELAY '00:00:05'--",
+            "1' AND (SELECT COUNT(*) FROM users) > 0--",
+        ],
+    )
     def test_blind_sql_injection_blocked(self, security_db, payload):
         """Blind SQL injection attempts should be blocked."""
         import time
+
         cursor = security_db.cursor()
 
         start = time.time()
@@ -159,11 +171,14 @@ class TestBlindSQLInjection:
 class TestUnionBasedInjection:
     """Test UNION-based SQL injection prevention."""
 
-    @pytest.mark.parametrize("payload", [
-        "1' UNION SELECT NULL,NULL,NULL--",
-        "1' UNION ALL SELECT username, NULL, NULL FROM users--",
-        "999 UNION SELECT * FROM users--",
-    ])
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            "1' UNION SELECT NULL,NULL,NULL--",
+            "1' UNION ALL SELECT username, NULL, NULL FROM users--",
+            "999 UNION SELECT * FROM users--",
+        ],
+    )
     def test_union_injection_blocked(self, security_db, payload):
         """UNION-based injection should not extract extra data."""
         cursor = security_db.cursor()
@@ -171,13 +186,13 @@ class TestUnionBasedInjection:
         # Insert test user
         cursor.execute(
             "INSERT INTO users (github_id, username) VALUES (?, ?)",
-            (1, "legitimate_user")
+            (1, "legitimate_user"),
         )
         security_db.commit()
 
         # Attempt UNION injection
         cursor.execute("SELECT id,\1.* FROM \1 WHERE github_id = ?", (payload,))
-        results = :]
+        results = cursor.fetchall()
 
         # Should only return legitimate results (or none)
         # Should NOT return all users via UNION

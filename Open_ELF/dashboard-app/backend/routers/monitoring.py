@@ -26,9 +26,11 @@ import requests
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
     from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
     logger = get_logger("monitoring")
 except ImportError:
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("monitoring")
 
@@ -60,8 +62,6 @@ except ImportError:
             """Convert sqlite3.Row to dict"""
             return dict(row) if hasattr(row, "keys") else row
 
-# Configure logging
-logger = logging.getLogger(__name__)
 
 # Unified logging (best-effort)
 try:
@@ -87,6 +87,7 @@ except Exception:
     def _log_error(message: str) -> None:
         logger.error(message)
 
+
 router = APIRouter(prefix="/api/v1", tags=["monitoring"])
 
 # Database path - Production database (restored with 6885 records)
@@ -100,6 +101,7 @@ COORDINATION_DIR = ELF_DIR / ".coordination"
 EVENT_BRIDGE_HEARTBEAT = COORDINATION_DIR / "event-bridge-heartbeat.json"
 OPENCODE_SERVER = "http://localhost:4096"
 
+
 def get_db_connection() -> sqlite3.Connection:
     """Get database connection with proper settings."""
     conn = sqlite3.connect(DB_PATH, timeout=10.0)
@@ -107,9 +109,11 @@ def get_db_connection() -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
+
 # ==============================================================================
 # Sentinel Endpoints
 # ==============================================================================
+
 
 @router.get("/sentinel/status")
 async def get_sentinel_status():
@@ -164,6 +168,7 @@ async def get_sentinel_status():
     except Exception as e:
         logger.error(f"Error fetching sentinel status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 def detect_patterns_from_cycles(cycles: List[Dict]) -> List[Dict]:
     """Detect patterns from sentinel cycle history."""
@@ -226,9 +231,11 @@ def detect_patterns_from_cycles(cycles: List[Dict]) -> List[Dict]:
 
     return patterns
 
+
 # ==============================================================================
 # Event Chronicle Endpoints
 # ==============================================================================
+
 
 @router.get("/chronicle/events")
 async def get_chronicle_events(
@@ -290,6 +297,7 @@ async def get_chronicle_events(
             status_code=500, detail=f"Error querying chronicle: {str(e)}"
         )
 
+
 @router.get("/chronicle/stats")
 async def get_chronicle_stats():
     """Get event chronicle statistics (from SQL database)."""
@@ -341,19 +349,24 @@ async def get_chronicle_stats():
         logger.error(f"Error fetching chronicle stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # ==============================================================================
 # Event Bridge Control Request Model
 # ==============================================================================
 
+
 class EventBridgeControlRequest(BaseModel):
     action: str  # 'start', 'stop', 'restart'
+
 
 class OrchestratorControlRequest(BaseModel):
     action: str  # 'start', 'stop', 'restart'
 
+
 # ==============================================================================
 # Event Bridge Endpoints
 # ==============================================================================
+
 
 @router.get("/event-bridge/status")
 async def get_event_bridge_status():
@@ -407,9 +420,11 @@ async def get_event_bridge_status():
         "last_event_time": last_event_time,
     }
 
+
 # ==============================================================================
 # Orchestrator Endpoints
 # ==============================================================================
+
 
 @router.get("/orchestrator/status")
 async def get_orchestrator_status():
@@ -490,6 +505,7 @@ async def get_orchestrator_status():
     #     },
     #     "missions": status_payload.get("missions", []),
     # }
+
 
 @router.post("/orchestrator/control")
 async def control_orchestrator(request: OrchestratorControlRequest):
@@ -589,6 +605,7 @@ async def control_orchestrator(request: OrchestratorControlRequest):
         _log_error(f"Error controlling orchestrator: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/event-bridge/control")
 async def control_event_bridge(request: EventBridgeControlRequest):
     """Control Event Bridge (start/stop/restart)."""
@@ -687,9 +704,11 @@ async def control_event_bridge(request: EventBridgeControlRequest):
         _log_error(f"Error controlling Event Bridge: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # ==============================================================================
 # System Health Endpoints
 # ==============================================================================
+
 
 @router.get("/health/status")
 async def get_system_health():
@@ -744,6 +763,7 @@ async def get_system_health():
         # Return default response if table doesn't exist
         return {"status": "ok", "current": None, "history": [], "metrics": None}
 
+
 def calculate_health_metrics(history: List[Dict]) -> Dict:
     """Calculate health metrics from history."""
     if not history:
@@ -766,12 +786,15 @@ def calculate_health_metrics(history: List[Dict]) -> Dict:
         "failed_requests": (total - healthy_count) * 10,
     }
 
+
 # ==============================================================================
 # Watcher Endpoints
 # ==============================================================================
 
+
 class WatcherControlRequest(BaseModel):
     action: str  # 'start', 'stop', 'restart'
+
 
 @router.get("/watcher/status")
 async def get_watcher_status():
@@ -925,6 +948,7 @@ async def get_watcher_status():
             },
         }
 
+
 @router.post("/watcher/control")
 async def control_watcher(request: WatcherControlRequest):
     """Control watcher (start/stop/restart)."""
@@ -1058,6 +1082,7 @@ async def control_watcher(request: WatcherControlRequest):
         _log_error(f"Error controlling watcher: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.get("/monitoring/watcher/events")
 async def get_watcher_events():
     """Get last 20 watcher events for monitoring card."""
@@ -1097,6 +1122,7 @@ async def get_watcher_events():
     except Exception as e:
         logger.error(f"Error fetching watcher events: {e}")
         return {"status": "error", "error": str(e)}
+
 
 @router.get("/monitoring/orchestrator/events")
 async def get_orchestrator_events():
@@ -1166,6 +1192,7 @@ async def get_orchestrator_events():
         logger.error(f"Error fetching orchestrator events: {e}")
         return {"status": "error", "error": str(e)}
 
+
 @router.get("/monitoring/ollama/status")
 async def get_ollama_status():
     """Get Ollama embeddings service status for monitoring."""
@@ -1231,6 +1258,7 @@ async def get_ollama_status():
             "error": str(e),
             "last_checked": datetime.now().isoformat(),
         }
+
 
 @router.post("/monitoring/system-health/update")
 async def update_system_health():
@@ -1315,63 +1343,79 @@ async def update_system_health():
         logger.error(f"Error updating system health: {e}")
         return {"status": "error", "error": str(e)}
 
+
 # ==============================================================================
 # Escalations Endpoint - NEW
 # ==============================================================================
 
+
 @router.get("/escalations")
 async def get_escalations(
-    agent: Optional[str] = Query(default=None, description="Filter by agent: watcher, sentinel, ceo"),
-    severity: Optional[str] = Query(default=None, description="Filter by severity: info, warning, critical"),
-    limit: int = Query(default=50, le=200, description="Number of escalations to return"),
-    hours: int = Query(default=24, description="Look back period in hours")
+    agent: Optional[str] = Query(
+        default=None, description="Filter by agent: watcher, sentinel, ceo"
+    ),
+    severity: Optional[str] = Query(
+        default=None, description="Filter by severity: info, warning, critical"
+    ),
+    limit: int = Query(
+        default=50, le=200, description="Number of escalations to return"
+    ),
+    hours: int = Query(default=24, description="Look back period in hours"),
 ):
     """
     Get escalations from all agents (watcher, sentinel, CEO).
-    
+
     Escalations are events where agents have detected issues requiring attention.
     """
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Build query for escalation events
         where_conditions = ["timestamp > datetime('now', ?)"]
-        params = [f'-{hours} hours']
-        
+        params = [f"-{hours} hours"]
+
         # Event types that represent escalations
         escalation_event_types = [
-            'sentinel_cycle',      # Sentinel monitoring cycles with status
-            'watcher_escalation',  # Watcher escalations
-            'ceo_alert',          # CEO alerts
-            'critical_event',     # General critical events
-            'agent_escalation',   # Generic agent escalation
-            'system_alert',       # System-level alerts
+            "sentinel_cycle",  # Sentinel monitoring cycles with status
+            "watcher_escalation",  # Watcher escalations
+            "ceo_alert",  # CEO alerts
+            "critical_event",  # General critical events
+            "agent_escalation",  # Generic agent escalation
+            "system_alert",  # System-level alerts
         ]
-        
+
         # Build event type filter
-        event_type_placeholders = ', '.join(['?' for _ in escalation_event_types])
+        event_type_placeholders = ", ".join(["?" for _ in escalation_event_types])
         where_conditions.append(f"event_type IN ({event_type_placeholders})")
         params.extend(escalation_event_types)
-        
+
         # Filter by agent if specified
         if agent:
             agent = agent.lower()
-            if agent == 'watcher':
-                where_conditions.append("(source LIKE '%watcher%' OR event_type LIKE '%watcher%')")
-            elif agent == 'sentinel':
-                where_conditions.append("(source LIKE '%sentinel%' OR event_type LIKE '%sentinel%')")
-            elif agent == 'ceo':
-                where_conditions.append("(source LIKE '%ceo%' OR event_type LIKE '%ceo%')")
-        
+            if agent == "watcher":
+                where_conditions.append(
+                    "(source LIKE '%watcher%' OR event_type LIKE '%watcher%')"
+                )
+            elif agent == "sentinel":
+                where_conditions.append(
+                    "(source LIKE '%sentinel%' OR event_type LIKE '%sentinel%')"
+                )
+            elif agent == "ceo":
+                where_conditions.append(
+                    "(source LIKE '%ceo%' OR event_type LIKE '%ceo%')"
+                )
+
         # Filter by severity if specified
         if severity:
             severity = severity.lower()
-            where_conditions.append("(status = ? OR json_extract(data, '$.severity') = ? OR json_extract(data, '$.analysis.status') = ?)")
+            where_conditions.append(
+                "(status = ? OR json_extract(data, '$.severity') = ? OR json_extract(data, '$.analysis.status') = ?)"
+            )
             params.extend([severity, severity, severity])
-        
+
         where_clause = " AND ".join(where_conditions)
-        
+
         query = f"""
             SELECT id, timestamp, event_type, source, summary, data, status
             FROM event_chronicle
@@ -1380,21 +1424,23 @@ async def get_escalations(
             LIMIT ?
         """
         params.append(limit)
-        
+
         cursor.execute(query, params)
-        
+
         escalations = []
         for row in cursor.fetchall():
             try:
                 data = json.loads(row["data"]) if row["data"] else {}
             except:
                 data = {}
-            
+
             # Determine severity from various possible locations
             severity = row["status"] or "info"
             if not severity or severity == "ok":
-                severity = data.get("severity") or data.get("analysis", {}).get("status", "info")
-            
+                severity = data.get("severity") or data.get("analysis", {}).get(
+                    "status", "info"
+                )
+
             # Format escalation entry
             escalation = {
                 "id": row["id"],
@@ -1406,27 +1452,27 @@ async def get_escalations(
                 "severity": severity,
                 "data": data,
                 "display_message": format_escalation_message(row, data),
-                "requires_action": severity in ["warning", "critical"]
+                "requires_action": severity in ["warning", "critical"],
             }
             escalations.append(escalation)
-        
+
         # Get summary statistics
         stats = {
             "total": len(escalations),
             "by_agent": {},
             "by_severity": {"info": 0, "warning": 0, "critical": 0},
-            "requiring_action": sum(1 for e in escalations if e["requires_action"])
+            "requiring_action": sum(1 for e in escalations if e["requires_action"]),
         }
-        
+
         for esc in escalations:
             agent_name = esc["agent"]
             stats["by_agent"][agent_name] = stats["by_agent"].get(agent_name, 0) + 1
             sev = esc["severity"]
             if sev in stats["by_severity"]:
                 stats["by_severity"][sev] += 1
-        
+
         conn.close()
-        
+
         return {
             "status": "ok",
             "escalations": escalations,
@@ -1435,20 +1481,23 @@ async def get_escalations(
                 "agent": agent,
                 "severity": severity,
                 "hours": hours,
-                "limit": limit
+                "limit": limit,
             },
-            "last_updated": datetime.now().isoformat()
+            "last_updated": datetime.now().isoformat(),
         }
-        
+
     except Exception as e:
         logger.error(f"Error fetching escalations: {e}")
-        raise HTTPException(status_code=500, detail=f"Error fetching escalations: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error fetching escalations: {str(e)}"
+        )
+
 
 def detect_agent_from_source(source: str, event_type: str) -> str:
     """Detect which agent generated this escalation."""
     source_lower = source.lower() if source else ""
     event_lower = event_type.lower() if event_type else ""
-    
+
     if "watcher" in source_lower or "watcher" in event_lower:
         return "watcher"
     elif "sentinel" in source_lower or "sentinel" in event_lower:
@@ -1462,15 +1511,18 @@ def detect_agent_from_source(source: str, event_type: str) -> str:
     else:
         return "unknown"
 
+
 def format_escalation_message(row, data: Dict) -> str:
     """Format a human-readable message for the escalation."""
     summary = row["summary"] or "No summary"
     event_type = row["event_type"]
-    
+
     # Add severity indicator
     severity = data.get("severity") or data.get("analysis", {}).get("status", "info")
-    severity_emoji = {"critical": "🔴", "warning": "🟡", "info": "🔵"}.get(severity, "⚪")
-    
+    severity_emoji = {"critical": "🔴", "warning": "🟡", "info": "🔵"}.get(
+        severity, "⚪"
+    )
+
     # Format based on event type
     if "sentinel" in event_type:
         return f"{severity_emoji} Sentinel: {summary}"
@@ -1481,15 +1533,19 @@ def format_escalation_message(row, data: Dict) -> str:
     else:
         return f"{severity_emoji} {event_type}: {summary}"
 
+
 @router.get("/escalations/summary")
-async def get_escalations_summary(hours: int = Query(default=24, description="Look back period in hours")):
+async def get_escalations_summary(
+    hours: int = Query(default=24, description="Look back period in hours"),
+):
     """Get a summary of recent escalations by agent and severity."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Get counts by agent
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT 
                 CASE 
                     WHEN source LIKE '%watcher%' OR event_type LIKE '%watcher%' THEN 'watcher'
@@ -1504,54 +1560,65 @@ async def get_escalations_summary(hours: int = Query(default=24, description="Lo
             WHERE timestamp > datetime('now', ?)
             AND event_type IN ('sentinel_cycle', 'watcher_escalation', 'ceo_alert', 'critical_event', 'agent_escalation')
             GROUP BY agent, status
-        """, (f'-{hours} hours',))
-        
+        """,
+            (f"-{hours} hours",),
+        )
+
         agent_summary = {}
         for row in cursor.fetchall():
             agent = row["agent"]
             if agent not in agent_summary:
-                agent_summary[agent] = {"total": 0, "critical": 0, "warning": 0, "info": 0, "ok": 0}
-            
+                agent_summary[agent] = {
+                    "total": 0,
+                    "critical": 0,
+                    "warning": 0,
+                    "info": 0,
+                    "ok": 0,
+                }
+
             status = row["status"] or "info"
             count = row["count"]
-            
+
             agent_summary[agent]["total"] += count
             if status in agent_summary[agent]:
                 agent_summary[agent][status] = count
-        
+
         # Get recent critical escalations
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT timestamp, source, summary, status
             FROM event_chronicle
             WHERE timestamp > datetime('now', ?)
             AND status IN ('critical', 'warning')
             ORDER BY timestamp DESC
             LIMIT 10
-        """, (f'-{hours} hours',))
-        
+        """,
+            (f"-{hours} hours",),
+        )
+
         recent_critical = [
             {
                 "timestamp": row["timestamp"],
                 "agent": detect_agent_from_source(row["source"], ""),
                 "summary": row["summary"],
-                "severity": row["status"]
+                "severity": row["status"],
             }
             for row in cursor.fetchall()
         ]
-        
+
         conn.close()
-        
+
         return {
             "status": "ok",
             "summary": {
                 "by_agent": agent_summary,
                 "recent_critical": recent_critical,
-                "total_escalations": sum(a["total"] for a in agent_summary.values())
+                "total_escalations": sum(a["total"] for a in agent_summary.values()),
             },
             "period_hours": hours,
-            "last_updated": datetime.now().isoformat()
+            "last_updated": datetime.now().isoformat(),
         }
-        
+
     except Exception as e:
         logger.error(f"Error fetching escalations summary: {e}")
         raise HTTPException(status_code=500, detail=f"Error fetching summary: {str(e)}")

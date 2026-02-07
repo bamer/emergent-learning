@@ -19,14 +19,15 @@ from utils import get_db, dict_from_row
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
     from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
     logger = get_logger("heuristics")
 except ImportError:
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("heuristics")
-
-logger = logging.getLogger(__name__)
 T = TypeVar("T")
+
 
 def retry_on_locked(max_retries: int = 3, base_delay: float = 0.1):
     """Decorator to retry database operations on lock errors with exponential backoff."""
@@ -54,15 +55,18 @@ def retry_on_locked(max_retries: int = 3, base_delay: float = 0.1):
 
     return decorator
 
+
 router = APIRouter(prefix="/api/v1", tags=["heuristics"])
 
 # ConnectionManager will be injected from main.py
 manager = None
 
+
 def set_manager(m):
     """Set the ConnectionManager for broadcasting updates."""
     global manager
     manager = m
+
 
 @router.get("/heuristics")
 async def get_heuristics(
@@ -110,6 +114,7 @@ async def get_heuristics(
 
         cursor.execute(query, params)
         return [dict_from_row(r) for r in cursor.fetchall()]
+
 
 @router.get("/heuristics/{heuristic_id}")
 async def get_heuristic(heuristic_id: int, history_limit: int = 20):
@@ -166,6 +171,7 @@ async def get_heuristic(heuristic_id: int, history_limit: int = 20):
         heuristic["related"] = [dict_from_row(r) for r in cursor.fetchall()]
 
         return heuristic
+
 
 @router.get("/heuristic-graph")
 async def get_heuristic_graph():
@@ -342,6 +348,7 @@ async def get_heuristic_graph():
             },
         }
 
+
 @router.post("/heuristics/{heuristic_id}/promote")
 @retry_on_locked(max_retries=3, base_delay=0.2)
 async def promote_to_golden(heuristic_id: int) -> ActionResult:
@@ -394,6 +401,7 @@ async def promote_to_golden(heuristic_id: int) -> ActionResult:
 
         return ActionResult(success=True, message="Promoted to golden rule")
 
+
 @router.post("/heuristics/{heuristic_id}/demote")
 @retry_on_locked(max_retries=3, base_delay=0.2)
 async def demote_from_golden(heuristic_id: int) -> ActionResult:
@@ -423,6 +431,7 @@ async def demote_from_golden(heuristic_id: int) -> ActionResult:
             )
 
         return ActionResult(success=True, message="Demoted from golden rule")
+
 
 @router.put("/heuristics/{heuristic_id}")
 @retry_on_locked(max_retries=3, base_delay=0.2)
@@ -479,6 +488,7 @@ async def update_heuristic(heuristic_id: int, update: HeuristicUpdate) -> Action
             )
 
         return ActionResult(success=True, message="Heuristic updated")
+
 
 @router.delete("/heuristics/{heuristic_id}")
 @retry_on_locked(max_retries=3, base_delay=0.2)

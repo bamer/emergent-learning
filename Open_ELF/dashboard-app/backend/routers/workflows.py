@@ -13,22 +13,25 @@ from utils.database import get_db, dict_from_row
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
     from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
     logger = get_logger("workflows")
 except ImportError:
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("workflows")
 
 router = APIRouter(prefix="/api/v1", tags=["workflows"])
-logger = logging.getLogger(__name__)
 
 # Path will be set from main.py
 EMERGENT_LEARNING_PATH = None
+
 
 def set_paths(elf_path: Path):
     """Set the paths for workflow operations."""
     global EMERGENT_LEARNING_PATH
     EMERGENT_LEARNING_PATH = elf_path
+
 
 @router.get("/workflows")
 async def get_workflows(limit: int = 100, offset: int = 0):
@@ -55,6 +58,7 @@ async def get_workflows(limit: int = 100, offset: int = 0):
             (limit, offset),
         )  # Parameter binding prevents SQL injection
         return [dict_from_row(r) for r in cursor]
+
 
 @router.post("/workflows")
 async def create_workflow(workflow: WorkflowCreate) -> ActionResult:

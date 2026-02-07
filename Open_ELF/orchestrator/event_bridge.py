@@ -26,17 +26,6 @@ from typing import Dict, Any, Optional, List, Callable
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 
-# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
-try:
-    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
-
-    logger = get_logger("event_bridge")
-except ImportError:
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("event_bridge")
-
 # Configuration
 OPENCODE_SERVER = "http://localhost:4096"
 LOGS_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")

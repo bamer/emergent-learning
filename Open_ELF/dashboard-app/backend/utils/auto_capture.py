@@ -28,21 +28,20 @@ from typing import Optional
 
 from utils.database import get_db
 from utils.outcome_inference import (
-
-# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
-try:
-    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
-    logger = get_logger("auto_capture")
-except ImportError:
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("auto_capture")
-
     infer_outcome_from_content,
     extract_content_from_result,
 )
 
-logger = logging.getLogger(__name__)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
+    logger = get_logger("auto_capture")
+except ImportError:
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("auto_capture")
+
 
 class AutoCapture:
     """
@@ -438,6 +437,7 @@ class AutoCapture:
             "last_check": self.last_check.isoformat() if self.last_check else None,
             "stats": self.stats.copy(),
         }
+
 
 # Global instance for easy import
 auto_capture = AutoCapture()

@@ -21,14 +21,15 @@ from utils.database import get_base_path
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
     from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+
     logger = get_logger("sessions")
 except ImportError:
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("sessions")
 
 router = APIRouter(prefix="/api/v1", tags=["sessions"])
-logger = logging.getLogger(__name__)
 
 # Path to summarizer script
 SUMMARIZER_SCRIPT = get_base_path() / "scripts" / "summarize-session.py"
@@ -36,10 +37,12 @@ SUMMARIZER_SCRIPT = get_base_path() / "scripts" / "summarize-session.py"
 # SessionIndex will be injected from main.py
 session_index = None
 
+
 def set_session_index(idx):
     """Set the SessionIndex instance."""
     global session_index
     session_index = idx
+
 
 @router.get("/sessions/stats")
 async def get_session_stats():
@@ -65,6 +68,7 @@ async def get_session_stats():
     except Exception as e:
         logger.error(f"Error getting session stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get session stats")
+
 
 @router.get("/sessions")
 async def get_sessions(
@@ -118,6 +122,7 @@ async def get_sessions(
         logger.error(f"Error listing sessions: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to list sessions")
 
+
 @router.get("/sessions/{session_id}")
 async def get_session(session_id: str):
     """
@@ -167,6 +172,7 @@ async def get_session(session_id: str):
         logger.error(f"Error loading session {session_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to load session")
 
+
 @router.get("/projects")
 async def get_session_projects():
     """
@@ -192,6 +198,7 @@ async def get_session_projects():
     except Exception as e:
         logger.error(f"Error getting projects: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get projects")
+
 
 @router.get("/sessions/{session_id}/summary")
 async def get_session_summary(session_id: str):
@@ -224,6 +231,7 @@ async def get_session_summary(session_id: str):
         logger.error(f"Error getting session summary {session_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to get session summary")
 
+
 def _run_summarizer(session_id: str, use_llm: bool = True):
     """Background task to run the summarizer script."""
     if not UUID_PATTERN.match(session_id):
@@ -244,6 +252,7 @@ def _run_summarizer(session_id: str, use_llm: bool = True):
         logger.error(f"Summarizer timed out for {session_id}")
     except Exception as e:
         logger.error(f"Error running summarizer for {session_id}: {e}")
+
 
 @router.post("/sessions/{session_id}/summarize")
 async def trigger_summarize(
@@ -278,6 +287,7 @@ async def trigger_summarize(
     except Exception as e:
         logger.error(f"Error triggering summarize for {session_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to trigger summarization")
+
 
 @router.post("/sessions/summarize-batch")
 async def trigger_batch_summarize(
@@ -339,6 +349,7 @@ async def trigger_batch_summarize(
         raise HTTPException(
             status_code=500, detail="Failed to trigger batch summarization"
         )
+
 
 @router.post("/sessions/check-in")
 async def check_in(background_tasks: BackgroundTasks):
