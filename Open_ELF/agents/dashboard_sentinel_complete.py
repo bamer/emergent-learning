@@ -2,7 +2,7 @@
 """
 AI Dashboard Sentinel - Complete intelligent monitoring agent with full capabilities
 
-This agent uses opencode/big-pickle model for comprehensive dashboard management:
+This agent uses AI model for comprehensive dashboard management:
 - Learning & Adaptation
 - Predictive Analysis
 - Auto-corrections
@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 class AISentinel:
     """Complete AI-powered dashboard monitoring agent with full capabilities."""
 
-    def __init__(self, name="Dashboard Sentinel AI", model="big-pickle"):
+    def __init__(self, name="Dashboard Sentinel AI", model="nemotron-v3-coder"):
         self.name = name
         self.model = model
         self.db_path = "/home/bamer/.opencode/emergent-learning/memory/index.db"
@@ -410,10 +410,10 @@ class AISentinel:
 
             # Content analysis
             cursor.execute("SELECT type, COUNT(*) FROM learnings GROUP BY type")
-            learning_types = dict(cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
+            learning_types = dict(cursor.fetchall())
 
             cursor.execute("SELECT domain, COUNT(*) FROM heuristics GROUP BY domain")
-            heuristic_domains = dict(cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
+            heuristic_domains = dict(cursor.fetchall())
 
             conn.close()
 

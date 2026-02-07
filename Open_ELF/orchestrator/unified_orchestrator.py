@@ -455,6 +455,7 @@ class UnifiedOrchestrator:
             response = requests.get(f"{EVENT_BRIDGE_URL}/status", timeout=2)
             health_status["event_bridge"] = response.status_code == 200
         except:
+            logger.error(f"❌ Failed health_status[\"event_bridge\"]")
             pass
 
         # Watcher (pgrep)
@@ -468,6 +469,7 @@ class UnifiedOrchestrator:
             if result.returncode == 0:
                 self.watcher_pid = result.stdout.strip()
         except:
+            logger.error(f"❌ Failed health_status[\"watcher\"]")
             pass
 
         # Learning Capture (pgrep)
@@ -485,6 +487,7 @@ class UnifiedOrchestrator:
                 self.learning_capture_active = False
                 self.learning_capture_pid = None
         except:
+            logger.error(f"❌ Failed health_status[\"learning_capture\"]")
             pass
 
         self._services_health = health_status
