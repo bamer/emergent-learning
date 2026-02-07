@@ -257,10 +257,10 @@ class AgentManager:
             if response.status_code in [200, 201]:
                 session_data = response.json()
                 session_id = session_data.get("id")
-                
+
                 if session_id:
-                    # Envoyer le prompt système initial
-                    self._send_system_prompt(session_id, agent_config)
+                    # Initialiser l'agent via binding explicite (AGENTS.md)
+                    self._init_session_agent(session_id, agent_config.name)
                     return session_id
             else:
                 self.logger.error(f"❌ Échec création session: {response.status_code}")
@@ -270,40 +270,39 @@ class AgentManager:
         
         return None
     
-    def _send_system_prompt(self, session_id: str, agent_config: AgentConfig):
+    def _init_session_agent(self, session_id: str, agent_name: str) -> None:
         """
-        Envoie le prompt système initial à la session.
-        
+        Initialise la session avec un binding explicite d'agent.
+
         Args:
             session_id: ID de session
-            agent_config: Configuration de l'agent
+            agent_name: Nom de l'agent
         """
         try:
-            # Le premier message établit le contexte système
-
-            provider_id, _, model_id =  agent_config.model.partition('/') 
             response = requests.post(
                 f"{self.opencode_url}/session/{session_id}/message",
                 json={
-                    "model": {
-                        "providerID": provider_id,
-                        "modelID":  model_id
-                    },
-                    "parts": [{
-                        "type": "text",
-                        "text": f"[SYSTEM PROMPT - DO NOT RESPOND TO THIS MESSAGE]\n\n{agent_config.system_prompt}\n\n[END SYSTEM PROMPT]\n\nAcknowledge that you understand your role as the {agent_config.name} agent."
-                    }]
+                    "agent": agent_name,
+                    "noReply": True,
+                    "parts": [
+                        {
+                            "type": "text",
+                            "text": f"Initialize agent {agent_name}"
+                        }
+                    ]
                 },
                 timeout=self.timeout
             )
-            
+
             if response.status_code == 200:
-                self.logger.debug(f"✅ Prompt système envoyé pour {agent_config.name}")
+                self.logger.debug(f"✅ Agent initialisé pour {agent_name}")
             else:
-                self.logger.warning(f"⚠️ Échec envoi prompt système: {response.status_code}")
-                
+                self.logger.warning(
+                    f"⚠️ Échec initialisation agent {agent_name}: {response.status_code}"
+                )
+
         except Exception as e:
-            self.logger.error(f"❌ Erreur envoi prompt système: {e}")
+            self.logger.error(f"❌ Erreur initialisation agent {agent_name}: {e}")
     
     def _is_session_valid(self, session_id: str) -> bool:
         """Vérifie si une session est toujours valide"""
