@@ -29,15 +29,18 @@ if str(ELF_DIR) not in sys.path:
 # Import centralized logger
 try:
     from Open_ELF.agents import elf_logging
+
     logger = elf_logging.get_logger("elf_watcher")
 except ImportError:
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("elf_watcher")
 
 # Import event logger for database logging
 try:
     from Open_ELF.utils.event_logger import log_watcher_check, log_event
+
     EVENT_LOGGER_AVAILABLE = True
 except ImportError:
     logger.warning("Event logger not available, database logging disabled")
@@ -62,6 +65,7 @@ except ImportError:
 # Import AgentManager (NOUVEAU SYSTÈME)
 try:
     from Open_ELF.agents.agent_manager import AgentManager, get_agent_manager
+
     AGENT_MANAGER_AVAILABLE = True
 except ImportError:
     logger.error("❌ AgentManager not available - falling back to basic mode")
@@ -106,7 +110,7 @@ class ElfWatcher:
         self.ai_analysis_interval = AI_ANALYSIS_INTERVAL
         self.escalation_count = 0
         self.cycle_count = 0
-        
+
         # NOUVEAU : Initialiser AgentManager
         self.agent_manager = None
         if AGENT_MANAGER_AVAILABLE:
@@ -153,6 +157,7 @@ class ElfWatcher:
         # Vérifier le service Learning Capture via process
         try:
             import subprocess
+
             result = subprocess.run(
                 ["pgrep", "-f", "background-learning-capture.py"],
                 capture_output=True,
@@ -164,10 +169,12 @@ class ElfWatcher:
 
         return state
 
-    def analyze_with_agent_manager(self, system_state: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze_with_agent_manager(
+        self, system_state: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         NOUVEAU : Analyser l'état du système via AgentManager.
-        
+
         Utilise le vrai prompt système du fichier watcher.md
         au lieu de prompts hardcodés.
         """
@@ -182,25 +189,29 @@ class ElfWatcher:
                 "analysis_type": "watcher_cycle",
                 "timestamp": datetime.now().isoformat(),
                 "cycle_count": self.cycle_count,
-                "tier": 2
+                "tier": 2,
             }
 
-            logger.info("🤖 Sending analysis request to Watcher agent via AgentManager...")
-            
+            logger.info(
+                "🤖 Sending analysis request to Watcher agent via AgentManager..."
+            )
+
             # Appeler l'agent Watcher avec son vrai prompt système
             result = self.agent_manager.watcher(
                 request="Analyze the current system state and provide insights. "
-                       "Focus on: 1) Overall health assessment, 2) Anomalies detected, "
-                       "3) Recommended actions, 4) Predictive insights.",
-                context=context
+                "Focus on: 1) Overall health assessment, 2) Anomalies detected, "
+                "3) Recommended actions, 4) Predictive insights.",
+                context=context,
             )
 
             if result.get("success"):
-                logger.info(f"✅ Watcher analysis completed (session: {result.get('session_id', 'unknown')[:8]}...)")
-                
+                logger.info(
+                    f"✅ Watcher analysis completed (session: {result.get('session_id', 'unknown')[:8]}...)"
+                )
+
                 # Parser la réponse de l'agent
                 ai_response = result.get("response", "")
-                
+
                 return {
                     "status": self._parse_status_from_response(ai_response),
                     "analysis": ai_response,
@@ -209,7 +220,7 @@ class ElfWatcher:
                     "priority_actions": self._extract_priority_actions(ai_response),
                     "ai_processed": True,
                     "session_id": result.get("session_id"),
-                    "model_used": result.get("model_used")
+                    "model_used": result.get("model_used"),
                 }
             else:
                 error_msg = result.get("error", "Unknown error")
@@ -223,9 +234,14 @@ class ElfWatcher:
     def _parse_status_from_response(self, response: str) -> str:
         """Extraire le statut de la réponse de l'agent."""
         response_lower = response.lower()
-        if any(word in response_lower for word in ["critical", "severe", "down", "failure"]):
+        if any(
+            word in response_lower for word in ["critical", "severe", "down", "failure"]
+        ):
             return "critical"
-        elif any(word in response_lower for word in ["warning", "degraded", "issue", "problem"]):
+        elif any(
+            word in response_lower
+            for word in ["warning", "degraded", "issue", "problem"]
+        ):
             return "warning"
         else:
             return "healthy"
@@ -233,52 +249,54 @@ class ElfWatcher:
     def _extract_anomalies(self, response: str) -> List[str]:
         """Extraire les anomalies détectées de la réponse."""
         anomalies = []
-        lines = response.split('\n')
+        lines = response.split("\n")
         in_anomalies_section = False
-        
+
         for line in lines:
-            if 'anomal' in line.lower() or 'issue' in line.lower():
+            if "anomal" in line.lower() or "issue" in line.lower():
                 in_anomalies_section = True
-            elif in_anomalies_section and line.strip().startswith('-'):
+            elif in_anomalies_section and line.strip().startswith("-"):
                 anomalies.append(line.strip()[1:].strip())
-            elif in_anomalies_section and line.strip() == '':
+            elif in_anomalies_section and line.strip() == "":
                 in_anomalies_section = False
-                
+
         return anomalies
 
     def _extract_recommendations(self, response: str) -> List[str]:
         """Extraire les recommandations de la réponse."""
         recommendations = []
-        lines = response.split('\n')
+        lines = response.split("\n")
         in_recommendations_section = False
-        
+
         for line in lines:
-            if 'recommend' in line.lower() or 'action' in line.lower():
+            if "recommend" in line.lower() or "action" in line.lower():
                 in_recommendations_section = True
-            elif in_recommendations_section and line.strip().startswith('-'):
+            elif in_recommendations_section and line.strip().startswith("-"):
                 recommendations.append(line.strip()[1:].strip())
-            elif in_recommendations_section and line.strip() == '':
+            elif in_recommendations_section and line.strip() == "":
                 in_recommendations_section = False
-                
+
         return recommendations
 
     def _extract_priority_actions(self, response: str) -> List[str]:
         """Extraire les actions prioritaires de la réponse."""
         actions = []
-        lines = response.split('\n')
+        lines = response.split("\n")
         in_priority_section = False
-        
+
         for line in lines:
-            if 'priority' in line.lower() or 'immediate' in line.lower():
+            if "priority" in line.lower() or "immediate" in line.lower():
                 in_priority_section = True
-            elif in_priority_section and line.strip().startswith('-'):
+            elif in_priority_section and line.strip().startswith("-"):
                 actions.append(line.strip()[1:].strip())
-            elif in_priority_section and line.strip() == '':
+            elif in_priority_section and line.strip() == "":
                 in_priority_section = False
-                
+
         return actions
 
-    def fallback_analysis(self, system_state: Dict[str, Any], error_msg: str = "") -> Dict[str, Any]:
+    def fallback_analysis(
+        self, system_state: Dict[str, Any], error_msg: str = ""
+    ) -> Dict[str, Any]:
         """Analyse de secours si AgentManager indisponible."""
         event_bridge_healthy = system_state.get("event_bridge_healthy", False)
         services_healthy = all(system_state.get("services", {}).values())
@@ -300,7 +318,7 @@ class ElfWatcher:
             "recommendations": [],
             "priority_actions": [],
             "ai_processed": False,
-            "fallback": True
+            "fallback": True,
         }
 
     def basic_analysis(self, system_state: Dict[str, Any]) -> Dict[str, Any]:
@@ -325,11 +343,71 @@ class ElfWatcher:
             "recommendations": [],
             "priority_actions": [],
             "ai_processed": False,
-            "basic_only": True
+            "basic_only": True,
         }
 
     def submit_escalation(self, escalation_data: dict) -> dict:
-        """Soumettre une escalade à l'Event Bridge pour traitement CEO."""
+        """Soumettre une escalade - utilise AgentManager directement (fallback sur Event Bridge)."""
+        # ESSAI 1: Utiliser AgentManager directement (meilleure option)
+        if AGENT_MANAGER_AVAILABLE:
+            try:
+                logger.info("🤖 Triggering AI agent analysis via AgentManager...")
+                manager = get_agent_manager()
+
+                # Construire le prompt d'analyse
+                prompt = f"""Analyze this watcher escalation:
+
+System State: {json.dumps(escalation_data.get("system_state", {}), indent=2)}
+Analysis: {json.dumps(escalation_data.get("analysis", {}), indent=2)}
+
+Please:
+1. Analyze the severity and root causes
+2. Recommend immediate actions
+3. If critical, explain what should be escalated to CEO
+
+Provide a detailed analysis."""
+
+                # Appeler l'agent unified-orchestrator
+                response = manager.ask_agent("unified-orchestrator", prompt)
+
+                logger.info("✅ AI agent analysis completed")
+
+                # Créer un fichier d'escalade dans ceo-inbox
+                escalation_id = escalation_data.get(
+                    "escalation_id", f"esc_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                )
+                escalation_file = (
+                    ELF_DIR / "ceo-inbox" / f"escalation_{escalation_id}.md"
+                )
+
+                with open(escalation_file, "w") as f:
+                    f.write(f"# Escalation: {escalation_id}\n\n")
+                    f.write(f"**Source:** Watcher System\n\n")
+                    f.write(f"**Time:** {datetime.now().isoformat()}\n\n")
+                    f.write(
+                        f"**System State:**\n```json\n{json.dumps(escalation_data.get('system_state', {}), indent=2)}\n```\n\n"
+                    )
+                    f.write(
+                        f"**Watcher Analysis:**\n```json\n{json.dumps(escalation_data.get('analysis', {}), indent=2)}\n```\n\n"
+                    )
+                    f.write(f"**AI Agent Analysis:**\n{response}\n")
+
+                logger.info(f"🚨 Escalation file created: {escalation_file}")
+
+                return {
+                    "status": "success",
+                    "escalation_id": escalation_id,
+                    "agent_analysis": "completed",
+                    "file_created": str(escalation_file),
+                    "agent_triggered": True,
+                }
+
+            except Exception as e:
+                logger.error(f"❌ AgentManager failed: {e}")
+                # Fallback vers Event Bridge
+                logger.info("🔄 Falling back to Event Bridge...")
+
+        # ESSAI 2: Fallback vers Event Bridge (si AgentManager échoue ou indisponible)
         try:
             response = requests.post(
                 f"{self.event_bridge_url}/api/v1/mission",
@@ -417,7 +495,9 @@ class ElfWatcher:
         status = analysis.get("status", "unknown")
         analysis_text = analysis.get("analysis", "No analysis")
 
-        log_entry = f"{timestamp} | STATUS: {status} | NOTES: {analysis_text[:100]}...\n"
+        log_entry = (
+            f"{timestamp} | STATUS: {status} | NOTES: {analysis_text[:100]}...\n"
+        )
 
         try:
             with open(WATCHER_LOG, "a") as f:
@@ -496,7 +576,9 @@ class ElfWatcher:
             "system_state": system_state,
             "analysis": analysis,
             "escalation_needed": escalation_needed,
-            "escalation_submitted": escalation_needed if should_run_ai_analysis else False,
+            "escalation_submitted": escalation_needed
+            if should_run_ai_analysis
+            else False,
             "ai_analysis_run": should_run_ai_analysis,
         }
 
@@ -516,7 +598,7 @@ class ElfWatcher:
 
         event_bridge_healthy = system_state.get("event_bridge_healthy", False)
         event_bridge_status = "🟢 Intégré" if event_bridge_healthy else "🔴 Standalone"
-        
+
         # NOUVEAU : Afficher le mode d'analyse
         if analysis.get("ai_processed"):
             ai_status = "🤖 AgentManager IA"
@@ -537,10 +619,13 @@ class ElfWatcher:
 
         # Calculer le temps jusqu'à la prochaine analyse IA
         if ai_analysis_run:
-            cycles_until_ai = (self.ai_analysis_interval // self.basic_poll_interval)
+            cycles_until_ai = self.ai_analysis_interval // self.basic_poll_interval
         else:
-            cycles_until_ai = (self.ai_analysis_interval // self.basic_poll_interval) - (
-                self.cycle_count % (self.ai_analysis_interval // self.basic_poll_interval)
+            cycles_until_ai = (
+                self.ai_analysis_interval // self.basic_poll_interval
+            ) - (
+                self.cycle_count
+                % (self.ai_analysis_interval // self.basic_poll_interval)
             )
         seconds_until_ai = cycles_until_ai * self.basic_poll_interval
         print(
@@ -566,10 +651,12 @@ class ElfWatcher:
         logger.info(
             f"   AI analysis: every {self.ai_analysis_interval}s ({self.ai_analysis_interval // 60} minutes)"
         )
-        
+
         if AGENT_MANAGER_AVAILABLE:
             logger.info(f"   ✅ AgentManager: ENABLED")
-            logger.info(f"   📁 Agents loaded: {len(self.agent_manager.list_agents()) if self.agent_manager else 0}")
+            logger.info(
+                f"   📁 Agents loaded: {len(self.agent_manager.list_agents()) if self.agent_manager else 0}"
+            )
         else:
             logger.warning(f"   ⚠️  AgentManager: DISABLED (fallback mode)")
 

@@ -41,6 +41,7 @@ except ImportError as e:
 # Import AgentManager (NOUVEAU SYSTÈME)
 try:
     from agent_manager import AgentManager, get_agent_manager
+
     AGENT_MANAGER_AVAILABLE = True
 except ImportError:
     logging.error("❌ AgentManager not available - falling back to basic mode")
@@ -95,7 +96,7 @@ class SentinelMonitor:
         self.pattern_handler = (
             PatternResponseHandler() if PatternResponseHandler else None
         )
-        
+
         # NOUVEAU : Initialiser AgentManager
         self.agent_manager = None
         if AGENT_MANAGER_AVAILABLE:
@@ -106,7 +107,28 @@ class SentinelMonitor:
                 logger.error(f"❌ Failed to initialize AgentManager in Sentinel: {e}")
 
     def ask_orchestrator(self, request_type: str, data: dict) -> dict:
-        """Ask the unified orchestrator for decisions and guidance."""
+        """Ask for decisions - utilise AgentManager directement (fallback sur orchestrator)."""
+        # ESSAI 1: Utiliser AgentManager directement
+        if self.agent_manager:
+            try:
+                logger.info(f"🤖 Using AgentManager for request: {request_type}")
+
+                prompt = f"Request: {request_type}\n\nData: {json.dumps(data, indent=2)}\n\nPlease analyze and provide recommendations."
+                response = self.agent_manager.ask_agent("unified-orchestrator", prompt)
+
+                return {
+                    "status": "success",
+                    "agent": "unified-orchestrator",
+                    "response": response,
+                    "coordinated_patterns": data.get("patterns", []),
+                    "source": "agent_manager",
+                }
+
+            except Exception as e:
+                logger.error(f"❌ AgentManager failed: {e}")
+                logger.info("🔄 Falling back to orchestrator...")
+
+        # ESSAI 2: Fallback vers orchestrator HTTP
         try:
             response = requests.post(
                 f"{self.orchestrator_url}/api/v1/ask",
@@ -130,7 +152,66 @@ class SentinelMonitor:
             return {"error": str(e)}
 
     def submit_to_orchestrator(self, mission_type: str, data: dict) -> dict:
-        """Submit missions to the unified orchestrator."""
+        """Submit missions - utilise AgentManager directement (fallback sur orchestrator)."""
+        # ESSAI 1: Utiliser AgentManager directement
+        if self.agent_manager:
+            try:
+                logger.info(f"🤖 Using AgentManager for mission: {mission_type}")
+
+                # Construire le prompt selon le type de mission
+                if mission_type == "sentinel_monitoring":
+                    prompt = f"""Analyze this sentinel monitoring data:
+
+{json.dumps(data, indent=2)}
+
+Please:
+1. Analyze system health and metrics
+2. Detect any anomalies or patterns
+3. Recommend actions if issues found
+4. If critical, create an escalation
+
+Provide detailed analysis."""
+
+                    response = self.agent_manager.ask_agent("sentinel", prompt)
+
+                    # Créer fichier d'escalade si critique
+                    if "critical" in response.lower() or "error" in response.lower():
+                        escalation_file = f"/home/bamer/.opencode/emergent-learning/ceo-inbox/sentinel_escalation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+                        with open(escalation_file, "w") as f:
+                            f.write(
+                                f"# Sentinel Escalation\n\n**Time:** {datetime.now().isoformat()}\n\n"
+                            )
+                            f.write(
+                                f"**Data:**\n```json\n{json.dumps(data, indent=2)}\n```\n\n"
+                            )
+                            f.write(f"**Analysis:**\n{response}\n")
+                        logger.info(f"🚨 Escalation created: {escalation_file}")
+
+                    return {
+                        "status": "success",
+                        "agent": "sentinel",
+                        "agent_analysis": response,
+                        "actions": ["analysis_completed"],
+                        "source": "agent_manager",
+                    }
+
+                else:
+                    # Autres types de missions
+                    response = self.agent_manager.ask_agent(
+                        "unified-orchestrator", str(data)
+                    )
+                    return {
+                        "status": "success",
+                        "agent": "unified-orchestrator",
+                        "response": response,
+                        "source": "agent_manager",
+                    }
+
+            except Exception as e:
+                logger.error(f"❌ AgentManager failed: {e}")
+                logger.info("🔄 Falling back to orchestrator...")
+
+        # ESSAI 2: Fallback vers orchestrator HTTP
         try:
             response = requests.post(
                 f"{self.orchestrator_url}/api/v1/mission",
@@ -260,7 +341,7 @@ class SentinelMonitor:
     def analyze_with_ai(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
         """
         NOUVEAU : Analyser les métriques via AgentManager.
-        
+
         Utilise le vrai prompt système du fichier sentinel.md
         au lieu de prompts hardcodés ou de l'orchestrator HTTP.
         """
@@ -276,22 +357,26 @@ class SentinelMonitor:
                 "timestamp": datetime.now().isoformat(),
             }
 
-            logger.info("🤖 Sending analysis request to Sentinel agent via AgentManager...")
-            
+            logger.info(
+                "🤖 Sending analysis request to Sentinel agent via AgentManager..."
+            )
+
             # Appeler l'agent Sentinel avec son vrai prompt système
             result = self.agent_manager.sentinel(
                 request="Analyze the current system metrics and provide a comprehensive health assessment. "
-                       "Focus on: 1) Overall system status, 2) Anomalies detected, 3) Security concerns, "
-                       "4) Performance issues, 5) Recommended actions with priorities.",
-                context=context
+                "Focus on: 1) Overall system status, 2) Anomalies detected, 3) Security concerns, "
+                "4) Performance issues, 5) Recommended actions with priorities.",
+                context=context,
             )
 
             if result.get("success"):
-                logger.info(f"✅ Sentinel analysis completed (session: {result.get('session_id', 'unknown')[:8]}...)")
-                
+                logger.info(
+                    f"✅ Sentinel analysis completed (session: {result.get('session_id', 'unknown')[:8]}...)"
+                )
+
                 # Parser la réponse de l'agent
                 ai_response = result.get("response", "")
-                
+
                 return {
                     "status": self._parse_status_from_response(ai_response),
                     "analysis": ai_response,
@@ -301,7 +386,7 @@ class SentinelMonitor:
                     "priority_actions": self._extract_priority_actions(ai_response),
                     "ai_processed": True,
                     "session_id": result.get("session_id"),
-                    "model_used": result.get("model_used")
+                    "model_used": result.get("model_used"),
                 }
             else:
                 error_msg = result.get("error", "Unknown error")
@@ -315,9 +400,15 @@ class SentinelMonitor:
     def _parse_status_from_response(self, response: str) -> str:
         """Extraire le statut de la réponse de l'agent."""
         response_lower = response.lower()
-        if any(word in response_lower for word in ["critical", "severe", "down", "failure", "corruption"]):
+        if any(
+            word in response_lower
+            for word in ["critical", "severe", "down", "failure", "corruption"]
+        ):
             return "critical"
-        elif any(word in response_lower for word in ["warning", "degraded", "issue", "problem", "alert"]):
+        elif any(
+            word in response_lower
+            for word in ["warning", "degraded", "issue", "problem", "alert"]
+        ):
             return "warning"
         else:
             return "healthy"
@@ -325,72 +416,94 @@ class SentinelMonitor:
     def _extract_anomalies(self, response: str) -> List[str]:
         """Extraire les anomalies détectées de la réponse."""
         anomalies = []
-        lines = response.split('\n')
+        lines = response.split("\n")
         in_anomalies_section = False
-        
+
         for line in lines:
             lower_line = line.lower()
-            if 'anomal' in lower_line or 'issue' in lower_line or 'concern' in lower_line:
+            if (
+                "anomal" in lower_line
+                or "issue" in lower_line
+                or "concern" in lower_line
+            ):
                 in_anomalies_section = True
-            elif in_anomalies_section and (line.strip().startswith('-') or line.strip().startswith('*')):
+            elif in_anomalies_section and (
+                line.strip().startswith("-") or line.strip().startswith("*")
+            ):
                 anomalies.append(line.strip()[1:].strip())
-            elif in_anomalies_section and line.strip() == '':
+            elif in_anomalies_section and line.strip() == "":
                 in_anomalies_section = False
-                
+
         return anomalies
 
     def _extract_recommendations(self, response: str) -> List[str]:
         """Extraire les recommandations de la réponse."""
         recommendations = []
-        lines = response.split('\n')
+        lines = response.split("\n")
         in_recommendations_section = False
-        
+
         for line in lines:
             lower_line = line.lower()
-            if 'recommend' in lower_line or 'suggestion' in lower_line or 'action' in lower_line:
+            if (
+                "recommend" in lower_line
+                or "suggestion" in lower_line
+                or "action" in lower_line
+            ):
                 in_recommendations_section = True
-            elif in_recommendations_section and (line.strip().startswith('-') or line.strip().startswith('*')):
+            elif in_recommendations_section and (
+                line.strip().startswith("-") or line.strip().startswith("*")
+            ):
                 recommendations.append(line.strip()[1:].strip())
-            elif in_recommendations_section and line.strip() == '':
+            elif in_recommendations_section and line.strip() == "":
                 in_recommendations_section = False
-                
+
         return recommendations
 
     def _extract_patterns(self, response: str) -> List[str]:
         """Extraire les patterns détectés de la réponse."""
         patterns = []
-        lines = response.split('\n')
+        lines = response.split("\n")
         in_patterns_section = False
-        
+
         for line in lines:
             lower_line = line.lower()
-            if 'pattern' in lower_line or 'trend' in lower_line:
+            if "pattern" in lower_line or "trend" in lower_line:
                 in_patterns_section = True
-            elif in_patterns_section and (line.strip().startswith('-') or line.strip().startswith('*')):
+            elif in_patterns_section and (
+                line.strip().startswith("-") or line.strip().startswith("*")
+            ):
                 patterns.append(line.strip()[1:].strip())
-            elif in_patterns_section and line.strip() == '':
+            elif in_patterns_section and line.strip() == "":
                 in_patterns_section = False
-                
+
         return patterns
 
     def _extract_priority_actions(self, response: str) -> List[str]:
         """Extraire les actions prioritaires de la réponse."""
         actions = []
-        lines = response.split('\n')
+        lines = response.split("\n")
         in_priority_section = False
-        
+
         for line in lines:
             lower_line = line.lower()
-            if 'priority' in lower_line or 'immediate' in lower_line or 'urgent' in lower_line:
+            if (
+                "priority" in lower_line
+                or "immediate" in lower_line
+                or "urgent" in lower_line
+            ):
                 in_priority_section = True
-            elif in_priority_section and (line.strip().startswith('-') or line.strip().startswith('*')):
+            elif in_priority_section and (
+                line.strip().startswith("-") or line.strip().startswith("*")
+            ):
                 actions.append(line.strip()[1:].strip())
-            elif in_priority_section and line.strip() == '':
+            elif in_priority_section and line.strip() == "":
                 in_priority_section = False
-                
+
         return actions
 
-    def fallback_analysis(self, metrics: Dict[str, Any], error_msg: str = "") -> Dict[str, Any]:
+    def fallback_analysis(
+        self, metrics: Dict[str, Any], error_msg: str = ""
+    ) -> Dict[str, Any]:
         """Fallback analysis when AI is not available."""
         if "error" in metrics:
             return {
@@ -401,7 +514,7 @@ class SentinelMonitor:
                 "patterns": [],
                 "priority_actions": ["Fix monitoring system"],
                 "ai_processed": False,
-                "fallback": True
+                "fallback": True,
             }
 
         # Simple rule-based analysis
@@ -416,7 +529,9 @@ class SentinelMonitor:
             analysis = f"No recent activity detected. {error_msg}"
         else:
             status = "healthy"
-            analysis = f"All systems operational (basic check - AI unavailable: {error_msg})"
+            analysis = (
+                f"All systems operational (basic check - AI unavailable: {error_msg})"
+            )
 
         return {
             "status": status,
@@ -426,7 +541,7 @@ class SentinelMonitor:
             "patterns": [],
             "priority_actions": [],
             "ai_processed": False,
-            "fallback": True
+            "fallback": True,
         }
 
     def learn_user_patterns(self, metrics: Dict[str, Any]) -> Dict[str, Any]:

@@ -1153,13 +1153,13 @@ class EventBridge:
                             #   from Open_ELF.agents.agent_manager import get_agent_manager
                             #   manager = get_agent_manager()
                             #   result = manager.watcher(request, context)
-                            
+
                             response = {
                                 "response_type": "coordination_result",
                                 "data": {
                                     "message": "AI analysis has been moved to AgentManager. "
-                                              "Use 'from Open_ELF.agents.agent_manager import get_agent_manager' "
-                                              "and call manager.watcher() directly.",
+                                    "Use 'from Open_ELF.agents.agent_manager import get_agent_manager' "
+                                    "and call manager.watcher() directly.",
                                     "status": "deprecated",
                                     "timestamp": datetime.now().isoformat(),
                                 },
@@ -1183,14 +1183,116 @@ class EventBridge:
 
                             mission_type = request_data.get("mission_type", "unknown")
                             component = request_data.get("component", "unknown")
-                            
-                            logger.info(f"📋 Mission received: {mission_type} from {component}")
+                            data = request_data.get("data", {})
+
+                            logger.info(
+                                f"📋 Mission received: {mission_type} from {component}"
+                            )
+
+                            # Trigger AI agent analysis via AgentManager
+                            try:
+                                sys.path.insert(0, str(ELF_DIR / "Open_ELF" / "agents"))
+                                from agent_manager import AgentManager
+
+                                manager = AgentManager()
+
+                                # Build analysis prompt based on mission type
+                                if mission_type == "watcher_escalation":
+                                    prompt = f"""Analyze this watcher escalation from component '{component}':
+
+Data: {json.dumps(data, indent=2)}
+
+Please:
+1. Analyze the severity of the issue
+2. Identify root causes
+3. Recommend immediate actions
+4. Create an escalation file in ceo-inbox/ if critical
+
+Respond with a detailed analysis."""
+
+                                    # Run agent analysis in background thread to not block HTTP response
+                                    def run_analysis():
+                                        try:
+                                            response = manager.ask_agent(
+                                                "unified-orchestrator", prompt
+                                            )
+                                            _log_info(
+                                                f"✅ Agent analysis completed for {mission_type}"
+                                            )
+
+                                            # Write analysis to log
+                                            analysis_log = (
+                                                LOGS_DIR / "agent_analysis.log"
+                                            )
+                                            with open(analysis_log, "a") as f:
+                                                f.write(f"\n{'=' * 60}\n")
+                                                f.write(
+                                                    f"Mission: {mission_type} from {component}\n"
+                                                )
+                                                f.write(
+                                                    f"Time: {datetime.now().isoformat()}\n"
+                                                )
+                                                f.write(f"Response: {response}\n")
+
+                                            # Create escalation file if critical
+                                            if (
+                                                "critical" in response.lower()
+                                                or "error" in response.lower()
+                                                or "failed" in response.lower()
+                                            ):
+                                                escalation_file = (
+                                                    ELF_DIR
+                                                    / "ceo-inbox"
+                                                    / f"escalation_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{mission_type}.md"
+                                                )
+                                                with open(escalation_file, "w") as f:
+                                                    f.write(
+                                                        f"# Escalation: {mission_type}\n\n"
+                                                    )
+                                                    f.write(
+                                                        f"**Component:** {component}\n\n"
+                                                    )
+                                                    f.write(
+                                                        f"**Time:** {datetime.now().isoformat()}\n\n"
+                                                    )
+                                                    f.write(
+                                                        f"**Data:**\n```json\n{json.dumps(data, indent=2)}\n```\n\n"
+                                                    )
+                                                    f.write(
+                                                        f"**Agent Analysis:**\n{response}\n"
+                                                    )
+                                                _log_info(
+                                                    f"🚨 Escalation file created: {escalation_file}"
+                                                )
+                                        except Exception as e:
+                                            _log_error(f"❌ Agent analysis failed: {e}")
+
+                                    # Start analysis in background
+                                    analysis_thread = threading.Thread(
+                                        target=run_analysis, daemon=True
+                                    )
+                                    analysis_thread.start()
+                                    _log_info(
+                                        f"🤖 Agent analysis started for {mission_type}"
+                                    )
+
+                                elif mission_type == "system_alert":
+                                    # Handle other mission types
+                                    prompt = f"System alert from {component}: {json.dumps(data)}"
+                                    manager.ask_agent("unified-orchestrator", prompt)
+
+                            except Exception as e:
+                                _log_error(f"❌ Failed to trigger agent analysis: {e}")
+                                import traceback
+
+                                _log_error(traceback.format_exc())
 
                             response = {
                                 "mission_id": f"mission_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
                                 "status": "accepted",
                                 "mission_type": mission_type,
                                 "component": component,
+                                "agent_triggered": True,
                                 "timestamp": datetime.now().isoformat(),
                             }
                             self.wfile.write(json.dumps(response).encode())
