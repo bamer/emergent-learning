@@ -21,6 +21,15 @@ from dataclasses import dataclass
 from statistics import mean, stdev, variance
 from math import prod
 
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("fraud_detector")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("fraud_detector")
+
 # Configuration
 try:
     from query.config_loader import get_base_path
@@ -75,7 +84,6 @@ class FraudConfig:
     # Context tracking (CEO decision: hash only, 7-day retention)
     context_retention_days: int = 7
     context_hash_algorithm: str = "sha256"
-
 
 class FraudDetector:
     """
@@ -972,7 +980,6 @@ class FraudDetector:
             conn.commit()
         finally:
             conn.close()
-
 
 # CLI interface
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ loading full content for performance. Provides lazy loading for full sessions.
 """
 
 import json
-import logging
+
 import threading
 from dataclasses import dataclass, asdict
 from datetime import datetime
@@ -15,8 +15,16 @@ from pathlib import Path
 from typing import List, Dict, Optional, Any
 import re
 
-logger = logging.getLogger(__name__)
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("session_index")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("session_index")
 
+logger = logging.getLogger(__name__)
 
 @dataclass
 class SessionMetadata:
@@ -36,7 +44,6 @@ class SessionMetadata:
     is_partial: bool = False
     corruption_count: int = 0
 
-
 @dataclass
 class SessionMessage:
     """Individual message in a session."""
@@ -48,7 +55,6 @@ class SessionMessage:
     is_command: bool = False
     tool_use: Optional[List[Dict[str, Any]]] = None
     thinking: Optional[str] = None
-
 
 class SessionIndex:
     """

@@ -25,12 +25,21 @@ Usage:
 """
 
 import json
-import logging
+
 import threading
 import time
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
+
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("mission_live_handler")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("mission_live_handler")
 
 # Support imports relatifs et absolus
 try:
@@ -40,9 +49,7 @@ except ImportError:
     from mission_engine import MissionEngine
     from models import Mission, MissionStatus, MissionPriority, MissionType, MissionResult
 
-
 logger = logging.getLogger("LiveMissionHandler")
-
 
 @dataclass
 class LiveMissionView:
@@ -87,7 +94,6 @@ class LiveMissionView:
             "actions_count": self.actions_count,
             "current_step": self.current_step,
         }
-
 
 class LiveMissionHandler:
     """
@@ -592,7 +598,6 @@ Cette mission a été créée automatiquement suite à la détection d'un patter
             except Exception as e:
                 logger.error(f"❌ Erreur callback {event}: {e}")
 
-
 # ==================== Fonctions Utilitaires ====================
 
 def format_live_mission_for_display(mission: LiveMissionView) -> str:
@@ -645,7 +650,6 @@ def format_live_mission_for_display(mission: LiveMissionView) -> str:
         lines.append(f"   Étape: {mission.current_step}")
     
     return "\n".join(lines)
-
 
 # ==================== Point d'entrée ====================
 

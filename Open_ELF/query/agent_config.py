@@ -15,8 +15,17 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Tuple, List
 from datetime import datetime, timezone
 from functools import lru_cache
-import logging
+
 import os
+
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("agent_config")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("agent_config")
 
 # Setup module logger
 logger = logging.getLogger(__name__)
@@ -35,7 +44,6 @@ try:
 except ImportError:
     from config_loader import deep_merge, get_base_path
 
-
 def get_global_agent_config_path() -> Optional[Path]:
     """
     Get path to global agent selector config.
@@ -48,7 +56,6 @@ def get_global_agent_config_path() -> Optional[Path]:
     except RuntimeError as e:
         logger.warning(f"Failed to get base path for agent config: {e}")
         return None
-
 
 def get_project_agent_config_path() -> Optional[Path]:
     """
@@ -64,7 +71,6 @@ def get_project_agent_config_path() -> Optional[Path]:
         return project_config
 
     return None
-
 
 def load_yaml_safe(path: Path) -> Optional[Dict[str, Any]]:
     """Load YAML file safely, returning None on any error."""
@@ -85,7 +91,6 @@ def load_yaml_safe(path: Path) -> Optional[Dict[str, Any]]:
     except Exception as e:
         logger.warning(f"Failed to parse YAML config at {path}: {e}")
         return None
-
 
 def validate_config(config: Dict[str, Any]) -> Tuple[bool, List[str]]:
     """
@@ -150,7 +155,6 @@ def validate_config(config: Dict[str, Any]) -> Tuple[bool, List[str]]:
     is_valid = len(errors) == 0
     return is_valid, errors
 
-
 def get_default_agent_config() -> Dict[str, Any]:
     """Return default agent configuration when no config files exist."""
     return {
@@ -182,7 +186,6 @@ def get_default_agent_config() -> Dict[str, Any]:
             "low": None,
         },
     }
-
 
 @lru_cache(maxsize=1)
 def load_agent_config() -> Tuple[Dict[str, Any], str]:
@@ -236,7 +239,6 @@ def load_agent_config() -> Tuple[Dict[str, Any], str]:
 
     return merged, source
 
-
 def format_config_for_context(
     config: Dict[str, Any], source: str, include_metadata: bool = True
 ) -> str:
@@ -286,7 +288,6 @@ def format_config_for_context(
     lines.append("")
     return "\n".join(lines)
 
-
 def _format_config_text(config: Dict[str, Any], indent: int = 0) -> str:
     """Format config as readable text (fallback when YAML not available)."""
     lines = []
@@ -303,7 +304,6 @@ def _format_config_text(config: Dict[str, Any], indent: int = 0) -> str:
 
     return "\n".join(lines)
 
-
 def get_config_for_context(include_metadata: bool = True) -> str:
     """
     Main entry point: Load and format agent config for context injection.
@@ -318,7 +318,6 @@ def get_config_for_context(include_metadata: bool = True) -> str:
     """
     config, source = load_agent_config()
     return format_config_for_context(config, source, include_metadata)
-
 
 def get_config_value(key_path: str, default: Any = None) -> Any:
     """
@@ -343,7 +342,6 @@ def get_config_value(key_path: str, default: Any = None) -> Any:
             return default
 
     return current
-
 
 # CLI for testing
 if __name__ == "__main__":

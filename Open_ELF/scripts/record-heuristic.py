@@ -20,7 +20,15 @@ import sys
 import re
 from pathlib import Path
 from datetime import datetime
-import logging
+
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("record-heuristic")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("record-heuristic")
 
 # Setup logging
 script_dir = Path(__file__).parent
@@ -29,9 +37,7 @@ logs_dir = base_dir / "logs"
 logs_dir.mkdir(exist_ok=True)
 
 log_file = logs_dir / f"{datetime.now().strftime('%Y%m%d')}.log"
-logging.basicConfig(
-    level=logging.INFO,
-    format="[%(asctime)s] [%(levelname)s] [record-heuristic] %(message)s",
+s] [%(levelname)s] [record-heuristic] %(message)s",
     handlers=[
         logging.FileHandler(log_file),
         logging.StreamHandler(sys.stderr)
@@ -48,7 +54,6 @@ MAX_RULE_LENGTH = 500
 MAX_DOMAIN_LENGTH = 100
 MAX_EXPLANATION_LENGTH = 5000
 
-
 def sanitize_input(text):
     """Sanitize input: strip control chars, normalize whitespace"""
     if not text:
@@ -58,7 +63,6 @@ def sanitize_input(text):
     # Normalize multiple spaces to single
     text = ' '.join(text.split())
     return text.strip()
-
 
 def validate_confidence(confidence_str):
     """Validate and convert confidence to float"""
@@ -85,14 +89,12 @@ def validate_confidence(confidence_str):
     logger.warning(f"Invalid confidence '{confidence_str}', defaulting to 0.7")
     return 0.7
 
-
 def sanitize_domain(domain):
     """Sanitize domain to prevent path traversal"""
     domain = domain.lower()
     domain = re.sub(r'[^a-z0-9\-]', '', domain.replace(' ', '-'))
     domain = domain.strip('-')[:100]
     return domain
-
 
 def preflight_check():
     """Verify database and directory structure"""
@@ -103,7 +105,6 @@ def preflight_check():
 
     heuristics_dir.mkdir(parents=True, exist_ok=True)
     logger.info("Pre-flight checks passed")
-
 
 def record_heuristic(domain, rule, explanation, source_type, confidence):
     """Record heuristic to database and markdown file"""
@@ -161,7 +162,6 @@ def record_heuristic(domain, rule, explanation, source_type, confidence):
         print(f"ERROR: Failed to record heuristic: {e}", file=sys.stderr)
         return False
 
-
 def interactive_mode():
     """Interactive prompt for heuristic input"""
     print("=== Record Heuristic ===\n")
@@ -193,7 +193,6 @@ def interactive_mode():
     except (EOFError, KeyboardInterrupt):
         print("\nOperation cancelled by user.")
         sys.exit(0)
-
 
 def main():
     preflight_check()
@@ -255,7 +254,6 @@ def main():
         sys.exit(0)
     else:
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

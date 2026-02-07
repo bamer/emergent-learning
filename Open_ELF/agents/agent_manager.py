@@ -18,7 +18,7 @@ Usage:
 """
 
 import json
-import logging
+
 import re
 import sys
 import time
@@ -27,17 +27,23 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List, Callable
 import requests
 
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("agent_manager")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("agent_manager")
+
 # Configuration du logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - [%(name)s] - %(levelname)s - %(message)s"
+s - [%(name)s] - %(levelname)s - %(message)s"
 )
 
 # Chemins par défaut
 DEFAULT_AGENTS_DIR = Path("/home/bamer/.opencode/agents/OPC_ELF_System_Agents")
 DEFAULT_OPENCODE_URL = "http://localhost:4096"
 DEFAULT_MODEL = "nvidia/minimaxai/minimax-m2"  # Modèle rapide et gratuit
-
 
 class AgentConfig:
     """Configuration d'un agent chargé depuis un fichier .md"""
@@ -54,7 +60,6 @@ class AgentConfig:
     def __repr__(self) -> str:
         return f"AgentConfig(name={self.name}, model={self.model})"
 
-
 class AgentSession:
     """Session persistante pour un agent"""
     
@@ -69,7 +74,6 @@ class AgentSession:
         """Met à jour le timestamp de dernière utilisation"""
         self.last_used = datetime.now()
         self.message_count += 1
-
 
 class AgentManager:
     """
@@ -540,10 +544,8 @@ class AgentManager:
         for agent_name in list(self.sessions.keys()):
             self.cleanup_session(agent_name)
 
-
 # Fonction singleton pour faciliter l'utilisation
 _agent_manager_instance: Optional[AgentManager] = None
-
 
 def get_agent_manager(
     opencode_url: str = DEFAULT_OPENCODE_URL,
@@ -566,14 +568,12 @@ def get_agent_manager(
         )
     return _agent_manager_instance
 
-
 def reset_agent_manager():
     """Réinitialise l'instance singleton (utile pour les tests)"""
     global _agent_manager_instance
     if _agent_manager_instance:
         _agent_manager_instance.cleanup_all_sessions()
     _agent_manager_instance = None
-
 
 # Point d'entrée pour tests
 if __name__ == "__main__":

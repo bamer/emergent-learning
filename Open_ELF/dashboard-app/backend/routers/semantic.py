@@ -7,12 +7,20 @@ Provides endpoints for:
 - Search history
 """
 
-import logging
 import sqlite3
 from typing import Optional
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 from pathlib import Path
+
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("semantic")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("semantic")
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +29,6 @@ router = APIRouter(prefix="/api/v1/semantic", tags=["semantic"])
 BASE_DIR = Path.home() / ".opencode" / "emergent-learning"
 DB_PATH = BASE_DIR / "memory" / "index.db"
 
-
 class SemanticSearchRequest(BaseModel):
     """Request model for semantic search."""
 
@@ -29,7 +36,6 @@ class SemanticSearchRequest(BaseModel):
     top_k: int = 5
     source_type: Optional[str] = None
     min_similarity: float = 0.0
-
 
 @router.get("/health")
 async def semantic_health():
@@ -48,7 +54,6 @@ async def semantic_health():
         return {"status": "healthy", "embeddings_count": count}
     except Exception as e:
         return {"status": "error", "error": str(e)}
-
 
 @router.get("/stats")
 async def semantic_stats():
@@ -79,7 +84,6 @@ async def semantic_stats():
         }
     except Exception as e:
         return {"error": str(e), "total_embeddings": 0}
-
 
 @router.post("/search")
 async def semantic_search(request: SemanticSearchRequest):
@@ -223,7 +227,6 @@ async def semantic_search(request: SemanticSearchRequest):
         logger.error(f"Semantic search error: {e}")
         return {"error": str(e), "results": []}
 
-
 @router.get("/embeddings")
 async def list_embeddings(source_type: Optional[str] = None, limit: int = 50):
     """List all indexed embeddings."""
@@ -286,7 +289,6 @@ async def list_embeddings(source_type: Optional[str] = None, limit: int = 50):
     except Exception as e:
         logger.error(f"List embeddings error: {e}")
         return {"embeddings": [], "count": 0, "error": str(e)}
-
 
 @router.post("/index")
 async def index_file(file_path: str, source_type: str = "file"):

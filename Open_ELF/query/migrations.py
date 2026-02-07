@@ -12,10 +12,17 @@ Usage:
 import sqlite3
 from pathlib import Path
 from typing import Optional, List, Tuple
-import logging
+
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("migrations")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("migrations")
 
 logger = logging.getLogger(__name__)
-
 
 def get_db_path(db_path: Optional[str] = None) -> Path:
     """Get database path, with fallbacks."""
@@ -30,7 +37,6 @@ def get_db_path(db_path: Optional[str] = None) -> Path:
     except ImportError:
         return Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
 
-
 def column_exists(conn: sqlite3.Connection, table: str, column: str) -> bool:
     """Check if a column exists in a table."""
     cursor = conn.cursor()
@@ -40,7 +46,6 @@ def column_exists(conn: sqlite3.Connection, table: str, column: str) -> bool:
     ]  # Ajouté LIMIT pour éviter l'accumulation mémoire
     return column in columns
 
-
 def index_exists(conn: sqlite3.Connection, index_name: str) -> bool:
     """Check if an index exists."""
     cursor = conn.cursor()
@@ -48,7 +53,6 @@ def index_exists(conn: sqlite3.Connection, index_name: str) -> bool:
         f"SELECT name FROM sqlite_master WHERE type='index' AND name=?", (index_name,)
     )
     return cursor.fetchone() is not None
-
 
 def run_migrations_sync(db_path: Optional[str] = None):
     """
@@ -144,7 +148,6 @@ def run_migrations_sync(db_path: Optional[str] = None):
         conn.execute("PRAGMA foreign_keys=ON")  # Re-enable
         conn.close()
 
-
 async def run_migrations_async(db_path: Optional[str] = None):
     """
     Async wrapper for migrations (currently just calls sync version).
@@ -152,7 +155,6 @@ async def run_migrations_async(db_path: Optional[str] = None):
     Future: Could be optimized for async SQLite operations.
     """
     run_migrations_sync(db_path)
-
 
 class SchemaMigrator:
     """
@@ -172,7 +174,6 @@ class SchemaMigrator:
     async def run_async(self):
         """Run migrations asynchronously."""
         await run_migrations_async(str(self.db_path))
-
 
 # Auto-run migrations on module import (for safety)
 try:

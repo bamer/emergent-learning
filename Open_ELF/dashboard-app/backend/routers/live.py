@@ -6,7 +6,7 @@ Provides Server-Sent Events (SSE) for live dashboard updates.
 
 import asyncio
 import json
-import logging
+
 import re
 from datetime import datetime
 from pathlib import Path
@@ -19,13 +19,21 @@ from pydantic import BaseModel
 
 from utils.database import get_db, dict_from_row
 
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("live")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("live")
+
 router = APIRouter(prefix="/api/v1/live", tags=["live"])
 logger = logging.getLogger(__name__)
 
 # Path to Claude Code tasks directory
 TASKS_DIR = Path.home() / ".opencode" / "tasks"
 PROJECTS_DIR = Path.home() / ".opencode" / "projects"
-
 
 def _load_session_names() -> Dict[str, str]:
     """Load session names from all sessions-index.json files."""
@@ -56,14 +64,12 @@ def _load_session_names() -> Dict[str, str]:
 
     return session_names
 
-
 class SignalRequest(BaseModel):
     """Request body for adding a note to a task."""
 
     task_id: str
     session_id: str
     note_text: str
-
 
 class TaskStatusRequest(BaseModel):
     """Request body for changing task status."""
@@ -72,7 +78,6 @@ class TaskStatusRequest(BaseModel):
         str  # 'blocked', 'cancelled', 'pending', 'in_progress', 'completed', 'error'
     )
     reason: Optional[str] = None
-
 
 def _load_tasks_from_dir() -> Dict[str, List[Dict[str, Any]]]:
     """Load all tasks from the tasks directory, grouped by session."""
@@ -116,7 +121,6 @@ def _load_tasks_from_dir() -> Dict[str, List[Dict[str, Any]]]:
 
     return sessions
 
-
 def _get_task_file_mtimes() -> Dict[str, float]:
     """Get modification times for all task files."""
     mtimes = {}
@@ -135,7 +139,6 @@ def _get_task_file_mtimes() -> Dict[str, float]:
                 pass
 
     return mtimes
-
 
 async def _generate_task_events(request: Request):
     """Generator for SSE task updates."""
@@ -181,7 +184,6 @@ async def _generate_task_events(request: Request):
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
         await asyncio.sleep(1)  # Poll every 1 second
-
 
 async def _generate_trail_events(request: Request):
     """Generator for SSE trail updates."""
@@ -242,7 +244,6 @@ async def _generate_trail_events(request: Request):
 
         await asyncio.sleep(1.5)  # Poll every 1.5 seconds
 
-
 @router.get("/tasks")
 async def stream_tasks(request: Request):
     """
@@ -265,7 +266,6 @@ async def stream_tasks(request: Request):
         },
     )
 
-
 @router.get("/trails")
 async def stream_trails(request: Request):
     """
@@ -286,7 +286,6 @@ async def stream_trails(request: Request):
             "X-Accel-Buffering": "no",
         },
     )
-
 
 @router.get("/sessions")
 async def get_active_sessions():
@@ -327,7 +326,6 @@ async def get_active_sessions():
     result.sort(key=lambda s: s.get("last_activity") or "", reverse=True)
 
     return result
-
 
 @router.post("/signal")
 async def add_task_signal(signal: SignalRequest):
@@ -383,7 +381,6 @@ async def add_task_signal(signal: SignalRequest):
     except IOError as e:
         raise HTTPException(status_code=500, detail=f"Failed to update task file: {e}")
 
-
 @router.post("/task/{session_id}/{task_id}/start")
 async def start_task(session_id: str, task_id: str):
     """Start a stopped/cancelled task."""
@@ -418,7 +415,6 @@ async def start_task(session_id: str, task_id: str):
     except Exception as e:
         logger.error(f"Error starting task {task_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.post("/task/{session_id}/{task_id}/stop")
 async def stop_task(session_id: str, task_id: str):
@@ -455,7 +451,6 @@ async def stop_task(session_id: str, task_id: str):
         logger.error(f"Error stopping task {task_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post("/task/{session_id}/{task_id}/relaunch")
 async def relaunch_task(session_id: str, task_id: str):
     """Relaunch a completed/cancelled task."""
@@ -490,7 +485,6 @@ async def relaunch_task(session_id: str, task_id: str):
     except Exception as e:
         logger.error(f"Error relaunching task {task_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.post("/task/{session_id}/{task_id}/status")
 async def update_task_status(session_id: str, task_id: str, request: TaskStatusRequest):

@@ -25,13 +25,22 @@ Usage:
 """
 
 import json
-import logging
+
 import sys
 import time
 import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Callable
+
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("mission_engine")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("mission_engine")
 
 # Ajouter le path pour imports
 sys.path.insert(0, str(Path(__file__).parent.parent / "agents"))
@@ -58,9 +67,7 @@ except ImportError:
     AGENT_MANAGER_AVAILABLE = False
     logging.warning("AgentManager non disponible - mode dégradé")
 
-
 logger = logging.getLogger("MissionEngine")
-
 
 class MissionEngine:
     """
@@ -129,8 +136,7 @@ class MissionEngine:
     def _setup_logging(self):
         """Configure le logging"""
         log_format = "%(asctime)s - [%(name)s] - %(levelname)s - %(message)s"
-        logging.basicConfig(
-            level=getattr(logging, self.config.log_level),
+        ,
             format=log_format
         )
         
@@ -676,11 +682,9 @@ PRIORITY: [Critical/High/Medium/Low]"""
         logger.info(f"🗑️ {count} missions terminées supprimées")
         return count
 
-
 # ==================== Singleton ====================
 
 _mission_engine_instance: Optional[MissionEngine] = None
-
 
 def get_mission_engine(config: Optional[MissionEngineConfig] = None) -> MissionEngine:
     """
@@ -697,14 +701,12 @@ def get_mission_engine(config: Optional[MissionEngineConfig] = None) -> MissionE
         _mission_engine_instance = MissionEngine(config)
     return _mission_engine_instance
 
-
 def reset_mission_engine():
     """Réinitialise l'instance singleton"""
     global _mission_engine_instance
     if _mission_engine_instance:
         _mission_engine_instance.stop_background_processing()
     _mission_engine_instance = None
-
 
 # ==================== Point d'entrée ====================
 

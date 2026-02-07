@@ -18,11 +18,19 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-import logging
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 import requests
+
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("monitoring")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("monitoring")
 
 # Import database utilities
 try:
@@ -52,9 +60,7 @@ except ImportError:
             """Convert sqlite3.Row to dict"""
             return dict(row) if hasattr(row, "keys") else row
 
-
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Unified logging (best-effort)
@@ -81,7 +87,6 @@ except Exception:
     def _log_error(message: str) -> None:
         logger.error(message)
 
-
 router = APIRouter(prefix="/api/v1", tags=["monitoring"])
 
 # Database path - Production database (restored with 6885 records)
@@ -95,7 +100,6 @@ COORDINATION_DIR = ELF_DIR / ".coordination"
 EVENT_BRIDGE_HEARTBEAT = COORDINATION_DIR / "event-bridge-heartbeat.json"
 OPENCODE_SERVER = "http://localhost:4096"
 
-
 def get_db_connection() -> sqlite3.Connection:
     """Get database connection with proper settings."""
     conn = sqlite3.connect(DB_PATH, timeout=10.0)
@@ -103,11 +107,9 @@ def get_db_connection() -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
-
 # ==============================================================================
 # Sentinel Endpoints
 # ==============================================================================
-
 
 @router.get("/sentinel/status")
 async def get_sentinel_status():
@@ -162,7 +164,6 @@ async def get_sentinel_status():
     except Exception as e:
         logger.error(f"Error fetching sentinel status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 def detect_patterns_from_cycles(cycles: List[Dict]) -> List[Dict]:
     """Detect patterns from sentinel cycle history."""
@@ -225,11 +226,9 @@ def detect_patterns_from_cycles(cycles: List[Dict]) -> List[Dict]:
 
     return patterns
 
-
 # ==============================================================================
 # Event Chronicle Endpoints
 # ==============================================================================
-
 
 @router.get("/chronicle/events")
 async def get_chronicle_events(
@@ -291,7 +290,6 @@ async def get_chronicle_events(
             status_code=500, detail=f"Error querying chronicle: {str(e)}"
         )
 
-
 @router.get("/chronicle/stats")
 async def get_chronicle_stats():
     """Get event chronicle statistics (from SQL database)."""
@@ -343,24 +341,19 @@ async def get_chronicle_stats():
         logger.error(f"Error fetching chronicle stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # ==============================================================================
 # Event Bridge Control Request Model
 # ==============================================================================
 
-
 class EventBridgeControlRequest(BaseModel):
     action: str  # 'start', 'stop', 'restart'
-
 
 class OrchestratorControlRequest(BaseModel):
     action: str  # 'start', 'stop', 'restart'
 
-
 # ==============================================================================
 # Event Bridge Endpoints
 # ==============================================================================
-
 
 @router.get("/event-bridge/status")
 async def get_event_bridge_status():
@@ -414,11 +407,9 @@ async def get_event_bridge_status():
         "last_event_time": last_event_time,
     }
 
-
 # ==============================================================================
 # Orchestrator Endpoints
 # ==============================================================================
-
 
 @router.get("/orchestrator/status")
 async def get_orchestrator_status():
@@ -499,7 +490,6 @@ async def get_orchestrator_status():
     #     },
     #     "missions": status_payload.get("missions", []),
     # }
-
 
 @router.post("/orchestrator/control")
 async def control_orchestrator(request: OrchestratorControlRequest):
@@ -599,7 +589,6 @@ async def control_orchestrator(request: OrchestratorControlRequest):
         _log_error(f"Error controlling orchestrator: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post("/event-bridge/control")
 async def control_event_bridge(request: EventBridgeControlRequest):
     """Control Event Bridge (start/stop/restart)."""
@@ -698,11 +687,9 @@ async def control_event_bridge(request: EventBridgeControlRequest):
         _log_error(f"Error controlling Event Bridge: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # ==============================================================================
 # System Health Endpoints
 # ==============================================================================
-
 
 @router.get("/health/status")
 async def get_system_health():
@@ -757,7 +744,6 @@ async def get_system_health():
         # Return default response if table doesn't exist
         return {"status": "ok", "current": None, "history": [], "metrics": None}
 
-
 def calculate_health_metrics(history: List[Dict]) -> Dict:
     """Calculate health metrics from history."""
     if not history:
@@ -780,15 +766,12 @@ def calculate_health_metrics(history: List[Dict]) -> Dict:
         "failed_requests": (total - healthy_count) * 10,
     }
 
-
 # ==============================================================================
 # Watcher Endpoints
 # ==============================================================================
 
-
 class WatcherControlRequest(BaseModel):
     action: str  # 'start', 'stop', 'restart'
-
 
 @router.get("/watcher/status")
 async def get_watcher_status():
@@ -942,7 +925,6 @@ async def get_watcher_status():
             },
         }
 
-
 @router.post("/watcher/control")
 async def control_watcher(request: WatcherControlRequest):
     """Control watcher (start/stop/restart)."""
@@ -1076,7 +1058,6 @@ async def control_watcher(request: WatcherControlRequest):
         _log_error(f"Error controlling watcher: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/monitoring/watcher/events")
 async def get_watcher_events():
     """Get last 20 watcher events for monitoring card."""
@@ -1116,7 +1097,6 @@ async def get_watcher_events():
     except Exception as e:
         logger.error(f"Error fetching watcher events: {e}")
         return {"status": "error", "error": str(e)}
-
 
 @router.get("/monitoring/orchestrator/events")
 async def get_orchestrator_events():
@@ -1186,7 +1166,6 @@ async def get_orchestrator_events():
         logger.error(f"Error fetching orchestrator events: {e}")
         return {"status": "error", "error": str(e)}
 
-
 @router.get("/monitoring/ollama/status")
 async def get_ollama_status():
     """Get Ollama embeddings service status for monitoring."""
@@ -1252,7 +1231,6 @@ async def get_ollama_status():
             "error": str(e),
             "last_checked": datetime.now().isoformat(),
         }
-
 
 @router.post("/monitoring/system-health/update")
 async def update_system_health():
@@ -1336,7 +1314,6 @@ async def update_system_health():
     except Exception as e:
         logger.error(f"Error updating system health: {e}")
         return {"status": "error", "error": str(e)}
-
 
 # ==============================================================================
 # Escalations Endpoint - NEW
@@ -1467,7 +1444,6 @@ async def get_escalations(
         logger.error(f"Error fetching escalations: {e}")
         raise HTTPException(status_code=500, detail=f"Error fetching escalations: {str(e)}")
 
-
 def detect_agent_from_source(source: str, event_type: str) -> str:
     """Detect which agent generated this escalation."""
     source_lower = source.lower() if source else ""
@@ -1485,7 +1461,6 @@ def detect_agent_from_source(source: str, event_type: str) -> str:
         return "experiment-analyzer"
     else:
         return "unknown"
-
 
 def format_escalation_message(row, data: Dict) -> str:
     """Format a human-readable message for the escalation."""
@@ -1505,7 +1480,6 @@ def format_escalation_message(row, data: Dict) -> str:
         return f"{severity_emoji} CEO: {summary}"
     else:
         return f"{severity_emoji} {event_type}: {summary}"
-
 
 @router.get("/escalations/summary")
 async def get_escalations_summary(hours: int = Query(default=24, description="Look back period in hours")):

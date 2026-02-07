@@ -7,12 +7,19 @@ Provides FastAPI endpoints for timeline data using Event Chronicle.
 from fastapi import APIRouter, HTTPException, Query
 from typing import Optional, List, Dict, Any
 from pathlib import Path
-import logging
 
 from .event_adapter import get_chronicle_events, get_chronicle_stats
 
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("timeline_api")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("timeline_api")
+
 # Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["timeline"])
@@ -20,7 +27,6 @@ router = APIRouter(prefix="/api/v1", tags=["timeline"])
 # Standard ELF event chronicle location
 ELF_BASE_PATH = Path(__file__).parent.parent.parent
 EVENT_CHRONICLE_DIR = ELF_BASE_PATH / "event_chronicle"
-
 
 @router.get("/timeline/events")
 async def get_timeline_events(
@@ -55,7 +61,6 @@ async def get_timeline_events(
         logger.error(f"Error fetching timeline events: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/timeline/stats")
 async def get_timeline_stats():
     """
@@ -73,7 +78,6 @@ async def get_timeline_stats():
     except Exception as e:
         logger.error(f"Error fetching timeline stats: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/timeline/recent")
 async def get_recent_events(limit: int = Query(default=10, le=100)):
@@ -95,7 +99,6 @@ async def get_recent_events(limit: int = Query(default=10, le=100)):
         logger.error(f"Error fetching recent events: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # Event type constants for frontend use
 EVENT_TYPES = [
     "task_start",
@@ -110,7 +113,6 @@ EVENT_TYPES = [
     "session_started",
     "session_ended",
 ]
-
 
 @router.get("/timeline/event-types")
 async def get_event_types():

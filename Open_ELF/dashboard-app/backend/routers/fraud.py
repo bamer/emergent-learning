@@ -2,7 +2,6 @@
 Fraud Router - Fraud reports and review.
 """
 
-import logging
 import sys
 from pathlib import Path
 
@@ -10,18 +9,25 @@ from fastapi import APIRouter, HTTPException
 
 from models import FraudReviewRequest, ActionResult
 
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("fraud")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("fraud")
+
 router = APIRouter(prefix="/api/v1", tags=["fraud"])
 logger = logging.getLogger(__name__)
 
 # Path will be set from main.py
 EMERGENT_LEARNING_PATH = None
 
-
 def set_paths(elf_path: Path):
     """Set the paths for fraud operations."""
     global EMERGENT_LEARNING_PATH
     EMERGENT_LEARNING_PATH = elf_path
-
 
 def get_fraud_reviewer():
     """Get a FraudReviewer instance."""
@@ -34,7 +40,6 @@ def get_fraud_reviewer():
 
     return FraudReviewer()
 
-
 @router.get("/fraud-reports")
 async def get_pending_fraud_reports():
     """Get all pending fraud reports for human review."""
@@ -45,7 +50,6 @@ async def get_pending_fraud_reports():
     except Exception as e:
         logger.error(f"Error fetching fraud reports: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.get("/fraud-reports/{report_id}")
 async def get_fraud_report(report_id: int):
@@ -65,7 +69,6 @@ async def get_fraud_report(report_id: int):
     except Exception as e:
         logger.error(f"Error fetching fraud report {report_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.post("/fraud-reports/{report_id}/review")
 async def review_fraud_report(

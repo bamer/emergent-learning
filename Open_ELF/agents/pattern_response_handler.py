@@ -11,14 +11,22 @@ When Sentinel detects patterns:
 """
 
 import sqlite3
-import logging
+
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 import json
 
-logger = logging.getLogger(__name__)
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("pattern_response_handler")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("pattern_response_handler")
 
+logger = logging.getLogger(__name__)
 
 class PatternResponseHandler:
     """Handle responses to detected patterns."""
@@ -248,7 +256,6 @@ class PatternResponseHandler:
             logger.error(f"❌ Failed to record to chronicle: {e}")
             return False
 
-
 def main():
     """Test the pattern response handler."""
     handler = PatternResponseHandler()
@@ -273,7 +280,5 @@ def main():
         for rec in result["recommendations"]:
             print(f"  - {rec}")
 
-
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     main()

@@ -13,7 +13,7 @@ This module provides:
 
 import asyncio
 import json
-import logging
+
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Callable
 from datetime import datetime
@@ -23,8 +23,16 @@ from .openelf_logging import get_logger
 from .database import get_connection, execute_query
 from .config import get_config
 
-logger = get_logger("central_orchestrator")
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("central_orchestrator")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("central_orchestrator")
 
+logger = get_logger("central_orchestrator")
 
 @dataclass
 class OrchestratorRequest:
@@ -39,7 +47,6 @@ class OrchestratorRequest:
     timestamp: datetime
     priority: int = 1  # 1=low, 5=high, 10=critical
 
-
 @dataclass
 class OrchestratorResponse:
     """Response from the central orchestrator."""
@@ -49,7 +56,6 @@ class OrchestratorResponse:
     data: Dict[str, Any]
     timestamp: datetime
     confidence: float = 1.0  # 0.0-1.0 confidence in the response
-
 
 class DecisionEngine:
     """Intelligent decision engine for the orchestrator."""
@@ -722,7 +728,6 @@ RECOMMENDATION: <what to do next>
             confidence=0.85,
         )
 
-
 class CentralOrchestrator:
     """The central orchestrator that components can ask for answers."""
 
@@ -774,10 +779,8 @@ class CentralOrchestrator:
                 logger.error(f"Error processing orchestrator requests: {e}")
                 await asyncio.sleep(5)
 
-
 # Global instance for easy access
 _orchestrator_instance: Optional[CentralOrchestrator] = None
-
 
 def get_central_orchestrator() -> CentralOrchestrator:
     """Get or create the central orchestrator instance."""
@@ -785,7 +788,6 @@ def get_central_orchestrator() -> CentralOrchestrator:
     if _orchestrator_instance is None:
         _orchestrator_instance = CentralOrchestrator()
     return _orchestrator_instance
-
 
 async def ask_orchestrator(
     component: str, request_type: str, data: Dict[str, Any], priority: int = 1
@@ -803,7 +805,6 @@ async def ask_orchestrator(
     )
 
     return await orchestrator.ask_orchestrator(request)
-
 
 # Example usage patterns
 async def example_usage():
@@ -845,7 +846,6 @@ async def example_usage():
             "options": ["scale_down", "continue", "escalate"],
         },
     )
-
 
 async def initialize_central_orchestrator():
     """Initialize the central orchestrator."""

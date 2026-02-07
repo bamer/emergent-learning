@@ -5,15 +5,22 @@ Provides ConnectionManager for handling real-time updates to connected clients.
 """
 
 import asyncio
-import logging
+
 from datetime import datetime
 from typing import List
 
 from fastapi import WebSocket
 
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("broadcast")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("broadcast")
 
 logger = logging.getLogger(__name__)
-
 
 class ConnectionManager:
     def __init__(self):

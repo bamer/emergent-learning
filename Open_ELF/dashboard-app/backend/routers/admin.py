@@ -2,7 +2,6 @@
 Admin Router - CEO inbox, export, open-in-editor.
 """
 
-import logging
 import re
 import sqlite3
 import subprocess
@@ -14,13 +13,21 @@ from fastapi import APIRouter, HTTPException
 from models import ActionResult, OpenInEditorRequest
 from utils import get_db, dict_from_row
 
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("admin")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("admin")
+
 router = APIRouter(prefix="/api/v1", tags=["admin"])
 logger = logging.getLogger(__name__)
 
 # Path will be set from main.py
 EMERGENT_LEARNING_PATH = None
 ALLOWED_OPEN_PATHS = []
-
 
 def set_paths(elf_path: Path):
     """Set the paths for admin operations."""
@@ -30,7 +37,6 @@ def set_paths(elf_path: Path):
         elf_path.resolve(),
         Path.home().resolve(),
     ]
-
 
 def _is_path_allowed(file_path: Path) -> bool:
     """
@@ -58,7 +64,6 @@ def _is_path_allowed(file_path: Path) -> bool:
         return False
     except (OSError, RuntimeError):
         return False
-
 
 @router.get("/ceo-inbox")
 async def get_ceo_inbox():
@@ -114,7 +119,6 @@ async def get_ceo_inbox():
 
     return items
 
-
 @router.get("/ceo-inbox/{filename}")
 async def get_ceo_inbox_item(filename: str):
     """Get full content of a CEO inbox item."""
@@ -142,7 +146,6 @@ async def get_ceo_inbox_item(filename: str):
     except Exception as e:
         logger.error(f"Error reading CEO inbox item {filename}: {e}")
         raise HTTPException(status_code=500, detail="Failed to read item")
-
 
 @router.get("/export/{export_type}")
 async def export_data(export_type: str, format: str = "json"):
@@ -241,7 +244,6 @@ async def export_data(export_type: str, format: str = "json"):
 
         return data
 
-
 @router.post("/open-in-editor")
 async def open_in_editor(request: OpenInEditorRequest) -> ActionResult:
     """Open a file in VS Code."""
@@ -269,13 +271,11 @@ async def open_in_editor(request: OpenInEditorRequest) -> ActionResult:
             success=False, message="Failed to open file in editor. Please try again."
         )
 
-
 # ==============================================================================
 # Database Backup Endpoints
 # ==============================================================================
 
 DEFAULT_BACKUP_KEEP_COUNT = 7
-
 
 def _get_backup_dir() -> Path:
     """Get the backup directory path."""
@@ -283,13 +283,11 @@ def _get_backup_dir() -> Path:
         raise HTTPException(status_code=500, detail="Paths not configured")
     return EMERGENT_LEARNING_PATH / "backups"
 
-
 def _get_db_path() -> Path:
     """Get the database path."""
     if EMERGENT_LEARNING_PATH is None:
         raise HTTPException(status_code=500, detail="Paths not configured")
     return EMERGENT_LEARNING_PATH / "memory" / "index.db"
-
 
 def _perform_backup(keep_count: int = DEFAULT_BACKUP_KEEP_COUNT) -> dict:
     """
@@ -345,7 +343,6 @@ def _perform_backup(keep_count: int = DEFAULT_BACKUP_KEEP_COUNT) -> dict:
             backup_path.unlink()
         raise HTTPException(status_code=500, detail=f"Backup failed: {e}")
 
-
 @router.post("/backup")
 async def create_backup(keep_count: int = DEFAULT_BACKUP_KEEP_COUNT) -> dict:
     """
@@ -358,7 +355,6 @@ async def create_backup(keep_count: int = DEFAULT_BACKUP_KEEP_COUNT) -> dict:
         Backup metadata including file path and size
     """
     return _perform_backup(keep_count)
-
 
 @router.get("/backups")
 async def list_backups() -> dict:
@@ -396,7 +392,6 @@ async def list_backups() -> dict:
         "total": len(backup_list),
         "backup_dir": str(backup_dir),
     }
-
 
 @router.post("/backup/restore/{backup_name}")
 async def restore_backup(backup_name: str) -> ActionResult:

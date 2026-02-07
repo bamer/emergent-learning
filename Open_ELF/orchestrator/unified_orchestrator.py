@@ -17,7 +17,7 @@ Dependencies:
 """
 
 import asyncio
-import logging
+
 import subprocess
 import threading
 import requests
@@ -25,6 +25,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("unified_orchestrator")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("unified_orchestrator")
 
 # Constants
 OPENCODE_SERVER = "http://localhost:4096"
@@ -37,8 +46,7 @@ LEARNING_CAPTURE_SCRIPT = ELF_DIR / "scripts/background-learning-capture.py"
 LEARNING_CAPTURE_LOG = OPEN_ELF_DIR / "logs/learning-capture.log"
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("UnifiedOrchestrator")
 
@@ -51,7 +59,6 @@ try:
     logger.info("✓ Database logging available")
 except ImportError:
     logger.warning("⚠ Database logging unavailable")
-
 
 @dataclass
 class Event:
@@ -76,7 +83,6 @@ class Event:
     timestamp: datetime
     processed: bool = False
     action: Optional[str] = None
-
 
 class UnifiedOrchestrator:
     """Unified Orchestrator manages system services and processes events.
@@ -549,7 +555,6 @@ class UnifiedOrchestrator:
             else None,
         }
 
-
 async def main():
     """Entry point for running orchestrator."""
     import sys
@@ -561,14 +566,11 @@ async def main():
     orchestrator = UnifiedOrchestrator()
     await orchestrator._start_async()
 
-
 if __name__ == "__main__":
     asyncio.run(main())
 
-
 # Singleton accessor for dashboard backend compatibility
 _orchestrator_instance = None
-
 
 def get_orchestrator():
     """Get singleton instance of UnifiedOrchestrator for dashboard backend compatibility."""

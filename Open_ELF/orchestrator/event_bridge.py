@@ -13,7 +13,7 @@ Ce module se concentre uniquement sur la gestion des événements SSE.
 """
 
 import json
-import logging
+
 import os
 import requests
 import sys
@@ -25,6 +25,15 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List, Callable
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
+
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("event_bridge")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("event_bridge")
 
 # Configuration
 OPENCODE_SERVER = "http://localhost:4096"
@@ -49,7 +58,6 @@ DEFAULT_CONFIG = {
 # Ensure logs directory exists
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
-
 # Setup logging (unified + local)
 sys.path.insert(0, str(ELF_DIR / "agents"))
 sys.path.insert(0, str(ELF_DIR / "Open_ELF" / "utils"))
@@ -65,9 +73,7 @@ try:
         log_error("event_bridge", message)
 
 except Exception:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             logging.FileHandler(LOGS_DIR / "event_bridge.log"),
             logging.StreamHandler(sys.stdout),
@@ -80,7 +86,6 @@ except Exception:
 
     def _log_error(message: str):
         logger.error(message)
-
 
 # Add Open_ELF to Python path for imports
 OPEN_ELF_DIR = Path(__file__).parent.parent
@@ -100,7 +105,6 @@ except ImportError as e:
     logger.warning(
         f"Event logger not available, events will not be logged to database: {e}"
     )
-
 
 class HookManager:
     """Gère l'exécution des hooks ELF."""
@@ -196,7 +200,6 @@ class HookManager:
                     proc.kill()
 
         return success
-
 
 class EventBridge:
     """Pont entre les events OpenCode et les hooks ELF."""
@@ -1344,7 +1347,6 @@ Respond with a detailed analysis."""
             # Propagate error - status server is critical for monitoring
             raise RuntimeError(f"Critical: Status server failed to start: {e}")
 
-
 def main():
     """Point d'entrée principal."""
     if len(sys.argv) < 2:
@@ -1384,16 +1386,13 @@ def main():
         print(f"Unknown command: {command}")
         sys.exit(1)
 
-
 if __name__ == "__main__":
     from datetime import datetime
 
     main()
 
-
 # Singleton accessor for dashboard backend compatibility
 _event_bridge_instance = None
-
 
 def get_event_bridge_singleton():
     """Get singleton instance of EventBridge for dashboard backend compatibility."""

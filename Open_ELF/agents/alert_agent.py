@@ -9,8 +9,15 @@ import time
 import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
-from logging import handlers
-import logging
+
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("alert_agent")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("alert_agent")
 
 # Configuration
 ELF_DIR = Path.home() / ".opencode" / "emergent-learning"

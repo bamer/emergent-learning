@@ -17,15 +17,20 @@ import requests
 import signal
 from pathlib import Path
 from typing import Optional
-import logging
+
+# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
+try:
+    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    logger = get_logger("launch_agents")
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger("launch_agents")
 
 # Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="[%(name)s] %(message)s"
+s] %(message)s"
 )
 logger = logging.getLogger("AgentLauncher")
-
 
 class AgentLauncher:
     """Launch and manage ELF agents."""
@@ -251,7 +256,6 @@ read -p "Appuyez sur Entrée pour fermer..."
         
         return True
 
-
 def main():
     """Main entry point."""
     import argparse
@@ -283,7 +287,6 @@ def main():
     
     success = launcher.launch(use_terminal=not args.no_terminal)
     sys.exit(0 if success else 1)
-
 
 if __name__ == "__main__":
     main()
