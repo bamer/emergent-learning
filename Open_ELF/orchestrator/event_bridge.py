@@ -7,6 +7,9 @@ OpenCode Event Bridge - Emulates Claude Code hooks using OpenCode SSE events
 Usage:
     python event_bridge.py start  # Démarre le bridge
     python event_bridge.py status # Affiche le statut
+
+Note: La gestion des appels IA a été déplacée vers AgentManager.
+Ce module se concentre uniquement sur la gestion des événements SSE.
 """
 
 import json
@@ -17,14 +20,11 @@ import sys
 import time
 import subprocess
 import threading
-import asyncio
-import concurrent.futures
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Callable
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
-# httpx removed - using requests instead
 
 # Configuration
 OPENCODE_SERVER = "http://localhost:4096"
@@ -35,7 +35,7 @@ COORDINATION_DIR = ELF_DIR / ".coordination"
 EVENT_BRIDGE_HEARTBEAT = COORDINATION_DIR / "event-bridge-heartbeat.json"
 EVENT_BRIDGE_CONFIG = ELF_DIR / "Open_ELF/orchestrator/event_bridge_config.json"
 
-# Default configuration
+# Default configuration (simplified - removed AI analysis config)
 DEFAULT_CONFIG = {
     "logging": {
         "throttle_seconds": 5,
@@ -44,177 +44,10 @@ DEFAULT_CONFIG = {
         "max_details_length": 100,
     },
     "status_server": {"default_port": 9998, "fallback_port": 9999},
-    "ai_analysis": {
-        "timeout_seconds": 600,  # 10 minutes for AI processing (covers 5min max)
-        "model": "nvidia/minimaxai/minimax-m2",  # Fast testing model
-        "session_title": "ELF AI Analysis Session",
-    },
 }
 
 # Ensure logs directory exists
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
-
-
-class OpenCodeAIClient:
-    """Client pour interagir avec OpenCode via HTTP (synchronous)."""
-
-    def __init__(
-        self, base_url: str, timeout: int = 600
-    ):  # 10 minute timeout for slow models
-        self.base_url = base_url.rstrip("/")
-        self.timeout = timeout
-        self.ai_session_id: Optional[str] = None
-
-    def ensure_ai_session(self) -> str:
-        """S'assurer qu'une session AI existe et retourner son ID."""
-        if self.ai_session_id:
-            return self.ai_session_id
-
-        try:
-            # Reuse existing AI session to avoid memory issues
-            response = requests.get(f"{self.base_url}/session", timeout=self.timeout)
-            if response.status_code == 200:
-                sessions = response.json()
-                # Look for sessions that match our patterns
-                for session in sessions:
-                    title = session.get("title", "")
-                    slug = session.get("slug", "")
-                    # Match various patterns for ELF AI sessions
-                    if (
-                        "AI Analysis" in title
-                        or "elf" in slug.lower()
-                        or "nvidia" in title.lower()
-                        or "minimax" in title.lower()
-                    ):
-                        self.ai_session_id = session.get("id")
-                        if self.ai_session_id:
-                            _log_info(
-                                f"✅ Reusing existing AI session: {self.ai_session_id[:8]}..."
-                            )
-                            return self.ai_session_id
-
-            # Créer une nouvelle session AI
-            config = DEFAULT_CONFIG.get("ai_analysis", {})
-            session_title = config.get(
-                "session_title", "ELF AI Analysis Session - nvidia/minimaxai/minimax-m2"
-            )
-
-            response = requests.post(
-                f"{self.base_url}/session",
-                json={
-                    "title": session_title,
-                    "directory": str(ELF_DIR),
-                },
-                timeout=self.timeout,
-            )
-
-            if response.status_code in [200, 201]:
-                session_data = response.json()
-                self.ai_session_id = session_data.get("id")
-                if self.ai_session_id:
-                    _log_info(f"✅ Created new AI session: {self.ai_session_id[:8]}...")
-                    return self.ai_session_id
-                else:
-                    raise Exception(
-                        "Failed to create AI session: No session ID received"
-                    )
-            else:
-                raise Exception(f"Failed to create AI session: {response.status_code}")
-
-        except Exception as e:
-            _log_error(f"❌ Error managing AI session: {e}")
-            raise
-
-    def send_analysis_request(
-        self, prompt: str, component: str = "unknown"
-    ) -> Dict[str, Any]:
-        """Envoyer une requête d'analyse à l'agent AI via OpenCode."""
-        try:
-            session_id = self.ensure_ai_session()
-            config = DEFAULT_CONFIG.get("ai_analysis", {})
-            model = config.get("model", "opencode/big-pickle")
-
-            _log_info(
-                f"🤖 Sending AI analysis request from {component} (session: {session_id[:8]}...)"
-            )
-
-            # Préparer le message avec contexte du composant
-            enhanced_prompt = f"""ELF System Analysis Request from {component.upper()} Agent
-
-{prompt}
-
-You are analyzing system state as the {component} agent. Provide agent-specific insights and recommendations. Be concise but informative."""
-
-            # Test with nvidia/minimaxai/minimax-m2 (fast + free for testing)
-            available_models = [
-                {
-                    "providerID": "nvidia",
-                    "modelID": "minimaxai/minimax-m2",
-                },  # Fast testing model
-            ]
-
-            # Try models in order of preference
-            last_error = None
-            for model_config in available_models:
-                try:
-                    response = requests.post(
-                        f"{self.base_url}/session/{session_id}/message",
-                        json={
-                            "parts": [{"type": "text", "text": enhanced_prompt}],
-                            "model": model_config,
-                        },
-                        timeout=self.timeout,
-                    )
-
-                    if response.status_code == 200:
-                        # Success with this model
-                        result = response.json()
-                        message_info = result.get("info", {})
-                        parts = result.get("parts", [])
-
-                        # Extraire la réponse de l'assistant - look for text parts with actual content
-                        text_parts = [
-                            p
-                            for p in parts
-                            if p.get("type") == "text" and p.get("text")
-                        ]
-                        # Extract just the assistant response content
-                        ai_response = "".join(
-                            part.get("text", "") for part in text_parts
-                        )
-
-                        if ai_response.strip():
-                            _log_info(
-                                f"✅ AI analysis completed successfully with {model_config['providerID']}/{model_config['modelID']}"
-                            )
-                            return {
-                                "success": True,
-                                "response": ai_response.strip(),
-                                "session_id": session_id,
-                                "message_id": message_info.get("id"),
-                                "model_used": model_config,
-                                "timestamp": datetime.now().isoformat(),
-                            }
-                    else:
-                        last_error = f"Model {model_config['providerID']}/{model_config['modelID']} failed: {response.status_code}"
-                        continue  # Try next model
-                except Exception as e:
-                    last_error = f"Model {model_config['providerID']}/{model_config['modelID']} error: {str(e)}"
-                    continue  # Try next model
-
-            # If we get here, all models failed
-            raise Exception(f"All AI models failed. Last error: {last_error}")
-
-        except requests.exceptions.Timeout:
-            return {
-                "success": False,
-                "error": f"AI analysis timeout after {self.timeout} seconds",
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "error": f"AI analysis failed: {str(e)}",
-            }
 
 
 # Setup logging (unified + local)
@@ -749,9 +582,7 @@ class EventBridge:
                     for msg in messages:
                         msg_id = msg.get("info", {}).get("id")
                         if not msg_id or msg_id in seen_messages[session_id]:
-                            # Vérifier quand même si des parties ont été ajoutées
-                            # en comparant le nombre de parties
-                            pass
+                            continue
 
                         seen_messages[session_id].add(msg_id)
 
@@ -818,7 +649,7 @@ class EventBridge:
         event_type = event.get("type", "unknown")
         event_properties = event.get("properties", {})
 
-        # NEW: Handle tool usage embedded in message.part.updated events
+        # Handle tool usage embedded in message.part.updated events
         if event_type == "message.part.updated":
             part = event_properties.get("part", {})
             part_type = part.get("type")
@@ -1312,247 +1143,56 @@ class EventBridge:
                                     # If we can't parse the request, use empty dict
                                     pass
 
-                            # Check if this is a watcher request that needs special handling
-                            component = request_data.get("component", "")
-                            request_type = request_data.get("request_type", "")
-                            data = request_data.get("data", {})
+                            self.send_response(200)
+                            self.send_header("Content-type", "application/json")
+                            self.end_headers()
+
+                            # NOTE: AI analysis has been moved to AgentManager
+                            # Event Bridge now only handles event routing
+                            # For AI analysis, use AgentManager instead:
+                            #   from Open_ELF.agents.agent_manager import get_agent_manager
+                            #   manager = get_agent_manager()
+                            #   result = manager.watcher(request, context)
+                            
+                            response = {
+                                "response_type": "coordination_result",
+                                "data": {
+                                    "message": "AI analysis has been moved to AgentManager. "
+                                              "Use 'from Open_ELF.agents.agent_manager import get_agent_manager' "
+                                              "and call manager.watcher() directly.",
+                                    "status": "deprecated",
+                                    "timestamp": datetime.now().isoformat(),
+                                },
+                                "timestamp": datetime.now().isoformat(),
+                            }
+                            self.wfile.write(json.dumps(response).encode())
+                        elif self.path == "/api/v1/mission":
+                            # Handle mission submissions (escalations)
+                            content_length = int(self.headers.get("Content-Length", 0))
+                            request_data = {}
+                            if content_length > 0:
+                                try:
+                                    post_data = self.rfile.read(content_length)
+                                    request_data = json.loads(post_data.decode("utf-8"))
+                                except (json.JSONDecodeError, UnicodeDecodeError):
+                                    pass
 
                             self.send_response(200)
                             self.send_header("Content-type", "application/json")
                             self.end_headers()
 
-                            # Handle AI analysis requests by actually calling OpenCode
-                            if (
-                                component == "elf_watcher"
-                                and request_type == "system_analysis"
-                            ):
-                                # Generate prompt based on system state
-                                system_state = data.get("system_state", {})
-                                analysis_type = data.get("analysis_type", "generic")
+                            mission_type = request_data.get("mission_type", "unknown")
+                            component = request_data.get("component", "unknown")
+                            
+                            logger.info(f"📋 Mission received: {mission_type} from {component}")
 
-                                prompt = bridge._generate_analysis_prompt(
-                                    system_state, analysis_type
-                                )
-
-                                # Call OpenCode for actual AI analysis (async)
-                                _log_info(
-                                    f"🤖 Starting AI analysis for {component} via OpenCode (nvidia/minimaxai/minimax-m2 - fast testing)..."
-                                )
-                                try:
-                                    # Run async analysis in thread pool to avoid blocking
-                                    with (
-                                        concurrent.futures.ThreadPoolExecutor()
-                                    ) as executor:
-                                        future = executor.submit(
-                                            bridge._ask_opencode, prompt, component
-                                        )
-                                        opencode_result = future.result(
-                                            timeout=600  # 10 minutes to allow for slow AI responses
-                                        )
-                                except concurrent.futures.TimeoutError:
-                                    _log_error(
-                                        "⏰ AI analysis timed out after 10 minutes (expected max: 5 minutes)"
-                                    )
-                                    opencode_result = {
-                                        "success": False,
-                                        "error": "AI analysis timed out after 10 minutes (expected max: 5 minutes)",
-                                    }
-                                except Exception as e:
-                                    _log_error(f"❌ AI analysis thread failed: {e}")
-                                    opencode_result = {
-                                        "success": False,
-                                        "error": f"AI analysis thread failed: {str(e)}",
-                                    }
-
-                                if opencode_result["success"]:
-                                    response = {
-                                        "response_type": "coordination_result",
-                                        "data": {
-                                            "ai_analysis": opencode_result["response"],
-                                            "session_id": opencode_result.get(
-                                                "session_id"
-                                            ),
-                                            "timestamp": datetime.now().isoformat(),
-                                            "status": "completed",
-                                            "processing_time": "async_completed",
-                                        },
-                                        "timestamp": datetime.now().isoformat(),
-                                        "priority": request_data.get("priority", 2),
-                                    }
-                                else:
-                                    # Fallback response if OpenCode fails
-                                    response = {
-                                        "response_type": "coordination_result",
-                                        "data": {
-                                            "ai_analysis": f"Analysis temporarily unavailable: {opencode_result['error']}",
-                                            "timestamp": datetime.now().isoformat(),
-                                            "status": "error",
-                                            "error_details": opencode_result.get(
-                                                "error"
-                                            ),
-                                        },
-                                        "timestamp": datetime.now().isoformat(),
-                                        "priority": request_data.get("priority", 2),
-                                    }
-                            elif (
-                                component == "elf_watcher"
-                                and request_type == "watcher_analysis"
-                            ):
-                                # Provide more detailed watcher analysis
-                                system_state = data.get("system_state", {})
-                                prompt = f"""ELF Watcher Analysis Request
-
-WATCHER STATUS: {system_state.get("status", "unknown")}
-LAST CHECK: {system_state.get("last_check_time", "unknown")}
-SERVICES MONITORED: {len(system_state.get("services", {}))}
-ERROR COUNT: {system_state.get("error_count", 0)}
-
-Provide a concise analysis of watcher performance and recommend optimizations."""
-                                try:
-                                    opencode_result = bridge._ask_opencode(
-                                        prompt, component
-                                    )
-                                    if opencode_result["success"]:
-                                        response = {
-                                            "response_type": "coordination_result",
-                                            "data": {
-                                                "ai_analysis": opencode_result[
-                                                    "response"
-                                                ],
-                                                "timestamp": datetime.now().isoformat(),
-                                                "status": "completed",
-                                                "analysis_type": "watcher_specific",
-                                            },
-                                            "timestamp": datetime.now().isoformat(),
-                                            "priority": request_data.get("priority", 2),
-                                        }
-                                    else:
-                                        response = {
-                                            "response_type": "coordination_result",
-                                            "data": {
-                                                "ai_analysis": f"Watcher analysis via OpenCode failed: {opencode_result['error']}",
-                                                "timestamp": datetime.now().isoformat(),
-                                                "status": "fallback",
-                                            },
-                                            "timestamp": datetime.now().isoformat(),
-                                            "priority": request_data.get("priority", 2),
-                                        }
-                                except Exception as e:
-                                    response = {
-                                        "response_type": "coordination_result",
-                                        "data": {
-                                            "ai_analysis": f"Watcher analysis error: {str(e)}",
-                                            "timestamp": datetime.now().isoformat(),
-                                            "status": "error",
-                                        },
-                                        "timestamp": datetime.now().isoformat(),
-                                        "priority": request_data.get("priority", 2),
-                                    }
-                            elif component == "unified_orchestrator":
-                                # Handle orchestrator requests
-                                prompt = f"""ELF Unified Orchestrator Analysis Request
-
-REQUEST TYPE: {request_type}
-COMPONENT: {component}
-DATA: {str(data)[:200]}...
-
-Provide operational insights for orchestrator optimization."""
-                                try:
-                                    opencode_result = bridge._ask_opencode(
-                                        prompt, component
-                                    )
-                                    if opencode_result["success"]:
-                                        response = {
-                                            "component": "event_bridge",
-                                            "request_type": request_type,
-                                            "data": {
-                                                "ai_analysis": opencode_result[
-                                                    "response"
-                                                ],
-                                                "timestamp": datetime.now().isoformat(),
-                                                "status": "completed",
-                                            },
-                                            "timestamp": datetime.now().isoformat(),
-                                            "priority": request_data.get("priority", 2),
-                                        }
-                                    else:
-                                        response = {
-                                            "component": "event_bridge",
-                                            "request_type": request_type,
-                                            "data": {
-                                                "analysis": f"Orchestrator analysis failed: {opencode_result['error']}",
-                                                "timestamp": datetime.now().isoformat(),
-                                                "status": "error",
-                                            },
-                                            "timestamp": datetime.now().isoformat(),
-                                            "priority": request_data.get("priority", 2),
-                                        }
-                                except Exception as e:
-                                    response = {
-                                        "component": "event_bridge",
-                                        "request_type": request_type,
-                                        "data": {
-                                            "analysis": f"Orchestrator request error: {str(e)}",
-                                            "timestamp": datetime.now().isoformat(),
-                                            "status": "error",
-                                        },
-                                        "timestamp": datetime.now().isoformat(),
-                                        "priority": request_data.get("priority", 2),
-                                    }
-                            else:
-                                # Default response for other components with AI enhancement
-                                prompt = f"""ELF System Component Analysis
-
-COMPONENT: {component}
-REQUEST TYPE: {request_type}
-DATA: {str(data)[:300]}...
-
-Provide insights about this component request and system integration."""
-                                try:
-                                    opencode_result = bridge._ask_opencode(
-                                        prompt, component
-                                    )
-                                    if opencode_result["success"]:
-                                        response = {
-                                            "component": "event_bridge",
-                                            "request_type": request_type
-                                            or "generic_request",
-                                            "data": {
-                                                "analysis": opencode_result["response"],
-                                                "timestamp": datetime.now().isoformat(),
-                                                "status": "completed",
-                                                "ai_enhanced": True,
-                                            },
-                                            "timestamp": datetime.now().isoformat(),
-                                            "priority": request_data.get("priority", 2),
-                                        }
-                                    else:
-                                        response = {
-                                            "component": "event_bridge",
-                                            "request_type": request_type
-                                            or "generic_request",
-                                            "data": {
-                                                "analysis": f"Request processed via Event Bridge with OpenCode integration (AI unavailable: {opencode_result['error'][:50]}...)",
-                                                "timestamp": datetime.now().isoformat(),
-                                                "status": "completed_fallback",
-                                            },
-                                            "timestamp": datetime.now().isoformat(),
-                                            "priority": request_data.get("priority", 2),
-                                        }
-                                except Exception as e:
-                                    response = {
-                                        "component": "event_bridge",
-                                        "request_type": request_type
-                                        or "generic_request",
-                                        "data": {
-                                            "analysis": "Request processed via Event Bridge (AI processing failed)",
-                                            "timestamp": datetime.now().isoformat(),
-                                            "status": "completed",
-                                            "error": str(e)[:100],
-                                        },
-                                        "timestamp": datetime.now().isoformat(),
-                                        "priority": request_data.get("priority", 2),
-                                    }
+                            response = {
+                                "mission_id": f"mission_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                                "status": "accepted",
+                                "mission_type": mission_type,
+                                "component": component,
+                                "timestamp": datetime.now().isoformat(),
+                            }
                             self.wfile.write(json.dumps(response).encode())
                         else:
                             self.send_response(404)
@@ -1601,66 +1241,6 @@ Provide insights about this component request and system integration."""
             _log_error(f"❌ Failed to start status server: {e}")
             # Propagate error - status server is critical for monitoring
             raise RuntimeError(f"Critical: Status server failed to start: {e}")
-
-    def _ask_opencode(self, prompt: str, component: str = "unknown") -> Dict[str, Any]:
-        """Ask OpenCode for AI analysis using synchronous client."""
-        config = DEFAULT_CONFIG.get("ai_analysis", {})
-        timeout = config.get("timeout_seconds", 300)
-
-        try:
-            client = OpenCodeAIClient(self.base_url, timeout=timeout)
-            result = client.send_analysis_request(prompt, component)
-            return result
-        except Exception as e:
-            _log_error(f"❌ AI analysis request failed: {e}")
-            return {
-                "success": False,
-                "error": f"AI analysis request failed: {str(e)}",
-            }
-
-    def _generate_analysis_prompt(
-        self, system_state: Dict[str, Any], analysis_type: str
-    ) -> str:
-        """Generate prompt for AI analysis based on system state."""
-        services_status = system_state.get("services", {})
-        services_report = "\n".join(
-            [
-                f"  - {service}: {'✅ Operational' if healthy else '❌ Down'}"
-                for service, healthy in services_status.items()
-            ]
-        )
-
-        if analysis_type == "watcher_cycle":
-            prompt = f"""ELF System Health Analysis Request
-
-SYSTEM STATE:
-Timestamp: {system_state.get("timestamp", "Unknown")}
-Event Bridge Status: {"✅ Connected" if system_state.get("event_bridge_healthy", False) else "❌ Disconnected"}
-Services Status:
-{services_report}
-
-ANALYSIS REQUEST:
-Provide a concise analysis of the system health status and recommend any necessary actions.
-Include:
-1. Overall system health assessment
-2. Critical issues that need immediate attention
-3. Recommended actions to improve system stability
-4. Predictive insights about potential future issues
-
-Keep response under 200 words and focus on actionable insights."""
-        else:
-            prompt = f"""ELF System Analysis Request
-
-SYSTEM STATE:
-Timestamp: {system_state.get("timestamp", "Unknown")}
-Event Bridge Status: {"✅ Connected" if system_state.get("event_bridge_healthy", False) else "❌ Disconnected"}
-Services Status:
-{services_report}
-
-PROVIDE A DETAILED ANALYSIS of the system state and recommend appropriate actions.
-Focus on operational efficiency and system reliability."""
-
-        return prompt
 
 
 def main():

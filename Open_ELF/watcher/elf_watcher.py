@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-ELF Watcher System
+ELF Watcher System v2.0 - AgentManager Integration
 
-Watcher modernisé qui utilise l'Event Bridge au lieu d'OpenCode directement.
+Watcher modernisé qui utilise AgentManager pour les analyses IA
+au lieu de l'ancien système Event Bridge + OpenCodeAIClient.
 
 Features:
-- Utilise l'Event Bridge (port 9998) pour toutes les décisions
-- Coordonne les escalades via l'API Event Bridge
+- Utilise AgentManager avec les vrais prompts système depuis les fichiers .md
+- Sessions persistantes par agent (watcher, sentinel, etc.)
+- Coordonne les escalades via l'API Event Bridge (pour les missions)
 - Intégration complète avec l'architecture unifiée
 """
 
@@ -27,24 +29,20 @@ if str(ELF_DIR) not in sys.path:
 # Import centralized logger
 try:
     from Open_ELF.agents import elf_logging
-
     logger = elf_logging.get_logger("elf_watcher")
 except ImportError:
     import logging
-
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("elf_watcher")
 
 # Import event logger for database logging
 try:
     from Open_ELF.utils.event_logger import log_watcher_check, log_event
-
     EVENT_LOGGER_AVAILABLE = True
 except ImportError:
     logger.warning("Event logger not available, database logging disabled")
     EVENT_LOGGER_AVAILABLE = False
 
-    # Define fallback functions to prevent NameErrors
     def log_watcher_check(
         tier: int, status: str, summary: str, details: Optional[Dict[str, Any]] = None
     ) -> Optional[int]:
@@ -59,6 +57,15 @@ except ImportError:
         status: str = "success",
     ) -> Optional[int]:
         return None
+
+
+# Import AgentManager (NOUVEAU SYSTÈME)
+try:
+    from Open_ELF.agents.agent_manager import AgentManager, get_agent_manager
+    AGENT_MANAGER_AVAILABLE = True
+except ImportError:
+    logger.error("❌ AgentManager not available - falling back to basic mode")
+    AGENT_MANAGER_AVAILABLE = False
 
 
 # Helper function for safe database logging
@@ -91,7 +98,7 @@ WATCHER_LOG = COORDINATION_DIR / "watcher-log.md"
 
 
 class ElfWatcher:
-    """Watcher moderne intégré à l'Event Bridge."""
+    """Watcher moderne intégré à AgentManager v2.0."""
 
     def __init__(self):
         self.event_bridge_url = EVENT_BRIDGE_URL
@@ -99,30 +106,227 @@ class ElfWatcher:
         self.ai_analysis_interval = AI_ANALYSIS_INTERVAL
         self.escalation_count = 0
         self.cycle_count = 0
+        
+        # NOUVEAU : Initialiser AgentManager
+        self.agent_manager = None
+        if AGENT_MANAGER_AVAILABLE:
+            try:
+                self.agent_manager = get_agent_manager()
+                logger.info("✅ AgentManager initialized successfully")
+            except Exception as e:
+                logger.error(f"❌ Failed to initialize AgentManager: {e}")
 
-    def ask_event_bridge(self, request_type: str, data: dict) -> dict:
-        """Demander des décisions à l'Event Bridge."""
+    def check_event_bridge_health(self) -> bool:
+        """Vérifier si l'Event Bridge est sain."""
         try:
-            response = requests.post(
-                f"{self.event_bridge_url}/api/v1/ask",
-                json={
-                    "component": "elf_watcher",
-                    "request_type": request_type,
-                    "data": data,
-                    "priority": 2,  # Priorité élevée pour les escalades
-                },
-                timeout=10,
+            response = requests.get(f"{self.event_bridge_url}/status", timeout=5)
+            return response.status_code == 200
+        except:
+            return False
+
+    def gather_system_state(self) -> Dict[str, Any]:
+        """Collecter l'état du système pour analyse."""
+        state = {
+            "timestamp": datetime.now().isoformat(),
+            "event_bridge_healthy": self.check_event_bridge_health(),
+            "services": {},
+            "processes": {},
+            "escalation_count": self.escalation_count,
+            "cycle_count": self.cycle_count,
+        }
+
+        # Vérifier les services clés
+        services_to_check = [
+            ("dashboard_backend", "http://localhost:8888/api/v1/health/status"),
+            ("event_bridge", "http://localhost:9998/status"),
+        ]
+
+        for service_name, health_url in services_to_check:
+            try:
+                response = requests.get(health_url, timeout=3)
+                state["services"][service_name] = response.status_code == 200
+                logger.debug(f"Service {service_name}: {response.status_code}")
+            except Exception as e:
+                state["services"][service_name] = False
+                logger.debug(f"Service {service_name} check failed: {e}")
+
+        # Vérifier le service Learning Capture via process
+        try:
+            import subprocess
+            result = subprocess.run(
+                ["pgrep", "-f", "background-learning-capture.py"],
+                capture_output=True,
+                text=True,
             )
-            if response.status_code == 200:
-                return response.json()
-            else:
-                logger.warning(
-                    f"Event Bridge returned {response.status_code}: {response.text}"
-                )
-                return {"error": f"Event Bridge returned {response.status_code}"}
+            state["services"]["learning_capture"] = result.returncode == 0
         except Exception as e:
-            logger.error(f"Failed to ask Event Bridge: {e}")
-            return {"error": str(e)}
+            state["services"]["learning_capture"] = False
+
+        return state
+
+    def analyze_with_agent_manager(self, system_state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        NOUVEAU : Analyser l'état du système via AgentManager.
+        
+        Utilise le vrai prompt système du fichier watcher.md
+        au lieu de prompts hardcodés.
+        """
+        if not self.agent_manager:
+            logger.warning("AgentManager not available, using fallback analysis")
+            return self.fallback_analysis(system_state)
+
+        try:
+            # Préparer le contexte pour l'agent Watcher
+            context = {
+                "system_state": system_state,
+                "analysis_type": "watcher_cycle",
+                "timestamp": datetime.now().isoformat(),
+                "cycle_count": self.cycle_count,
+                "tier": 2
+            }
+
+            logger.info("🤖 Sending analysis request to Watcher agent via AgentManager...")
+            
+            # Appeler l'agent Watcher avec son vrai prompt système
+            result = self.agent_manager.watcher(
+                request="Analyze the current system state and provide insights. "
+                       "Focus on: 1) Overall health assessment, 2) Anomalies detected, "
+                       "3) Recommended actions, 4) Predictive insights.",
+                context=context
+            )
+
+            if result.get("success"):
+                logger.info(f"✅ Watcher analysis completed (session: {result.get('session_id', 'unknown')[:8]}...)")
+                
+                # Parser la réponse de l'agent
+                ai_response = result.get("response", "")
+                
+                return {
+                    "status": self._parse_status_from_response(ai_response),
+                    "analysis": ai_response,
+                    "anomalies": self._extract_anomalies(ai_response),
+                    "recommendations": self._extract_recommendations(ai_response),
+                    "priority_actions": self._extract_priority_actions(ai_response),
+                    "ai_processed": True,
+                    "session_id": result.get("session_id"),
+                    "model_used": result.get("model_used")
+                }
+            else:
+                error_msg = result.get("error", "Unknown error")
+                logger.error(f"❌ Watcher agent failed: {error_msg}")
+                return self.fallback_analysis(system_state, error_msg)
+
+        except Exception as e:
+            logger.error(f"❌ Error calling AgentManager: {e}")
+            return self.fallback_analysis(system_state, str(e))
+
+    def _parse_status_from_response(self, response: str) -> str:
+        """Extraire le statut de la réponse de l'agent."""
+        response_lower = response.lower()
+        if any(word in response_lower for word in ["critical", "severe", "down", "failure"]):
+            return "critical"
+        elif any(word in response_lower for word in ["warning", "degraded", "issue", "problem"]):
+            return "warning"
+        else:
+            return "healthy"
+
+    def _extract_anomalies(self, response: str) -> List[str]:
+        """Extraire les anomalies détectées de la réponse."""
+        anomalies = []
+        lines = response.split('\n')
+        in_anomalies_section = False
+        
+        for line in lines:
+            if 'anomal' in line.lower() or 'issue' in line.lower():
+                in_anomalies_section = True
+            elif in_anomalies_section and line.strip().startswith('-'):
+                anomalies.append(line.strip()[1:].strip())
+            elif in_anomalies_section and line.strip() == '':
+                in_anomalies_section = False
+                
+        return anomalies
+
+    def _extract_recommendations(self, response: str) -> List[str]:
+        """Extraire les recommandations de la réponse."""
+        recommendations = []
+        lines = response.split('\n')
+        in_recommendations_section = False
+        
+        for line in lines:
+            if 'recommend' in line.lower() or 'action' in line.lower():
+                in_recommendations_section = True
+            elif in_recommendations_section and line.strip().startswith('-'):
+                recommendations.append(line.strip()[1:].strip())
+            elif in_recommendations_section and line.strip() == '':
+                in_recommendations_section = False
+                
+        return recommendations
+
+    def _extract_priority_actions(self, response: str) -> List[str]:
+        """Extraire les actions prioritaires de la réponse."""
+        actions = []
+        lines = response.split('\n')
+        in_priority_section = False
+        
+        for line in lines:
+            if 'priority' in line.lower() or 'immediate' in line.lower():
+                in_priority_section = True
+            elif in_priority_section and line.strip().startswith('-'):
+                actions.append(line.strip()[1:].strip())
+            elif in_priority_section and line.strip() == '':
+                in_priority_section = False
+                
+        return actions
+
+    def fallback_analysis(self, system_state: Dict[str, Any], error_msg: str = "") -> Dict[str, Any]:
+        """Analyse de secours si AgentManager indisponible."""
+        event_bridge_healthy = system_state.get("event_bridge_healthy", False)
+        services_healthy = all(system_state.get("services", {}).values())
+
+        if not event_bridge_healthy:
+            status = "critical"
+            analysis = f"Event Bridge non disponible. {error_msg}"
+        elif not services_healthy:
+            status = "warning"
+            analysis = f"Certains services ne répondent pas. {error_msg}"
+        else:
+            status = "healthy"
+            analysis = f"Tous les systèmes opérationnels (analyse IA indisponible: {error_msg})"
+
+        return {
+            "status": status,
+            "analysis": analysis,
+            "anomalies": [],
+            "recommendations": [],
+            "priority_actions": [],
+            "ai_processed": False,
+            "fallback": True
+        }
+
+    def basic_analysis(self, system_state: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyse basique sans appel IA."""
+        event_bridge_healthy = system_state.get("event_bridge_healthy", False)
+        services_healthy = all(system_state.get("services", {}).values())
+
+        if not event_bridge_healthy:
+            status = "critical"
+            analysis_text = "Event Bridge non disponible"
+        elif not services_healthy:
+            status = "warning"
+            analysis_text = "Certains services ne répondent pas"
+        else:
+            status = "healthy"
+            analysis_text = "Tous les systèmes opérationnels (vérification basique)"
+
+        return {
+            "status": status,
+            "analysis": analysis_text,
+            "anomalies": [],
+            "recommendations": [],
+            "priority_actions": [],
+            "ai_processed": False,
+            "basic_only": True
+        }
 
     def submit_escalation(self, escalation_data: dict) -> dict:
         """Soumettre une escalade à l'Event Bridge pour traitement CEO."""
@@ -147,125 +351,13 @@ class ElfWatcher:
             logger.error(f"Failed to submit escalation: {e}")
             return {"error": str(e)}
 
-    def check_event_bridge_health(self) -> bool:
-        """Vérifier si l'Event Bridge est sain."""
-        try:
-            response = requests.get(f"{self.event_bridge_url}/status", timeout=5)
-            return response.status_code == 200
-        except:
-            return False
-
-    def gather_system_state(self) -> Dict[str, Any]:
-        """Collecter l'état du système pour analyse."""
-        state = {
-            "timestamp": datetime.now().isoformat(),
-            "event_bridge_healthy": self.check_event_bridge_health(),
-            "services": {},
-            "processes": {},
-            "escalation_count": self.escalation_count,
-        }
-
-        # Vérifier les services clés qui existent réellement
-        services_to_check = [
-            ("dashboard_backend", "http://localhost:8888/api/v1/health/status"),
-            ("event_bridge", "http://localhost:9998/status"),
-        ]
-
-        for service_name, health_url in services_to_check:
-            try:
-                response = requests.get(health_url, timeout=3)
-                state["services"][service_name] = response.status_code == 200
-                logger.debug(f"Service {service_name}: {response.status_code}")
-            except Exception as e:
-                state["services"][service_name] = False
-                logger.debug(f"Service {service_name} check failed: {e}")
-
-        # Vérifier le service Learning Capture via process
-        try:
-            import subprocess
-
-            result = subprocess.run(
-                ["pgrep", "-f", "background-learning-capture.py"],
-                capture_output=True,
-                text=True,
-            )
-            state["services"]["learning_capture"] = result.returncode == 0
-        except Exception as e:
-            state["services"]["learning_capture"] = False
-
-        return state
-
-    def analyze_with_event_bridge(self, system_state: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyser l'état du système via l'Event Bridge."""
-        event_bridge_response = self.ask_event_bridge(
-            "system_analysis",
-            {
-                "system_state": system_state,
-                "analysis_type": "watcher_cycle",
-                "timestamp": datetime.now().isoformat(),
-            },
-        )
-
-        if "error" not in event_bridge_response:
-            return event_bridge_response.get("data", {})
-
-        # Fallback analysis si Event Bridge indisponible
-        return self.fallback_analysis(system_state)
-
-    def fallback_analysis(self, system_state: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyse de secours si Event Bridge indisponible."""
-        event_bridge_healthy = system_state.get("event_bridge_healthy", False)
-        services_healthy = all(system_state.get("services", {}).values())
-
-        if not event_bridge_healthy:
-            status = "critical"
-            analysis = "Event Bridge non disponible"
-        elif not services_healthy:
-            status = "warning"
-            analysis = "Certains services ne répondent pas"
-        else:
-            status = "healthy"
-            analysis = "Tous les systèmes opérationnels"
-
-        return {
-            "status": status,
-            "analysis": analysis,
-            "anomalies": [],
-            "recommendations": [],
-            "priority_actions": [],
-        }
-
-    def basic_analysis(self, system_state: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyse basique sans appel à l'Event Bridge."""
-        event_bridge_healthy = system_state.get("event_bridge_healthy", False)
-        services_healthy = all(system_state.get("services", {}).values())
-
-        if not event_bridge_healthy:
-            status = "critical"
-            analysis_text = "Event Bridge non disponible"
-        elif not services_healthy:
-            status = "warning"
-            analysis_text = "Certains services ne répondent pas"
-        else:
-            status = "healthy"
-            analysis_text = "Tous les systèmes opérationnels (vérification basique)"
-
-        return {
-            "status": status,
-            "analysis": analysis_text,
-            "anomalies": [],
-            "recommendations": [],
-            "priority_actions": [],
-        }
-
     def handle_escalation(
         self, analysis: Dict[str, Any], system_state: Dict[str, Any]
     ) -> bool:
         """Gérer les escalades via l'Event Bridge."""
         if analysis.get("status") != "critical":
-            return False  # Pas besoin d'escalade
+            return False
 
-        # Log escalation attempt to database
         log_to_database(
             tier=1,
             status="warning",
@@ -292,7 +384,6 @@ class ElfWatcher:
             )
             self.escalation_count += 1
 
-            # Log successful escalation to database
             log_to_database(
                 tier=1,
                 status="success",
@@ -308,7 +399,6 @@ class ElfWatcher:
             logger.error(
                 f"❌ Échec de soumission d'escalation: {escalation_response['error']}"
             )
-            # Log failed escalation to database
             log_to_database(
                 tier=1,
                 status="error",
@@ -327,7 +417,7 @@ class ElfWatcher:
         status = analysis.get("status", "unknown")
         analysis_text = analysis.get("analysis", "No analysis")
 
-        log_entry = f"{timestamp} | STATUS: {status} | NOTES: {analysis_text}\n"
+        log_entry = f"{timestamp} | STATUS: {status} | NOTES: {analysis_text[:100]}...\n"
 
         try:
             with open(WATCHER_LOG, "a") as f:
@@ -339,7 +429,6 @@ class ElfWatcher:
         """Exécuter un cycle de monitoring complet."""
         logger.info("🔍 ELF Watcher - Starting monitoring cycle...")
 
-        # Log cycle start to database
         log_to_database(
             tier=1,
             status="info",
@@ -350,28 +439,29 @@ class ElfWatcher:
         # Collecter l'état du système
         system_state = self.gather_system_state()
 
-        # Vérifier si nous devons faire une analyse AI (tous les 5 cycles si basic_poll_interval = 60s)
+        # Vérifier si nous devons faire une analyse IA
         should_run_ai_analysis = (
             self.cycle_count % (self.ai_analysis_interval // self.basic_poll_interval)
         ) == 0
 
-        if should_run_ai_analysis:
-            logger.info("🤖 Running AI analysis cycle")
-            # Log AI analysis start
+        if should_run_ai_analysis and AGENT_MANAGER_AVAILABLE:
+            logger.info("🤖 Running AI analysis cycle via AgentManager")
             log_to_database(
                 tier=2,
                 status="info",
-                summary="AI analysis cycle started",
+                summary="AI analysis cycle started via AgentManager",
                 details={"cycle_count": self.cycle_count},
             )
-            # Analyser via Event Bridge
-            analysis = self.analyze_with_event_bridge(system_state)
+            # NOUVEAU : Utiliser AgentManager au lieu de l'Event Bridge
+            analysis = self.analyze_with_agent_manager(system_state)
         else:
-            # Analyse basique seulement
-            logger.info("📋 Running basic system check only")
+            if not AGENT_MANAGER_AVAILABLE:
+                logger.info("📋 Running basic system check (AgentManager unavailable)")
+            else:
+                logger.info("📋 Running basic system check only")
             analysis = self.basic_analysis(system_state)
 
-        # Gérer les escalades si nécessaire (seulement pour AI analysis)
+        # Gérer les escalades si nécessaire
         escalation_needed = False
         if should_run_ai_analysis:
             escalation_needed = self.handle_escalation(analysis, system_state)
@@ -379,17 +469,18 @@ class ElfWatcher:
         # Enregistrer les résultats
         self.log_findings(system_state, analysis)
 
-        # Log cycle completion to database
+        # Log cycle completion
         cycle_status = analysis.get("status", "unknown")
-        analysis_text = analysis.get("analysis", "")
+        analysis_text = analysis.get("analysis", "")[:100]
         log_to_database(
             tier=1,
             status=cycle_status,
-            summary=f"Cycle {self.cycle_count} completed - {cycle_status}: {analysis_text}",
+            summary=f"Cycle {self.cycle_count} completed - {cycle_status}: {analysis_text}...",
             details={
                 "cycle_count": self.cycle_count,
                 "ai_analysis_run": should_run_ai_analysis,
                 "escalation_needed": escalation_needed,
+                "ai_processed": analysis.get("ai_processed", False),
                 "system_state": system_state,
                 "analysis": analysis,
             },
@@ -405,9 +496,7 @@ class ElfWatcher:
             "system_state": system_state,
             "analysis": analysis,
             "escalation_needed": escalation_needed,
-            "escalation_submitted": escalation_needed
-            if should_run_ai_analysis
-            else False,
+            "escalation_submitted": escalation_needed if should_run_ai_analysis else False,
             "ai_analysis_run": should_run_ai_analysis,
         }
 
@@ -427,20 +516,32 @@ class ElfWatcher:
 
         event_bridge_healthy = system_state.get("event_bridge_healthy", False)
         event_bridge_status = "🟢 Intégré" if event_bridge_healthy else "🔴 Standalone"
+        
+        # NOUVEAU : Afficher le mode d'analyse
+        if analysis.get("ai_processed"):
+            ai_status = "🤖 AgentManager IA"
+        elif analysis.get("fallback"):
+            ai_status = "⚠️  Fallback (no IA)"
+        else:
+            ai_status = "📋 Basic Check"
 
         print(f"\n🔍 ELF Watcher - {datetime.now().strftime('%H:%M:%S')}")
         print("=" * 60)
         print(f"{status_emoji} Statut: {analysis.get('status', 'unknown').upper()}")
         print(f"🎯 Event Bridge: {event_bridge_status}")
-        print(f"📊 Analyse: {analysis.get('analysis', 'No analysis')}")
+        print(f"🤖 Analyse: {ai_status}")
+        print(f"📊 Mode: {analysis.get('analysis', 'No analysis')[:60]}...")
         print(
             f"⏱️  Cycle: {self.cycle_count} ({'AI Analysis' if ai_analysis_run else 'Basic Check'})"
         )
 
-        # Calculer le temps jusqu'à la prochaine analyse AI
-        cycles_until_ai = (self.ai_analysis_interval // self.basic_poll_interval) - (
-            self.cycle_count % (self.ai_analysis_interval // self.basic_poll_interval)
-        )
+        # Calculer le temps jusqu'à la prochaine analyse IA
+        if ai_analysis_run:
+            cycles_until_ai = (self.ai_analysis_interval // self.basic_poll_interval)
+        else:
+            cycles_until_ai = (self.ai_analysis_interval // self.basic_poll_interval) - (
+                self.cycle_count % (self.ai_analysis_interval // self.basic_poll_interval)
+            )
         seconds_until_ai = cycles_until_ai * self.basic_poll_interval
         print(
             f"⏱️  Prochaine AI: {seconds_until_ai}s ({seconds_until_ai // 60}m {seconds_until_ai % 60}s)"
@@ -460,20 +561,27 @@ class ElfWatcher:
 
     def start_continuous_monitoring(self):
         """Démarrer la surveillance continue."""
-        logger.info(f"🚀 ELF Watcher starting continuous monitoring")
+        logger.info(f"🚀 ELF Watcher v2.0 starting continuous monitoring")
         logger.info(f"   Basic checks: every {self.basic_poll_interval}s")
         logger.info(
             f"   AI analysis: every {self.ai_analysis_interval}s ({self.ai_analysis_interval // 60} minutes)"
         )
+        
+        if AGENT_MANAGER_AVAILABLE:
+            logger.info(f"   ✅ AgentManager: ENABLED")
+            logger.info(f"   📁 Agents loaded: {len(self.agent_manager.list_agents()) if self.agent_manager else 0}")
+        else:
+            logger.warning(f"   ⚠️  AgentManager: DISABLED (fallback mode)")
 
-        # Log watcher start to database
         log_to_database(
             tier=1,
             status="info",
-            summary="Watcher process started - beginning continuous monitoring",
+            summary="Watcher v2.0 process started - beginning continuous monitoring",
             details={
+                "version": "2.0",
                 "basic_interval": self.basic_poll_interval,
                 "ai_analysis_interval": self.ai_analysis_interval,
+                "agent_manager_available": AGENT_MANAGER_AVAILABLE,
             },
         )
 
@@ -483,7 +591,6 @@ class ElfWatcher:
                 if STOP_FILE.exists():
                     logger.info("⏹️ Stop file detected, exiting gracefully")
 
-                    # Log watcher stop to database
                     log_to_database(
                         tier=1,
                         status="info",
@@ -506,7 +613,6 @@ class ElfWatcher:
 
         except KeyboardInterrupt:
             logger.info("⏹️ Stopped by user")
-            # Log keyboard interrupt to database
             log_to_database(
                 tier=1,
                 status="info",
@@ -518,7 +624,6 @@ class ElfWatcher:
             )
         except Exception as e:
             logger.error(f"❌ ELF Watcher crashed: {e}")
-            # Log crash to database
             log_to_database(
                 tier=1,
                 status="error",
