@@ -285,7 +285,7 @@ class AgentManager:
                 json={
                     "model": {
                         "providerID": "nvidia",
-                        "modelID": agent_config.model.split("/")[-1] if "/" in agent_config.model else agent_config.model
+                        "modelID":  agent_config.model
                     },
                     "parts": [{
                         "type": "text",
@@ -378,7 +378,7 @@ class AgentManager:
                 json={
                     "model": {
                         "providerID": "nvidia",
-                        "modelID": agent_config.model.split("/")[-1] if "/" in agent_config.model else agent_config.model
+                        "modelID": agent_config.model
                     },
                     "parts": [{"type": "text", "text": message}]
                 },
