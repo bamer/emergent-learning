@@ -125,6 +125,39 @@ OpenCode SSE → Event Bridge → ELF Hooks
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+### CEO Inbox Monitor (Autonomous Escalation Processing)
+
+**Purpose**: Autonomous background service that processes CEO-level escalations
+
+**Location**: `emergent-learning/Open_ELF/agents/ceo_inbox_monitor.py`
+
+**Responsibilities**:
+- ✅ Monitor CEO inbox for new escalation files
+- ✅ Process escalations using CEO agent via AgentManager
+- ✅ Archive processed escalations with results
+- ✅ Maintain audit trail of all CEO decisions
+
+**Behavior**:
+```
+New Escalation → CEO Monitor (5min interval) → AgentManager.ceo()
+                  → Response logged → Escalation archived
+```
+
+**Configuration**:
+- Check interval: 5 minutes (configurable)
+- Escalation directory: `~/.opencode/emergent-learning/ceo-inbox/`
+- Archives directory: `~/.opencode/emergent-learning/ceo-inbox/archive/`
+
+**Start**:
+```bash
+bash /home/bamer/.opencode/emergent-learning/scripts/start-ceo-monitor.sh
+```
+
+Or via system startup:
+```bash
+bash /home/bamer/.opencode/emergent-learning/start-elf-system.sh
+```
+
 ## Data Flow Examples
 
 ### Scenario 1: Agent Query (AI Interaction)
@@ -348,19 +381,24 @@ export ELF_HOOKS_DIR="/path/to/hooks"
 
 ## Summary
 
-| Component | Purpose | AI Calls? | Use For |
-|-----------|---------|-----------|---------|
-| **AgentManager** | AI interaction gateway | ✅ YES | All LLM queries |
-| **Event Bridge** | Event routing | ❌ NO | SSE events, status, actions |
+| Component | Purpose | AI Calls? | Cycle | Use For |
+|-----------|---------|-----------|-------|---------|
+| **AgentManager** | AI interaction gateway | ✅ YES | On-demand | All LLM queries |
+| **Event Bridge** | Event routing | ❌ NO | Event-driven | SSE events, status, actions |
+| **Watcher** | System health monitor | ✅ YES | Basic: 60s, AI: 10min | Resource, process, anomaly monitoring |
+| **Sentinel** | Security pattern detector | ✅ YES | Basic: 30s, AI: 5min | Behavioral analysis, vulnerability detection |
+| **Unified Orchestrator** | Central coordination | ✅ YES | Basic: 10s, AI: 15min | Event fusion, decision making, mission execution |
+| **CEO Monitor** | Escalation processor | ✅ YES | 5 min interval | Autonomous CEO decision processing |
 
 Remember:
 - **AgentManager = AI** (OpenCode sessions, prompts, responses)
 - **Event Bridge = Events** (SSE stream, hooks, HTTP API)
+- **Tiered Monitors** = Autonomous monitoring with configurable AI intervals
 
 Keep them separate, keep them clean.
 
 ---
 
-**Version**: 1.0
+**Version**: 1.1
 **Last Updated**: 2026-02-08
 **Maintainer**: ELF Team

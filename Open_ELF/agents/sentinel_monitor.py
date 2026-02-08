@@ -118,7 +118,7 @@ class SentinelMonitor:
             try:
                 logger.info(f"🤖 Using AgentManager for request: {request_type}")
 
-                prompt = f"Request: {request_type}\n\nData: {json.dumps(data, indent=2)}\n\nPlease analyze and provide recommendations."
+                prompt = f"Request: {request_type}\n\nData: {json.dumps(data, indent=2)}\n\nCheck the system for any defect and Depend of severity take or Recommend immediate actions Create an escalation file in ceo-inbox/ if critical"
                 response = self.agent_manager.ask_agent("unified-orchestrator", prompt)
 
                 return {

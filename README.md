@@ -74,7 +74,7 @@ Animated avatar overlay that appears on your desktop. Celebrates task completion
 | **Local Dashboard** | Visual monitoring at http://localhost:3001 (no API tokens used) |
 | **Session History** | Browse all Opencode sessions in dashboard - search, filter by project/date, expand to see full conversations |
 | **Cross-Session Continuity** | Pick up where you left off - search what you asked in previous sessions. Lightweight retrieval (~500 tokens), or ~20k for heavy users reviewing full day |
-| **Async Watcher** | Background Haiku monitors your work, escalates to Opus only when needed. 95% cheaper than constant Opus monitoring |
+| **Async Watcher** | Background OpenCode agents monitor your work, escalate to deep analysis only when needed. Tiered system reduces costs by 90%+ |
 
 ### Hotspots
 ![Hotspots](docs/assets/Hotspots.png)
@@ -117,17 +117,44 @@ No tokens consumed - reads directly from `~/.opencode/projects/` JSONL files.
 
 ### Async Watcher
 
-A background Haiku agent monitors coordination state every 30 seconds. When it detects something that needs attention, it escalates to Opus automatically.
+The ELF system uses multiple autonomous monitoring agents with tiered analysis:
 
 ```
-┌─────────────────┐     exit 1      ┌─────────────────┐
-│  Haiku (Tier 1) │ ──────────────► │  Opus (Tier 2)  │
-│  Fast checks    │   "need help"   │  Deep analysis  │
-│  ~$0.001/check  │                 │  ~$0.10/call    │
-└─────────────────┘                 └─────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    Tiered Monitoring Architecture                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+│  │   Watcher   │  │  Sentinel   │  │  Unified Orchestrator   │  │
+│  │ (60s cycle) │  │ (30s cycle) │  │     (10s cycle)         │  │
+│  │ AI: 10 min  │  │ AI: 5 min   │  │    AI: 15 min           │  │
+│  └──────┬──────┘  └──────┬──────┘  └───────────┬─────────────┘  │
+│         │                │                      │                │
+│         └────────────────┼──────────────────────┘                │
+│                          │                                      │
+│                    ┌─────┴─────┐                                 │
+│                    │  Agent    │                                 │
+│                    │  Manager  │                                 │
+│                    │ (AI Core) │                                 │
+│                    └─────┬─────┘                                 │
+│                          │                                      │
+│                    ┌─────┴─────┐                                 │
+│                    │  CEO      │                                 │
+│                    │  Monitor  │                                 │
+│                    │ (5 min)   │                                 │
+│                    └───────────┘                                 │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-Runs automatically - no user interaction required. See [src/watcher/README.md](src/watcher/README.md) for configuration and details.
+**Each Tier:**
+- **Basic Cycle**: Fast system health checks (60s/30s/10s intervals)
+- **AI Analysis**: Deep analysis using AgentManager at configured intervals
+- **Autonomous Action**: Agents can restart services, clear caches, escalate
+
+**Costs:** Basic cycles are near-free; AI analysis costs ~$0.01-0.10 per cycle. Overall cost reduction of 90%+ vs constant AI monitoring.
+
+Runs automatically - no user interaction required. See [Open_ELF/watcher/](Open_ELF/watcher/) for configuration and details.
 
 ## How It Works
 

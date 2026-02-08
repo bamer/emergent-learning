@@ -5,6 +5,49 @@ All notable changes to the Emergent Learning Framework will be documented in thi
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-02-08
+
+### Added
+- **Tier-Based AI Analysis System** - Optimized AI usage with configurable timing intervals
+  - **Watcher**: AI analysis every 10 minutes (basic checks every 60s)
+  - **Sentinel**: AI analysis every 5 minutes (basic checks every 30s)
+  - **Unified Orchestrator**: AI analysis every 15 minutes (basic checks every 10s)
+  - Added `_analyze_with_ai()` method using AgentManager for deep analysis
+  - Added `basic_analysis()` method for non-AI cycle checks
+  - Significantly reduces token costs while maintaining system awareness
+
+- **CEO Inbox Monitor** - Autonomous escalation processing agent
+  - New `ceo_inbox_monitor.py` script for autonomous CEO escalation handling
+  - Checks every 5 minutes for new escalations
+  - Uses OpenCode AgentManager to invoke CEO agent for processing
+  - Archives processed escalations automatically
+  - Start script: `scripts/start-ceo-monitor.sh`
+  - Reduces manual intervention for CEO-level decisions
+
+### Changed
+- **System Startup Script** - Updated `start-elf-system.sh` to launch all services
+  - Added startup functions for: Unified Orchestrator, Sentinel Monitor, CEO Inbox Monitor
+  - Fixed orchestrator to use `start` argument
+  - All 6 services now start in correct order with proper dependencies
+
+- **Check-in Workflow** - Fixed bugs and improved reliability
+  - Fixed wrong path: `src/query/query.py` → `query/query.py`
+  - Fixed wrong port: UnifiedOrchestrator 9999 → process detection via pgrep
+  - Fixed wrong port: Dashboard Frontend 5173 → 3001
+  - Added Sentinel detection in architecture status check
+  - Updated to use OpenCode AgentManager instead of haiku Task tool
+
+- **Configuration Updates** - Claude configuration files
+  - `.claude/CLAUDE.md`: Removed haiku references, added AgentManager integration
+  - `.opencode/commands/checkin.md`: Updated session summarization workflow
+  - `.opencode/skills/agent-coordination/`: Fixed skill path references
+
+### Fixed
+- **Session Summarization** - Fixed workflow for automatic session memory
+  - Now uses OpenCode AgentManager with researcher agent
+  - Removed deprecated haiku Task tool references
+  - Properly saves summaries to `memory/sessions/` directory
+
 ## [0.5.2] - 2026-02-07
 
 ### Fixed
