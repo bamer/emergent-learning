@@ -35,13 +35,11 @@ try:
 except ImportError:
     OPENAI_AVAILABLE = False
 
-# Import with fallbacks
+# Import DB models (still needed for direct heuristic queries)
 try:
     from query.models import Heuristic, get_manager
-    from query.exceptions import QuerySystemError, DatabaseError
 except ImportError:
     from models import Heuristic, get_manager
-    from exceptions import QuerySystemError, DatabaseError
 
 
 class SemanticSearcher:
@@ -155,6 +153,23 @@ class SemanticSearcher:
         """Generate cache key for text."""
         return hashlib.md5(text.encode()).hexdigest()
     
+    async def _embed_via_daemon(self, text: str) -> Optional[np.ndarray]:
+        """Generate embedding via semantic daemon HTTP API."""
+        try:
+            import aiohttp
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    "http://localhost:5001/embed",
+                    json={"text": text},
+                    timeout=aiohttp.ClientTimeout(total=30)
+                ) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        return np.array(data["embedding"])
+        except Exception:
+            pass
+        return None
+
     async def embed(self, text: str) -> np.ndarray:
         """
         Generate embedding for text.
@@ -165,23 +180,24 @@ class SemanticSearcher:
         Returns:
             Embedding vector as numpy array
         """
-        # Check cache first
         cache_key = self._get_cache_key(text)
         if cache_key in self._cache:
             return self._cache[cache_key]
-        
-        # Generate embedding
-        if self._use_openai:
-            embedding = await self._embed_openai(text)
-        elif self.embedder is not None:
-            embedding = await self.embedder.embed_async(text)
-            if embedding is None:
-                embedding = self._keyword_fallback(text)
-        else:
-            # Fallback: simple keyword vector
+
+        # Try daemon API first
+        embedding = await self._embed_via_daemon(text)
+
+        # Fallback to local embedder
+        if embedding is None:
+            if self._use_openai:
+                embedding = await self._embed_openai(text)
+            elif self.embedder is not None:
+                embedding = await self.embedder.embed_async(text)
+
+        # Final fallback: keyword
+        if embedding is None:
             embedding = self._keyword_fallback(text)
-        
-        # Cache and return
+
         self._cache[cache_key] = embedding
         return embedding
     
@@ -222,6 +238,28 @@ class SemanticSearcher:
             return 0.0
         return dot / (norm1 * norm2)
     
+    async def search_via_daemon(self, query: str, top_k: int = 5,
+                               source_type: Optional[str] = None,
+                               min_similarity: float = 0.0) -> List[Dict[str, Any]]:
+        """Search stored embeddings via the semantic daemon API."""
+        try:
+            import aiohttp
+            payload = {"query": query, "top_k": top_k, "min_similarity": min_similarity}
+            if source_type:
+                payload["source_type"] = source_type
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    "http://localhost:5001/search",
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=30)
+                ) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        return data.get("results", [])
+        except Exception:
+            pass
+        return []
+
     async def find_relevant_heuristics(
         self,
         task: str,

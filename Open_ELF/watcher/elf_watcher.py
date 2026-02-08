@@ -28,7 +28,7 @@ if str(ELF_DIR) not in sys.path:
 
 # Import centralized logger
 try:
-    from Open_ELF.agents import elf_logging
+    from Open_ELF.utils import elf_logging
 
     logger = elf_logging.get_logger("elf_watcher")
 except ImportError:
@@ -39,12 +39,12 @@ except ImportError:
 
 # Import event logger for database logging
 try:
-    from Open_ELF.utils.event_logger import log_watcher_check, log_event
+    from Open_ELF.utils.elf_logging import log_watcher_check, log_event
 
-    EVENT_LOGGER_AVAILABLE = True
+    event_logger_available = True
 except ImportError:
     logger.warning("Event logger not available, database logging disabled")
-    EVENT_LOGGER_AVAILABLE = False
+    event_logger_available = False
 
     def log_watcher_check(
         tier: int, status: str, summary: str, details: Optional[Dict[str, Any]] = None
@@ -61,23 +61,23 @@ except ImportError:
     ) -> Optional[int]:
         return None
 
-
-# Import AgentManager (NOUVEAU SYSTÈME)
+    # Import AgentManager (NOUVEAU SYSTÈME)
 try:
     from Open_ELF.agents.agent_manager import AgentManager, get_agent_manager
 
-    AGENT_MANAGER_AVAILABLE = True
+    agent_manager_available = True
 except ImportError:
     logger.error("❌ AgentManager not available - falling back to basic mode")
-    AGENT_MANAGER_AVAILABLE = False
+    agent_manager_available = False
+
+    # Helper function for safe database logging
 
 
-# Helper function for safe database logging
 def log_to_database(
     tier: int, status: str, summary: str, details: Optional[Dict[str, Any]] = None
 ) -> Optional[int]:
     """Log watcher event to database safely."""
-    if not EVENT_LOGGER_AVAILABLE:
+    if not event_logger_available:
         return None
 
     try:
@@ -113,7 +113,7 @@ class ElfWatcher:
 
         # NOUVEAU : Initialiser AgentManager
         self.agent_manager = None
-        if AGENT_MANAGER_AVAILABLE:
+        if agent_manager_available:
             try:
                 self.agent_manager = get_agent_manager()
                 logger.info("✅ AgentManager initialized successfully")
@@ -179,6 +179,11 @@ class ElfWatcher:
         au lieu de prompts hardcodés.
         """
         if not self.agent_manager:
+            logger.warning("AgentManager not available, using fallback analysis")
+            return self.fallback_analysis(system_state)
+
+        # Also check if agent_manager_available is False (fallback case)
+        if not agent_manager_available:
             logger.warning("AgentManager not available, using fallback analysis")
             return self.fallback_analysis(system_state)
 
@@ -349,7 +354,7 @@ class ElfWatcher:
     def submit_escalation(self, escalation_data: dict) -> dict:
         """Soumettre une escalade - utilise AgentManager directement (fallback sur Event Bridge)."""
         # ESSAI 1: Utiliser AgentManager directement (meilleure option)
-        if AGENT_MANAGER_AVAILABLE:
+        if agent_manager_available:
             try:
                 logger.info("🤖 Triggering AI agent analysis via AgentManager...")
                 manager = get_agent_manager()
@@ -525,7 +530,7 @@ Do your mission then Respond with a detailed analysis."""
             self.cycle_count % (self.ai_analysis_interval // self.basic_poll_interval)
         ) == 0
 
-        if should_run_ai_analysis and AGENT_MANAGER_AVAILABLE:
+        if should_run_ai_analysis and agent_manager_available:
             logger.info("🤖 Running AI analysis cycle via AgentManager")
             log_to_database(
                 tier=2,
@@ -536,7 +541,7 @@ Do your mission then Respond with a detailed analysis."""
             # NOUVEAU : Utiliser AgentManager au lieu de l'Event Bridge
             analysis = self.analyze_with_agent_manager(system_state)
         else:
-            if not AGENT_MANAGER_AVAILABLE:
+            if not agent_manager_available:
                 logger.info("📋 Running basic system check (AgentManager unavailable)")
             else:
                 logger.info("📋 Running basic system check only")
@@ -653,7 +658,7 @@ Do your mission then Respond with a detailed analysis."""
             f"   AI analysis: every {self.ai_analysis_interval}s ({self.ai_analysis_interval // 60} minutes)"
         )
 
-        if AGENT_MANAGER_AVAILABLE:
+        if agent_manager_available:
             logger.info(f"   ✅ AgentManager: ENABLED")
             logger.info(
                 f"   📁 Agents loaded: {len(self.agent_manager.list_agents()) if self.agent_manager else 0}"
@@ -669,7 +674,7 @@ Do your mission then Respond with a detailed analysis."""
                 "version": "2.0",
                 "basic_interval": self.basic_poll_interval,
                 "ai_analysis_interval": self.ai_analysis_interval,
-                "agent_manager_available": AGENT_MANAGER_AVAILABLE,
+                "agent_manager_available": agent_manager_available,
             },
         )
 

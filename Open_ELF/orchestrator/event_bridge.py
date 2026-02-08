@@ -53,7 +53,7 @@ LOGS_DIR.mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(ELF_DIR / "agents"))
 sys.path.insert(0, str(ELF_DIR / "Open_ELF" / "utils"))
 try:
-    from agents.elf_logging import get_logger, log_info, log_error
+    from Open_ELF.utils.elf_logging import get_logger, log_info, log_error
 
     logger = get_logger("event_bridge")
 
@@ -91,10 +91,10 @@ for path in (OPEN_ELF_DIR, ELF_ROOT_DIR):
         sys.path.insert(0, str(path))
 
 # Import event_logger for database logging (NEW)
-EVENT_LOGGER_AVAILABLE = False
-EVENT_LOGGER = None
+event_logger_available = False
+event_logger = None
 try:
-    from Open_ELF.utils.event_logger import log_event
+    from Open_ELF.utils.elf_logging import log_event
 
     EVENT_LOGGER_AVAILABLE = True
     EVENT_LOGGER = log_event
@@ -226,11 +226,24 @@ class EventBridge:
         self.log_throttle_seconds = logging_config.get("throttle_seconds", 5)
         self.important_events = set(
             logging_config.get(
-                "important_events", ["message", "tool", "error", "session"]
+                "important_events", ["tool", "error", "session", "message.updated"]
             )
         )
         self.event_summary_interval = logging_config.get("summary_interval", 10)
         self.max_details_length = logging_config.get("max_details_length", 100)
+
+        # Event blocking for high-volume spam events
+        event_handling_config = self.config.get("event_handling", {})
+        self.blocked_events = set(
+            event_handling_config.get(
+                "blocked_events",
+                ["message.part.updated", "tool_poll", "server.heartbeat"],
+            )
+        )
+        self.max_events_per_minute = event_handling_config.get(
+            "max_events_per_minute", 100
+        )
+        self._event_minute_counters = {}  # Track events per minute by type
 
         # Event listener system for components like UnifiedOrchestrator
         self._listeners = []  # List of registered listeners: [{id, callback, event_types}]
@@ -367,8 +380,12 @@ class EventBridge:
 
             self.last_log_time[event_type] = current_time
 
-            # Log event to database if available and logger is callable
-            if EVENT_LOGGER_AVAILABLE and callable(EVENT_LOGGER):
+            # Log event to database if available, logger is callable, and event is not blocked
+            if (
+                EVENT_LOGGER_AVAILABLE
+                and callable(EVENT_LOGGER)
+                and event_type not in self.blocked_events
+            ):
                 try:
                     # Extract severity from event type for classification
                     severity = "info"
@@ -1169,7 +1186,7 @@ class EventBridge:
                             logger.info(
                                 f"📋 Mission logged: {mission_type} from {component}"
                             )
-                            
+
                             # Store mission in database if available
                             if EVENT_LOGGER_AVAILABLE and callable(EVENT_LOGGER):
                                 try:

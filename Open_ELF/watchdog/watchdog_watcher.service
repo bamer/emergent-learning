@@ -1,0 +1,16 @@
+[Unit]
+Description=ELF Watcher Watchdog
+After=network.target
+
+[Service]
+Type=simple
+User=bamer
+WorkingDirectory=/home/bamer/.opencode/emergent-learning
+ExecStart=/usr/bin/python3 /home/bamer/.opencode/emergent-learning/Open_ELF/watchdog/watchdog_watcher.py
+Restart=always
+RestartSec=10
+StandardOutput=file:/home/bamer/.opencode/emergent-learning/logs/watchdog_watcher.log
+StandardError=file:/home/bamer/.opencode/emergent-learning/logs/watchdog_watcher_error.log
+
+[Install]
+WantedBy=default.target

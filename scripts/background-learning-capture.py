@@ -242,20 +242,21 @@ def record_heuristic(heuristic: dict) -> bool:
         heuristic_id = cursor.lastrowid
 
         # Also create embedding via API
-        try:
-            embedding_text = f"{heuristic['domain']}: {heuristic['rule']}"
-            requests.post(
-                "http://localhost:8888/api/v1/persistence/heuristics",
-                json={
-                    "domain": heuristic["domain"],
-                    "rule": heuristic["rule"],
-                    "confidence": heuristic["confidence"],
-                    "source_type": "auto-capture",
-                },
-                timeout=5,
-            )
-        except:
-            pass  # Non-critical, heuristic is already saved
+        # TEMPORARILY DISABLED due to timeout issues
+        # try:
+        #     embedding_text = f"{heuristic['domain']}: {heuristic['rule']}"
+        #     requests.post(
+        #         "http://localhost:8888/api/v1/persistence/heuristics",
+        #         json={
+        #             "domain": heuristic["domain"],
+        #             "rule": heuristic["rule"],
+        #             "confidence": heuristic["confidence"],
+        #             "source_type": "auto-capture",
+        #         },
+        #         timeout=5,
+        #     )
+        # except:
+        #     pass  # Non-critical, heuristic is already saved
 
         conn.commit()
         conn.close()

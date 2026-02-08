@@ -1,14 +1,23 @@
 {
   "logging": {
     "throttle_seconds": 5,
-    "important_events": ["message", "tool", "error", "session"],
+    "important_events": ["tool", "error", "session", "message.updated"],
     "summary_interval": 10,
     "max_details_length": 100
   },
   "event_handling": {
     "max_event_history": 1000,
     "cleanup_interval_minutes": 60,
-    "enable_statistics": true
+    "enable_statistics": true,
+    "blocked_events": ["message.part.updated", "tool_poll", "server.heartbeat"],
+    "throttle_events": {
+      "message.updated": 10,
+      "session.status": 5,
+      "tool": 5,
+      "session.updated": 5,
+      "watcher_check": 10
+    },
+    "max_events_per_minute": 100
   },
   "heartbeat": {
     "update_interval_seconds": 30,

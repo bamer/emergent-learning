@@ -169,7 +169,7 @@ def get_stats():
         cursor.execute(
             "SELECT source_type, COUNT(*) FROM embeddings GROUP BY source_type"
         )
-        by_source = {row[0]: row[1] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire}
+        by_source = {row[0]: row[1] for row in cursor.fetchall()}
 
         # Total count
         cursor.execute("SELECT COUNT(*) FROM embeddings")
@@ -211,8 +211,6 @@ def generate_embedding():
             return jsonify({"error": "Empty text"}), 400
 
         # Generate embedding
-        import asyncio
-
         embedding = generate_embedding_sync(text)
 
         if embedding is None:
@@ -248,8 +246,6 @@ def store_embedding():
         metadata = json.dumps(data.get("metadata", {}))
 
         # Generate embedding
-        import asyncio
-
         embedding = generate_embedding_sync(text)
 
         if embedding is None:
@@ -261,21 +257,29 @@ def store_embedding():
 
         cursor.execute(
             """
-            INSERT INTO embeddings (source_id, source_type, text_content, embedding, metadata, created_at)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO embeddings (source_id, source_type, text_content, embedding, embedding_blob, metadata, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
             (
                 source_id,
                 source_type,
                 text,
                 json.dumps(embedding.tolist()),
+                embedding.astype(np.float32).tobytes(),
                 metadata,
                 datetime.now().isoformat(),
             ),
         )
 
-        conn.commit()
         embedding_id = cursor.lastrowid
+
+        # Update FTS index
+        cursor.execute("""
+            INSERT INTO embeddings_fts(rowid, text_content, source_type)
+            VALUES (?, ?, ?)
+        """, (embedding_id, text, source_type))
+
+        conn.commit()
         conn.close()
 
         return jsonify(
@@ -310,8 +314,6 @@ def semantic_search():
             return jsonify({"error": "Empty query"}), 400
 
         # Generate query embedding
-        import asyncio
-
         query_embedding = generate_embedding_sync(query)
 
         if query_embedding is None:
@@ -321,25 +323,52 @@ def semantic_search():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        if source_type:
-            cursor.execute(
-                """
-                SELECT id, source_id, source_type, text_content, embedding, metadata, created_at
-                FROM embeddings
-                WHERE source_type = ?
-            """,
-                (source_type,),
+        # FTS5 candidate pre-filtering
+        try:
+            fts_query = ' OR '.join(
+                f'"{word}"' for word in query.split()
+                if len(word) > 2 and word.isalnum()
             )
-        else:
-            cursor.execute("""
-                SELECT id, source_id, source_type, text_content, embedding, metadata, created_at
-                FROM embeddings
-            """)
+            if fts_query and source_type:
+                cursor.execute("""
+                    SELECT rowid FROM embeddings_fts
+                    WHERE embeddings_fts MATCH ? AND source_type = ?
+                    LIMIT 200
+                """, (fts_query, source_type))
+            elif fts_query:
+                cursor.execute("""
+                    SELECT rowid FROM embeddings_fts
+                    WHERE embeddings_fts MATCH ?
+                    LIMIT 200
+                """, (fts_query,))
+            else:
+                cursor.execute("SELECT id FROM embeddings LIMIT 200")
+            candidate_ids = [row[0] for row in cursor.fetchall()]
+        except Exception:
+            # FTS fallback: use direct query with limit
+            cursor.execute("SELECT id FROM embeddings LIMIT 500")
+            candidate_ids = [row[0] for row in cursor.fetchall()]
+
+        if not candidate_ids:
+            conn.close()
+            return jsonify({"query": query, "results": [], "total_matches": 0, "returned": 0, "min_similarity_applied": min_similarity})
+
+        placeholders = ','.join('?' * len(candidate_ids))
+        cursor.execute(f"""
+            SELECT id, source_id, source_type, text_content,
+                   COALESCE(embedding_blob, NULL) as emb_blob,
+                   embedding, metadata, created_at
+            FROM embeddings WHERE id IN ({placeholders})
+        """, candidate_ids)
 
         results = []
-        for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+        for row in cursor.fetchall():
             try:
-                stored_embedding = np.array(json.loads(row["embedding"]))
+                emb_blob = row["emb_blob"]
+                if emb_blob:
+                    stored_embedding = np.frombuffer(emb_blob, dtype=np.float32)
+                else:
+                    stored_embedding = np.array(json.loads(row["embedding"]))
                 similarity = cosine_similarity(query_embedding, stored_embedding)
 
                 results.append(
@@ -347,7 +376,7 @@ def semantic_search():
                         "id": row["id"],
                         "source_id": row["source_id"],
                         "source_type": row["source_type"],
-                        "text": row["text_content"][:500],  # Truncate for response
+                        "text": row["text_content"][:500],
                         "similarity": round(similarity, 4),
                         "metadata": json.loads(row["metadata"])
                         if row["metadata"]
@@ -412,12 +441,21 @@ def search_by_file():
         # Search
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM embeddings")
+        cursor.execute("""
+            SELECT id, source_id, source_type, text_content,
+                   COALESCE(embedding_blob, NULL) as emb_blob,
+                   embedding, metadata, created_at
+            FROM embeddings LIMIT 500
+        """)
 
         results = []
-        for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+        for row in cursor.fetchall():
             try:
-                stored_embedding = np.array(json.loads(row["embedding"]))
+                emb_blob = row["emb_blob"]
+                if emb_blob:
+                    stored_embedding = np.frombuffer(emb_blob, dtype=np.float32)
+                else:
+                    stored_embedding = np.array(json.loads(row["embedding"]))
                 similarity = cosine_similarity(file_embedding, stored_embedding)
 
                 results.append(
@@ -473,6 +511,18 @@ def init_database():
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_embeddings_source 
             ON embeddings(source_type, source_id)
+        """)
+
+        # Add BLOB column for faster embedding storage (migration-safe)
+        try:
+            cursor.execute("ALTER TABLE embeddings ADD COLUMN embedding_blob BLOB")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
+        # FTS5 virtual table for candidate pre-filtering
+        cursor.execute("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS embeddings_fts 
+            USING fts5(text_content, source_type, content=embeddings, content_rowid=id)
         """)
 
         conn.commit()

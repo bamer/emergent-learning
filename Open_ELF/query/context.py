@@ -836,6 +836,18 @@ class ContextBuilderMixin:
                         context_parts.append(entry)
                     ceo_reviews_count = len(ceo_reviews)
 
+                # Session integration - load cross-session context
+                try:
+                    from query.session_integration import SessionIntegration
+                    session_int = SessionIntegration(debug=getattr(self, 'debug', False))
+                    session_context, _ = session_int.build_session_checkin_context()
+                    if session_context:
+                        context_parts.append(session_context)
+                except ImportError:
+                    pass
+                except Exception:
+                    pass
+
                 # Task context with building header (show depth level)
                 depth_label = f" ({depth})" if depth != "standard" else ""
                 building_header = (

@@ -83,7 +83,7 @@ def migrate_file(file_path: str, dry_run: bool = False) -> bool:
         module_name = get_module_name(file_path)
 
         # Check if file already uses elf_logging
-        if "from elf_logging import" in content or "elf_logging.get_logger" in content:
+        if "from Open_ELF.utils.elf_logging import" in content or "elf_logging.get_logger" in content:
             print(f"  ✓ Already uses unified logger: {file_path}")
             return True
 
@@ -95,7 +95,7 @@ def migrate_file(file_path: str, dry_run: bool = False) -> bool:
         # Pattern 1: Replace basic logging setup
         # Remove: import logging
         # Remove: logging.basicConfig(...)
-        # Add: from elf_logging import get_logger
+        # Add: from Open_ELF.utils.elf_logging import get_logger
         # Add: logger = get_logger("module_name")
 
         # Remove import logging
@@ -117,7 +117,7 @@ def migrate_file(file_path: str, dry_run: bool = False) -> bool:
         logger_setup = f'''
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
     logger = get_logger("{module_name}")
 except ImportError:
     import logging

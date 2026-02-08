@@ -20,7 +20,7 @@ if str(AGENTS_DIR) not in sys.path:
 
 # Import centralized logger
 try:
-    from elf_logging import get_logger, log_critical
+    from Open_ELF.utils.elf_logging import get_logger, log_critical
 
     escalation_logger = get_logger("escalation")
 except ImportError:

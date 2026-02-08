@@ -462,20 +462,16 @@ class SessionIntegration:
 
 def extend_query_system_build_context():
     """
-    Returns code snippet to add to QuerySystem.build_context() method.
-
-    Add this after the CEO reviews section:
-
-    ```python
-    # Session integration (NEW)
-    from query.session_integration import SessionIntegration
-    session_int = SessionIntegration(debug=self.debug)
-    session_context, _ = session_int.build_session_checkin_context()
-    if session_context:
-        context_parts.append(session_context)
-    ```
+    Hook to extend QuerySystem.build_context() with session context.
+    
+    Import and call from QuerySystem.build_context():
+        from query.session_integration import SessionIntegration
+        session_int = SessionIntegration(debug=self.debug)
+        session_context, _ = session_int.build_session_checkin_context()
+        if session_context:
+            context_parts.append(session_context)
     """
-    pass
+    return SessionIntegration
 
 
 if __name__ == "__main__":

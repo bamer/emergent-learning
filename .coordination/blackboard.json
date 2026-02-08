@@ -1,8 +1,18 @@
 {
-  "timestamp": "2026-02-05T03:21:11.969433",
-  "agents": {},
+  "timestamp": "2026-02-09T00:17:33.467075",
+  "agents": {
+    "test_agent": {
+      "status": "active",
+      "pid": 623034,
+      "last_heartbeat": "2026-02-09T00:17:27.373018",
+      "capabilities": [
+        "testing"
+      ]
+    }
+  },
   "agent_files": [],
   "stop_requested": false,
-  "status": "idle",
-  "last_check": "2026-02-05T03:21:11.969433"
+  "status": "active",
+  "last_check": "2026-02-09T00:17:33.467099",
+  "active_tasks": 0
 }

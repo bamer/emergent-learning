@@ -18,7 +18,7 @@ from pydantic import BaseModel
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
 
     logger = get_logger("orchestrator")
 except ImportError:

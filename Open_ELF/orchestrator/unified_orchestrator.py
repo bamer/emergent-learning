@@ -46,7 +46,7 @@ logger = logging.getLogger("UnifiedOrchestrator")
 # Event logging to database
 DATABASE_LOGGING_AVAILABLE = False
 try:
-    from utils.event_logger import log_event as log_orchestrator_db
+    from Open_ELF.utils.elf_logging import log_event as log_orchestrator_db
 
     DATABASE_LOGGING_AVAILABLE = True
     logger.info("✓ Database logging available")

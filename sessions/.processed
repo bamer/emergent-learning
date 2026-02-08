@@ -4,7 +4,11 @@
     "test_session.jsonl",
     "simulated_session.jsonl",
     "significant_issue_session.jsonl",
-    ""
+    "",
+    "2026-02-01_session.jsonl",
+    "2026-02-02_session.jsonl",
+    "2026-02-06_session.jsonl",
+    "2026-02-09_session.jsonl"
   ],
-  "last_processed": "2026-01-31T08:44:14.207621"
+  "last_processed": "2026-02-09T01:04:57.471679"
 }

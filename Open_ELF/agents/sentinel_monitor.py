@@ -42,14 +42,14 @@ except ImportError as e:
 try:
     from agent_manager import AgentManager, get_agent_manager
 
-    AGENT_MANAGER_AVAILABLE = True
+    agent_manager_available = True
 except ImportError:
     logging.error("❌ AgentManager not available - falling back to basic mode")
-    AGENT_MANAGER_AVAILABLE = False
+    agent_manager_available = False
 
 # Use centralized logging
 try:
-    from elf_logging import get_logger, log_critical
+    from Open_ELF.utils.elf_logging import get_logger, log_critical
 
     logger = get_logger("sentinel_monitor")
 except ImportError:
@@ -104,7 +104,7 @@ class SentinelMonitor:
 
         # NOUVEAU : Initialiser AgentManager
         self.agent_manager = None
-        if AGENT_MANAGER_AVAILABLE:
+        if agent_manager_available:
             try:
                 self.agent_manager = get_agent_manager()
                 logger.info("✅ AgentManager initialized successfully in Sentinel")

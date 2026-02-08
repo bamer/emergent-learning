@@ -33,7 +33,7 @@ from utils.outcome_inference import (
 )
 
 try:
-    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
 
     logger = get_logger("auto_capture")
 except ImportError:

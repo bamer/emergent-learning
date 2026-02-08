@@ -167,21 +167,6 @@ class OllamaEmbedder:
         tasks = [self.embed_async(text) for text in texts]
         return await asyncio.gather(*tasks)
 
-    def embed_batch_sync(self, texts: List[str]) -> List[Optional[np.ndarray]]:
-        """
-        Sync method to generate embeddings for multiple texts.
-
-        Args:
-            texts: List of texts to embed
-
-        Returns:
-            List of embedding vectors (or None for failures)
-        """
-        try:
-            return asyncio.run(self.embed_batch_async(texts))
-        except Exception:
-            return [None for _ in texts]
-
     async def close(self):
         """Close the HTTP session."""
         if self._session is not None and not self._session.closed:

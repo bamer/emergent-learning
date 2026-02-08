@@ -25,7 +25,13 @@ import requests
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_critical,
+        log_error,
+        log_warning,
+        log_info,
+    )
 
     logger = get_logger("monitoring")
 except ImportError:
@@ -805,30 +811,39 @@ async def get_watcher_status():
         cursor = conn.cursor()
 
         # Get recent watcher activity from event_chronicle
+        # Watcher creates events with event_type LIKE '%watcher%' (e.g., 'file.watcher.updated')
         cursor.execute(
             """
-            SELECT timestamp, event_type, source, data, summary
+            SELECT timestamp, event_type, source, data, summary, status
             FROM event_chronicle
-            WHERE source LIKE '%watcher%' OR event_type LIKE '%watcher%'
+            WHERE event_type LIKE '%watcher%'
             ORDER BY timestamp DESC
             LIMIT 20
             """
         )
 
         logs = []
+        critical_escalations = 0
         for row in cursor.fetchall():
+            level = (
+                row["status"]
+                if row["status"] in ("critical", "warning", "error")
+                else "info"
+            )
+            if row["status"] == "critical":
+                critical_escalations += 1
             logs.append(
                 {
                     "timestamp": row["timestamp"],
-                    "level": "info",
+                    "level": level,
                     "message": row["summary"]
                     or f"{row['event_type']} from {row['source']}",
                     "tier": "tier1",
                 }
             )
 
-        # Check watchdog.log file for additional logs
-        watchdog_log_path = ELF_DIR / "logs" / "watcher.log"
+        # Check unified ELF logger file for additional logs
+        watchdog_log_path = ELF_DIR / "logs" / "elf_watcher.log"
         if watchdog_log_path.exists():
             try:
                 # Read last 50 lines from watcher.log
@@ -867,29 +882,42 @@ async def get_watcher_status():
         )
         is_running = result.returncode == 0
 
-        # Get sentinel cycles for additional context
+        # Get watcher cycles for additional context
+        # Count escalations from watcher events in last hour
         cursor.execute(
             """
             SELECT COUNT(*) as count,
                    MAX(timestamp) as last_check,
-                   COUNT(CASE WHEN status = 'critical' THEN 1 END) as escalations
+                   COUNT(CASE WHEN status IN ('critical') THEN 1 END) as critical_escalations,
+                   COUNT(CASE WHEN status IN ('warning') THEN 1 END) as warning_count
             FROM event_chronicle
-            WHERE event_type = 'sentinel_cycle'
+            WHERE event_type LIKE '%watcher%'
             AND timestamp > datetime('now', '-1 hour')
             """
         )
 
         row = cursor.fetchone()
         last_check = row["last_check"] if row and row["last_check"] else None
-        escalations = row["escalations"] if row and row["escalations"] else 0
+        critical_count = (
+            row["critical_escalations"] if row and row["critical_escalations"] else 0
+        )
+        warning_count = row["warning_count"] if row and row["warning_count"] else 0
         total_cycles = row["count"] if row and row["count"] else 0
 
         conn.close()
 
+        # Determine status based on CRITICAL escalations only (not warnings)
+        # Status is critical ONLY if recent logs show critical entries
+        current_status = "healthy"
+        if critical_count > 0:
+            current_status = "critical"
+        elif warning_count > 0:
+            current_status = "warning"
+
         # Determine current tier based on recent activity
         tier = "idle"
         if is_running:
-            tier = "tier1" if escalations == 0 else "tier2"
+            tier = "tier1" if critical_count == 0 else "tier2"
 
         status = {
             "is_running": is_running,
@@ -898,13 +926,9 @@ async def get_watcher_status():
             "next_check": (datetime.now() + timedelta(seconds=30)).isoformat(),
             "check_interval_seconds": 30,
             "total_checks": total_cycles,
-            "escalations_count": escalations,
-            "current_status": "healthy"
-            if escalations == 0
-            else "warning"
-            if escalations < 3
-            else "critical",
-            "analysis_summary": f"Watcher {'active' if is_running else 'inactive'}. {escalations} escalations in last hour.",
+            "escalations_count": critical_count,
+            "current_status": current_status,
+            "analysis_summary": f"Watcher {'active' if is_running else 'inactive'}. {critical_count} critical, {warning_count} warnings in last hour.",
         }
 
         config = {

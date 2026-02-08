@@ -31,7 +31,7 @@ AGENTS_DIR = Path(__file__).parent.parent.parent.parent / "agents"
 if str(AGENTS_DIR) not in sys.path:
     sys.path.insert(0, str(AGENTS_DIR))
 
-from elf_logging import get_logger, LOGS_DIR
+from Open_ELF.utils.elf_logging import get_logger, LOGS_DIR
 
 # Import orchestrator components
 from unified_orchestrator import UnifiedOrchestrator, AgentType

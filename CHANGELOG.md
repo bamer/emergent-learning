@@ -24,6 +24,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Start script: `scripts/start-ceo-monitor.sh`
   - Reduces manual intervention for CEO-level decisions
 
+- **Pheromone Trail Recording Hook** - Fixed and re-enabled file tracking
+  - Created new `record_trails.py` hook in `~/.opencode/hooks/PostToolUse/`
+  - Added `after_apply()` function to `post_tool_learning.py` hook
+  - Hooks now properly registered with OpenCode (export `after_apply` function)
+  - Tracks Read, edit_file, create_file, Write, Bash, and Grep operations
+  - Uses `trail_helper.lay_trails()` for hotspot analysis
+
 ### Changed
 - **System Startup Script** - Updated `start-elf-system.sh` to launch all services
   - Added startup functions for: Unified Orchestrator, Sentinel Monitor, CEO Inbox Monitor
@@ -47,6 +54,32 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Now uses OpenCode AgentManager with researcher agent
   - Removed deprecated haiku Task tool references
   - Properly saves summaries to `memory/sessions/` directory
+
+- **Pheromone Trails Not Recording** - Root cause was missing OpenCode hook registration
+  - Previous hooks in `PostToolUse/` were missing `after_apply()` function
+  - OpenCode hooks must export `after_apply(tool_name, args, output, session)` to be called
+  - Added proper `after_apply()` function to `post_tool_learning.py`
+  - Created dedicated `record_trails.py` hook for file tracking
+  - Now correctly records to `trails` table on every tool execution
+
+- **Learning Workflow Broken** - Learning extraction was not working since Jan 31st
+  - Root cause: `after_apply()` function was missing from hooks, so OpenCode never called them
+  - Added `after_apply()` function to `post_tool_learning.py` with full learning extraction
+  - Fixed output handling to properly wrap string output in dict format
+  - Now correctly extracts `[LEARNED:domain] markers` and creates heuristics
+  - Test confirmed: 2 new heuristics created from test markers
+
+- **Logger Consolidation** - Merged duplicate logging modules into single unified system
+  - **Before**: Two logging modules existed:
+    1. `Open_ELF/agents/elf_logging.py` - File-based logging (83 imports)
+    2. `Open_ELF/utils/event_logger.py` - Database event logging (4 imports)
+  - **After**: Single unified logging system `Open_ELF/utils/elf_logging.py`
+    - All file-based logging functions: `get_logger()`, `log_info()`, `log_warning()`, `log_error()`, `log_critical()`
+    - All database event functions: `log_event()`, `log_watcher_check()`, `log_file_event()`, `log_orchestrator_event()`, `get_recent_events()`
+    - Event types dictionary included for consistency
+  - Updated all import statements across the codebase
+  - Simplified import: `from Open_ELF.utils.elf_logging import get_logger, log_event, ...`
+  - `event_logger.py` deleted (functionality merged into elf_logging.py)
 
 ## [0.5.2] - 2026-02-07
 

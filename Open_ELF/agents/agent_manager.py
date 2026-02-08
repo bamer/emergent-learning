@@ -18,6 +18,8 @@ Usage:
 """
 
 import json
+import time as _time
+import traceback
 
 import re
 import subprocess
@@ -27,7 +29,7 @@ from typing import Any, Dict, List, Optional
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
 
     logger = get_logger("agent_manager")
 except ImportError:
@@ -123,6 +125,37 @@ class AgentManager:
         self._load_all_agents()
 
         self.logger.info(f"✅ AgentManager initialisé avec {len(self.agents)} agents")
+
+    def _log_session_entry(self, agent_name: str, session_id: str, 
+                           request: str, response: str, 
+                           outcome: str, model_used: str, duration_ms: int = 0):
+        """Log agent interaction to JSONL session file for inter-session memory."""
+        try:
+            logs_dir = Path("/home/bamer/.opencode/emergent-learning/sessions/logs")
+            logs_dir.mkdir(parents=True, exist_ok=True)
+            
+            date_str = datetime.now().strftime("%Y-%m-%d")
+            log_file = logs_dir / f"{date_str}_session.jsonl"
+            
+            # Create concise input summary
+            input_summary = request[:120].replace('\n', ' ')
+            
+            entry = {
+                "ts": datetime.now().isoformat(),
+                "agent": agent_name,
+                "session_id": session_id[:12] if session_id else "",
+                "tool": f"agent:{agent_name}",
+                "input_summary": input_summary,
+                "output_length": len(response) if response else 0,
+                "outcome": outcome,
+                "model_used": model_used,
+                "duration_ms": duration_ms,
+            }
+            
+            with open(log_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(entry, default=str) + '\n')
+        except Exception as e:
+            self.logger.debug(f"Session log write failed: {e}")
 
     def _session_title(self, agent_name: str, date_label: str) -> str:
         return f"ELF {agent_name.title()} Session {date_label}"
@@ -340,33 +373,61 @@ class AgentManager:
             return False
 
     def _sdk_request(self, action: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        # Preflight checks
+        sdk_path = SDK_CLIENT_PATH
+        if not sdk_path.exists():
+            return {"success": False, "error": f"SDK client not found at {sdk_path}"}
+
+        if not hasattr(self, '_bun_available'):
+            import shutil
+            self._bun_available = shutil.which('bun') is not None
+            if not self._bun_available:
+                self.logger.error("bun runtime not found in PATH")
+
+        if not self._bun_available:
+            return {"success": False, "error": "bun runtime not found. Install from https://bun.sh"}
+
         request_body = {
             "action": action,
             "baseUrl": self.opencode_url,
             "payload": payload,
         }
 
-        try:
-            result = subprocess.run(
-                ["bun", str(SDK_CLIENT_PATH)],
-                input=json.dumps(request_body),
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=self.timeout,
-            )
-        except FileNotFoundError as exc:
-            return {"success": False, "error": f"bun not available: {exc}"}
-        except subprocess.TimeoutExpired:
-            return {
-                "success": False,
-                "error": f"Timeout après {self.timeout}s",
-            }
+        max_retries = 2
+        last_error = None
+        for attempt in range(max_retries + 1):
+            try:
+                result = subprocess.run(
+                    ["bun", str(sdk_path)],
+                    input=json.dumps(request_body),
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=self.timeout,
+                )
+                break
+            except subprocess.TimeoutExpired:
+                last_error = f"SDK request timed out after {self.timeout}s (attempt {attempt + 1})"
+                self.logger.warning(last_error)
+                if attempt < max_retries:
+                    _time.sleep(1)
+                    continue
+                return {"success": False, "error": last_error}
+            except FileNotFoundError:
+                return {"success": False, "error": "bun command not found"}
+            except Exception as e:
+                last_error = str(e)
+                self.logger.warning(f"SDK request failed (attempt {attempt + 1}): {last_error}")
+                if attempt < max_retries:
+                    _time.sleep(1)
+                    continue
+                return {"success": False, "error": f"SDK request failed after {max_retries + 1} attempts: {last_error}"}
 
         if result.returncode != 0:
+            stderr_msg = result.stderr[:500] if result.stderr else "No error output"
             return {
                 "success": False,
-                "error": result.stderr.strip() or "SDK client failed",
+                "error": f"SDK exited with code {result.returncode}: {stderr_msg}",
             }
 
         try:
@@ -412,6 +473,7 @@ class AgentManager:
 
         try:
             # S'assurer qu'une session existe
+            _start_time = _time.monotonic()
             session_id = self._ensure_session(agent_name)
 
             if not session_id:
@@ -461,6 +523,17 @@ class AgentManager:
                     f"✅ {agent_name}: Réponse reçue ({len(ai_response)} chars)"
                 )
 
+                _duration = int((_time.monotonic() - _start_time) * 1000)
+                self._log_session_entry(
+                    agent_name=agent_name,
+                    session_id=session_id or "",
+                    request=user_request,
+                    response=ai_response.strip(),
+                    outcome="success",
+                    model_used=agent_config.model,
+                    duration_ms=_duration
+                )
+
                 return {
                     "success": True,
                     "agent": agent_name,
@@ -473,6 +546,16 @@ class AgentManager:
             else:
                 error_msg = prompt_result.get("error", "OpenCode SDK error")
                 self.logger.error(f"❌ {agent_name}: {error_msg}")
+                _duration = int((_time.monotonic() - _start_time) * 1000)
+                self._log_session_entry(
+                    agent_name=agent_name,
+                    session_id=session_id or "",
+                    request=user_request,
+                    response="",
+                    outcome="failure",
+                    model_used=agent_config.model,
+                    duration_ms=_duration
+                )
                 return {
                     "success": False,
                     "error": error_msg,
@@ -482,6 +565,15 @@ class AgentManager:
         except Exception as e:
             error_msg = str(e)
             self.logger.error(f"❌ {agent_name}: {error_msg}")
+            self._log_session_entry(
+                agent_name=agent_name,
+                session_id="",
+                request=user_request,
+                response="",
+                outcome="failure",
+                model_used=self.agents.get(agent_name, AgentConfig(agent_name, {}, "")).model if agent_name in self.agents else "unknown",
+                duration_ms=0
+            )
             return {"success": False, "error": error_msg, "agent": agent_name}
 
     # Méthodes de convenance pour les agents principaux

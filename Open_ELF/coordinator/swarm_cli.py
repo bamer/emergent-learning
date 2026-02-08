@@ -1,83 +1,129 @@
 #!/usr/bin/env python3
 """
-swarm_cli.py - Command-line interface for swarm tasks
+Swarm CLI - Command-line interface for ELF swarm execution.
 
 Usage:
-  python3 swarm_cli.py --task "Refactor API" --agents architect researcher skeptic
-  python3 swarm_cli.py --task "Find bugs" --subtasks "Test edge cases" "Test invalid input" "Test performance"
+    python swarm_cli.py run --task "Analyze authentication system"
+    python swarm_cli.py run --task "Find security vulnerabilities" --mode analysis
+    python swarm_cli.py run --task "Design new API" --agents architect creative skeptic
+    python swarm_cli.py status
+    python swarm_cli.py agents
 """
 
+import argparse
+import json
 import sys
 from pathlib import Path
-from swarm_controller import SwarmController
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from coordinator.swarm_controller import SwarmController, SWARM_MODES, AGENT_ROLES
+
+
+def cmd_run(args):
+    controller = SwarmController(max_workers=args.workers, timeout=args.timeout)
+    custom_agents = args.agents if args.agents else None
+
+    result = controller.execute_swarm(
+        task_description=args.task,
+        mode=args.mode,
+        custom_agents=custom_agents,
+    )
+
+    if args.json_output:
+        for agent_result in result.get("agent_results", {}).values():
+            if "response" in agent_result:
+                agent_result["response_length"] = len(agent_result["response"])
+                agent_result["response"] = agent_result["response"][:200] + "..."
+        print(json.dumps(result, indent=2, default=str))
+    else:
+        print(f"\nTask: {result['task']}")
+        print(f"Status: {result['status']}")
+        print(f"Completed: {result.get('completed_count', 0)}/{result.get('total_count', 0)}")
+        print(f"Learnings: {result.get('total_learnings', 0)}")
+
+        if result.get("all_learnings"):
+            print("\nExtracted Learnings:")
+            for i, learning in enumerate(result["all_learnings"], 1):
+                print(f"  {i}. [{learning['domain']}] {learning['lesson'][:100]}")
+
+        for agent_name, agent_result in result.get("agent_results", {}).items():
+            print(f"\n--- {agent_name} ({agent_result['status']}) ---")
+            if agent_result.get("response"):
+                print(agent_result["response"][:500])
+                if len(agent_result.get("response", "")) > 500:
+                    print(f"  ... ({len(agent_result['response'])} chars total)")
+            elif agent_result.get("error"):
+                print(f"  Error: {agent_result['error']}")
+
+
+def cmd_status(args):
+    try:
+        from Open_ELF.core.coordination import get_coordination_store
+        store = get_coordination_store()
+    except ImportError:
+        from core.coordination import get_coordination_store
+        store = get_coordination_store()
+
+    agents = store.get_all_agents()
+    tasks = store.get_active_tasks()
+
+    print("ELF Coordination Status")
+    print("=" * 40)
+
+    print(f"\nRegistered Agents ({len(agents)}):")
+    for agent in agents:
+        icon = {"active": "+", "stale": "?", "stopped": "-"}.get(agent["status"], "?")
+        print(f"  [{icon}] {agent['name']} (pid:{agent['pid']}, {agent['status']})")
+        print(f"      Last heartbeat: {agent['last_heartbeat']}")
+
+    print(f"\nActive Tasks ({len(tasks)}):")
+    for task in tasks:
+        print(f"  [{task['state']}] {task['id']} (owner: {task['owner']})")
+    if not tasks:
+        print("  No active tasks")
+
+
+def cmd_agents(args):
+    print("Available Swarm Agents:")
+    print("=" * 40)
+    for name, info in AGENT_ROLES.items():
+        print(f"\n  {name}:")
+        print(f"    Role: {info['role']}")
+        print(f"    Perspective: {info['perspective']}")
+
+    print("\n\nSwarm Modes:")
+    for mode, agents in SWARM_MODES.items():
+        print(f"  {mode}: {', '.join(agents)}")
+
 
 def main():
-    import argparse
-    
-    parser = argparse.ArgumentParser(
-        description="Swarm Agent Task Executor",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Execute task with auto-generated subtasks
-  python3 swarm_cli.py --task "Refactor authentication system"
-  
-  # Execute task with specific subtasks
-  python3 swarm_cli.py --task "Find security vulnerabilities" \\
-    --subtasks "Test SQL injection" "Test XSS" "Test CSRF"
-  
-  # Execute with specific agents
-  python3 swarm_cli.py --task "Design API" --agents architect creative researcher
-        """
-    )
-    
-    parser.add_argument('--task', required=True, help='Main task description')
-    parser.add_argument('--subtasks', nargs='+', help='Optional subtasks')
-    parser.add_argument('--agents', nargs='+', default=['architect', 'researcher', 'skeptic', 'creative'],
-                        help='Agents to use (default: all)')
-    parser.add_argument('--output', help='Save results to JSON file')
-    parser.add_argument('--verbose', action='store_true', help='Verbose output')
-    
-    args = parser.parse_args()
-    
-    # Execute swarm
-    print("\n" + "="*70)
-    print("  🐝 SWARM AGENT EXECUTION")
-    print("="*70 + "\n")
-    
-    controller = SwarmController()
-    result = controller.execute_swarm(args.task, args.subtasks)
-    
-    # Save results if requested
-    if args.output:
-        import json
-        output_path = Path(args.output)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(json.dumps(result, indent=2))
-        print(f"\n✅ Results saved to: {args.output}")
-    
-    # Print summary
-    print("\n" + "="*70)
-    print("  📊 SUMMARY")
-    print("="*70)
-    print(f"\nStatus: {result['status']}")
-    print(f"Recommendation: {result['recommendation']}")
-    print(f"Total learnings captured: {len(result['all_learnings'])}")
-    
-    if result['all_learnings']:
-        print("\nTop Learnings:")
-        for i, learning in enumerate(result['all_learnings'][:5], 1):
-            print(f"  {i}. {learning[:70]}...")
-    
-    print("\nAgent Results:")
-    for agent_result in result['agent_results']:
-        status_emoji = "✅" if agent_result['status'] == 'completed' else "❌"
-        print(f"  {status_emoji} {agent_result['agent']}: {agent_result['status']} " 
-              f"({len(agent_result['learnings'])} learnings)")
-    
-    print("\n" + "="*70 + "\n")
-    
-    return 0 if result['status'] == 'success' else 1
+    parser = argparse.ArgumentParser(description="ELF Swarm CLI")
+    subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
-if __name__ == '__main__':
-    sys.exit(main())
+    run_parser = subparsers.add_parser("run", help="Execute a swarm task")
+    run_parser.add_argument("--task", "-t", required=True, help="Task description")
+    run_parser.add_argument("--mode", "-m", default="all", choices=list(SWARM_MODES.keys()))
+    run_parser.add_argument("--agents", "-a", nargs="+", choices=list(AGENT_ROLES.keys()))
+    run_parser.add_argument("--workers", "-w", type=int, default=4)
+    run_parser.add_argument("--timeout", type=int, default=120)
+    run_parser.add_argument("--json", dest="json_output", action="store_true")
+
+    subparsers.add_parser("status", help="Show coordination status")
+    subparsers.add_parser("agents", help="List available agents")
+
+    args = parser.parse_args()
+
+    if args.command == "run":
+        cmd_run(args)
+    elif args.command == "status":
+        cmd_status(args)
+    elif args.command == "agents":
+        cmd_agents(args)
+    else:
+        parser.print_help()
+
+
+if __name__ == "__main__":
+    main()

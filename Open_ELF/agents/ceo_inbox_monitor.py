@@ -28,7 +28,7 @@ sys.path.insert(0, str(ROOT_DIR / "Open_ELF" / "agents"))
 
 # Import centralized elf_logging
 try:
-    from elf_logging import get_logger, log_info, log_error, log_warning
+    from Open_ELF.utils.elf_logging import get_logger, log_info, log_error, log_warning
 
     logger = get_logger("ceo_inbox_monitor")
 except ImportError:
