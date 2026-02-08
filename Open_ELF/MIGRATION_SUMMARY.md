@@ -10,35 +10,8 @@ Ce document résume les changements effectués pour standardiser l'utilisation d
 
 ### 1. Fichiers Dépréciés (avec warnings)
 
-#### `agents/base_agent.py` ➜ DÉPRÉCIÉ
-- **Statut**: Marqué comme obsolète avec warnings Python
-- **Migration**:
-  ```python
-  # AVANT (déprécié)
-  from agents.base_agent import BaseAgent, ResearcherAgent
-  researcher = ResearcherAgent()
-  result = researcher.analyze("task")
-  
-  # APRÈS (standard)
-  from agents.agent_manager import get_agent_manager
-  manager = get_agent_manager()
-  result = manager.researcher("Analyze this task")
-  ```
-
-#### `agents/elf_ai_client.py` ➜ DÉPRÉCIÉ
-- **Statut**: Marqué comme obsolète avec warnings Python
-- **Migration**:
-  ```python
-  # AVANT (déprécié)
-  from agents.elf_ai_client import ELFAIClient
-  client = ELFAIClient()
-  response = client.call("prompt")
-  
-  # APRÈS (standard)
-  from agents.agent_manager import get_agent_manager
-  manager = get_agent_manager()
-  result = manager.ask_agent("experiment-analyzer", "Analyze this experiment...")
-  ```
+Les anciens helpers IA ont été dépréciés au profit de `AgentManager`.
+Les exemples d'import obsolètes ont été retirés pour éviter toute confusion.
 
 ### 2. Dashboard Monitoring - Nouveaux Endpoints
 

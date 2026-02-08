@@ -125,8 +125,9 @@ export function CeoStatusPanel({
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [ceoRunning, setCeoRunning] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'items' | 'history' | 'actions' | 'escalations'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'items' | 'history' | 'actions'>('overview');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
   
   // Refs to prevent race conditions
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -325,6 +326,19 @@ Please check the ceo-inbox directory and process any pending items. For each ite
     });
   };
 
+  // Toggle section expansion
+  const toggleSection = (section: string) => {
+    setExpandedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(section)) {
+        newSet.delete(section);
+      } else {
+        newSet.add(section);
+      }
+      return newSet;
+    });
+  };
+
   const getPriorityConfig = (priority: string) => {
     const priorityKey = priority.includes('Critical') ? 'Critical' :
                        priority.includes('High') ? 'High' :
@@ -411,7 +425,6 @@ Please check the ceo-inbox directory and process any pending items. For each ite
         {[
           { id: 'overview', label: 'Overview', icon: Activity },
           { id: 'items', label: 'Inbox', icon: Inbox },
-          { id: 'escalations', label: 'Escalations', icon: AlertTriangle },
           { id: 'history', label: 'History', icon: Clock },
           { id: 'actions', label: 'Actions', icon: Zap }
         ].map(tab => (
@@ -616,76 +629,104 @@ Please check the ceo-inbox directory and process any pending items. For each ite
                     <p className="text-xs text-slate-500 mt-1">System operating normally</p>
                   </div>
                 )}
-              </div>
-            )}
 
-            {/* Escalations Tab */}
-            {selectedTab === 'escalations' && (
-              <div className="space-y-3">
-                {escalations.length === 0 ? (
-                  <div className="text-center text-slate-500 py-8">
-                    <CheckCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No recent escalations</p>
-                    <p className="text-xs mt-1">System operating normally</p>
-                  </div>
-                ) : (
-                  escalations.map((escalation, index) => {
-                    const severityColors = {
-                      critical: { bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400' },
-                      high: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400' },
-                      medium: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400' },
-                      low: { bg: 'bg-slate-500/10', border: 'border-slate-500/20', text: 'text-slate-400' }
-                    };
-                    const colors = severityColors[escalation.severity] || severityColors.low;
-                    
-                    return (
-                      <div
-                        key={escalation.id || index}
-                        className={`p-3 rounded-lg border ${colors.border} ${colors.bg}`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <span className={`flex-shrink-0 px-2 py-0.5 rounded text-xs font-medium ${colors.bg} ${colors.text}`}>
-                            {escalation.severity.toUpperCase()}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-slate-300">{escalation.message}</p>
-                            
-                            {/* Response or Action */}
-                            {(escalation.response || escalation.action_taken) && (
-                              <div className="mt-2 p-2 bg-slate-700/30 rounded text-xs">
-                                {escalation.response && (
-                                  <div className="mb-1">
-                                    <span className="text-emerald-400 font-medium">Response:</span>
-                                    <span className="text-slate-300 ml-1">{escalation.response}</span>
-                                  </div>
-                                )}
-                                {escalation.action_taken && (
-                                  <div>
-                                    <span className="text-violet-400 font-medium">Action:</span>
-                                    <span className="text-slate-300 ml-1">{escalation.action_taken}</span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            
-                            {/* Metadata */}
-                            <div className="flex items-center gap-3 text-xs text-slate-500 mt-2">
-                              <Clock className="w-3 h-3" />
-                              <span>{formatTime(escalation.timestamp)}</span>
-                              <span className={`px-1.5 py-0.5 rounded ${
-                                escalation.status === 'resolved' ? 'bg-emerald-500/20 text-emerald-400' :
-                                escalation.status === 'acknowledged' ? 'bg-blue-500/20 text-blue-400' :
-                                'bg-amber-500/20 text-amber-400'
-                              }`}>
-                                {escalation.status}
-                              </span>
-                            </div>
-                          </div>
+                {/* Recent Escalations */}
+                <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden">
+                  <button
+                    onClick={() => toggleSection('escalations')}
+                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-400" />
+                      <span className="font-medium text-slate-200">Recent Escalations</span>
+                      {escalations.length > 0 && (
+                        <span className={`text-xs px-2 py-0.5 rounded ${
+                          escalations.some(e => e.severity === 'critical') ? 'bg-red-500/20 text-red-400' :
+                          escalations.some(e => e.severity === 'high') ? 'bg-amber-500/20 text-amber-400' :
+                          'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {escalations.length}
+                        </span>
+                      )}
+                    </div>
+                    {expandedSections.has('escalations') ? (
+                      <ChevronDown className="w-4 h-4 text-slate-400" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    )}
+                  </button>
+
+                  {expandedSections.has('escalations') && (
+                    <div className="border-t border-slate-700/50">
+                      {escalations.length === 0 ? (
+                        <div className="p-4 text-center">
+                          <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-3 opacity-50" />
+                          <div className="text-slate-400 text-sm">No recent escalations</div>
+                          <div className="text-slate-500 text-xs mt-1">System operating normally</div>
                         </div>
-                      </div>
-                    );
-                  })
-                )}
+                      ) : (
+                        <div className="max-h-64 overflow-y-auto">
+                          {escalations.map((escalation, index) => {
+                            const severityColors = {
+                              critical: { bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400' },
+                              high: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400' },
+                              medium: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400' },
+                              low: { bg: 'bg-slate-500/10', border: 'border-slate-500/20', text: 'text-slate-400' }
+                            };
+                            const colors = severityColors[escalation.severity] || severityColors.low;
+                            
+                            return (
+                              <div
+                                key={escalation.id || index}
+                                className={`px-4 py-3 border-b border-slate-700/30 last:border-0 ${colors.bg} ${colors.border}`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <span className={`flex-shrink-0 px-2 py-0.5 rounded text-xs font-medium ${colors.bg} ${colors.text}`}>
+                                    {escalation.severity.toUpperCase()}
+                                  </span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm text-slate-300 mb-1">{escalation.message}</p>
+                                    
+                                    {/* Response or Action */}
+                                    {(escalation.response || escalation.action_taken) && (
+                                      <div className="mt-2 p-2 bg-slate-700/30 rounded text-xs">
+                                        {escalation.response && (
+                                          <div className="mb-1">
+                                            <span className="text-emerald-400 font-medium">Response:</span>
+                                            <span className="text-slate-300 ml-1">{escalation.response}</span>
+                                          </div>
+                                        )}
+                                        {escalation.action_taken && (
+                                          <div>
+                                            <span className="text-violet-400 font-medium">Action:</span>
+                                            <span className="text-slate-300 ml-1">{escalation.action_taken}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                    
+                                    {/* Metadata */}
+                                    <div className="flex items-center gap-3 text-xs text-slate-500 mt-2">
+                                      <Clock className="w-3 h-3" />
+                                      <span>{formatTime(escalation.timestamp)}</span>
+                                      <span className={`px-1.5 py-0.5 rounded ${
+                                        escalation.status === 'resolved' ? 'bg-emerald-500/20 text-emerald-400' :
+                                        escalation.status === 'acknowledged' ? 'bg-blue-500/20 text-blue-400' :
+                                        'bg-amber-500/20 text-amber-400'
+                                      }`}>
+                                        {escalation.status}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

@@ -20,12 +20,10 @@ Usage:
 import json
 
 import re
-import sys
-import time
+import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Callable
-import requests
+from typing import Any, Dict, List, Optional
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
@@ -44,6 +42,8 @@ import logging  # Import here for class type hints
 DEFAULT_AGENTS_DIR = Path("/home/bamer/.opencode/agents/OPC_ELF_System_Agents")
 DEFAULT_OPENCODE_URL = "http://localhost:4096"
 DEFAULT_MODEL = "llama/nemotron-v3-coder"  # Modèle rapide et gratuit
+DEFAULT_WORKDIR = Path("/home/bamer/.opencode/emergent-learning")
+SDK_CLIENT_PATH = Path(__file__).with_name("opencode_sdk_client.mjs")
 
 
 class AgentConfig:
@@ -96,6 +96,7 @@ class AgentManager:
         self,
         opencode_url: str = DEFAULT_OPENCODE_URL,
         agents_dir: Optional[Path] = None,
+        workdir: Optional[Path] = None,
         timeout: int = 600,
         logger: Optional[logging.Logger] = None,
     ):
@@ -111,6 +112,7 @@ class AgentManager:
         self.opencode_url = opencode_url.rstrip("/")
         self.agents_dir = agents_dir or DEFAULT_AGENTS_DIR
         self.timeout = timeout
+        self.workdir = workdir or DEFAULT_WORKDIR
         self.logger = logger or logging.getLogger("AgentManager")
 
         # Stockage
@@ -121,6 +123,9 @@ class AgentManager:
         self._load_all_agents()
 
         self.logger.info(f"✅ AgentManager initialisé avec {len(self.agents)} agents")
+
+    def _session_title(self, agent_name: str, date_label: str) -> str:
+        return f"ELF {agent_name.title()} Session {date_label}"
 
     def _load_all_agents(self):
         """Charge tous les agents depuis les fichiers .md"""
@@ -232,91 +237,142 @@ class AgentManager:
         """
         try:
             # D'abord, essayer de réutiliser une session existante
-            response = requests.get(
-                f"{self.opencode_url}/session", timeout=self.timeout
-            )
+            date_label = datetime.now().strftime("%d-%m-%Y")
+            expected_title = self._session_title(agent_config.name, date_label)
 
-            if response.status_code == 200:
-                sessions = response.json()
+            list_result = self._sdk_request(
+                "session_list",
+                payload={"directory": str(self.workdir)},
+            )
+            if list_result.get("success"):
+                sessions = list_result.get("data", [])
                 for session in sessions:
-                    title = session.get("title", "").lower()
-                    if agent_config.name.lower() in title:
+                    title = session.get("title", "")
+                    if title == expected_title:
                         session_id = session.get("id")
                         if session_id:
                             self.logger.debug(
                                 f"♻️ Session existante trouvée: {session_id[:8]}..."
                             )
                             return session_id
+            else:
+                self.logger.warning(
+                    "⚠️ Impossible de lister les sessions: %s",
+                    list_result.get("error"),
+                )
 
             # Créer une nouvelle session
-            response = requests.post(
-                f"{self.opencode_url}/session",
-                json={
-                    "title": f"ELF {agent_config.name.title()} Agent Session Bamer Test",
-                    "directory": str(Path.home() / ".opencode" / "emergent-learning"),
-                    "agent": agent_config.name,
+            create_result = self._sdk_request(
+                "session_create",
+                payload={
+                    "title": expected_title,
+                    "directory": str(self.workdir),
                 },
-                timeout=self.timeout,
             )
-
-            if response.status_code in [200, 201]:
-                session_data = response.json()
+            if create_result.get("success"):
+                session_data = create_result.get("data", {})
                 session_id = session_data.get("id")
 
                 if session_id:
                     # Initialiser l'agent via binding explicite (AGENTS.md)
-                    self._init_session_agent(session_id, agent_config.name)
+                    self._init_session_agent(session_id, agent_config)
                     return session_id
             else:
-                self.logger.error(f"❌ Échec création session: {response.status_code}")
+                self.logger.error(
+                    "❌ Échec création session: %s", create_result.get("error")
+                )
 
         except Exception as e:
             self.logger.error(f"❌ Erreur création session: {e}")
 
         return None
 
-    def _init_session_agent(self, session_id: str, agent_name: str) -> None:
+    def _init_session_agent(self, session_id: str, agent_config: AgentConfig) -> None:
         """
         Initialise la session avec un binding explicite d'agent.
 
         Args:
             session_id: ID de session
-            agent_name: Nom de l'agent
+            agent_config: Configuration de l'agent
         """
         try:
-            response = requests.post(
-                f"{self.opencode_url}/session/{session_id}/message",
-                json={
-                    "agent": agent_name,
+            provider_id, _, model_id = agent_config.model.partition("/")
+            init_result = self._sdk_request(
+                "session_prompt",
+                payload={
+                    "sessionId": session_id,
+                    "directory": str(self.workdir),
+                    "agent": agent_config.name,
+                    "model": {"providerID": provider_id, "modelID": model_id},
                     "noReply": True,
                     "parts": [
-                        {"type": "text", "text": f"Initialize agent {agent_name}"}
+                        {
+                            "type": "text",
+                            "text": f"Initialize agent {agent_config.name}",
+                        }
                     ],
                 },
-                timeout=self.timeout,
             )
 
-            if response.status_code == 200:
-                self.logger.debug(f"✅ Agent initialisé pour {agent_name}")
+            if init_result.get("success"):
+                self.logger.debug(f"✅ Agent initialisé pour {agent_config.name}")
             else:
                 self.logger.warning(
-                    f"⚠️ Échec initialisation agent {agent_name}: {response.status_code}"
+                    "⚠️ Échec initialisation agent %s: %s",
+                    agent_config.name,
+                    init_result.get("error"),
                 )
 
         except Exception as e:
-            self.logger.error(f"❌ Erreur initialisation agent {agent_name}: {e}")
+            self.logger.error(
+                f"❌ Erreur initialisation agent {agent_config.name}: {e}"
+            )
 
     def _is_session_valid(self, session_id: str) -> bool:
         """Vérifie si une session est toujours valide"""
-        # test debug on recree une session juste pour debut le truc de l'agent
-        return False
         try:
-            response = requests.get(
-                f"{self.opencode_url}/session/{session_id}", timeout=10
+            result = self._sdk_request(
+                "session_get",
+                payload={"sessionId": session_id, "directory": str(self.workdir)},
             )
-            return response.status_code == 200
-        except:
+            return bool(result.get("success"))
+        except Exception:
             return False
+
+    def _sdk_request(self, action: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        request_body = {
+            "action": action,
+            "baseUrl": self.opencode_url,
+            "payload": payload,
+        }
+
+        try:
+            result = subprocess.run(
+                ["bun", str(SDK_CLIENT_PATH)],
+                input=json.dumps(request_body),
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=self.timeout,
+            )
+        except FileNotFoundError as exc:
+            return {"success": False, "error": f"bun not available: {exc}"}
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "error": f"Timeout après {self.timeout}s",
+            }
+
+        if result.returncode != 0:
+            return {
+                "success": False,
+                "error": result.stderr.strip() or "SDK client failed",
+            }
+
+        try:
+            return json.loads(result.stdout)
+        except json.JSONDecodeError as exc:
+            return {"success": False, "error": f"Réponse SDK invalide: {exc}"}
 
     def ask_agent(
         self,
@@ -380,17 +436,19 @@ class AgentManager:
                 "/"
             )  # simplest, no error‑prone unpacking
             # Envoyer la requête à OpenCode
-            response = requests.post(
-                f"{self.opencode_url}/session/{session_id}/message",
-                json={
+            prompt_result = self._sdk_request(
+                "session_prompt",
+                payload={
+                    "sessionId": session_id,
+                    "directory": str(self.workdir),
+                    "agent": agent_config.name,
                     "model": {"providerID": provider_id, "modelID": model_id},
                     "parts": [{"type": "text", "text": message}],
                 },
-                timeout=self.timeout,
             )
 
-            if response.status_code == 200:
-                data = response.json()
+            if prompt_result.get("success"):
+                data = prompt_result.get("data", {})
                 parts = data.get("parts", [])
 
                 # Extraire la réponse texte
@@ -413,7 +471,7 @@ class AgentManager:
                     "model_used": agent_config.model,
                 }
             else:
-                error_msg = f"OpenCode API error: {response.status_code}"
+                error_msg = prompt_result.get("error", "OpenCode SDK error")
                 self.logger.error(f"❌ {agent_name}: {error_msg}")
                 return {
                     "success": False,
@@ -421,11 +479,6 @@ class AgentManager:
                     "agent": agent_name,
                     "request": user_request,
                 }
-
-        except requests.exceptions.Timeout:
-            error_msg = f"Timeout après {self.timeout}s"
-            self.logger.error(f"⏰ {agent_name}: {error_msg}")
-            return {"success": False, "error": error_msg, "agent": agent_name}
         except Exception as e:
             error_msg = str(e)
             self.logger.error(f"❌ {agent_name}: {error_msg}")
@@ -527,8 +580,9 @@ class AgentManager:
 
         session = self.sessions[agent_name]
         try:
-            requests.delete(
-                f"{self.opencode_url}/session/{session.session_id}", timeout=10
+            self._sdk_request(
+                "session_delete",
+                payload={"sessionId": session.session_id, "directory": str(self.workdir)},
             )
             del self.sessions[agent_name]
             self.logger.info(f"🗑️ Session nettoyée pour {agent_name}")

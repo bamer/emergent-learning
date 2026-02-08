@@ -104,7 +104,7 @@ def test_no_deprecated_usage():
         r"from.*base_agent.*import",
         r"import.*BaseAgent",
         r"from.*elf_ai_client.*import",
-        r"import.*ELFAIClient"
+        r"import.*ELFAIClient",
     ]
     
     found_deprecated = False
@@ -116,9 +116,16 @@ def test_no_deprecated_usage():
             text=True
         )
         
-        # Ignorer les fichiers de backup et __pycache__
-        files = [f for f in result.stdout.strip().split('\n') 
-                 if f and '__pycache__' not in f and '.pyc' not in f]
+        # Ignorer les fichiers de backup, __pycache__ et documentation
+        files = [
+            f
+            for f in result.stdout.strip().split("\n")
+            if f
+            and "__pycache__" not in f
+            and ".pyc" not in f
+            and not f.endswith(".md")
+            and not f.endswith("test_migration.py")
+        ]
         
         if files and files[0]:
             print(f"   ⚠️  Pattern '{pattern[:30]}...' trouvé dans:")

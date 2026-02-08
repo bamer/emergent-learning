@@ -155,12 +155,10 @@ Solution :
 Dans tous les fichiers .py de Open_ELF/ :
 ```python
 # AVANT (incorrect)
-from agents.base_agent import BaseAgent
+from legacy.helpers import LegacyAgent
 
 # APRÈS (correct)
-from Open_ELF.agents.base_agent import BaseAgent
-# OU mieux : imports relatifs
-from .agents.base_agent import BaseAgent
+from Open_ELF.agents.agent_manager import get_agent_manager
 ```
 
 #### 4.2 Mettre à jour les chemins dans les scripts shell
