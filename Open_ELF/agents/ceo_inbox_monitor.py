@@ -264,7 +264,7 @@ You have received an escalation that requires your attention:
         logger.info("=" * 60)
         logger.info("🚀 CEO Inbox Monitor Starting")
         logger.info(f"   Check Interval: {self.check_interval}s")
-        logger.info(f"   AI Interval: {self.ai_interval}s")
+        logger.info("   Processing: AI only (CEO agent)")
         logger.info("=" * 60)
 
         self.running = True

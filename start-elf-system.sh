@@ -52,6 +52,7 @@ EVENT_BRIDGE_PID=""
 FRONTEND_PID=""
 WATCHER_PID=""
 LEARNING_CAPTURE_PID=""
+CEO_MONITOR_PID=""  # CEO Inbox Monitor
 RUNNING=true
 OPENCODE_EXTERNAL=false  # true si OpenCode est déjà démarré manuellement
 
@@ -91,6 +92,11 @@ cleanup() {
         sleep 1
         kill -9 "${LEARNING_CAPTURE_PID}" 2>/dev/null || true
     fi
+    if [[ -n "${CEO_MONITOR_PID:-}" ]]; then
+        kill "${CEO_MONITOR_PID}" 2>/dev/null || true
+        sleep 1
+        kill -9 "${CEO_MONITOR_PID}" 2>/dev/null || true
+    fi
     
     # Kill tous les processus liés à Open_ELF et dashboard
     pkill -f "opencode serve" 2>/dev/null || true
@@ -99,6 +105,7 @@ cleanup() {
     pkill -f "npm run dev" 2>/dev/null || true
     pkill -f "Open_ELF/watcher/launcher.py" 2>/dev/null || true
     pkill -f "background-learning-capture.py" 2>/dev/null || true
+    pkill -f "Open_ELF/agents/ceo_inbox_monitor.py" 2>/dev/null || true
     
     log_success "✅ Nettoyage terminé"
     log "👋 Au revoir!"
@@ -326,6 +333,43 @@ start_learning_capture() {
     fi
 }
 
+# Démarrer le CEO Inbox Monitor
+start_ceo_monitor() {
+    log "👔 Démarrage du CEO Inbox Monitor..."
+    
+    local ceo_monitor_script="${ELF_DIR}/agents/ceo_inbox_monitor.py"
+    
+    # Vérifier que le script existe
+    if [[ ! -f "${ceo_monitor_script}" ]]; then
+        log_warning "⚠️ Script CEO Inbox Monitor introuvable: ${ceo_monitor_script}"
+        return 0  # Continuer sans le monitor
+    fi
+    
+    # Tuer tout processus existant avant de lancer
+    log "🔄 Arrêt des anciennes instances du CEO monitor..."
+    pkill -f "Open_ELF/agents/ceo_inbox_monitor.py" 2>/dev/null || true
+    sleep 1
+    
+    # Démarrer le monitor en arrière-plan
+    cd "${SCRIPT_DIR}"
+    python3 "${ceo_monitor_script}" start >"${LOGS_DIR}/ceo-monitor.log" 2>&1 &
+    CEO_MONITOR_PID=$!
+    cd - >/dev/null
+    
+    # Attendre quelques secondes pour laisser démarrer
+    sleep 3
+    
+    # Vérifier qu'il tourne
+    if is_running "${CEO_MONITOR_PID}"; then
+        log_success "✅ CEO Inbox Monitor démarré (PID: ${CEO_MONITOR_PID})"
+        log_info "   📬 Traitement autonome des escalations"
+        return 0
+    else
+        log_warning "⚠️ CEO Inbox Monitor non démarré"
+        return 0  # Continuer même si non prêt
+    fi
+}
+
 # Démarrer le Dashboard Frontend
 start_frontend() {
     log "🚀 Démarrage du Dashboard Frontend (port 3001)..."
@@ -420,6 +464,12 @@ show_status() {
     else
         echo "⚪ Learning Capture (non actif)"
     fi
+    
+    if is_running "${CEO_MONITOR_PID}"; then
+        echo "✅ CEO Monitor (PID: ${CEO_MONITOR_PID})"
+    else
+        echo "⚪ CEO Monitor (non actif)"
+    fi
     echo "----------------------------------------"
 }
 
@@ -444,6 +494,7 @@ test_mode() {
     start_event_bridge || return 1
     start_watcher || return 1
     start_learning_capture || return 0  # Ne pas bloquer si échec
+    start_ceo_monitor || return 0  # CEO Inbox Monitor
     
     show_status
     show_urls
@@ -478,6 +529,7 @@ all_mode() {
     start_watcher || return 1
     start_frontend || return 1
     start_learning_capture || return 0  # Ne pas bloquer si échec
+    start_ceo_monitor || return 0  # CEO Inbox Monitor
     
     show_status
     show_urls
@@ -505,6 +557,7 @@ no_opencode_mode() {
     start_watcher || return 1
     start_frontend || return 1
     start_learning_capture || return 0  # Ne pas bloquer si échec
+    start_ceo_monitor || return 0  # CEO Inbox Monitor
     
     show_status
     show_urls

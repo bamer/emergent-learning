@@ -90,19 +90,19 @@ def patch_sync_golden_rules():
     replacements = [
         (
             "def run():",
-            "def run():\n    try:\n        from sgr_logger import log_start, log_success, log_error, log_info\n        log_start()\n    except:\n        pass",
+            "def run():\n    try:\n        from hooks.lib.sgr_logger import log_start, log_success, log_error, log_info\n        log_start()\n    except:\n        pass",
         ),
         (
             "if sync_golden_rules():",
-            'if sync_golden_rules():\n            try:\n                from sgr_logger import log_success\n                log_success("Synced golden-rules.md to database")\n            except:\n                pass',
+            'if sync_golden_rules():\n            try:\n                from hooks.lib.sgr_logger import log_success\n                log_success("Synced golden-rules.md to database")\n            except:\n                pass',
         ),
         (
             'print(f"[SYNC] {result}")',
-            'try:\n            from sgr_logger import log_info\n            log_info(result)\n        except:\n            pass\n        print(f"[SYNC] {result}")',
+            'try:\n            from hooks.lib.sgr_logger import log_info\n            log_info(result)\n        except:\n            pass\n        print(f"[SYNC] {result}")',
         ),
         (
             'except Exception as e:\n        print(f"[WARN] Golden rules sync failed: {e}")',
-            'except Exception as e:\n        print(f"[WARN] Golden rules sync failed: {e}")\n        try:\n            from sgr_logger import log_error\n            log_error(f"Golden rules sync failed: {e}")\n        except:\n            pass',
+            'except Exception as e:\n        print(f"[WARN] Golden rules sync failed: {e}")\n        try:\n            from hooks.lib.sgr_logger import log_error\n            log_error(f"Golden rules sync failed: {e}")\n        except:\n            pass',
         ),
     ]
 

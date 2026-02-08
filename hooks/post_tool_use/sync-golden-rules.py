@@ -86,7 +86,7 @@ def sync_golden_rules():
     except Exception as e:
         print(f"[WARN] Golden rules sync failed: {e}")
         try:
-            from sgr_logger import log_error
+            from hooks.lib.sgr_logger import log_error
 
             log_error(f"Golden rules sync failed: {e}")
         except:
@@ -106,7 +106,7 @@ def run():
             f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] [DEBUG] sync-golden-rules START\n"
         )
     try:
-        from sgr_logger import log_start, log_success, log_error, log_info
+        from hooks.lib.sgr_logger import log_start, log_success, log_error, log_info
 
         log_start()
     except:
@@ -120,7 +120,7 @@ def run():
     if current_hash and current_hash != last_hash:
         if sync_golden_rules():
             try:
-                from sgr_logger import log_success
+                from hooks.lib.sgr_logger import log_success
 
                 log_success("Synced golden-rules.md to database")
             except:
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     result = run()
     if result:
         try:
-            from sgr_logger import log_info
+            from hooks.lib.sgr_logger import log_info
 
             log_info(result)
         except:
