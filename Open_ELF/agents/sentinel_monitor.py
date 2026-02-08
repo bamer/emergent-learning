@@ -165,13 +165,21 @@ class SentinelMonitor:
 
                 # Construire le prompt selon le type de mission
                 if mission_type == "sentinel_monitoring":
-                    prompt = f"""@sentinel Analyze this sentinel monitoring data:
+                    prompt = f"""Check the system for any defect, here is the sentinel data :
 
 {json.dumps(data, indent=2)}
 
 Please:
-1. Analyze the severity of the issue
-2. Identify root causes
+1. Check quickly the core componement of the system and ensure they are running :
+- Dashboard Backend 
+- Event Bridge 
+- Dashboard Frontend
+- Watcher 
+- Sentinel 
+- Orchestrator 
+- Learning Capture 
+- CEO Monitor
+2. If not working : Identify root causes
 3. Depend of severity take or Recommend immediate actions
 4. Create an escalation file in ceo-inbox/ if critical
 
@@ -368,7 +376,18 @@ Do your mission then Respond with a detailed analysis."""
 
             # Appeler l'agent Sentinel avec son vrai prompt système
             result = self.agent_manager.sentinel(
-                request="Analyze the current system metrics and provide a comprehensive health assessment. "
+                request="Check and test the current real system state"
+                "1. Check quickly the core componement of the system and ensure they are running :"
+                "- Dashboard Backend "
+                "- Event Bridge "
+                "- Dashboard Frontend"
+                "- Watcher "
+                "- Sentinel "
+                "- Orchestrator "
+                "- Learning Capture "
+                "- CEO Monitor"
+                ""
+                "Depend of severity take or Recommend immediate actions then provide a comprehensive health assessment. "
                 "Focus on: 1) Overall system status, 2) Anomalies detected, 3) Security concerns, "
                 "4) Performance issues, 5) Recommended actions with priorities.",
                 context=context,

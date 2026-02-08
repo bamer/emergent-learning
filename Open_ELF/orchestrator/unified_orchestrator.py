@@ -556,7 +556,7 @@ class UnifiedOrchestrator:
             # Call unified-orchestrator agent via AgentManager
             result = self.agent_manager.ask_agent(
                 "unified-orchestrator",
-                f"Analyze the current system state and provide insights:\n\n{self._format_state_for_ai(system_state)}",
+                f"Check the current for any defect and take apropriate actions:\n\n{self._format_state_for_ai(system_state)}",
             )
 
             if result.get("success"):

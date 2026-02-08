@@ -257,6 +257,7 @@ class CheckinOrchestrator:
             ("OpenCode Server", status["opencode_server"]),
             ("EventBridge", status["event_bridge"]),
             ("UnifiedOrchestrator", status["unified_orchestrator"]),
+            ("Sentinel Monitor", status["sentinel"]),
             ("Dashboard Backend", status["dashboard_backend"]),
             ("Dashboard Frontend", status["dashboard_frontend"]),
             ("Watcher", status["watcher"]),

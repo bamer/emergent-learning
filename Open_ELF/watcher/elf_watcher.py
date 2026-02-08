@@ -198,7 +198,7 @@ class ElfWatcher:
 
             # Appeler l'agent Watcher avec son vrai prompt système
             result = self.agent_manager.watcher(
-                request="Analyze the current system state and engage necessary actions if needed than make a concise report. "
+                request="Check the current system state and engage necessary actions if needed than make a concise report. "
                 "Focus on: 1) Anomalies detected, "
                 "2) Recommended actions.",
                 context=context,

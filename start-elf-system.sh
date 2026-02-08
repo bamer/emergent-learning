@@ -392,7 +392,7 @@ start_orchestrator() {
     
     # Démarrer l'orchestrator en arrière-plan
     cd "${ELF_DIR}/orchestrator"
-    python3 "${orchestrator_script}" >"${LOGS_DIR}/orchestrator.log" 2>&1 &
+    python3 "${orchestrator_script}" start >"${LOGS_DIR}/orchestrator.log" 2>&1 &
     local orchestrator_script_pid=$!
     cd - >/dev/null
     
