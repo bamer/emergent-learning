@@ -104,8 +104,11 @@ cleanup() {
     pkill -f "event_bridge.py" 2>/dev/null || true
     pkill -f "npm run dev" 2>/dev/null || true
     pkill -f "Open_ELF/watcher/launcher.py" 2>/dev/null || true
+    pkill -f "Open_ELF/watcher/elf_watcher.py" 2>/dev/null || true
     pkill -f "background-learning-capture.py" 2>/dev/null || true
     pkill -f "Open_ELF/agents/ceo_inbox_monitor.py" 2>/dev/null || true
+    pkill -f "Open_ELF/orchestrator/unified_orchestrator.py" 2>/dev/null || true
+    pkill -f "Open_ELF/agents/sentinel_monitor.py" 2>/dev/null || true
     
     log_success "✅ Nettoyage terminé"
     log "👋 Au revoir!"
@@ -370,6 +373,80 @@ start_ceo_monitor() {
     fi
 }
 
+# Démarrer l'Unified Orchestrator
+start_orchestrator() {
+    log "🧠 Démarrage de l'Unified Orchestrator..."
+    
+    local orchestrator_script="${ELF_DIR}/orchestrator/unified_orchestrator.py"
+    
+    # Vérifier que le script existe
+    if [[ ! -f "${orchestrator_script}" ]]; then
+        log_warning "⚠️ Script Orchestrator introuvable: ${orchestrator_script}"
+        return 0  # Continuer sans l'orchestrator
+    fi
+    
+    # Tuer tout processus existant avant de lancer
+    log "🔄 Arrêt des anciennes instances de l'orchestrator..."
+    pkill -f "Open_ELF/orchestrator/unified_orchestrator.py" 2>/dev/null || true
+    sleep 1
+    
+    # Démarrer l'orchestrator en arrière-plan
+    cd "${ELF_DIR}/orchestrator"
+    python3 "${orchestrator_script}" >"${LOGS_DIR}/orchestrator.log" 2>&1 &
+    local orchestrator_script_pid=$!
+    cd - >/dev/null
+    
+    # Attendre quelques secondes pour laisser démarrer
+    sleep 3
+    
+    # Vérifier qu'il tourne
+    if is_running "${orchestrator_script_pid}"; then
+        log_success "✅ Unified Orchestrator démarré (PID: ${orchestrator_script_pid})"
+        log_info "   🎯 Décision-making centralisé"
+        return 0
+    else
+        log_warning "⚠️ Unified Orchestrator non démarré"
+        return 0  # Continuer même si non prêt
+    fi
+}
+
+# Démarrer la Sentinel Monitor
+start_sentinel() {
+    log "🛡️ Démarrage de la Sentinel Monitor..."
+    
+    local sentinel_script="${ELF_DIR}/agents/sentinel_monitor.py"
+    
+    # Vérifier que le script existe
+    if [[ ! -f "${sentinel_script}" ]]; then
+        log_warning "⚠️ Script Sentinel introuvable: ${sentinel_script}"
+        return 0  # Continuer sans la sentinel
+    fi
+    
+    # Tuer tout processus existant avant de lancer
+    log "🔄 Arrêt des anciennes instances de la sentinel..."
+    pkill -f "Open_ELF/agents/sentinel_monitor.py" 2>/dev/null || true
+    sleep 1
+    
+    # Démarrer la sentinel en arrière-plan
+    cd "${SCRIPT_DIR}"
+    python3 "${sentinel_script}" >"${LOGS_DIR}/sentinel.log" 2>&1 &
+    local sentinel_script_pid=$!
+    cd - >/dev/null
+    
+    # Attendre quelques secondes pour laisser démarrer
+    sleep 3
+    
+    # Vérifier qu'il tourne
+    if is_running "${sentinel_script_pid}"; then
+        log_success "✅ Sentinel Monitor démarrée (PID: ${sentinel_script_pid})"
+        log_info "   🔍 Surveillance continue du système"
+        return 0
+    else
+        log_warning "⚠️ Sentinel Monitor non démarrée"
+        return 0  # Continuer même si non prêt
+    fi
+}
+
 # Démarrer le Dashboard Frontend
 start_frontend() {
     log "🚀 Démarrage du Dashboard Frontend (port 3001)..."
@@ -459,6 +536,18 @@ show_status() {
         echo "❌ Watcher"
     fi
     
+    if pgrep -f "Open_ELF/agents/sentinel_monitor.py" >/dev/null 2>&1; then
+        echo "🛡️ Sentinel (en cours)"
+    else
+        echo "⚪ Sentinel (non actif)"
+    fi
+    
+    if pgrep -f "Open_ELF/orchestrator/unified_orchestrator.py" >/dev/null 2>&1; then
+        echo "🧠 Orchestrator (en cours)"
+    else
+        echo "⚪ Orchestrator (non actif)"
+    fi
+    
     if is_running "${LEARNING_CAPTURE_PID}"; then
         echo "✅ Learning Capture (PID: ${LEARNING_CAPTURE_PID})"
     else
@@ -492,7 +581,9 @@ test_mode() {
     start_opencode_server || return 1
     start_backend || return 1
     start_event_bridge || return 1
+    start_orchestrator || return 1  # Unified Orchestrator
     start_watcher || return 1
+    start_sentinel || return 0  # Sentinel Monitor
     start_learning_capture || return 0  # Ne pas bloquer si échec
     start_ceo_monitor || return 0  # CEO Inbox Monitor
     
@@ -526,7 +617,9 @@ all_mode() {
     start_opencode_server || return 1
     start_backend || return 1
     start_event_bridge || return 1
+    start_orchestrator || return 1  # Unified Orchestrator
     start_watcher || return 1
+    start_sentinel || return 0  # Sentinel Monitor
     start_frontend || return 1
     start_learning_capture || return 0  # Ne pas bloquer si échec
     start_ceo_monitor || return 0  # CEO Inbox Monitor
@@ -554,7 +647,9 @@ no_opencode_mode() {
     # Démarrer les autres services
     start_backend || return 1
     start_event_bridge || return 1
+    start_orchestrator || return 1  # Unified Orchestrator
     start_watcher || return 1
+    start_sentinel || return 0  # Sentinel Monitor
     start_frontend || return 1
     start_learning_capture || return 0  # Ne pas bloquer si échec
     start_ceo_monitor || return 0  # CEO Inbox Monitor

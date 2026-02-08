@@ -355,22 +355,22 @@ cli_ref = """# CLI Reference
 
 ```bash
 # Build full context (what agents see)
-python src/query/query.py --context
+python query/query.py --context
 
 # Query by domain
-python src/query/query.py --domain testing
+python query/query.py --domain testing
 
 # Query by tags
-python src/query/query.py --tags api,error
+python query/query.py --tags api,error
 
 # Get recent learnings
-python src/query/query.py --recent 10
+python query/query.py --recent 10
 
 # View statistics
-python src/query/query.py --stats
+python query/query.py --stats
 
 # Validate database
-python src/query/query.py --validate
+python query/query.py --validate
 
 # Export learnings
 python src/query/query.py --export > backup.json
@@ -648,20 +648,20 @@ architecture = """# Architecture
 
 # Write all files
 files = {
-    'Home.md': home,
-    'Installation.md': installation,
-    'Configuration.md': configuration,
-    'Dashboard.md': dashboard,
-    'Swarm.md': swarm,
-    'CLI-Reference.md': cli_ref,
-    'Golden-Rules.md': golden_rules,
-    'Token-Costs.md': token_costs,
-    'Migration.md': migration,
-    'Architecture.md': architecture,
+    "Home.md": home,
+    "Installation.md": installation,
+    "Configuration.md": configuration,
+    "Dashboard.md": dashboard,
+    "Swarm.md": swarm,
+    "CLI-Reference.md": cli_ref,
+    "Golden-Rules.md": golden_rules,
+    "Token-Costs.md": token_costs,
+    "Migration.md": migration,
+    "Architecture.md": architecture,
 }
 
 for filename, content in files.items():
-    (wiki_dir / filename).write_text(content, encoding='utf-8')
+    (wiki_dir / filename).write_text(content, encoding="utf-8")
     print(f"Created {filename}")
 
 print(f"\nCreated {len(files)} wiki pages in {wiki_dir}")

@@ -83,16 +83,18 @@ except Exception:
         logger.error(message)
 
 
-# Add Open_ELF to Python path for imports
+# Add Open_ELF root and parent to Python path for imports
 OPEN_ELF_DIR = Path(__file__).parent.parent
-if str(OPEN_ELF_DIR) not in sys.path:
-    sys.path.insert(0, str(OPEN_ELF_DIR))
+ELF_ROOT_DIR = OPEN_ELF_DIR.parent
+for path in (OPEN_ELF_DIR, ELF_ROOT_DIR):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
 
 # Import event_logger for database logging (NEW)
 EVENT_LOGGER_AVAILABLE = False
 EVENT_LOGGER = None
 try:
-    from utils.event_logger import log_event
+    from Open_ELF.utils.event_logger import log_event
 
     EVENT_LOGGER_AVAILABLE = True
     EVENT_LOGGER = log_event

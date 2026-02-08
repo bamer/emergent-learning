@@ -49,7 +49,7 @@
         "nemotron-v3-coder": {
           "name": "nemotron-v3-coder",
           "limit": {
-            "context": 128000,
+            "context": 100000,
             "output": 65536
           }
         }

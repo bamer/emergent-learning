@@ -64,9 +64,9 @@ class CheckinOrchestrator:
         self.selected_model = os.environ.get("ELF_MODEL", "claude")
         self.architecture_ports = {
             "event_bridge": 9998,
-            "unified_orchestrator": 9999,
+            "unified_orchestrator": 9998,
             "dashboard_backend": 8888,
-            "dashboard_frontend": 5173,
+            "dashboard_frontend": 3001,
             "opencode_server": 4096,
         }
 
@@ -161,18 +161,16 @@ class CheckinOrchestrator:
         except:
             status["event_bridge"] = "stopped"
 
-        # Check UnifiedOrchestrator
+        # Check UnifiedOrchestrator (by process since it connects to EventBridge, not its own HTTP server)
         try:
-            response = requests.get(
-                "http://localhost:8888/api/v1/orchestrator/status", timeout=3
+            result = subprocess.run(
+                ["pgrep", "-f", "Open_ELF/orchestrator/unified_orchestrator.py"],
+                capture_output=True,
+                text=True,
             )
-            if response.status_code == 200:
-                api_data = response.json()
-                status["unified_orchestrator"] = api_data.get("status_data", {}).get(
-                    "running", "stopped"
-                )
-            else:
-                status["unified_orchestrator"] = "stopped"
+            status["unified_orchestrator"] = (
+                "running" if result.returncode == 0 else "stopped"
+            )
         except:
             status["unified_orchestrator"] = "stopped"
 
@@ -223,6 +221,17 @@ class CheckinOrchestrator:
                 pass
         except:
             status["watcher"] = "stopped"
+
+        # Check Sentinel Monitor
+        try:
+            result = subprocess.run(
+                ["pgrep", "-f", "Open_ELF/agents/sentinel_monitor.py"],
+                capture_output=True,
+                text=True,
+            )
+            status["sentinel"] = "running" if result.returncode == 0 else "stopped"
+        except:
+            status["sentinel"] = "stopped"
 
         # Check Learning Capture
         try:
