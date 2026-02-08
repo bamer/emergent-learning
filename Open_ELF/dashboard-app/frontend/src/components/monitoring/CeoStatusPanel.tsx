@@ -6,6 +6,18 @@ import {
   Minus, Zap, Brain, Bell, BellOff, Shield
 } from 'lucide-react';
 
+interface Escalation {
+  id: string;
+  agent: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  message: string;
+  context?: Record<string, any>;
+  timestamp: string;
+  response?: string;
+  action_taken?: string;
+  status: 'pending' | 'acknowledged' | 'resolved';
+}
+
 interface CeoItem {
   filename: string;
   title: string;
@@ -107,12 +119,13 @@ export function CeoStatusPanel({
   const [metrics, setMetrics] = useState<CeoMetrics | null>(null);
   const [analysis, setAnalysis] = useState<CeoAnalysis | null>(null);
   const [cycleHistory, setCycleHistory] = useState<CeoCycle[]>([]);
+  const [escalations, setEscalations] = useState<Escalation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [ceoRunning, setCeoRunning] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'items' | 'history' | 'actions'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'items' | 'history' | 'actions' | 'escalations'>('overview');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   
   // Refs to prevent race conditions
@@ -214,6 +227,19 @@ export function CeoStatusPanel({
     }
   }, [apiBaseUrl]);
 
+  // Fetch escalations
+  const fetchEscalations = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/escalations?agent=ceo&limit=10`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const data = await response.json();
+      setEscalations(data.escalations || []);
+    } catch (err) {
+      console.error('Failed to fetch escalations:', err);
+    }
+  }, [apiBaseUrl]);
+
   // Spawn CEO agent
   const spawnCeoAgent = useCallback(async () => {
     try {
@@ -258,10 +284,14 @@ Please check the ceo-inbox directory and process any pending items. For each ite
     
     // Initial fetch
     fetchCeoStatus();
+    fetchEscalations();
     
     // Setup auto-refresh
     if (autoRefresh) {
-      intervalRef.current = setInterval(fetchCeoStatus, refreshInterval);
+      intervalRef.current = setInterval(() => {
+        fetchCeoStatus();
+        fetchEscalations();
+      }, refreshInterval);
     }
     
     return () => {
@@ -380,7 +410,8 @@ Please check the ceo-inbox directory and process any pending items. For each ite
       <div className="flex border-b border-slate-700/50">
         {[
           { id: 'overview', label: 'Overview', icon: Activity },
-          { id: 'items', label: 'Escalations', icon: Inbox },
+          { id: 'items', label: 'Inbox', icon: Inbox },
+          { id: 'escalations', label: 'Escalations', icon: AlertTriangle },
           { id: 'history', label: 'History', icon: Clock },
           { id: 'actions', label: 'Actions', icon: Zap }
         ].map(tab => (
@@ -584,6 +615,76 @@ Please check the ceo-inbox directory and process any pending items. For each ite
                     <p className="text-slate-400">No pending escalations</p>
                     <p className="text-xs text-slate-500 mt-1">System operating normally</p>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* Escalations Tab */}
+            {selectedTab === 'escalations' && (
+              <div className="space-y-3">
+                {escalations.length === 0 ? (
+                  <div className="text-center text-slate-500 py-8">
+                    <CheckCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No recent escalations</p>
+                    <p className="text-xs mt-1">System operating normally</p>
+                  </div>
+                ) : (
+                  escalations.map((escalation, index) => {
+                    const severityColors = {
+                      critical: { bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400' },
+                      high: { bg: 'bg-amber-500/10', border: 'border-amber-500/20', text: 'text-amber-400' },
+                      medium: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400' },
+                      low: { bg: 'bg-slate-500/10', border: 'border-slate-500/20', text: 'text-slate-400' }
+                    };
+                    const colors = severityColors[escalation.severity] || severityColors.low;
+                    
+                    return (
+                      <div
+                        key={escalation.id || index}
+                        className={`p-3 rounded-lg border ${colors.border} ${colors.bg}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className={`flex-shrink-0 px-2 py-0.5 rounded text-xs font-medium ${colors.bg} ${colors.text}`}>
+                            {escalation.severity.toUpperCase()}
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-slate-300">{escalation.message}</p>
+                            
+                            {/* Response or Action */}
+                            {(escalation.response || escalation.action_taken) && (
+                              <div className="mt-2 p-2 bg-slate-700/30 rounded text-xs">
+                                {escalation.response && (
+                                  <div className="mb-1">
+                                    <span className="text-emerald-400 font-medium">Response:</span>
+                                    <span className="text-slate-300 ml-1">{escalation.response}</span>
+                                  </div>
+                                )}
+                                {escalation.action_taken && (
+                                  <div>
+                                    <span className="text-violet-400 font-medium">Action:</span>
+                                    <span className="text-slate-300 ml-1">{escalation.action_taken}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            
+                            {/* Metadata */}
+                            <div className="flex items-center gap-3 text-xs text-slate-500 mt-2">
+                              <Clock className="w-3 h-3" />
+                              <span>{formatTime(escalation.timestamp)}</span>
+                              <span className={`px-1.5 py-0.5 rounded ${
+                                escalation.status === 'resolved' ? 'bg-emerald-500/20 text-emerald-400' :
+                                escalation.status === 'acknowledged' ? 'bg-blue-500/20 text-blue-400' :
+                                'bg-amber-500/20 text-amber-400'
+                              }`}>
+                                {escalation.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             )}
