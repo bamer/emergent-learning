@@ -99,6 +99,17 @@ try:
 except ImportError:
     pass
 
+# Semantic search (optional)
+SEMANTIC_SEARCH_AVAILABLE = False
+try:
+    try:
+        from query.semantic_search import SemanticSearcher
+    except ImportError:
+        from semantic_search import SemanticSearcher
+    SEMANTIC_SEARCH_AVAILABLE = True
+except ImportError:
+    pass
+
 
 def get_depth_limits(depth: str) -> dict:
     """Get query limits based on depth level."""
@@ -314,9 +325,49 @@ class ContextBuilderMixin:
                     # Add location awareness header
                     location_info = f"**Location:** `{self.current_location}`\n\n"
                     building_header += location_info
+                    
+                    # Add semantic memory availability notice
+                    semantic_notice = """## 📚 Semantic Memory Available
 
+**You have access to semantic memory** (task-aware search through all learnings and heuristics).
+
+**To use semantic memory in this session:**
+
+1. **For your current task with semantic search:**
+   ```
+   python query.py --context "your task description" --depth standard
+   ```
+   Returns: Golden rules + semantically relevant heuristics matched to your task
+
+2. **For expanded context:**
+   ```
+   python query.py --context "your task description" --depth deep
+   ```
+   Returns: Full context + semantic search + all learnings, experiments, and decisions
+
+3. **For domain-specific context:**
+   ```
+   python query.py --context --domain debugging --depth standard
+   ```
+   Returns: Golden rules + domain-specific heuristics + semantic results
+
+**Semantic matching works by:**
+- Analyzing your task description
+- Finding heuristics with similar concepts, patterns, and lessons
+- Ranking by relevance (% match) and confidence level
+- Prioritizing high-confidence, well-validated knowledge
+
+**When to trigger semantic search:**
+- Starting a new task or investigation
+- Stuck on a problem you haven't solved before
+- Need domain-specific best practices
+- Building context for other agents
+
+---
+
+"""
                     context_parts.insert(
-                        0, f"{building_header}# Task Context\n\n{task}\n\n---\n\n"
+                        0, f"{building_header}{semantic_notice}# Task Context\n\n{task}\n\n---\n\n"
                     )
                     result = "".join(context_parts)
                     self._log_debug(
@@ -346,6 +397,41 @@ class ContextBuilderMixin:
 
                 # Tier 2: Query-matched content
                 context_parts.append("# TIER 2: Relevant Knowledge\n\n")
+
+                # Semantic search (if available and within token budget)
+                semantic_results = None
+                if SEMANTIC_SEARCH_AVAILABLE and approx_tokens < max_chars * 0.5:
+                    try:
+                        self._log_debug("Running semantic search on task description")
+                        searcher = await SemanticSearcher.create(
+                            base_path=self.base_path
+                        )
+                        # Use task as semantic query
+                        semantic_results = await searcher.find_relevant_heuristics(
+                            task=task,
+                            threshold=0.6,  # Lower threshold for broader coverage
+                            limit=limits.get("heuristics", 5),
+                            domain=domain
+                        )
+                        try:
+                            await searcher.cleanup()
+                        except Exception:
+                            pass  # Cleanup errors are non-critical
+                        
+                        if semantic_results:
+                            context_parts.append("## Semantically Relevant Heuristics\n\n")
+                            for h in semantic_results:
+                                score = h.get("_final_score", 0)
+                                entry = f"- **{h['rule']}** (semantic match: {score*100:.0f}%, confidence: {h['confidence']:.2f})\n"
+                                if h.get("explanation"):
+                                    expl = h["explanation"][:100] + "..." if len(h["explanation"]) > 100 else h["explanation"]
+                                    entry += f"  {expl}\n"
+                                entry += "\n"
+                                context_parts.append(entry)
+                                approx_tokens += len(entry) // 4
+                            context_parts.append("\n")
+                    except Exception as e:
+                        self._log_debug(f"Semantic search failed (non-critical): {e}")
 
                 if domain:
                     context_parts.append(f"## Domain: {domain}\n\n")

@@ -21,6 +21,12 @@ Previously a 2600-line monolith duplicating core.py.
 Now delegates to cli.py which uses the async core.py internally.
 """
 
+# Suppress verbose logging from migrations and database layers BEFORE any imports
+import logging
+logging.getLogger("query.migrations").setLevel(logging.CRITICAL)
+logging.getLogger("migrations").setLevel(logging.CRITICAL)
+logging.getLogger("peewee").setLevel(logging.CRITICAL)
+
 # Portable venv detection and re-exec
 # If critical dependencies are missing, try to re-exec with the venv python
 import os

@@ -63,6 +63,15 @@ async def _async_main(args: argparse.Namespace) -> int:
     Returns:
         Exit code (0 for success, non-zero for errors)
     """
+    # Re-enable debug logging if requested
+    import logging
+    if args.debug:
+        logging.getLogger("query.migrations").setLevel(logging.DEBUG)
+        logging.getLogger("migrations").setLevel(logging.DEBUG)
+        logging.getLogger("peewee").setLevel(logging.DEBUG)
+        logging.getLogger("query.core").setLevel(logging.DEBUG)
+        logging.getLogger("core").setLevel(logging.DEBUG)
+    
     # Initialize query system with error handling
     query_system = None
     exit_code = 0
@@ -316,9 +325,9 @@ async def _async_main(args: argparse.Namespace) -> int:
                 )
                 return 1
 
-        elif args.context:
-            # Build full context
-            task = "Agent task context generation"
+        elif args.context is not None:
+            # Build full context (optionally with task description)
+            task = args.context if args.context != "task" else "Agent task context generation"
             domain = args.domain
             tags = args.tags.split(",") if args.tags else None
             result = await query_system.build_context(
@@ -481,6 +490,12 @@ async def _async_main(args: argparse.Namespace) -> int:
 
 def main():
     """Command-line interface for the query system."""
+    # Suppress verbose logging early (before imports that trigger migrations)
+    import logging
+    logging.getLogger("query.migrations").setLevel(logging.CRITICAL)
+    logging.getLogger("migrations").setLevel(logging.CRITICAL)
+    logging.getLogger("peewee").setLevel(logging.CRITICAL)
+    
     # Auto-run full setup on first use
     ensure_full_setup()
     # Auto-install hooks on first query
@@ -525,7 +540,8 @@ Error Codes:
         "--base-path", type=str, help="Base path to emergent-learning directory"
     )
     parser.add_argument(
-        "--context", action="store_true", help="Build full context for agents"
+        "--context", nargs="?", const="task", default=None, 
+        metavar="TASK_DESC", help="Build full context for agents (optionally with task description for semantic search)"
     )
     parser.add_argument(
         "--depth",
