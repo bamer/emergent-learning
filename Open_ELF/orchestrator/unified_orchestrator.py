@@ -19,6 +19,7 @@ Dependencies:
 import asyncio
 import logging
 import subprocess
+import sys
 import threading
 import requests
 from datetime import datetime
@@ -106,6 +107,24 @@ class UnifiedOrchestrator:
         self._last_health_check: Optional[datetime] = None
         self.started_at: Optional[datetime] = None
 
+        # AI Analysis timing (Tier-based like watcher/sentinel)
+        self.main_loop_interval = 10  # seconds (basic cycle)
+        self.ai_analysis_interval = 900  # seconds (15 minutes for AI analysis)
+        self.cycle_count = 0
+
+        # AgentManager integration
+        self.agent_manager = None
+        try:
+            sys.path.insert(0, str(OPEN_ELF_DIR / "agents"))
+            from agent_manager import AgentManager, get_agent_manager
+
+            self.agent_manager = get_agent_manager()
+            logger.info(
+                "✅ AgentManager initialized successfully in UnifiedOrchestrator"
+            )
+        except Exception as e:
+            logger.warning(f"⚠️ AgentManager not available: {e}")
+
     def start(self):
         """Start orchestrator (sync wrapper)."""
         asyncio.run(self._start_async())
@@ -130,14 +149,33 @@ class UnifiedOrchestrator:
         processor = asyncio.create_task(self._process_events())
         logger.info("⚙️  Event processor started")
 
-        # Main loop
+        # Main loop with AI Analysis tiers
         tick = 0
         try:
             while self.running:
                 tick += 1
+                self.cycle_count += 1
+
+                # Health check (every 10 ticks = 100 seconds)
                 if tick % 10 == 0:
                     logger.info(f"⏰ Tick #{tick}")
                     self._check_services_health()
+
+                # AI Analysis (every AI Analysis Interval)
+                should_run_ai = (
+                    self.cycle_count
+                    % (self.ai_analysis_interval // self.main_loop_interval)
+                ) == 0  # = 900/10 = 90 cycles
+
+                if should_run_ai and self.agent_manager:
+                    logger.info("🤖 Running AI analysis cycle via AgentManager")
+                    self._analyze_with_ai()
+                else:
+                    if not self.agent_manager and tick % 10 == 0:
+                        logger.info(
+                            "📋 Running basic health check (AgentManager unavailable)"
+                        )
+
                 await asyncio.sleep(10)
         except KeyboardInterrupt:
             logger.info("👋 Shutting down...")
@@ -493,6 +531,58 @@ class UnifiedOrchestrator:
         self._services_health = health_status
         self._last_health_check = datetime.now()
         return health_status
+
+    def _analyze_with_ai(self):
+        """AI-powered analysis of system state via AgentManager."""
+        if not self.agent_manager:
+            logger.warning("AgentManager not available for AI analysis")
+            return
+
+        try:
+            # Gather current system state
+            system_state = {
+                "services_health": self._services_health,
+                "last_health_check": self._last_health_check.isoformat()
+                if self._last_health_check
+                else None,
+                "events_processed": len(self.events),
+                "uptime_seconds": (datetime.now() - self.started_at).total_seconds()
+                if self.started_at
+                else 0,
+                "cycle_count": self.cycle_count,
+                "timestamp": datetime.now().isoformat(),
+            }
+
+            # Call unified-orchestrator agent via AgentManager
+            result = self.agent_manager.ask_agent(
+                "unified-orchestrator",
+                f"Analyze the current system state and provide insights:\n\n{self._format_state_for_ai(system_state)}",
+            )
+
+            if result.get("success"):
+                logger.info(
+                    f"✅ AI analysis completed: {result.get('response', '')[:100]}..."
+                )
+            else:
+                logger.error(
+                    f"❌ AI analysis failed: {result.get('error', 'Unknown error')}"
+                )
+
+        except Exception as e:
+            logger.error(f"❌ Error in AI analysis: {e}")
+
+    def _format_state_for_ai(self, state: Dict) -> str:
+        """Format system state for AI analysis."""
+        services = state.get("services_health", {})
+        return f"""
+System Health Summary:
+- EventBridge: {"✅ Running" if services.get("event_bridge") else "❌ Down"}
+- Watcher: {"✅ Running" if services.get("watcher") else "❌ Down"}
+- Learning Capture: {"✅ Running" if services.get("learning_capture") else "❌ Down"}
+- Events Processed: {state.get("events_processed", 0)}
+- Uptime: {state.get("uptime_seconds", 0):.0f} seconds
+- Cycle Count: {state.get("cycle_count", 0)}
+"""
 
     def _log_event(self, event: Event):
         """Log event to database.

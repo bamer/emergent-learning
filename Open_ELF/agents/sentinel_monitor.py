@@ -91,6 +91,11 @@ class SentinelMonitor:
             30  # Minimum minutes between same pattern detection
         )
 
+        # AI Analysis timing (Tier-based like watcher)
+        self.monitoring_interval = 30  # seconds (basic cycle)
+        self.ai_analysis_interval = 300  # seconds (5 minutes for AI analysis)
+        self.cycle_count = 0
+
         # Initialize Agent Execution Engine and Pattern Response Handler
         self.execution_engine = AgentExecutionEngine() if AgentExecutionEngine else None
         self.pattern_handler = (
@@ -544,6 +549,45 @@ Do your mission then Respond with a detailed analysis."""
             "fallback": True,
         }
 
+    def basic_analysis(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
+        """Basic analysis without AI - for non-AI cycles."""
+        if "error" in metrics:
+            return {
+                "status": "critical",
+                "analysis": f"Monitoring system error: {metrics['error']}",
+                "anomalies": ["Monitoring failure"],
+                "recommendations": ["Check monitoring system"],
+                "patterns": [],
+                "priority_actions": ["Fix monitoring system"],
+                "ai_processed": False,
+                "basic_only": True,
+            }
+
+        # Simple rule-based analysis
+        services_ok = metrics.get("services", {}).get("overall", False)
+        activity_score = metrics.get("activity", {}).get("activity_score", 0)
+
+        if not services_ok:
+            status = "critical"
+            analysis = "Service health issues detected"
+        elif activity_score == 0:
+            status = "warning"
+            analysis = "No recent activity detected"
+        else:
+            status = "healthy"
+            analysis = "All systems operational (basic check)"
+
+        return {
+            "status": status,
+            "analysis": analysis,
+            "anomalies": [],
+            "recommendations": [],
+            "patterns": [],
+            "priority_actions": [],
+            "ai_processed": False,
+            "basic_only": True,
+        }
+
     def learn_user_patterns(self, metrics: Dict[str, Any]) -> Dict[str, Any]:
         """Learn and adapt to user patterns and preferences."""
         learning_data = {
@@ -883,6 +927,9 @@ Do your mission then Respond with a detailed analysis."""
             f"🤖 {self.name} - Starting monitoring cycle (orchestrator-integrated)..."
         )
 
+        # Increment cycle counter
+        self.cycle_count += 1
+
         # Check orchestrator health first
         orchestrator_healthy = self.check_orchestrator_health()
         if not orchestrator_healthy:
@@ -893,8 +940,26 @@ Do your mission then Respond with a detailed analysis."""
         # Collect metrics
         metrics = self.collect_metrics()
 
-        # AI Analysis (now coordinated through orchestrator)
-        analysis = self.analyze_with_ai(metrics)
+        # AI Analysis - Only run every AI Analysis Interval (like watcher tiers)
+        should_run_ai_analysis = (
+            self.cycle_count % (self.ai_analysis_interval // self.monitoring_interval)
+        ) == 0
+
+        if should_run_ai_analysis and self.agent_manager:
+            logger.info("🤖 Running AI analysis cycle via AgentManager")
+            # AI Analysis (now coordinated through orchestrator)
+            analysis = self.analyze_with_ai(metrics)
+        else:
+            if not self.agent_manager:
+                logger.info(
+                    "📋 Running basic metrics analysis (AgentManager unavailable)"
+                )
+            else:
+                logger.info("📋 Running basic metrics analysis only")
+            analysis = self.basic_analysis(metrics)
+
+        # Add AI analysis flag to analysis
+        analysis["ai_analysis_run"] = should_run_ai_analysis
 
         # Pattern detection
         patterns = self.detect_patterns(metrics)
@@ -1108,6 +1173,35 @@ Do your mission then Respond with a detailed analysis."""
             print(f"\n🔍 Patterns Detected:")
             for pattern in patterns:
                 print(f"  • {pattern}")
+
+        # AI Analysis status
+        ai_analysis_run = analysis.get("ai_analysis_run", False)
+        if ai_analysis_run:
+            ai_status = "🤖 AI Analysis"
+        elif analysis.get("basic_only"):
+            ai_status = "📋 Basic Check"
+        elif analysis.get("fallback"):
+            ai_status = "⚠️  Fallback (no IA)"
+        else:
+            ai_status = "📋 Basic Check"
+
+        print(f"\n🤖 Analysis: {ai_status}")
+        print(f"⏱️  Cycle: {self.cycle_count}")
+
+        # Calculate time until next AI analysis
+        if ai_analysis_run:
+            cycles_until_ai = self.ai_analysis_interval // self.monitoring_interval
+        else:
+            cycles_until_ai = (
+                self.ai_analysis_interval // self.monitoring_interval
+            ) - (
+                self.cycle_count
+                % (self.ai_analysis_interval // self.monitoring_interval)
+            )
+        seconds_until_ai = cycles_until_ai * self.monitoring_interval
+        print(
+            f"⏱️  Next AI: {seconds_until_ai}s ({seconds_until_ai // 60}m {seconds_until_ai % 60}s)"
+        )
 
         print("\n" + "=" * 60)
 

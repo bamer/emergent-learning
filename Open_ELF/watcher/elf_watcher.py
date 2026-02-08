@@ -95,7 +95,7 @@ def log_to_database(
 # Configuration
 EVENT_BRIDGE_URL = "http://localhost:9998"
 BASIC_POLL_INTERVAL = 60  # seconds (basic system checks)
-AI_ANALYSIS_INTERVAL = 300  # seconds (5 minutes for AI analysis)
+AI_ANALYSIS_INTERVAL = 600  # seconds (10 minutes for AI analysis - Tier 2)
 COORDINATION_DIR = ELF_DIR / ".coordination"
 STOP_FILE = COORDINATION_DIR / "watcher-stop"
 WATCHER_LOG = COORDINATION_DIR / "watcher-log.md"
