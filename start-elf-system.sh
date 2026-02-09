@@ -236,21 +236,30 @@ start_backend() {
     fi
 }
 
-# Démarrer l'Event Bridge
+# Démarrer l'Event Bridge v2 (refactored)
 start_event_bridge() {
-    log "🚀 Démarrage de l'Event Bridge (port 9998)..."
+    log "🚀 Démarrage de l'Event Bridge v2.0 (port 9998)..."
     
-    local orchestrator_dir="${ELF_DIR}/orchestrator"
+    local event_bridge_script="${SCRIPT_DIR}/core/event_bridge_v2.py"
     
-    # Vérifier que le répertoire existe
-    if [[ ! -d "${orchestrator_dir}" ]]; then
-        log_error "❌ Répertoire orchestrator introuvable: ${orchestrator_dir}"
-        return 1
+    # Vérifier que le script existe (nouveau emplacement)
+    if [[ ! -f "${event_bridge_script}" ]]; then
+        log_warning "⚠️ Script Event Bridge v2 introuvable: ${event_bridge_script}"
+        log_info "   Essai avec l'ancien Event Bridge..."
+        # Fallback vers l'ancien Event Bridge
+        event_bridge_script="${ELF_DIR}/orchestrator/event_bridge.py"
+        if [[ ! -f "${event_bridge_script}" ]]; then
+            log_warning "⚠️ Ancien Event Bridge aussi introuvable"
+            return 0
+        fi
+        cd "${ELF_DIR}/orchestrator"
+        python3 "${event_bridge_script}" start >"${LOGS_DIR}/event-bridge.log" 2>&1 &
+    else
+        # Démarrer le nouveau Event Bridge v2
+        cd "${SCRIPT_DIR}"
+        python3 "${event_bridge_script}" start >"${LOGS_DIR}/event-bridge.log" 2>&1 &
     fi
     
-    # Démarrer l'Event Bridge en arrière-plan
-    cd "${orchestrator_dir}"
-    python3 event_bridge.py start >"${LOGS_DIR}/event-bridge.log" 2>&1 &
     EVENT_BRIDGE_PID=$!
     cd - >/dev/null
     

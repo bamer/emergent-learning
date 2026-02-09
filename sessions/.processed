@@ -8,7 +8,8 @@
     "2026-02-01_session.jsonl",
     "2026-02-02_session.jsonl",
     "2026-02-06_session.jsonl",
-    "2026-02-09_session.jsonl"
+    "2026-02-09_session.jsonl",
+    "manual_2026-02-10_session.jsonl"
   ],
-  "last_processed": "2026-02-09T01:04:57.471679"
+  "last_processed": "2026-02-09T15:44:20.019395"
 }
