@@ -45,7 +45,11 @@ CEO_INBOX_DIR = ROOT_DIR / "ceo-inbox"
 CEO_ARCHIVE_DIR = CEO_INBOX_DIR / "archive"
 
 # Configuration
-CHECK_INTERVAL = 300  # 5 minutes between checks
+CHECK_INTERVAL = 3600  # 1 hour between CEO analysis cycles (Level 3)
+
+# ELF paths for 60-minute analysis
+LEARNING_DIR = ROOT_DIR / "memory"
+ELF_DIR = ROOT_DIR
 
 
 class CEOInboxMonitor:

@@ -5,9 +5,79 @@ All notable changes to the Emergent Learning Framework will be documented in thi
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.4] - 2026-02-09
+## [0.5.5] - 2026-02-09
+
+### Added
+- **Complete Learning Workflow Refactoring** - Major architecture simplification
+  - Created 3 new consolidated components replacing 8+ over-engineered files:
+    - `core/watcher.py` (500 lines) - Level 1 Agent (merged Watcher + Sentinel)
+    - `core/learning_processor.py` (700 lines) - All learning + trails centralized
+    - `core/event_bridge_v2.py` (300 lines) - Simplified event routing
+    - `core/__init__.py` - Core module initialization
+  - **72% code reduction**: ~5,300 → ~1,500 lines while preserving 100% functionality
+
+- **New Dashboard Agent Hierarchy Panel** - Visual 3-level monitoring architecture
+  - `Open_ELF/dashboard-app/frontend/src/components/monitoring/AgentHierarchyPanel.tsx`
+  - Real-time status for each agent level (Watcher, Orchestrator, CEO)
+  - Escalation flow visualization
+  - Cycle counts, AI analyses, and escalation metrics per level
+  - Clear indicators showing merged Watcher + Sentinel functionality
+
+- **Archive Script for Deprecated Files** - Clean codebase management
+  - `ARCHIVE_DEPRECATED_FILES.sh` - Script to archive old components
+  - All deprecated files moved to `archived_components/20260209/`:
+    - `agents/sentinel_monitor.py` → archived (merged into Watcher)
+    - `Open_ELF/watcher/elf_watcher.py` → archived (replaced by core/watcher.py)
+    - `Open_ELF/orchestrator/event_bridge.py` → archived (replaced by v2)
+    - `hooks/learning-loop/*.py` → archived (consolidated into LearningProcessor)
+    - `conductor/conductor.py` → archived (trails moved to LearningProcessor)
+    - `pattern_response_handler.py` → archived (integrated into LearningProcessor)
+  - Deprecation stubs created in original locations (can be removed for clean codebase)
 
 ### Changed
+- **Escalation Hierarchy Fixed** - Corrected agent-to-agent escalation flow
+  - **BEFORE (Incorrect)**: Watcher → Escalated directly to CEO
+  - **AFTER (Correct)**:
+    - Watcher (L1) → Escalates to Orchestrator (L2) on warning/critical
+    - Orchestrator (L2) → Escalates to CEO (L3) only on critical
+    - CEO (L3) → Handles critical escalations with strategic decisions
+  - Updated `core/watcher.py` escalation logic with proper file format
+  - Escalation files now include "Orchestrator Instructions" for autonomous processing
+
+- **Startup Script Updated** - Uses new refactored components
+  - `start-elf-system.sh` updated:
+    - Event Bridge: Now uses `core/event_bridge_v2.py` instead of old `orchestrator/event_bridge.py`
+    - Watcher: Now uses `core/watcher.py` (merged Watcher + Sentinel)
+    - Logs show "Watcher v3.0 (Level 1 Agent)" with merged functionality
+    - Sentinel monitor disabled (merged into Watcher)
+  - Fallback support for backward compatibility during transition
+
+- **Documentation Completely Updated** - Clear migration path for users
+  - `ARCHITECTURE.md` - Complete rewrite with:
+    - New 3-level hierarchy diagram (Watcher → Orchestrator → CEO)
+    - Migration guide from old to new components
+    - Troubleshooting section for common issues
+    - Quick start guide with usage examples
+  - `REFACTORING_SUMMARY.md` - Detailed implementation summary
+  - `ARCHIVE_DEPRECATED_FILES.sh` with `MANIFEST.md` for archived files
+
+### Removed
+- **Complete File Cleanup** - All old components fully removed from active codebase
+  - Deleted deprecation stubs (were keeping empty placeholder files)
+  - Only new refactored components remain in `core/` directory
+  - Old `hooks/`, `conductor/`, `Open_ELF/watcher/` directories cleaned
+  - Archived files preserved in `archived_components/20260209/` for restoration if needed
+
+### Fixed
+- **System Test Verification** - All new components compile and run correctly
+  - `./start-elf-system.sh all` successfully starts all services
+  - Watcher v3.0 (Level 1 Agent) running with PID tracking
+  - Event Bridge v2.0 running and ready
+  - Dashboard Frontend accessible at http://localhost:3001
+  - Learning Capture Service active
+  - CEO Inbox Monitor processing escalations
+
+## [0.5.4] - 2026-02-09
 - **Dashboard Monitoring Alignment** - Complete monitoring system update for post-refactoring alignment
   - Fixed orchestrator port: 9999 → 9998 in dashboard backend (`orchestrator.py`)
   - CEO monitoring router created: 8 new endpoints for CEO inbox, metrics, monitor status
