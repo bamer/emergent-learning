@@ -423,7 +423,7 @@ class UnifiedOrchestrator:
         try:
             # Kill existing
             subprocess.run(
-                ["pkill", "-f", "watcher/elf_watcher.py"], capture_output=True
+                ["pkill", "-f", "core/watcher.py"], capture_output=True
             )
             import time
 
@@ -431,7 +431,7 @@ class UnifiedOrchestrator:
 
             # Start new
             process = subprocess.Popen(
-                ["python3", "watcher/elf_watcher.py"],
+                ["python3", str(BASE_DIR / "core" / "watcher.py")],
                 cwd=str(OPEN_ELF_DIR),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -441,7 +441,7 @@ class UnifiedOrchestrator:
 
             # Verify
             check = subprocess.run(
-                ["pgrep", "-f", "watcher/elf_watcher.py"],
+                ["pgrep", "-f", "core/watcher.py"],
                 capture_output=True,
                 text=True,
             )
@@ -499,7 +499,7 @@ class UnifiedOrchestrator:
         # Watcher (pgrep)
         try:
             result = subprocess.run(
-                ["pgrep", "-f", "watcher/elf_watcher.py"],
+                ["pgrep", "-f", "core/watcher.py"],
                 capture_output=True,
                 text=True,
             )
@@ -545,7 +545,7 @@ class UnifiedOrchestrator:
                 "last_health_check": self._last_health_check.isoformat()
                 if self._last_health_check
                 else None,
-                "events_processed": len(self.events),
+                "events_processed": self.bridge.status.get("events_processed", 0),
                 "uptime_seconds": (datetime.now() - self.started_at).total_seconds()
                 if self.started_at
                 else 0,

@@ -148,8 +148,8 @@ export function CeoStatusPanel({
     try {
       setError(null);
       
-      // Fetch CEO inbox items
-      const inboxResponse = await fetch(`${apiBaseUrl}/api/v1/ceo-inbox`);
+      // Fetch CEO inbox items from the correct endpoint
+      const inboxResponse = await fetch(`${apiBaseUrl}/api/v1/ceo/items`);
       if (!inboxResponse.ok) {
         throw new Error(`HTTP ${inboxResponse.status}: ${inboxResponse.statusText}`);
       }

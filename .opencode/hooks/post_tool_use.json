@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "post_tool_use": [
+      {
+        "name": "record_pheromone_trails",
+        "command": "python",
+        "args": ["/home/bamer/.opencode/emergent-learning/hooks/post_tool_use/record_pheromone.py"],
+        "timeout": 5,
+        "enabled": true
+      }
+    ]
+  }
+}

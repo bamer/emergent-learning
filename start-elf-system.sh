@@ -4,12 +4,14 @@
 #
 # Démarrage de tous les services nécessaires pour ELF OpenCode:
 # 1. OpenCode Server (port 4096) - Optionnel si déjà démarré manuellement
-# 2. Dashboard Backend (port 8888) 
+# 2. Dashboard Backend (port 8888) with NEW: CEO, Missions, System Services routers
 # 3. Event Bridge (port 9998)
 # 4. Dashboard Frontend (port 3001)
-# 5. Watcher (continuous monitoring)
+# 5. Watcher v3.0 (merged Watcher + Sentinel - Level 1 Agent)
 # 6. Learning Capture Service (auto-extraction des heuristiques)
-
+# 7. Unified Orchestrator (central decision-making)
+# 8. CEO Inbox Monitor (autonomous escalation processing)
+#
 # Usage:
 #     ./start-elf-system.sh [mode]
 #     
@@ -18,13 +20,19 @@
 #     minimal   - Démarre seulement OpenCode + Backend
 #     test      - Mode test rapide
 #     no-opencode - Démarre tout sauf OpenCode (si vous le gérez manuellement)
+#
+# REFACTORED v0.5.4 (2026-02-09):
+# - Sentinel merged into Watcher v3.0 (removed start_sentinel function)
+# - Added CEO, Missions, System services routers to backend
+# - Fixed orchestrator port 9998 (was 9999)
+# - AI analysis corrected (Watcher 5min vs old Sentinel 5min)
 
 set -euo pipefail
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ELF_DIR="${SCRIPT_DIR}/Open_ELF"
-OPENCODE_DIR="${HOME}/.opencode"
+OPENCODE_DIR="${HOME}/.openencode"
 LOGS_DIR="${ELF_DIR}/logs"
 
 # Create logs directory
@@ -45,14 +53,61 @@ log_warning() { echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*"; }
 log_error() { echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*"; }
 log_info() { echo -e "${CYAN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*"; }
 
+# Fonction d'aide
+show_help() {
+    echo -e "${CYAN}≡≡≡ ELF OpenCode System - Startup Script (v0.5.4) ≡≡≡${NC}"
+    echo ""
+    echo -e "${GREEN}USAGE:${NC}"
+    echo "  $0 [MODE]"
+    echo ""
+    echo -e "${GREEN}MODES:${NC}"
+    echo "  test      Quick test mode (OpenCode, Dashboard, Orchestrator, Watcher only)"
+    echo "  minimal   Minimal services (Backend + Frontend only, for development)"
+    echo "  no-opencode All services except OpenCode (for production use)"
+    echo "  all       Full system startup (default)"
+    echo "  --help    Show this help message"
+    echo ""
+    echo -e "${GREEN}SERVICES (Full Mode):${NC}"
+    echo "  • OpenCode Server (port 4096)"
+    echo "  • Dashboard Backend (port 8888) - with CEO, Missions, System Services routers"
+    echo "  • EventBridge (port 9999)"
+    echo "  • Unified Orchestrator (port 9998)"
+    echo "  • Watcher v3.0 (Level 1 Agent - Monitoring + Pattern Detection + AI Analysis)"
+    echo "  • Dashboard Frontend (port 5173)"
+    echo "  • Learning Capture Service"
+    echo "  • CEO Inbox Monitor"
+    echo ""
+    echo -e "${GREEN}NEW IN v0.5.4:${NC}"
+    echo "  • CEO Monitoring (/api/v1/ceo/* - 8 endpoints)"
+    echo "  • Mission Engine Monitoring (/api/v1/missions/* - 7 endpoints)"
+    echo "  • System Services Health Checks (/api/v1/system/* - 4 endpoints)"
+    echo "  • Coordinator Monitoring (/api/v1/monitoring/coordinator/* - 6 endpoints)"
+    echo "  • AI Analysis Schedule (/api/v1/monitoring/ai-analysis/* - 2 endpoints)"
+    echo "  • Pheromone Trails (/api/v1/monitoring/trails/* - 2 endpoints)"
+    echo "  • Orchestrator port corrected: 9999 → 9998"
+    echo "  • Sentinel merged into Watcher v3.0 (no longer separate service)"
+    echo ""
+    echo -e "${YELLOW}NOTES:${NC}"
+    echo "  • Sentinel has been merged into Watcher v3.0 - no longer a separate service"
+    echo "  • Orchestrator is now Unified Orchestrator on port 9998"
+    echo "  • Press Ctrl+C to stop all services cleanly"
+    echo ""
+    echo -e "${GREEN}EXAMPLES:${NC}"
+    echo "  $0              # Start full system"
+    echo "  $0 test         # Quick test mode"
+    echo "  $0 no-opencode  # Production mode (skip OpenCode)"
+    echo ""
+}
+
 # Variables globales
 OPENCODE_PID=""
 BACKEND_PID=""
 EVENT_BRIDGE_PID=""
 FRONTEND_PID=""
 WATCHER_PID=""
+ORCHESTRATOR_PID=""
 LEARNING_CAPTURE_PID=""
-CEO_MONITOR_PID=""  # CEO Inbox Monitor
+CEO_MONITOR_PID=""
 RUNNING=true
 OPENCODE_EXTERNAL=false  # true si OpenCode est déjà démarré manuellement
 
@@ -85,7 +140,12 @@ cleanup() {
     if [[ -n "${WATCHER_PID:-}" ]]; then
         kill "${WATCHER_PID}" 2>/dev/null || true
         sleep 1
-        kill -9 "${WATCHER_PID}" 2>/dev/null || true
+        kill -9 "${WATCHER_PID}"  2>/dev/null || true
+    fi
+    if [[ -n "${ORCHESTRATOR_PID:-}" ]]; then
+        kill "${ORCHESTRATOR_PID}" 2>/dev/null || true
+        sleep 1
+        kill -9 "${ORCHESTRATOR_PID}"  2>/dev/null || true
     fi
     if [[ -n "${LEARNING_CAPTURE_PID:-}" ]]; then
         kill "${LEARNING_CAPTURE_PID}" 2>/dev/null || true
@@ -108,12 +168,18 @@ cleanup() {
     pkill -f "background-learning-capture.py" 2>/dev/null || true
     pkill -f "Open_ELF/agents/ceo_inbox_monitor.py" 2>/dev/null || true
     pkill -f "Open_ELF/orchestrator/unified_orchestrator.py" 2>/dev/null || true
-    pkill -f "Open_ELF/agents/sentinel_monitor.py" 2>/dev/null || true
+    # NOTE: Removed pkill for sentinel_monitor.py - Sentinel merged into Watcher v3.0
     
     log_success "✅ Nettoyage terminé"
     log "👋 Au revoir!"
     exit 0
 }
+
+# Check for help flag early (before trap is set)
+if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
+    show_help
+    exit 0
+fi
 
 # Trap tous les signaux d'arrêt
 trap cleanup EXIT INT TERM HUP
@@ -129,13 +195,13 @@ is_running() {
 }
 
 # Vérifier si tous les services tournent encore
-# Note: OpenCode n'est pas vérifié si son PID est vide (démarré manuellement par l'utilisateur)
 all_services_running() {
     # Vérifier seulement les services que nous avons démarrés
     if is_running "${BACKEND_PID}" && \
        is_running "${EVENT_BRIDGE_PID}" && \
        is_running "${FRONTEND_PID}" && \
-       is_running "${WATCHER_PID}"; then
+       is_running "${WATCHER_PID}" && \
+       is_running "${ORCHESTRATOR_PID}"; then
         return 0
     fi
     return 1
@@ -195,13 +261,14 @@ start_opencode_server() {
         return 0
     else
         log_error "❌ Impossible de démarrer OpenCode Server"
-        log_warning "⚠️ Le script va continuer sans OpenCode"
+        log_warning "⚠️ Le script va continuer sans OpenCode Server"
         OPENCODE_EXTERNAL=true
         return 0  # Ne pas bloquer le démarrage
     fi
 }
 
-# Démarrer le Dashboard Backend
+# Démarrer le Dashboard Backend (port 8888)
+#    NOTE: Now includes new routers: CEO, Missions, System Services monitoring
 start_backend() {
     log "🚀 Démarrage du Dashboard Backend (port 8888)..."
     
@@ -229,6 +296,7 @@ start_backend() {
     # Attendre que le backend soit prêt
     if wait_for_service "http://localhost:8888/api/v1/agents/status" "Dashboard Backend" 30; then
         log_success "✅ Dashboard Backend démarré (PID: ${BACKEND_PID})"
+        log_info "   (Nouveaux routers: CEO, Missions, System Services monitoring activés)"
         return 0
     else
         log_error "❌ Impossible de démarrer le Dashboard Backend"
@@ -238,7 +306,7 @@ start_backend() {
 
 # Démarrer l'Event Bridge v2 (refactored)
 start_event_bridge() {
-    log "🚀 Démarrage de l'Event Bridge v2.0 (port 9998)..."
+    log "🌉 Démarrage de l'Event Bridge v2.0 (port 9998)..."
     
     local event_bridge_script="${SCRIPT_DIR}/core/event_bridge_v2.py"
     
@@ -275,7 +343,7 @@ start_event_bridge() {
 
 # Démarrer le Watcher v3.0 (refactored - merged Watcher + Sentinel)
 start_watcher() {
-    log "👁️ Démarrage du Watcher v3.0 (Level 1 Agent)..."
+    log "👁️ Démarrage du Watcher v3.0 (Level 1 Agent - merged Watcher + Sentinel)..."
     
     local watcher_script="${SCRIPT_DIR}/core/watcher.py"
     
@@ -310,7 +378,8 @@ start_watcher() {
     # Vérifier qu'il tourne
     if is_running "${WATCHER_PID}"; then
         log_success "✅ Watcher v3.0 démarré (PID: ${WATCHER_PID})"
-        log_info "   📊 Level 1 Agent: Monitoring + Pattern Detection + AI Analysis"
+        log_info "   Level 1 Agent: Monitoring + Pattern Detection + AI Analysis"
+        log_info "   (includes Sentinel capabilities merged)"
         return 0
     else
         log_warning "⚠️ Watcher v3.0 démarré mais non prêt (PID: ${WATCHER_PID})"
@@ -346,11 +415,11 @@ start_learning_capture() {
     # Vérifier qu'il tourne
     if is_running "${LEARNING_CAPTURE_PID}"; then
         log_success "✅ Learning Capture Service démarré (PID: ${LEARNING_CAPTURE_PID})"
-        log_info "   📊 Capture automatique des heuristiques activée"
+        log_info   "   Capture automatique des heuristiques activée"
         return 0
     else
         log_warning "⚠️ Learning Capture Service non démarré"
-        return 0  # Continuer même si non prêt
+        return 0
     fi
 }
 
@@ -368,7 +437,7 @@ start_ceo_monitor() {
     
     # Tuer tout processus existant avant de lancer
     log "🔄 Arrêt des anciennes instances du CEO monitor..."
-    pkill -f "Open_ELF/agents/ceo_inbox_monitor.py" 2>/dev/null || true
+    pkill -f "Open_ELF/agents/ini_ceo_monitor.py" 2>/dev/null || true
     sleep 1
     
     # Démarrer le monitor en arrière-plan
@@ -383,7 +452,7 @@ start_ceo_monitor() {
     # Vérifier qu'il tourne
     if is_running "${CEO_MONITOR_PID}"; then
         log_success "✅ CEO Inbox Monitor démarré (PID: ${CEO_MONITOR_PID})"
-        log_info "   📬 Traitement autonome des escalations"
+        log_info   "Traitement autonome des escalations"
         return 0
     else
         log_warning "⚠️ CEO Inbox Monitor non démarré"
@@ -411,16 +480,16 @@ start_orchestrator() {
     # Démarrer l'orchestrator en arrière-plan
     cd "${ELF_DIR}/orchestrator"
     python3 "${orchestrator_script}" start >"${LOGS_DIR}/orchestrator.log" 2>&1 &
-    local orchestrator_script_pid=$!
+    ORCHESTRATOR_PID=$!
     cd - >/dev/null
     
     # Attendre quelques secondes pour laisser démarrer
     sleep 3
     
     # Vérifier qu'il tourne
-    if is_running "${orchestrator_script_pid}"; then
-        log_success "✅ Unified Orchestrator démarré (PID: ${orchestrator_script_pid})"
-        log_info "   🎯 Décision-making centralisé"
+    if is_running "${ORCHESTRATOR_PID}"; then
+        log_success "✅ Unified Orchestrator démarré (PID: ${ORCHESTRATOR_PID})"
+        log_info   "Decision-making centralisé"
         return 0
     else
         log_warning "⚠️ Unified Orchestrator non démarré"
@@ -428,44 +497,7 @@ start_orchestrator() {
     fi
 }
 
-# Démarrer la Sentinel Monitor
-start_sentinel() {
-    log "🛡️ Démarrage de la Sentinel Monitor..."
-    
-    local sentinel_script="${ELF_DIR}/agents/sentinel_monitor.py"
-    
-    # Vérifier que le script existe
-    if [[ ! -f "${sentinel_script}" ]]; then
-        log_warning "⚠️ Script Sentinel introuvable: ${sentinel_script}"
-        return 0  # Continuer sans la sentinel
-    fi
-    
-    # Tuer tout processus existant avant de lancer
-    log "🔄 Arrêt des anciennes instances de la sentinel..."
-    pkill -f "Open_ELF/agents/sentinel_monitor.py" 2>/dev/null || true
-    sleep 1
-    
-    # Démarrer la sentinel en arrière-plan
-    cd "${SCRIPT_DIR}"
-    python3 "${sentinel_script}" >"${LOGS_DIR}/sentinel.log" 2>&1 &
-    local sentinel_script_pid=$!
-    cd - >/dev/null
-    
-    # Attendre quelques secondes pour laisser démarrer
-    sleep 3
-    
-    # Vérifier qu'il tourne
-    if is_running "${sentinel_script_pid}"; then
-        log_success "✅ Sentinel Monitor démarrée (PID: ${sentinel_script_pid})"
-        log_info "   🔍 Surveillance continue du système"
-        return 0
-    else
-        log_warning "⚠️ Sentinel Monitor non démarrée"
-        return 0  # Continuer même si non prêt
-    fi
-}
-
-# Démarrer le Dashboard Frontend
+# Démarrer la Dashboard Frontend
 start_frontend() {
     log "🚀 Démarrage du Dashboard Frontend (port 3001)..."
     
@@ -549,34 +581,41 @@ show_status() {
     fi
     
     if is_running "${WATCHER_PID}"; then
-        echo "✅ Watcher (PID: ${WATCHER_PID})"
+        echo "✅ Watcher v3.0 (PID: ${WATCHER_PID})"
+        echo "   Level 1: Monitoring + Pattern Detection + AI Analysis"
+        echo "   includes Sentinel capabilities (merged)"
     else
         echo "❌ Watcher"
     fi
     
-    if pgrep -f "Open_ELF/agents/sentinel_monitor.py" >/dev/null 2>&1; then
-        echo "🛡️ Sentinel (en cours)"
-    else
-        echo "⚪ Sentinel (non actif)"
-    fi
-    
     if pgrep -f "Open_ELF/orchestrator/unified_orchestrator.py" >/dev/null 2>&1; then
-        echo "🧠 Orchestrator (en cours)"
+        echo "🧠 Unified Orchestrator (en cours)"
     else
-        echo "⚪ Orchestrator (non actif)"
+        echo "⚪ Unified Orchestrator (non actif)"
     fi
     
     if is_running "${LEARNING_CAPTURE_PID}"; then
         echo "✅ Learning Capture (PID: ${LEARNING_CAPTURE_PID})"
+        echo "   Capture automatique des heuristiques activée"
     else
         echo "⚪ Learning Capture (non actif)"
     fi
     
     if is_running "${CEO_MONITOR_PID}"; then
         echo "✅ CEO Monitor (PID: ${CEO_MONITOR_PID})"
+        echo "   Traitement autonome des escalations"
     else
         echo "⚪ CEO Monitor (non actif)"
     fi
+    
+    echo ""
+    log "💡 Nouveaux endpoints de monitoring disponibles:"
+    echo "   /api/v1/ceo/* - CEO inbox metrics, monitor status"
+    echo "   /api/v1/missions/* - Mission Engine monitoring"
+    echo "   /api/v1/system/* - System services health checks"
+    echo "   /api/v1/monitoring/coordinator/* - Agent coordination"
+    echo "   /api/v1/monitoring/ai-analysis/* - AI analysis tracking"
+    echo "   /api/v1/monitoring/trails/* - Pheromone trails"
     echo "----------------------------------------"
 }
 
@@ -586,7 +625,7 @@ show_urls() {
     echo "----------------------------------------"
     echo "🏠 Dashboard:     http://localhost:3001"
     echo "📡 Backend API:   http://localhost:8888"
-    echo "🔌 Event Bridge:  http://localhost:9998/status"
+    echo "🔌 Event Bridge: http://localhost:9998/status"
     echo "🖥️ OpenCode:      http://localhost:4096"
     echo "----------------------------------------"
 }
@@ -600,10 +639,9 @@ test_mode() {
     start_backend || return 1
     start_event_bridge || return 1
     start_orchestrator || return 1  # Unified Orchestrator
-    start_watcher || return 1
-    start_sentinel || return 0  # Sentinel Monitor
-    start_learning_capture || return 0  # Ne pas bloquer si échec
-    start_ceo_monitor || return 0  # CEO Inbox Monitor
+    start_watcher || return 1               # Watcher v3.0 (already includes Sentinel)
+    start_learning_capture || return 0 # Ne pas bloquer si échec
+    start_ceo_monitor || return 0    # CEO Inbox Monitor
     
     show_status
     show_urls
@@ -635,12 +673,11 @@ all_mode() {
     start_opencode_server || return 1
     start_backend || return 1
     start_event_bridge || return 1
-    start_orchestrator || return 1  # Unified Orchestrator
-    start_watcher || return 1
-    start_sentinel || return 0  # Sentinel Monitor
+    start_orchestrator || return 1    # Unified Orchestrator
+    start_watcher || return 1               # Watcher v3.0 (merged Watcher + Sentinel)
     start_frontend || return 1
-    start_learning_capture || return 0  # Ne pas bloquer si échec
-    start_ceo_monitor || return 0  # CEO Inbox Monitor
+    start_learning_capture || return 0 # Ne pas bloquer si échec
+    start_ceo_monitor || return 0    # CEO Inbox Monitor
     
     show_status
     show_urls
@@ -665,12 +702,11 @@ no_opencode_mode() {
     # Démarrer les autres services
     start_backend || return 1
     start_event_bridge || return 1
-    start_orchestrator || return 1  # Unified Orchestrator
-    start_watcher || return 1
-    start_sentinel || return 0  # Sentinel Monitor
+    start_orchestrator || return 1 # Unified Orchestrator
+    start_watcher || return 1               # Watcher v3.0 (merged Watcher + Sentinel)
     start_frontend || return 1
-    start_learning_capture || return 0  # Ne pas bloquer si échec
-    start_ceo_monitor || return 0  # CEO Inbox Monitor
+    start_learning_capture || return 0 # Ne pas bloquer si échec
+    start_ceo_monitor || return 0    # CEO Inbox Monitor
     
     show_status
     show_urls
@@ -679,7 +715,7 @@ no_opencode_mode() {
     return 0
 }
 
-# Fonction principale - VERSION CORRIGÉE
+# Fonction principale - VERSION CORRECTÉE
 main() {
     local mode="all"
     
@@ -732,7 +768,7 @@ main() {
                 show_status
             fi
             
-            # Attendre 5 secondes mais interrompre si signal reçu
+            # Attendre 5 secondes mais interrompe si signal reçu
             if ! timeout 5 sleep 5; then
                 # Si timeout interrompu, c'est probablement un signal
                 if [[ $RUNNING == false ]]; then

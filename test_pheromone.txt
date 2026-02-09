@@ -1,3 +1,0 @@
-Test file for pheromone trail recording
-Created: 2026-02-09
-Purpose: Verify trail recording is working

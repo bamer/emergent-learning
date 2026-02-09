@@ -44,3 +44,33 @@ Watcher counted 2 'escalations' that were actually resolved documents and notes 
 
 ---
 
+## H-96: Health summary mechanism provides stale data; always verify process state directly using ps aux before taking action
+
+**Confidence**: 0.9
+**Source**: observation
+**Created**: 2026-02-09
+
+Health summary consistently reported Watcher as down despite it running for 69+ minutes. Verified through direct process check each time.
+
+---
+
+## H-99: Use current process paths in health checks
+
+**Confidence**: 0.9
+**Source**: observation
+**Created**: 2026-02-10
+
+Health monitoring must use current process locations, not legacy paths. When moving services, update all health check patterns including pgrep, pkill, and restart commands. Issue: unified_orchestrator.py used 'watcher/elf_watcher.py' but actual path is 'core/watcher.py'.
+
+---
+
+## H-100: Fetch metrics from source of truth API
+
+**Confidence**: 0.95
+**Source**: observation
+**Created**: 2026-02-10
+
+Always fetch health metrics from live API endpoints, not local state or internal queues. Caches become stale, while API provides real-time data. Issue: events_processed used len(self.events) which was always 0.
+
+---
+

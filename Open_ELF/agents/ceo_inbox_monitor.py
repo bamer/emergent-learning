@@ -226,42 +226,139 @@ You have received an escalation that requires your attention:
         logger.info(f"✅ Escalation archived: {archive_path.name}")
 
     def run_cycle(self):
-        """Run one monitoring cycle."""
+        """Run one monitoring cycle (Level 3 CEO Analysis)."""
         self.cycle_count += 1
 
-        logger.info(f"🔍 CEO Inbox Monitor - Cycle #{self.cycle_count}")
+        logger.info(
+            f"👑 CEO Inbox Monitor - Cycle #{self.cycle_count} (60-min analysis)"
+        )
 
         # Check for pending escalations
         pending = self.get_pending_escalations()
 
-        if not pending:
+        if pending:
+            logger.info(f"📬 Found {len(pending)} pending escalations")
+
+            # Process ALL escalations immediately
+            max_per_cycle = 10  # Max escalations per cycle
+            for i, escalation in enumerate(pending[:max_per_cycle]):
+                logger.info(
+                    f"🎯 Processing escalation {i + 1}/{min(len(pending), max_per_cycle)}: {escalation.name}"
+                )
+                result = self.process_escalation(escalation)
+
+                if result.get("status") in ["processed", "basic_processed"]:
+                    self.archive_escalation(escalation, result)
+                else:
+                    logger.warning(
+                        f"⚠️  Escalation {escalation.name} not processed: {result.get('error', 'Unknown')}"
+                    )
+
+            remaining = len(pending) - max_per_cycle
+            if remaining > 0:
+                logger.info(f"⚠️  {remaining} escalations remaining for next cycle")
+        else:
             logger.info("📭 No pending escalations")
-            return
 
-        logger.info(f"📬 Found {len(pending)} pending escalations")
+        # Perform 60-minute CEO analysis
+        self._perform_60min_analysis()
 
-        # Process ALL escalations immediately (not waiting for AI interval)
-        # Si des escalations sont détectées → traitement IMMÉDIAT
-        max_per_cycle = 10  # Max escalations per cycle to avoid long runs
-        for i, escalation in enumerate(pending[:max_per_cycle]):
-            logger.info(
-                f"🎯 Processing escalation {i + 1}/{min(len(pending), max_per_cycle)}: {escalation.name}"
+    def _perform_60min_analysis(self):
+        """
+        Perform the 60-minute CEO analysis.
+
+        This is the core Level 3 function that runs every hour.
+        """
+        logger.info("📊 Performing 60-minute CEO analysis...")
+
+        try:
+            import sqlite3
+
+            DB_PATH = LEARNING_DIR / "index.db"
+            if not DB_PATH.exists():
+                logger.warning("Database not found for CEO analysis")
+                return
+
+            conn = sqlite3.connect(str(DB_PATH))
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            # 1. Review heuristics for golden rule promotion
+            cursor.execute("""
+                SELECT COUNT(*) as count FROM heuristics 
+                WHERE is_golden = 0 AND confidence >= 0.9 AND times_validated >= 10
+            """)
+            promotion_candidates = cursor.fetchone()["count"]
+
+            # 2. Review active experiments
+            EXPERIMENTS_DIR = ELF_DIR / "memory" / "experiments" / "active"
+            experiments = (
+                list(EXPERIMENTS_DIR.glob("*.md")) if EXPERIMENTS_DIR.exists() else []
             )
 
-            # Always use AI if available (immediate processing when escalation detected)
-            result = self.process_escalation(escalation)
+            # 3. Review recent learnings
+            cursor.execute("""
+                SELECT type, COUNT(*) as count 
+                FROM learnings 
+                WHERE created_at > datetime('now', '-24 hours')
+                GROUP BY type
+            """)
+            recent_learnings = {row[0]: row[1] for row in cursor.fetchall()}
 
-            # Archive if processed
-            if result.get("status") in ["processed", "basic_processed"]:
-                self.archive_escalation(escalation, result)
-            else:
-                logger.warning(
-                    f"⚠️  Escalation {escalation.name} not processed: {result.get('error', 'Unknown')}"
+            # 4. Review heuristics that need attention
+            cursor.execute("""
+                SELECT COUNT(*) as count FROM heuristics 
+                WHERE is_golden = 1 AND confidence < 0.8
+            """)
+            degraded_golden = cursor.fetchone()["count"]
+
+            # 5. Check unresolved alerts
+            cursor.execute("""
+                SELECT COUNT(*) as count FROM alerts 
+                WHERE resolved = 0 AND created_at > datetime('now', '-24 hours')
+            """)
+            unresolved_alerts = cursor.fetchone()["count"]
+
+            # 6. Golden rule violations
+            cursor.execute("""
+                SELECT COUNT(*) as count FROM heuristics 
+                WHERE is_golden = 1 AND times_violated > 0
+            """)
+            golden_violations = cursor.fetchone()["count"]
+
+            conn.close()
+
+            # Log analysis results
+            logger.info("👑 CEO 60-min Analysis Results:")
+            logger.info(
+                f"   - Golden rule promotion candidates: {promotion_candidates}"
+            )
+            logger.info(f"   - Active experiments: {len(experiments)}")
+            logger.info(f"   - Recent learnings: {sum(recent_learnings.values())}")
+            logger.info(f"   - Degraded golden rules: {degraded_golden}")
+            logger.info(f"   - Unresolved alerts: {unresolved_alerts}")
+            logger.info(f"   - Golden rule violations: {golden_violations}")
+
+            # If there are promotion candidates, log them
+            if promotion_candidates > 0:
+                logger.info(
+                    f"   ⚠️  {promotion_candidates} heuristics ready for golden rule promotion"
                 )
 
-        remaining = len(pending) - max_per_cycle
-        if remaining > 0:
-            logger.info(f"⚠️  {remaining} escalations remaining for next cycle")
+            # If there are degraded golden rules, log warning
+            if degraded_golden > 0:
+                logger.warning(
+                    f"   ⚠️  {degraded_golden} golden rules have degraded confidence"
+                )
+
+            # If there are unresolved alerts, escalate to human
+            if unresolved_alerts > 5:
+                logger.warning(
+                    f"   🚨 {unresolved_alerts} unresolved alerts - human review recommended"
+                )
+
+        except Exception as e:
+            logger.error(f"CEO 60-min analysis error: {e}")
 
     def start(self):
         """Start continuous monitoring."""

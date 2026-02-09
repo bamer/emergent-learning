@@ -36,6 +36,7 @@ if str(ELF_DIR) not in sys.path:
 # Configuration
 DB_PATH = ELF_DIR / "memory" / "index.db"
 STATE_FILE = Path.home() / ".opencode" / "hooks" / "learning-loop" / "session-state.json"
+SEMANTIC_DAEMON_URL = "http://localhost:5001"
 
 # Risky patterns for advisory verification
 RISKY_PATTERNS = {
@@ -148,14 +149,17 @@ class LearningProcessor:
         """
         Process tool BEFORE execution.
         
-        - Load relevant heuristics
-        - Inject context
+        - Load relevant heuristics (keyword)
+        - Query semantic memory (embedding)
+        - Build injectable context
         - Track consulted heuristics
         """
         result = {
             "context_injected": False,
-            "heuristics_consulted": [],
-            "domains": []
+            "heuristics": [],
+            "semantic_memories": [],
+            "domains": [],
+            "injectable_context": "",
         }
         
         # Auto-detect domains from tool input
@@ -163,15 +167,59 @@ class LearningProcessor:
         result["domains"] = domains
         self.session_state["domains_queried"] = domains
         
-        # Consult relevant heuristics
+        # Consult relevant heuristics (keyword-based)
+        heuristics = []
         if domains:
             heuristics = self._consult_heuristics(domains, limit=5)
+            result["heuristics"] = heuristics
             result["heuristics_consulted"] = [h["id"] for h in heuristics]
             self.session_state["heuristics_consulted"] = result["heuristics_consulted"]
-            result["context_injected"] = len(heuristics) > 0
+        
+        # Semantic search (embedding-based)
+        query_text = self._build_semantic_query(event)
+        if query_text:
+            memories = self._semantic_search(query_text, top_k=3, min_similarity=0.25)
+            result["semantic_memories"] = memories
+        
+        # Build injectable context string
+        context_lines = []
+        
+        if heuristics:
+            context_lines.append("## Relevant Heuristics (from ELF memory)")
+            for h in heuristics[:3]:
+                conf = h.get("confidence", 0)
+                context_lines.append(f"- [{h.get('domain', 'general')}] {h.get('rule', '')} (confidence: {conf:.0%})")
+            context_lines.append("")
+        
+        if result["semantic_memories"]:
+            context_lines.append("## Semantic Memories (similar past experiences)")
+            for m in result["semantic_memories"][:3]:
+                sim = m.get("similarity", 0)
+                text = m.get("text", "")[:150]
+                context_lines.append(f"- (similarity: {sim:.0%}) {text}")
+            context_lines.append("")
+        
+        if context_lines:
+            result["injectable_context"] = "\n".join(context_lines)
+            result["context_injected"] = True
         
         self._save_session_state()
         return result
+
+    def _build_semantic_query(self, event: ToolEvent) -> str:
+        """Build a semantic search query from tool event."""
+        parts = [f"Tool: {event.tool_name}"]
+        
+        if isinstance(event.tool_input, dict):
+            # Extract meaningful fields
+            for key in ("filePath", "file_path", "path", "command", "pattern", "content", "description"):
+                val = event.tool_input.get(key, "")
+                if val and isinstance(val, str):
+                    parts.append(val[:200])
+                    break
+        
+        query = " ".join(parts)
+        return query[:500] if query else ""
     
     def _detect_domains(self, tool_input: Dict, tool_name: str) -> List[str]:
         """Auto-detect domains from tool context."""
@@ -224,6 +272,48 @@ class LearningProcessor:
         finally:
             conn.close()
     
+    def _semantic_search(self, query_text: str, top_k: int = 3, min_similarity: float = 0.25) -> List[Dict]:
+        """Query semantic daemon for relevant memories."""
+        try:
+            import urllib.request
+            payload = json.dumps({
+                "query": query_text,
+                "top_k": top_k,
+                "min_similarity": min_similarity,
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                f"{SEMANTIC_DAEMON_URL}/search",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                return data.get("results", [])
+        except Exception:
+            return []
+
+    def _store_embedding(self, text: str, source_id: str, source_type: str, metadata: Optional[Dict] = None):
+        """Store text with embedding in semantic daemon."""
+        try:
+            import urllib.request
+            payload = json.dumps({
+                "text": text,
+                "source_id": source_id,
+                "source_type": source_type,
+                "metadata": metadata or {},
+            }).encode("utf-8")
+            req = urllib.request.Request(
+                f"{SEMANTIC_DAEMON_URL}/store",
+                data=payload,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                pass  # Fire and forget
+        except Exception:
+            pass
+
     # =========================================================================
     # POST-TOOL PROCESSING
     # =========================================================================
@@ -742,6 +832,14 @@ class LearningProcessor:
                         updated_at = CURRENT_TIMESTAMP
                 """, (domain, rule, learning.get("confidence", 0.5), timestamp))
                 count += 1
+
+                # Store embedding in semantic daemon
+                self._store_embedding(
+                    text=f"{domain}: {rule}",
+                    source_id=f"heuristic_{domain}_{hash(rule) % 100000}",
+                    source_type="heuristic",
+                    metadata={"domain": domain, "confidence": learning.get("confidence", 0.5), "source": learning.get("source", "auto")},
+                )
             
             conn.commit()
             return count
@@ -846,6 +944,15 @@ class LearningProcessor:
             """, (description[:100], timestamp.isoformat()))
             
             conn.commit()
+
+            # Store failure embedding
+            self._store_embedding(
+                text=f"Failure: {description[:200]}. {reason}",
+                source_id=f"failure_{timestamp.strftime('%Y%m%d_%H%M%S')}",
+                source_type="failure",
+                metadata={"domain": domains[0] if domains else "general", "reason": reason},
+            )
+
             print(f"[LEARNING] Auto-recorded failure: {description[:50]}...", file=sys.stderr)
             
         except Exception as e:
@@ -1001,10 +1108,39 @@ def main():
     parser.add_argument("--decay-trails", action="store_true", help="Decay all trails")
     parser.add_argument("--hot-spots", action="store_true", help="Show hot spots")
     parser.add_argument("--limit", type=int, default=20, help="Limit for hot spots")
+    parser.add_argument("--json-rpc", action="store_true", help="JSON stdin/stdout mode for plugin bridge")
     
     args = parser.parse_args()
     
     processor = LearningProcessor()
+    
+    if args.json_rpc:
+        # JSON RPC mode: read event from stdin, process, write result to stdout
+        try:
+            raw = sys.stdin.read()
+            request = json.loads(raw)
+            action = request.get("action", "")
+            event_data = request.get("event", {})
+            
+            event = ToolEvent(
+                tool_name=event_data.get("tool_name", "unknown"),
+                tool_input=event_data.get("tool_input", {}),
+                tool_output=event_data.get("tool_output", {}),
+                session_id=event_data.get("session_id"),
+                timestamp=event_data.get("timestamp"),
+            )
+            
+            if action == "pre":
+                result = processor.pre_tool_process(event)
+            elif action == "post":
+                result = processor.post_tool_process(event)
+            else:
+                result = {"error": f"Unknown action: {action}"}
+            
+            print(json.dumps(result, default=str))
+        except Exception as e:
+            print(json.dumps({"error": str(e)}))
+        return
     
     if args.decay_trails:
         processor.decay_trails()

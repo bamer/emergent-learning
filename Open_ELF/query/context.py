@@ -473,6 +473,37 @@ class ContextBuilderMixin:
 ---
 
 """
+                    # Add minimal semantic search to minimal mode
+                    semantic_results = None
+                    if SEMANTIC_SEARCH_AVAILABLE and task != "Agent task context generation":
+                        try:
+                            self._log_debug("Running minimal semantic search on task description")
+                            searcher = await SemanticSearcher.create(
+                                base_path=self.base_path
+                            )
+                            # Use task as semantic query with broader threshold for minimal mode
+                            semantic_results = await searcher.find_relevant_heuristics(
+                                task=task,
+                                threshold=0.5,  # Lower threshold for broader coverage in minimal mode
+                                limit=3,  # Only top 3 in minimal mode
+                                domain=domain
+                            )
+                            try:
+                                await searcher.cleanup()
+                            except Exception:
+                                pass
+                            
+                            if semantic_results:
+                                context_parts.append("\n## 🧠 Semantic Memory Match (Top Results)\n\n")
+                                for h in semantic_results[:3]:
+                                    score = h.get("_final_score", 0)
+                                    rule = h['rule'][:70] + "..." if len(h['rule']) > 70 else h['rule']
+                                    entry = f"- **{rule}** ({score*100:.0f}% match)\n"
+                                    context_parts.append(entry)
+                                context_parts.append("\n")
+                        except Exception as e:
+                            self._log_debug(f"Minimal semantic search failed (non-critical): {e}")
+                    
                     context_parts.insert(
                         0, f"{building_header}{semantic_notice}# Task Context\n\n{task}\n\n---\n\n"
                     )

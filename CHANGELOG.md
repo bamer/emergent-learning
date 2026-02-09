@@ -5,7 +5,73 @@ All notable changes to the Emergent Learning Framework will be documented in thi
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.5] - 2026-02-09
+## [0.5.6] - 2026-02-10
+
+### Added
+- **Semantic Memory Integration** - Task-aware search through learnings and heuristics
+  - Integrated semantic search into context building pipeline
+  - Minimal mode now includes top 3 semantic matches for provided tasks
+  - Standard/deep modes include full semantic search results
+  - Semantic memory shows relevance percentages and confidence scores
+  - Automatic indexing of heuristics and learnings for semantic matching
+
+- **Database-First Golden Rules** - Golden rules now sourced from database
+  - Golden rules stored in `heuristics` table with `is_golden=1`
+  - Automatic indexing in semantic memory
+  - Confidence and validation count tracking
+  - Fallback to golden-rules.md file if database is empty
+  - 5-minute caching TTL per session
+
+### Changed
+- **Context Query System Enhanced** - New depth levels for context building
+  - `--context` (minimal): Golden rules + semantic memory notice + top 3 matches
+  - `--context --depth standard`: Golden rules + semantic results + heuristics/learnings
+  - `--context --depth deep`: Full context + semantic search + experiments + ADRs
+  - Task-aware semantic search: `--context "your task description"`
+  - Domain-specific search: `--context --domain debugging --depth standard`
+
+- **Command Documentation Updated**
+  - `/checkin` now documents semantic memory queries
+  - `/checkout` emphasizes automatic semantic memory indexing
+  - `/search` now combines session history + semantic memory search
+  - Updated examples for all semantic query patterns
+
+- **Logging Cleanup** - Suppressed verbose initialization messages
+  - Migration messages suppressed in production output
+  - Peewee connection logs hidden by default
+  - Warnings only shown when --debug flag used
+  - Query output now clean and agent-friendly
+
+### Fixed
+- **Golden Rules Implementation** - Resolved dual implementation conflict
+  - Disabled old `get_golden_rules` in queries/heuristics.py (file-based)
+  - ContextBuilderMixin now provides authoritative database-first implementation
+  - Category matching now supports substring matching (e.g., "core" matches "core-principles")
+  - Empty category filter results fallback to full content instead of placeholder
+
+### Technical Details
+- **Semantic Search Configuration**
+  - Embeddings: Ollama nomic-embed-text (768-dimensional)
+  - Fallbacks: OpenAI embeddings or keyword-based matching
+  - Storage: BLOB float32 vectors in SQLite
+  - Indexing: Full-text search for candidates + cosine similarity for ranking
+  - Thresholds: 0.5 (minimal mode, broad), 0.6 (standard/deep, focused)
+
+- **Performance**
+  - Semantic search only runs if within token budget
+  - Caching prevents redundant embeddings
+  - Top-K limiting (3 minimal, 5 standard, 10 deep)
+  - Graceful degradation if models unavailable
+
+## [0.5.5] - 2026-02-10
+
+### Fixed
+- **Dashboard Frontend Port Corrected** - Vite config port restored to 3001
+  - The vite.config.ts incorrectly had `port: 5173` (Vite's default)
+  - Corrected back to `port: 3001` (original, historically documented port)
+  - Previous version had correct 3001, was accidentally changed to 5173
+  - Start script ishare-elf-system.sh now correctly checks `http://localhost:3001`
+  - Verified via git history: commit 00dd570 had `port: 3001`, current had `port: 5173`
 
 ### Added
 - **Complete Learning Workflow Refactoring** - Major architecture simplification

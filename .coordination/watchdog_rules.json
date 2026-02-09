@@ -1,0 +1,1 @@
+{"event":"recent_learnings","condition":"== 0","action":"run_force_learning_extraction.sh"}

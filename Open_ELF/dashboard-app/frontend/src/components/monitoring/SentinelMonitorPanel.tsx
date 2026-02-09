@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Shield, Activity, AlertTriangle, CheckCircle, Clock,
-  TrendingUp, TrendingDown, Minus, Zap, Brain, Server,
-  Database, Wifi, RefreshCw, ChevronDown, ChevronRight,
-  Filter, Download, Eye, EyeOff, Bell, BellOff, Play, Pause
+  TrendingUp, TrendingDown, Zap, Brain, Server,
+  Database, RefreshCw, ChevronDown, ChevronRight,
+  Bell, BellOff, Play, Pause, Eye, Target, ZapOff
 } from 'lucide-react';
 
 // Types
@@ -19,7 +19,7 @@ interface Escalation {
   status: 'pending' | 'acknowledged' | 'resolved';
 }
 
-interface SentinelMetrics {
+interface WatcherMetrics {
   timestamp: string;
   services: {
     frontend: boolean;
@@ -46,7 +46,7 @@ interface SentinelMetrics {
   };
 }
 
-interface SentinelAnalysis {
+interface WatcherAnalysis {
   status: 'healthy' | 'warning' | 'critical';
   analysis: string;
   anomalies: string[];
@@ -55,10 +55,10 @@ interface SentinelAnalysis {
   priority_actions: string[];
 }
 
-interface SentinelCycle {
+interface WatcherCycle {
   timestamp: string;
-  metrics: SentinelMetrics;
-  analysis: SentinelAnalysis;
+  metrics: WatcherMetrics;
+  analysis: WatcherAnalysis;
   actions_taken: string[];
   agent_executions: AgentExecutionResult[];
 }
@@ -81,53 +81,84 @@ interface PatternDetection {
   cooldown_remaining?: number;
 }
 
-interface SentinelMonitorPanelProps {
+interface AIAnalysisSchedule {
+  agents: {
+    watcher: {
+      last_analysis: string | null;
+      next_analysis: string | null;
+      last_check: string | null;
+      ai_used_in_last_analysis: boolean;
+      config: {
+        analysis_interval: number;
+        basic_check_interval: number;
+        note: string;
+      };
+    };
+    orchestrator: {
+      last_analysis: string | null;
+      next_analysis: string | null;
+      last_check: string | null;
+      ai_used_in_last_analysis: boolean;
+      config: {
+        analysis_interval: number;
+        basic_check_interval: number;
+        note: string;
+      };
+    };
+  };
+}
+
+interface WatcherMonitorPanelProps {
   apiBaseUrl?: string;
   refreshInterval?: number;
 }
 
-// Status configurations
+// Status configurations - Human-readable with clear labels
 const STATUS_CONFIG = {
   healthy: {
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-500/10',
     borderColor: 'border-emerald-500/20',
     icon: CheckCircle,
-    label: 'Healthy',
-    emoji: '🟢'
+    label: 'All Good',
+    emoji: '✅',
+    description: 'System operating normally'
   },
   warning: {
     color: 'text-amber-400',
     bgColor: 'bg-amber-500/10',
     borderColor: 'border-amber-500/20',
     icon: AlertTriangle,
-    label: 'Warning',
-    emoji: '🟡'
+    label: 'Needs Attention',
+    emoji: '⚠️',
+    description: 'Some issues detected'
   },
   critical: {
     color: 'text-red-400',
     bgColor: 'bg-red-500/10',
     borderColor: 'border-red-500/20',
     icon: AlertTriangle,
-    label: 'Critical',
-    emoji: '🔴'
+    label: 'Action Required',
+    emoji: '🚨',
+    description: 'Critical issues need immediate action'
   },
-  // Watcher-specific statuses
   nominal: {
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-500/10',
     borderColor: 'border-emerald-500/20',
     icon: CheckCircle,
     label: 'Nominal',
-    emoji: '🟢'
+    emoji: '✅',
+    description: 'Running as expected'
   },
   stale: {
     color: 'text-amber-400',
     bgColor: 'bg-amber-500/10',
     borderColor: 'border-amber-500/20',
-    icon: AlertTriangle,
+    icon: Clock,
     label: 'Stale',
-    emoji: '🟡'
+    emoji: '⏰',
+    description: 'No recent updates'
   },
   error: {
     color: 'text-red-400',
@@ -135,7 +166,8 @@ const STATUS_CONFIG = {
     borderColor: 'border-red-500/20',
     icon: AlertTriangle,
     label: 'Error',
-    emoji: '🔴'
+    emoji: '❌',
+    description: 'Error state detected'
   },
   stopped: {
     color: 'text-slate-400',
@@ -143,69 +175,59 @@ const STATUS_CONFIG = {
     borderColor: 'border-slate-500/20',
     icon: Pause,
     label: 'Stopped',
-    emoji: '⏹️'
+    emoji: '⏹️',
+    description: 'Service not running'
   }
 };
 
 const SEVERITY_CONFIG = {
-  info: { color: 'text-blue-400', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/20' },
-  warning: { color: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/20' },
-  critical: { color: 'text-red-400', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/20' }
+  info: { color: 'text-blue-400', bgColor: 'bg-blue-500/10', borderColor: 'border-blue-500/20', emoji: 'ℹ️' },
+  warning: { color: 'text-amber-400', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/20', emoji: '⚠️' },
+  critical: { color: 'text-red-400', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/20', emoji: '🚨' }
 };
 
-export function SentinelMonitorPanel({ 
+// Helper to format intervals in human-readable format
+function formatInterval(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+}
+
+// Helper to format time ago
+function formatTimeAgo(timestamp: string): string {
+  if (!timestamp) return 'Never';
+  
+  const now = new Date();
+  const time = new Date(timestamp);
+  const diffMs = now.getTime() - time.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  
+  if (diffSecs < 60) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return time.toLocaleDateString();
+}
+
+export function WatcherMonitorPanel({ 
   apiBaseUrl = '', 
   refreshInterval = 30000 
-}: SentinelMonitorPanelProps) {
-  const [currentCycle, setCurrentCycle] = useState<SentinelCycle | null>(null);
-  const [cycleHistory, setCycleHistory] = useState<SentinelCycle[]>([]);
+}: WatcherMonitorPanelProps) {
+  const [currentCycle, setCurrentCycle] = useState<WatcherCycle | null>(null);
+  const [cycleHistory, setCycleHistory] = useState<WatcherCycle[]>([]);
   const [patterns, setPatterns] = useState<PatternDetection[]>([]);
   const [escalations, setEscalations] = useState<Escalation[]>([]);
+  const [aiSchedule, setAISchedule] = useState<AIAnalysisSchedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [sentinelRunning, setSentinelRunning] = useState(true);
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'cycles' | 'patterns' | 'actions'>('overview');
+  const [watcherRunning, setWatcherRunning] = useState(true);
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'cycles' | 'patterns' | 'actions' | 'ai'>('overview');
   const [expandedCycles, setExpandedCycles] = useState<Set<number>>(new Set());
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
 
-  // Fetch current sentinel status
-  const fetchSentinelStatus = useCallback(async () => {
-    try {
-      const response = await fetch(`${apiBaseUrl}/api/v1/sentinel/status`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      
-      const data = await response.json();
-      if (data.current_cycle) {
-        setCurrentCycle(data.current_cycle);
-      }
-      if (data.recent_cycles) {
-        setCycleHistory(data.recent_cycles);
-      }
-      if (data.patterns) {
-        setPatterns(data.patterns);
-      }
-      setError(null);
-    } catch (err) {
-      console.error('Failed to fetch sentinel status:', err);
-      setError(err instanceof Error ? err.message : 'Failed to connect to Sentinel');
-    } finally {
-      setLoading(false);
-    }
-  }, [apiBaseUrl]);
-
-  // Fetch escalations
-  const fetchEscalations = useCallback(async () => {
-    try {
-      const response = await fetch(`${apiBaseUrl}/api/v1/escalations?agent=sentinel&limit=10`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      
-      const data = await response.json();
-      setEscalations(data.escalations || []);
-    } catch (err) {
-      console.error('Failed to fetch escalations:', err);
-    }
-  }, [apiBaseUrl]);
+  // Fetch current watcher status (uses
 
   // Initial load and auto-refresh
   useEffect(() => {

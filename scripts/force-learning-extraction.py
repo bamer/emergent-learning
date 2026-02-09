@@ -15,7 +15,36 @@ from pathlib import Path
 # Add paths
 sys.path.insert(0, str(Path.home() / ".opencode" / "emergent-learning"))
 sys.path.insert(
-    0, str(Path.home() / ".opencode" / "emergent-learning" / "hooks" / "learning-loop")
+    0, str(Path.home() / ".opencode" / "emergent-learning" / "hooks" / "learning_loop")
+)
+# Also include archived components to resolve imported modules
+sys.path.insert(
+    0,
+    str(
+        Path.home()
+        / ".opencode"
+        / "emergent-learning"
+        / "archived_components"
+        / "20260209"
+    ),
+)
+
+# Debug: print sys.path to verify inclusion
+import sys
+
+print("DEBUG SYS.PATH INCLUSIONS:")
+for p in sys.path[:5]:
+    print("  ", p)
+# Also include archived components to resolve imported modules
+sys.path.insert(
+    0,
+    str(
+        Path.home()
+        / ".opencode"
+        / "emergent-learning"
+        / "archived_components"
+        / "20260209"
+    ),
 )
 
 # Import the extraction functions

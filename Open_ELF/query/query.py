@@ -28,6 +28,10 @@ import warnings
 logging.getLogger("query.migrations").setLevel(logging.CRITICAL)
 logging.getLogger("migrations").setLevel(logging.CRITICAL)
 logging.getLogger("peewee").setLevel(logging.CRITICAL)
+logging.getLogger("asyncio").setLevel(
+    logging.CRITICAL
+)  # Suppress unclosed session warnings
+logging.getLogger("aiohttp").setLevel(logging.CRITICAL)
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
 # Portable venv detection and re-exec

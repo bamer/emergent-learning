@@ -169,8 +169,14 @@ def calculate_ceo_metrics() -> CeoMetrics:
         "total": 0,
     }
 
-    # Process pending items (not in archive)
-    for file in CEO_INBOX_DIR.glob("escalation_*.md"):
+    # Process pending items (not in archive) - support multiple patterns
+    all_files = (
+        list(CEO_INBOX_DIR.glob("escalation_*.md")) +
+        list(CEO_INBOX_DIR.glob("watcher_esc_*.md")) +
+        list(CEO_INBOX_DIR.glob("escalation-*.md"))
+    )
+    
+    for file in all_files:
         if file.parent == CEO_ARCHIVE_DIR:
             metrics["archived"] += 1
             continue
@@ -264,12 +270,13 @@ def get_ceo_monitor_status() -> Dict[str, Any]:
 async def get_ceo_status():
     """Get CEO inbox status (active/idle/overloaded)."""
     try:
-        # Count pending items
-        pending_items = [
-            f
-            for f in CEO_INBOX_DIR.glob("escalation_*.md")
-            if f.parent != CEO_ARCHIVE_DIR
-        ]
+        # Count pending items - support multiple file patterns
+        all_files = (
+            list(CEO_INBOX_DIR.glob("escalation_*.md")) +
+            list(CEO_INBOX_DIR.glob("watcher_esc_*.md")) +
+            list(CEO_INBOX_DIR.glob("escalation-*.md"))
+        )
+        pending_items = [f for f in all_files if f.parent != CEO_ARCHIVE_DIR]
         pending_count = len(pending_items)
 
         # Determine status based on load
@@ -316,7 +323,14 @@ async def get_ceo_items(
     try:
         items = []
 
-        for file in CEO_INBOX_DIR.glob("escalation_*.md"):
+        # Support multiple escalation file patterns
+        all_files = (
+            list(CEO_INBOX_DIR.glob("escalation_*.md")) +
+            list(CEO_INBOX_DIR.glob("watcher_esc_*.md")) +
+            list(CEO_INBOX_DIR.glob("escalation-*.md"))
+        )
+        
+        for file in all_files:
             # Skip archive directory by default
             if file.parent == CEO_ARCHIVE_DIR:
                 continue

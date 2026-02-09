@@ -396,39 +396,8 @@ class CheckinOrchestrator:
             return self.selected_model
 
     def start_dashboard(self):
-        """Start the dashboard in a visible terminal window that user can close."""
-        try:
-            dashboard_ps1 = self.elf_home / "dashboard-app" / "run-dashboard.ps1"
-            dashboard_sh = self.elf_home / "dashboard-app" / "run-dashboard.sh"
-
-            if sys.platform == "win32":
-                # Launch PowerShell with -Command to avoid file association issues
-                if dashboard_ps1.exists():
-                    # Use & operator to invoke script as command, not "open" it
-                    cmd = f'& "{dashboard_ps1}"'
-                    subprocess.Popen(
-                        [
-                            "powershell",
-                            "-ExecutionPolicy",
-                            "Bypass",
-                            "-NoExit",
-                            "-Command",
-                            cmd,
-                        ],
-                        creationflags=subprocess.CREATE_NEW_CONSOLE,
-                    )
-                else:
-                    print(f"   [!] Dashboard script not found")
-                    return
-                print("   [OK] Dashboard launching (close the terminal window to stop)")
-            elif dashboard_sh.exists():
-                # Unix: launch in new terminal if possible
-                subprocess.Popen(["bash", str(dashboard_sh)])
-                print("   [OK] Dashboard launching")
-            else:
-                print(f"   [!] Dashboard script not found at {dashboard_sh}")
-        except Exception as e:
-            print(f"   [!] Could not start dashboard: {e}")
+        """Dashboard launch delegated to ./start-elf-system.sh - skipped here."""
+        print("   [OK] Dashboard managed by startup script")
 
     def check_ceo_decisions(self) -> bool:
         """Step 7: Check for pending CEO decisions."""
@@ -461,46 +430,11 @@ class CheckinOrchestrator:
         return response in ["y", "yes"]
 
     def launch_opencode_services(self):
-        """Launch OpenCode server and agents in independent terminal windows."""
-        print("\n[OpenCode] 🚀 Démarrage des services...\n")
-
-        try:
-            # Use unified services script that launches in terminal windows
-            services_script = (
-                Path.home() / ".opencode" / "scripts" / "start-services.sh"
-            )
-
-            if not services_script.exists():
-                print(f"[OpenCode] ❌ Script not found: {services_script}")
-                return False
-
-            # Launch the script which will open independent terminal windows
-            # The script handles gnome-terminal/xterm detection automatically
-            # Use start_new_session to detach completely from parent process
-            subprocess.Popen(
-                ["bash", str(services_script)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
-
-            # Give it a moment to start opening terminals
-            time.sleep(1)
-
-            print("[OpenCode] ✅ Services lancés!")
-            print("[OpenCode] 📍 Serveur: http://localhost:4096")
-            print("[OpenCode] 📚 API Docs: http://localhost:4096/doc")
-            print("[OpenCode] 🤖 Agents: En cours de démarrage...")
-            print("[OpenCode] 📱 Fenêtres de terminal ouvertes (mode interactif)\n")
-
-            return True
-
-        except Exception as e:
-            print(f"[OpenCode] ❌ Erreur: {e}")
-            import traceback
-
-            traceback.print_exc()
-            return False
+        """Services launch delegated to ./start-elf-system.sh - skipped here."""
+        print("\n[OpenCode] ✅ Services managed by startup script")
+        print("[OpenCode] 📍 Serveur: http://localhost:4096")
+        print("[OpenCode] 📚 API Docs: http://localhost:4096/doc\n")
+        return True
 
     def start_learning_daemon(self):
         """Step 9: Start the learning daemon for automatic learning extraction."""

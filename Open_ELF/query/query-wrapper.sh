@@ -1,5 +1,5 @@
 #!/bin/bash
 # Wrapper pour query.py
-# Redirige vers Open_ELF/query/
+# Redirige vers le bon emplacement
 
-python3 /home/bamer/.opencode/emergent-learning/Open_ELF/query/query.py "$@"
+python3 /home/bamer/.opencode/emergent-learning/query/query.py "$@"

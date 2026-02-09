@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """
-ELF Dashboard Backend
+ELF Dashboard Backend with Model Cards
 
-Real-time monitoring dashboard for the new ELF architecture.
-Provides:
-- EventBridge v2 statistics
-- LearningProcessor metrics
-- Agent hierarchy status
-- System health
+Real-time monitoring dashboard with detailed model cards for each agent:
+- EventBridge v2 (Level 0 - Infrastructure)
+- Watcher (Level 1 - Monitoring)
+- Orchestrator (Level 2 - Service Management)
+- CEO (Level 3 - Strategic Decisions)
 
 Run: python3 main.py
 Access: http://localhost:3011
@@ -18,8 +17,8 @@ import asyncio
 import sqlite3
 from pathlib import Path
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
-from fastapi import FastAPI, WebSocket, HTTPException
+from typing import Dict, Any
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 import uvicorn
@@ -61,188 +60,275 @@ def get_db_size():
 
 @app.get("/")
 async def root():
-    """Serve the dashboard HTML."""
+    """Serve the dashboard HTML with model cards."""
     html = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ELF Dashboard v2.0</title>
+    <title>ELF Dashboard v2.0 - Model Cards</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f1419; color: #e7e9ea; min-height: 100vh; }
-        .header { background: linear-gradient(135deg, #1a1f26 0%, #0d1117 100%); padding: 20px 30px; border-bottom: 1px solid #30363d; }
-        .header h1 { font-size: 24px; font-weight: 600; color: #58a6ff; }
-        .header .subtitle { color: #8b949e; font-size: 14px; margin-top: 5px; }
-        .status-bar { display: flex; gap: 20px; padding: 15px 30px; background: #161b22; border-bottom: 1px solid #30363d; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #3fb950; animation: pulse 2s infinite; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0e14; color: #e6edf3; min-height: 100vh; }
+        
+        /* Header */
+        .header { background: linear-gradient(135deg, #161b22 0%, #0d1117 100%); padding: 24px 32px; border-bottom: 1px solid #30363d; }
+        .header h1 { font-size: 28px; font-weight: 700; color: #58a6ff; display: flex; align-items: center; gap: 12px; }
+        .header .subtitle { color: #8b949e; font-size: 14px; margin-top: 6px; }
+        
+        /* Hierarchy Flow */
+        .hierarchy-flow { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 20px; background: #0d1117; border-bottom: 1px solid #30363d; }
+        .hierarchy-item { display: flex; align-items: center; gap: 10px; padding: 12px 20px; background: #161b22; border-radius: 8px; border: 1px solid #30363d; }
+        .hierarchy-item .level { font-size: 11px; color: #8b949e; text-transform: uppercase; }
+        .hierarchy-item .name { font-weight: 600; font-size: 15px; }
+        .hierarchy-arrow { color: #484f58; font-size: 20px; }
+        
+        /* Model Cards Grid */
+        .model-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; padding: 24px 32px; }
+        .model-card { background: #161b22; border: 1px solid #30363d; border-radius: 16px; overflow: hidden; }
+        .model-card.event-bridge { border-left: 4px solid #58a6ff; }
+        .model-card.watcher { border-left: 4px solid #a371f7; }
+        .model-card.orchestrator { border-left: 4px solid #3fb950; }
+        .model-card.ceo { border-left: 4px solid #f0883e; }
+        
+        .model-header { padding: 20px 24px; background: linear-gradient(135deg, #1c2128 0%, #161b22 100%); border-bottom: 1px solid #30363d; }
+        .model-header .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .model-header .icon { font-size: 32px; }
+        .model-header .status { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: #238636; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .model-header .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #3fb950; animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 20px 30px; }
-        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; }
-        .card h2 { font-size: 16px; color: #8b949e; margin-bottom: 15px; }
-        .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .stat { background: #0d1117; padding: 15px; border-radius: 8px; text-align: center; }
-        .stat .value { font-size: 28px; font-weight: 600; color: #58a6ff; }
-        .stat .label { font-size: 12px; color: #8b949e; margin-top: 5px; }
-        .stat.golden .value { color: #f0883e; }
-        .stat.trails .value { color: #a371f7; }
-        .component { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; background: #0d1117; border-radius: 8px; margin-bottom: 8px; }
-        .component .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; background: #238636; color: white; }
-        .hotspot { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #21262d; }
-        .scent { padding: 2px 8px; border-radius: 4px; font-size: 11px; }
-        .scent.hot { background: #f85149; color: white; }
-        .scent.discovery { background: #58a6ff; color: white; }
-        .scent.warning { background: #d29922; color: white; }
-        .event-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #21262d; }
-        .heuristic { padding: 10px 0; border-bottom: 1px solid #21262d; }
-        .heuristic .domain { font-size: 11px; color: #58a6ff; text-transform: uppercase; margin-bottom: 4px; }
-        .heuristic .rule { font-size: 13px; margin-bottom: 6px; }
-        .heuristic .meta { font-size: 11px; color: #8b949e; }
+        .model-header .level-badge { font-size: 10px; color: #8b949e; text-transform: uppercase; }
+        .model-header h2 { font-size: 20px; font-weight: 600; color: #e6edf3; }
+        .model-header .description { font-size: 13px; color: #8b949e; margin-top: 6px; }
+        
+        .model-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #30363d; }
+        .stat-cell { padding: 16px; background: #161b22; text-align: center; }
+        .stat-cell .value { font-size: 24px; font-weight: 700; color: #58a6ff; }
+        .stat-cell .label { font-size: 11px; color: #8b949e; text-transform: uppercase; margin-top: 4px; }
+        .stat-cell.highlight .value { color: #3fb950; }
+        .stat-cell.warning .value { color: #d29922; }
+        
+        .model-details { padding: 20px 24px; border-top: 1px solid #30363d; }
+        .detail-section { margin-bottom: 16px; }
+        .detail-section:last-child { margin-bottom: 0; }
+        .detail-section h3 { font-size: 12px; color: #8b949e; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .detail-list { display: flex; flex-wrap: wrap; gap: 8px; }
+        .detail-tag { padding: 6px 12px; background: #21262d; border-radius: 6px; font-size: 12px; color: #e6edf3; }
+        .detail-tag.active { background: #238636; color: white; }
+        
+        /* Escalation Flow */
+        .escalation-flow { display: flex; align-items: center; gap: 12px; padding: 16px 24px; background: #0d1117; border-top: 1px solid #30363d; }
+        .escalation-step { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+        .escalation-step .from { color: #8b949e; }
+        .escalation-step .arrow { color: #484f58; }
+        .escalation-step .to { color: #58a6ff; font-weight: 500; }
+        
+        /* Footer */
+        .footer { text-align: center; padding: 20px; color: #484f58; font-size: 12px; border-top: 1px solid #30363d; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🧠 ELF Dashboard v2.0</h1>
-        <div class="subtitle">Emergent Learning Framework - Real-time Monitoring</div>
+        <div class="subtitle">Emergent Learning Framework - Real-time Agent Monitoring</div>
     </div>
-    <div class="status-bar">
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <div class="status-dot"></div>
-            <span>System Healthy</span>
+    
+    <div class="hierarchy-flow">
+        <div class="hierarchy-item">
+            <span class="level">Level 0</span>
+            <span class="name">EventBridge</span>
+        </div>
+        <div class="hierarchy-arrow">→</div>
+        <div class="hierarchy-item">
+            <span class="level">Level 1</span>
+            <span class="name">Watcher</span>
+        </div>
+        <div class="hierarchy-arrow">→</div>
+        <div class="hierarchy-item">
+            <span class="level">Level 2</span>
+            <span class="name">Orchestrator</span>
+        </div>
+        <div class="hierarchy-arrow">→</div>
+        <div class="hierarchy-item">
+            <span class="level">Level 3</span>
+            <span class="name">CEO</span>
         </div>
     </div>
-    <div class="grid">
-        <div class="card">
-            <h2>📊 Learning Statistics</h2>
-            <div class="stat-grid">
-                <div class="stat"><div class="value" id="h-count">-</div><div class="label">Heuristics</div></div>
-                <div class="stat golden"><div class="value" id="g-count">-</div><div class="label">Golden Rules</div></div>
-                <div class="stat trails"><div class="value" id="t-count">-</div><div class="label">Trails</div></div><div class="stat"><div class="value" id="p-count">-</div><div class="label">Pheromones</div></div>
+    
+    <div class="model-cards">
+        <!-- EventBridge Model Card -->
+        <div class="model-card event-bridge">
+            <div class="model-header">
+                <div class="top">
+                    <span class="icon">🌉</span>
+                    <span class="status"><span class="status-dot"></span>Running</span>
+                </div>
+                <span class="level-badge">Level 0 - Infrastructure</span>
+                <h2>EventBridge v2.0</h2>
+                <div class="description">SSE event routing, session polling, message parsing</div>
+            </div>
+            <div class="model-stats">
+                <div class="stat-cell highlight">
+                    <div class="value" id="eb-events">-</div>
+                    <div class="label">Total Events</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="value" id="eb-per-min">-</div>
+                    <div class="label">Events/min</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="value" id="eb-tools">-</div>
+                    <div class="label">Tools Detected</div>
+                </div>
+            </div>
+            <div class="model-details">
+                <div class="detail-section">
+                    <h3>🔧 Functions</h3>
+                    <div class="detail-list">
+                        <span class="detail-tag active">SSE Listening</span>
+                        <span class="detail-tag active">Session Polling</span>
+                        <span class="detail-tag active">Message Parsing</span>
+                        <span class="detail-tag active">Tool Detection</span>
+                    </div>
+                </div>
+            </div>
+            <div class="escalation-flow">
+                <span class="escalation-step"><span class="from">EventBridge</span><span class="arrow">→</span><span class="to">LearningProcessor</span></span>
             </div>
         </div>
-        <div class="card">
-            <h2>🏗️ Architecture</h2>
-            <div class="component"><span>EventBridge v2.0</span><span class="badge">Running</span></div>
-            <div class="component"><span>Learning Processor</span><span class="badge">Running</span></div>
-            <div class="component"><span>Watcher (L1)</span><span class="badge">Active</span></div>
-            <div class="component"><span>Orchestrator (L2)</span><span class="badge">Active</span></div>
-            <div class="component"><span>CEO (L3)</span><span class="badge">Active</span></div>
+        
+        <!-- Watcher Model Card -->
+        <div class="model-card watcher">
+            <div class="model-header">
+                <div class="top">
+                    <span class="icon">👁️</span>
+                    <span class="status"><span class="status-dot"></span>Active</span>
+                </div>
+                <span class="level-badge">Level 1 - Monitoring</span>
+                <h2>Watcher v3.0</h2>
+                <div class="description">Health checks, pattern detection, AI analysis (5min), escalates to Orchestrator</div>
+            </div>
+            <div class="model-stats">
+                <div class="stat-cell">
+                    <div class="value" id="w-cycles">-</div>
+                    <div class="label">Cycles</div>
+                </div>
+                <div class="stat-cell highlight">
+                    <div class="value" id="w-escalations">-</div>
+                    <div class="label">Escalations</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="value" id="w-patterns">-</div>
+                    <div class="label">Patterns</div>
+                </div>
+            </div>
+            <div class="model-details">
+                <div class="detail-section">
+                    <h3>🎯 Responsibilities</h3>
+                    <div class="detail-list">
+                        <span class="detail-tag active">Service Health</span>
+                        <span class="detail-tag active">Pattern Detection</span>
+                        <span class="detail-tag active">AI Analysis</span>
+                        <span class="detail-tag active">Escalations</span>
+                    </div>
+                </div>
+            </div>
+            <div class="escalation-flow">
+                <span class="escalation-step"><span class="from">Watcher</span><span class="arrow">→</span><span class="to">Orchestrator</span> (warning/critical)</span>
+            </div>
         </div>
-        <div class="card">
-            <h2>📡 Event Stream</h2>
-            <div class="stat" style="margin-bottom: 15px;"><div class="value" id="e-pm">-</div><div class="label">Events/min</div></div>
-            <div id="events-list"></div>
+        
+        <!-- Orchestrator Model Card -->
+        <div class="model-card orchestrator">
+            <div class="model-header">
+                <div class="top">
+                    <span class="icon">🧠</span>
+                    <span class="status"><span class="status-dot"></span>Active</span>
+                </div>
+                <span class="level-badge">Level 2 - Service Management</span>
+                <h2>Orchestrator</h2>
+                <div class="description">Service management, auto-restart, AI analysis, escalates to CEO (critical)</div>
+            </div>
+            <div class="model-stats">
+                <div class="stat-cell">
+                    <div class="value" id="o-services">-</div>
+                    <div class="label">Services</div>
+                </div>
+                <div class="stat-cell warning">
+                    <div class="value" id="o-restarts">-</div>
+                    <div class="label">Restarts</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="value" id="o-missions">-</div>
+                    <div class="label">Missions</div>
+                </div>
+            </div>
+            <div class="model-details">
+                <div class="detail-section">
+                    <h3>🎯 Responsibilities</h3>
+                    <div class="detail-list">
+                        <span class="detail-tag active">Service Mgmt</span>
+                        <span class="detail-tag active">Auto-restart</span>
+                        <span class="detail-tag active">AI Decisions</span>
+                        <span class="detail-tag active">Escalations</span>
+                    </div>
+                </div>
+            </div>
+            <div class="escalation-flow">
+                <span class="escalation-step"><span class="from">Orchestrator</span><span class="arrow">→</span><span class="to">CEO</span> (critical only)</span>
+            </div>
         </div>
-        <div class="card">
-            <h2>🔥 Hot Spots</h2>
-            <div id="hotspots-list"></div>
-        </div>
-        <div class="card" style="grid-column: span 2;">
-            <h2>💡 Recent Heuristics</h2>
-            <div id="heuristics-list"></div>
+        
+        <!-- CEO Model Card -->
+        <div class="model-card ceo">
+            <div class="model-header">
+                <div class="top">
+                    <span class="icon">👔</span>
+                    <span class="status"><span class="status-dot"></span>Active</span>
+                </div>
+                <span class="level-badge">Level 3 - Strategic</span>
+                <h2>CEO Agent</h2>
+                <div class="description">Strategic decisions, critical escalation processing, system oversight</div>
+            </div>
+            <div class="model-stats">
+                <div class="stat-cell">
+                    <div class="value" id="c-escalations">-</div>
+                    <div class="label">Escalations</div>
+                </div>
+                <div class="stat-cell highlight">
+                    <div class="value" id="c-decisions">-</div>
+                    <div class="label">Decisions</div>
+                </div>
+                <div class="stat-cell">
+                    <div class="value" id="c-heuristics">-</div>
+                    <div class="label">Heuristics</div>
+                </div>
+            </div>
+            <div class="model-details">
+                <div class="detail-section">
+                    <h3>🎯 Responsibilities</h3>
+                    <div class="detail-list">
+                        <span class="detail-tag active">Strategy</span>
+                        <span class="detail-tag active">Critical Issues</span>
+                        <span class="detail-tag active">Oversight</span>
+                        <span class="detail-tag active">Golden Rules</span>
+                    </div>
+                </div>
+            </div>
+            <div class="escalation-flow">
+                <span class="escalation-step"><span class="from">Top of</span><span class="arrow">→</span><span class="to">Hierarchy</span></span>
+            </div>
         </div>
     </div>
+    
+    <div class="footer">
+        ELF Dashboard v2.0 • Real-time monitoring with auto-refresh • Data from SQLite
+    </div>
+    
     <script>
         async function update() {
             try {
-                const [l, e, hs, ht] = await Promise.all([
-                    fetch('/api/v1/learning').r=>r.json()),
-                    fetch('/api/v1/events').r=>r.json()),
-                    fetch('/api/v1/hotspots').r=>r.json()),
-                    fetch('/api/v1/heuristics').r=>r.json())
-                ]);
-                document.getElementById('h-count').textContent = l.heuristics;
-                document.getElementById('g-count').textContent = l.golden_rules;
-                document.getElementById('t-count').textContent = l.trails;
-                document.getElementById('p-count').textContent = l.pheromone_trails;
-                document.getElementById('e-pm').textContent = e.per_minute;
-                document.getElementById('events-list').innerHTML = (e.event_types||[]).slice(0,6).map(x=>`<div class="event-row"><span>${x.type}</span><span>${x.count}</span></div>`).join('');
-                document.getElementById('hotspots-list').innerHTML = (hs||[]).slice(0,6).map(h=>`<div class="hotspot"><span>${h.location.split('/').pop()}</span><span class="scent ${h.scent}">${h.scent}</span></div>`).join('');
-                document.getElementById('heuristics-list').innerHTML = (ht||[]).map(h=>`<div class="heuristic"><div class="domain">${h.domain}</div><div class="rule">${h.rule}</div><div class="meta">Conf: ${h.confidence.toFixed(2)} | Validated: ${h.validated} ${h.golden?'⭐':''}</div></div>`).join('');
-            } catch(e) { console.error(e); }
-        }
-        update(); setInterval(update, 3000);
-    </script>
-</body>
-</html>
-    """
-    return HTMLResponse(content=html)
-
-
-@app.get("/api/v1/learning")
-async def get_learning():
-    """Get learning statistics."""
-    conn = get_db_connection()
-    stats = {"heuristics": 0, "golden_rules": 0, "trails": 0, "pheromone_trails": 0, "learnings": 0, "db_size_kb": get_db_size()}
-    if conn:
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) as c FROM heuristics"); stats["heuristics"] = cursor.fetchone()["c"]
-            cursor.execute("SELECT COUNT(*) as c FROM heuristics WHERE is_golden=1"); stats["golden_rules"] = cursor.fetchone()["c"]
-            cursor.execute("SELECT COUNT(*) as c FROM trails"); stats["trails"] = cursor.fetchone()["c"]
-            cursor.execute("SELECT COUNT(*) as c FROM pheromone_trails"); stats["pheromone_trails"] = cursor.fetchone()["c"]
-            cursor.execute("SELECT COUNT(*) as c FROM learnings"); stats["learnings"] = cursor.fetchone()["c"]
-        finally:
-            conn.close()
-    return stats
-
-
-@app.get("/api/v1/events")
-async def get_events():
-    """Get event statistics."""
-    conn = get_db_connection()
-    stats = {"per_minute": 0, "total": 0, "event_types": []}
-    if conn:
-        try:
-            cursor = conn.cursor()
-            one_minute_ago = (datetime.now() - timedelta(minutes=1)).isoformat()
-            cursor.execute("SELECT COUNT(*) as c FROM metrics WHERE metric_type='event' AND created_at>?", (one_minute_ago,))
-            stats["per_minute"] = cursor.fetchone()["c"]
-            cursor.execute("SELECT SUM(metric_value) as c FROM metrics WHERE metric_type='event'")
-            r = cursor.fetchone(); stats["total"] = r["c"] if r and r["c"] else 0
-            cursor.execute("SELECT metric_name, SUM(metric_value) as c FROM metrics WHERE metric_type='event' GROUP BY metric_name ORDER BY c DESC LIMIT 10")
-            stats["event_types"] = [{"type": row["metric_name"], "count": row["c"]} for row in cursor.fetchall()]
-        finally:
-            conn.close()
-    return stats
-
-
-@app.get("/api/v1/hotspots")
-async def get_hotspots():
-    """Get hot spots."""
-    conn = get_db_connection()
-    hotspots = []
-    if conn:
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT location, scent, strength FROM trails GROUP BY location ORDER BY SUM(strength) DESC LIMIT 10")
-            hotspots = [{"location": row["location"], "scent": row["scent"], "strength": row["strength"]} for row in cursor.fetchall()]
-        finally:
-            conn.close()
-    return hotspots
-
-
-@app.get("/api/v1/heuristics")
-async def get_heuristics():
-    """Get recent heuristics."""
-    conn = get_db_connection()
-    heuristics = []
-    if conn:
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT domain, rule, confidence, times_validated, is_golden FROM heuristics ORDER BY updated_at DESC LIMIT 10")
-            heuristics = [{"domain": row["domain"], "rule": row["rule"], "confidence": row["confidence"], "validated": row["times_validated"], "golden": bool(row["is_golden"])} for row in cursor.fetchall()]
-        finally:
-            conn.close()
-    return heuristics
-
-
-@app.get("/api/v1/health")
-async def get_health():
-    """Get system health."""
-    return {"status": "healthy", "components": 5, "timestamp": datetime.now().isoformat()}
-
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=3011)
+                // EventBridge stats
+                const eb = await fetch('/api/v1/event-bridge').r=>r.json());
+                document.getElementById('eb-events').textContent = (
