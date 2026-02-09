@@ -34,3 +34,13 @@ Residual escalation_count=1 persisted after services recovered autonomously. Arc
 
 ---
 
+## H-95: After resolving escalations, immediately archive resolved documents and resolution notes to prevent false-positive escalation_count alerts
+
+**Confidence**: 0.85
+**Source**: observation
+**Created**: 2026-02-09
+
+Watcher counted 2 'escalations' that were actually resolved documents and notes from earlier in the day. Archiving to archive/ directory prevented false positives.
+
+---
+

@@ -264,25 +264,33 @@ start_event_bridge() {
     fi
 }
 
-# Démarrer le Watcher
+# Démarrer le Watcher v3.0 (refactored - merged Watcher + Sentinel)
 start_watcher() {
-    log "👁️ Démarrage du Watcher..."
+    log "👁️ Démarrage du Watcher v3.0 (Level 1 Agent)..."
     
-    local watcher_script="${ELF_DIR}/watcher/elf_watcher.py"
+    local watcher_script="${SCRIPT_DIR}/core/watcher.py"
     
-    # Vérifier que le script existe
+    # Vérifier que le script existe (nouveau emplacement)
     if [[ ! -f "${watcher_script}" ]]; then
-        log_warning "⚠️ Script watcher introuvable: ${watcher_script}"
-        return 0  # Continuer sans le watcher
+        log_warning "⚠️ Script watcher v3.0 introuvable: ${watcher_script}"
+        log_info "   Essai avec l'ancien watcher..."
+        # Fallback vers l'ancien watcher
+        watcher_script="${ELF_DIR}/watcher/elf_watcher.py"
+        if [[ ! -f "${watcher_script}" ]]; then
+            log_warning "⚠️ Ancien watcher aussi introuvable"
+            return 0
+        fi
     fi
     
     # Tuer tout processus watcher existant avant de lancer (force restart)
     log "🔄 Arrêt des anciennes instances du watcher..."
+    pkill -f "core/watcher.py" 2>/dev/null || true
     pkill -f "Open_ELF/watcher/elf_watcher.py" 2>/dev/null || true
+    pkill -f "Open_ELF/agents/sentinel_monitor.py" 2>/dev/null || true
     sleep 1  # Attendre que les processus se terminent
     
     # Démarrer le watcher en arrière-plan
-    cd "${ELF_DIR}"
+    cd "${SCRIPT_DIR}"
     python3 "${watcher_script}" >"${LOGS_DIR}/watcher.log" 2>&1 &
     WATCHER_PID=$!
     cd - >/dev/null
@@ -292,10 +300,11 @@ start_watcher() {
     
     # Vérifier qu'il tourne
     if is_running "${WATCHER_PID}"; then
-        log_success "✅ Watcher démarré (PID: ${WATCHER_PID})"
+        log_success "✅ Watcher v3.0 démarré (PID: ${WATCHER_PID})"
+        log_info "   📊 Level 1 Agent: Monitoring + Pattern Detection + AI Analysis"
         return 0
     else
-        log_warning "⚠️ Watcher démarré mais non prêt (PID: ${WATCHER_PID})"
+        log_warning "⚠️ Watcher v3.0 démarré mais non prêt (PID: ${WATCHER_PID})"
         return 0  # Continuer même si non prêt
     fi
 }
