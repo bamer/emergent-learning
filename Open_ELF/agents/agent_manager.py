@@ -29,7 +29,13 @@ from typing import Any, Dict, List, Optional
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_critical,
+        log_error,
+        log_warning,
+        log_info,
+    )
 
     logger = get_logger("agent_manager")
 except ImportError:
@@ -126,20 +132,27 @@ class AgentManager:
 
         self.logger.info(f"✅ AgentManager initialisé avec {len(self.agents)} agents")
 
-    def _log_session_entry(self, agent_name: str, session_id: str, 
-                           request: str, response: str, 
-                           outcome: str, model_used: str, duration_ms: int = 0):
+    def _log_session_entry(
+        self,
+        agent_name: str,
+        session_id: str,
+        request: str,
+        response: str,
+        outcome: str,
+        model_used: str,
+        duration_ms: int = 0,
+    ):
         """Log agent interaction to JSONL session file for inter-session memory."""
         try:
             logs_dir = Path("/home/bamer/.opencode/emergent-learning/sessions/logs")
             logs_dir.mkdir(parents=True, exist_ok=True)
-            
+
             date_str = datetime.now().strftime("%Y-%m-%d")
             log_file = logs_dir / f"{date_str}_session.jsonl"
-            
+
             # Create concise input summary
-            input_summary = request[:120].replace('\n', ' ')
-            
+            input_summary = request[:120].replace("\n", " ")
+
             entry = {
                 "ts": datetime.now().isoformat(),
                 "agent": agent_name,
@@ -151,9 +164,9 @@ class AgentManager:
                 "model_used": model_used,
                 "duration_ms": duration_ms,
             }
-            
-            with open(log_file, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(entry, default=str) + '\n')
+
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, default=str) + "\n")
         except Exception as e:
             self.logger.debug(f"Session log write failed: {e}")
 
@@ -378,14 +391,18 @@ class AgentManager:
         if not sdk_path.exists():
             return {"success": False, "error": f"SDK client not found at {sdk_path}"}
 
-        if not hasattr(self, '_bun_available'):
+        if not hasattr(self, "_bun_available"):
             import shutil
-            self._bun_available = shutil.which('bun') is not None
+
+            self._bun_available = shutil.which("bun") is not None
             if not self._bun_available:
                 self.logger.error("bun runtime not found in PATH")
 
         if not self._bun_available:
-            return {"success": False, "error": "bun runtime not found. Install from https://bun.sh"}
+            return {
+                "success": False,
+                "error": "bun runtime not found. Install from https://bun.sh",
+            }
 
         request_body = {
             "action": action,
@@ -417,11 +434,16 @@ class AgentManager:
                 return {"success": False, "error": "bun command not found"}
             except Exception as e:
                 last_error = str(e)
-                self.logger.warning(f"SDK request failed (attempt {attempt + 1}): {last_error}")
+                self.logger.warning(
+                    f"SDK request failed (attempt {attempt + 1}): {last_error}"
+                )
                 if attempt < max_retries:
                     _time.sleep(1)
                     continue
-                return {"success": False, "error": f"SDK request failed after {max_retries + 1} attempts: {last_error}"}
+                return {
+                    "success": False,
+                    "error": f"SDK request failed after {max_retries + 1} attempts: {last_error}",
+                }
 
         if result.returncode != 0:
             stderr_msg = result.stderr[:500] if result.stderr else "No error output"
@@ -531,7 +553,7 @@ class AgentManager:
                     response=ai_response.strip(),
                     outcome="success",
                     model_used=agent_config.model,
-                    duration_ms=_duration
+                    duration_ms=_duration,
                 )
 
                 return {
@@ -554,7 +576,7 @@ class AgentManager:
                     response="",
                     outcome="failure",
                     model_used=agent_config.model,
-                    duration_ms=_duration
+                    duration_ms=_duration,
                 )
                 return {
                     "success": False,
@@ -571,8 +593,12 @@ class AgentManager:
                 request=user_request,
                 response="",
                 outcome="failure",
-                model_used=self.agents.get(agent_name, AgentConfig(agent_name, {}, "")).model if agent_name in self.agents else "unknown",
-                duration_ms=0
+                model_used=self.agents.get(
+                    agent_name, AgentConfig(agent_name, {}, "")
+                ).model
+                if agent_name in self.agents
+                else "unknown",
+                duration_ms=0,
             )
             return {"success": False, "error": error_msg, "agent": agent_name}
 
@@ -615,6 +641,228 @@ class AgentManager:
         return self.ask_agent("creative", request, context)
 
     # Méthodes utilitaires
+
+    def spawn_agent(
+        self,
+        agent_name: str,
+        mission: str,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Spawn an agent for a long-running async mission.
+
+        Unlike ask_agent which waits for response, spawn_agent creates a session
+        and sends the mission asynchronously, returning immediately.
+
+        Args:
+            agent_name: Name of the agent to spawn
+            mission: The mission/task to execute
+            context: Optional context
+
+        Returns:
+            Dict with success status and session_id for monitoring
+            {
+                "success": bool,
+                "session_id": str,
+                "agent": str,
+                "message": str
+            }
+        """
+        if agent_name not in self.agents:
+            return {
+                "success": False,
+                "error": f"Unknown agent: {agent_name}. Available: {list(self.agents.keys())}",
+            }
+
+        agent_config = self.agents[agent_name]
+
+        try:
+            # Ensure session exists
+            session_id = self._ensure_session(agent_name)
+
+            if not session_id:
+                return {
+                    "success": False,
+                    "error": f"Failed to create session for {agent_name}",
+                }
+
+            # Update session stats
+            if agent_name in self.sessions:
+                self.sessions[agent_name].touch()
+
+            # Prepare message with context
+            message = mission
+            if context:
+                context_str = json.dumps(context, indent=2, default=str)
+                message = f"Context:\n{context_str}\n\nMission:\n{mission}"
+
+            self.logger.info(
+                f"🚀 {agent_name}: Spawning async mission ({len(message)} chars)"
+            )
+
+            # Send mission asynchronously (noReply=True)
+            provider_id, _, model_id = agent_config.model.partition("/")
+            prompt_result = self._sdk_request(
+                "session_prompt",
+                payload={
+                    "sessionId": session_id,
+                    "directory": str(self.workdir),
+                    "agent": agent_config.name,
+                    "model": {"providerID": provider_id, "modelID": model_id},
+                    "parts": [{"type": "text", "text": message}],
+                    "noReply": True,  # Async - don't wait for response
+                },
+            )
+
+            if prompt_result.get("success"):
+                self.logger.info(
+                    f"✅ {agent_name}: Mission spawned in session {session_id[:8]}..."
+                )
+                return {
+                    "success": True,
+                    "session_id": session_id,
+                    "agent": agent_name,
+                    "message": "Mission spawned successfully",
+                }
+            else:
+                error = prompt_result.get("error", "Unknown error")
+                self.logger.error(f"❌ {agent_name}: Failed to spawn - {error}")
+                return {
+                    "success": False,
+                    "error": f"Failed to spawn mission: {error}",
+                }
+
+        except Exception as e:
+            self.logger.error(f"❌ {agent_name}: Error spawning agent - {e}")
+            return {
+                "success": False,
+                "error": f"Exception: {str(e)}",
+            }
+
+    def get_session_status(self, session_id: str) -> Dict[str, Any]:
+        """
+        Get the status of a session.
+
+        Checks for completion by examining session messages. When using noReply: True,
+        we need to check if the AI has responded to determine completion.
+
+        Args:
+            session_id: The session ID to check
+
+        Returns:
+            Dict with session status and data
+        """
+        try:
+            # First check if session exists
+            get_result = self._sdk_request(
+                "session_get",
+                payload={"sessionId": session_id, "directory": str(self.workdir)},
+            )
+
+            self.logger.debug(
+                f"Session status check for {session_id[:8]}: success={get_result.get('success')}, has_data={bool(get_result.get('data'))}"
+            )
+
+            if not get_result.get("success") or not get_result.get("data"):
+                # Session not found - treat as completed/failed
+                return {
+                    "success": True,
+                    "session": None,
+                    "status": "completed",  # Session gone = likely completed and cleaned up
+                }
+
+            session_data = get_result.get("data", {})
+
+            # Get session messages to check for AI response
+            messages_result = self._sdk_request(
+                "messages",
+                payload={
+                    "sessionID": session_id,
+                    "directory": str(self.workdir),
+                    "limit": 10,
+                },
+            )
+
+            if messages_result.get("success"):
+                messages = messages_result.get("data", {}).get("messages", [])
+
+                # Check if there's a system message indicating completion
+                for msg in messages:
+                    if (
+                        msg.get("role") == "system"
+                        and "error" in msg.get("content", "").lower()
+                    ):
+                        return {
+                            "success": True,
+                            "session": session_data,
+                            "status": "error",
+                            "error": msg.get("content"),
+                        }
+
+                # Check if last message is from assistant (AI response)
+                if messages:
+                    last_message = messages[-1] if len(messages) > 0 else None
+                    if last_message and last_message.get("role") == "assistant":
+                        # AI has responded - mission completed
+                        return {
+                            "success": True,
+                            "session": session_data,
+                            "status": "completed",
+                            "last_response": last_message.get("content", ""),
+                        }
+                    else:
+                        # No AI response yet - still running
+                        return {
+                            "success": True,
+                            "session": session_data,
+                            "status": "running",
+                        }
+                else:
+                    # No messages yet - might be starting up
+                    return {
+                        "success": True,
+                        "session": session_data,
+                        "status": "running",
+                    }
+            else:
+                # Can't get messages, check if session exists
+                return {
+                    "success": True,
+                    "session": session_data,
+                    "status": "running",
+                }
+
+        except Exception as e:
+            self.logger.error(f"Error getting session {session_id[:8]} status: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+            }
+
+    def kill_session(self, session_id: str) -> bool:
+        """
+        Kill/delete a session.
+
+        Args:
+            session_id: The session ID to kill
+
+        Returns:
+            True if successful
+        """
+        try:
+            result = self._sdk_request(
+                "session_delete",
+                payload={"sessionId": session_id, "directory": str(self.workdir)},
+            )
+            if result.get("success"):
+                self.logger.info(f"🗑️ Session killed: {session_id[:8]}...")
+                return True
+            else:
+                self.logger.error(f"❌ Failed to kill session: {result.get('error')}")
+                return False
+        except Exception as e:
+            self.logger.error(f"❌ Error killing session: {e}")
+            return False
 
     def list_agents(self) -> List[str]:
         """Liste tous les agents disponibles"""
@@ -674,7 +922,10 @@ class AgentManager:
         try:
             self._sdk_request(
                 "session_delete",
-                payload={"sessionId": session.session_id, "directory": str(self.workdir)},
+                payload={
+                    "sessionId": session.session_id,
+                    "directory": str(self.workdir),
+                },
             )
             del self.sessions[agent_name]
             self.logger.info(f"🗑️ Session nettoyée pour {agent_name}")

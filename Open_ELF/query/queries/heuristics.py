@@ -28,55 +28,11 @@ from .base import BaseQueryMixin
 class HeuristicQueryMixin(BaseQueryMixin):
     """Mixin for heuristic and golden rule queries (async)."""
 
-    async def get_golden_rules(self, categories: Optional[List[str]] = None) -> str:
-        """
-        Read and return golden rules from memory/golden-rules.md (async with caching).
+    # DEPRECATED: get_golden_rules now implemented in ContextBuilderMixin
+    # It uses the database as the authoritative source instead of the file.
+    # Both get_golden_rules and _filter_golden_rules_by_category are disabled here.
 
-        Args:
-            categories: Optional list of categories to filter by (e.g., ['core', 'git']).
-                       If None, returns all rules.
-
-        Returns:
-            Content of golden rules file (filtered by category if specified),
-            or empty string if file does not exist.
-        """
-        if not self.golden_rules_path.exists():
-            return "# Golden Rules\n\nNo golden rules have been established yet."
-
-        cache_key = str(self.golden_rules_path)
-        now = time.time()
-
-        if cache_key in _golden_rules_cache:
-            if now - _golden_rules_cache_time.get(cache_key, 0) < _GOLDEN_RULES_CACHE_TTL:
-                content = _golden_rules_cache[cache_key]
-                if not categories:
-                    self._log_debug(f"Golden rules from cache ({len(content)} chars)")
-                    return content
-                filtered = self._filter_golden_rules_by_category(content, categories)
-                self._log_debug(f"Golden rules from cache filtered by {categories}")
-                return filtered
-
-        try:
-            async with aiofiles.open(self.golden_rules_path, 'r', encoding='utf-8') as f:
-                content = await f.read()
-
-            _golden_rules_cache[cache_key] = content
-            _golden_rules_cache_time[cache_key] = now
-
-            if not categories:
-                self._log_debug(f"Loaded golden rules ({len(content)} chars)")
-                return content
-
-            filtered = self._filter_golden_rules_by_category(content, categories)
-            self._log_debug(f"Loaded golden rules filtered by {categories} ({len(filtered)} chars)")
-            return filtered
-
-        except Exception as e:
-            error_msg = f"# Error Reading Golden Rules\n\nError: {str(e)}"
-            self._log_debug(f"Failed to read golden rules: {e}")
-            return error_msg
-
-    def _filter_golden_rules_by_category(self, content: str, categories: List[str]) -> str:
+    def _filter_golden_rules_by_category_DISABLED(self, content: str, categories: List[str]) -> str:
         """
         Filter golden rules markdown content by category.
 

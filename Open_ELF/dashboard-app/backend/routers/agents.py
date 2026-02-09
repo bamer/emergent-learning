@@ -29,7 +29,13 @@ from agents.agent_manager import get_agent_manager
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_critical,
+        log_error,
+        log_warning,
+        log_info,
+    )
 
     logger = get_logger("agents")
 except ImportError:
@@ -685,6 +691,480 @@ async def run_mission(request: MissionRequest):
             "mode": request.mode,
             "mission": request.mission,
         }
+
+
+# =============================================================================
+# NEW ASYNC MISSION SYSTEM WITH SPAWN_AGENT
+# =============================================================================
+
+# Import mission store
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from mission_store import get_mission_store, Mission
+
+
+def auto_select_agent(mission_text: str, manager) -> str:
+    """Automatically select the best agent based on mission content."""
+    text_lower = mission_text.lower()
+
+    # Code-related missions
+    if any(
+        kw in text_lower
+        for kw in ["code", "refactor", "debug", "fix", "analyze code", "review"]
+    ):
+        return "architect"
+
+    # Research and investigation
+    if any(
+        kw in text_lower
+        for kw in ["research", "investigate", "find", "search", "explore"]
+    ):
+        return "researcher"
+
+    # Design and creativity
+    if any(kw in text_lower for kw in ["design", "create", "build", "implement"]):
+        return "creative"
+
+    # Analysis and validation
+    if any(kw in text_lower for kw in ["analyze", "check", "validate", "verify"]):
+        return "skeptic"
+
+    # System and orchestration
+    if any(
+        kw in text_lower for kw in ["system", "orchestrate", "coordinate", "monitor"]
+    ):
+        return "unified-orchestrator"
+
+    # Learning and extraction
+    if any(kw in text_lower for kw in ["learn", "extract", "heuristic"]):
+        return "learning-extractor"
+
+    # Default to researcher for general tasks
+    return "researcher"
+
+
+class CreateMissionRequest(BaseModel):
+    """Request to create a new mission."""
+
+    agent_type: str
+    mission_text: str
+    model: Optional[str] = None
+
+
+class ExecuteMissionRequest(BaseModel):
+    """Request to execute a mission."""
+
+    pass
+
+
+@router.post("/missions")
+async def create_mission(request: CreateMissionRequest):
+    """Create a new pending mission."""
+    try:
+        store = get_mission_store()
+        mission = store.create_mission(
+            agent_type=request.agent_type, mission_text=request.mission_text
+        )
+
+        return {
+            "status": "created",
+            "mission_id": mission.id,
+            "agent_type": mission.agent_type,
+            "mission_text": mission.mission_text[:100] + "..."
+            if len(mission.mission_text) > 100
+            else mission.mission_text,
+            "created_at": mission.created_at,
+        }
+    except Exception as e:
+        logger.error(f"Failed to create mission: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create mission: {str(e)}"
+        )
+
+
+@router.get("/missions")
+async def list_missions(status: Optional[str] = None):
+    """List all missions, optionally filtered by status."""
+    try:
+        store = get_mission_store()
+        missions = store.list_missions(status)
+
+        return {
+            "missions": [
+                {
+                    "id": m.id,
+                    "status": m.status,
+                    "agent_type": m.agent_type,
+                    "mission_text": m.mission_text[:100] + "..."
+                    if len(m.mission_text) > 100
+                    else m.mission_text,
+                    "created_at": m.created_at,
+                    "started_at": m.started_at,
+                    "completed_at": m.completed_at,
+                    "duration_seconds": m.duration_seconds,
+                }
+                for m in missions
+            ],
+            "count": len(missions),
+        }
+    except Exception as e:
+        logger.error(f"Failed to list missions: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to list missions: {str(e)}"
+        )
+
+
+@router.get("/missions/{mission_id}")
+async def get_mission(mission_id: str):
+    """Get mission details."""
+    try:
+        store = get_mission_store()
+        mission = store.get_mission(mission_id)
+
+        if not mission:
+            raise HTTPException(status_code=404, detail="Mission not found")
+
+        return {
+            "id": mission.id,
+            "status": mission.status,
+            "agent_type": mission.agent_type,
+            "mission_text": mission.mission_text,
+            "result": mission.result,
+            "error": mission.error,
+            "session_id": mission.session_id,
+            "created_at": mission.created_at,
+            "started_at": mission.started_at,
+            "completed_at": mission.completed_at,
+            "duration_seconds": mission.duration_seconds,
+            "heuristics": mission.heuristics,
+            "logs": mission.logs,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get mission: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get mission: {str(e)}")
+
+
+@router.post("/missions/{mission_id}/execute")
+async def execute_mission(mission_id: str):
+    """Execute a mission using spawn_agent (async, long-running)."""
+    try:
+        store = get_mission_store()
+        mission = store.get_mission(mission_id)
+
+        if not mission:
+            raise HTTPException(status_code=404, detail="Mission not found")
+
+        if mission.status != "pending":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Mission is not pending (status: {mission.status})",
+            )
+
+        manager = get_agent_manager_instance()
+        if not manager:
+            raise HTTPException(status_code=503, detail="AgentManager not available")
+
+        # Use spawn_agent for async long-running missions
+        logger.info(f"🚀 Spawning agent for mission {mission_id}...")
+
+        try:
+            # Determine agent to use
+            agent_name = mission.agent_type
+            if agent_name == "auto" or agent_name not in manager.agents:
+                # Auto-select best agent based on mission content
+                agent_name = auto_select_agent(mission.mission_text, manager)
+                logger.info(f"🎯 Auto-selected agent: {agent_name}")
+
+            # Spawn agent asynchronously
+            result = manager.spawn_agent(
+                agent_name=agent_name,
+                mission=mission.mission_text,
+            )
+
+            if not result.get("success"):
+                error_msg = result.get("error", "Unknown error")
+                store.fail_mission(mission_id, error_msg)
+                raise HTTPException(
+                    status_code=500, detail=f"Failed to spawn agent: {error_msg}"
+                )
+
+            session_id = result.get("session_id")
+            if not session_id:
+                store.fail_mission(mission_id, "No session ID returned")
+                raise HTTPException(
+                    status_code=500, detail="No session ID returned from spawn_agent"
+                )
+
+            # Update mission status to running
+            store.start_mission(mission_id, session_id)
+
+            # Start background monitoring thread
+            monitor_thread = threading.Thread(
+                target=monitor_mission_async,
+                args=(mission_id, session_id, manager),
+                daemon=True,
+            )
+            monitor_thread.start()
+
+            return {
+                "status": "started",
+                "mission_id": mission_id,
+                "session_id": session_id,
+                "message": "Mission execution started. Use /missions/{mission_id}/status to poll.",
+            }
+
+        except Exception as spawn_error:
+            logger.error(
+                f"Failed to spawn agent for mission {mission_id}: {spawn_error}"
+            )
+            store.fail_mission(mission_id, str(spawn_error))
+            raise HTTPException(
+                status_code=500, detail=f"Failed to spawn agent: {str(spawn_error)}"
+            )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to execute mission: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to execute mission: {str(e)}"
+        )
+
+
+def monitor_mission_async(mission_id: str, session_id: str, manager):
+    """Background thread to monitor async mission execution."""
+    try:
+        store = get_mission_store()
+        logger.info(
+            f"👁️  [Monitor] Started monitoring mission {mission_id} (session {session_id[:8]}...)"
+        )
+
+        # Poll for mission completion
+        max_wait = 3600 * 24  # Max 24 hours
+        poll_interval = 10  # Poll every 10 seconds
+        waited = 0
+
+        while waited < max_wait:
+            try:
+                # Check if session is still active
+                session_result = manager.get_session_status(session_id)
+
+                logger.debug(
+                    f"[Monitor] Mission {mission_id[:8]}... Poll result: {session_result.get('status')} (waited {waited}s)"
+                )
+
+                if not session_result.get("success"):
+                    # Session not found or error
+                    logger.warning(
+                        f"[Monitor] Session {session_id[:8]} error for mission {mission_id}: {session_result.get('error')}"
+                    )
+                    store.fail_mission(
+                        mission_id,
+                        f"Session lost: {session_result.get('error', 'Unknown')}",
+                    )
+                    return
+
+                status = session_result.get("status", "unknown")
+
+                if status == "completed":
+                    # Mission completed - get the result
+                    response = session_result.get("last_response", "")
+                    logger.info(
+                        f"[Monitor] Mission {mission_id} completed! Response length: {len(response)} chars"
+                    )
+
+                    # Get mission for task context
+                    mission = store.get_mission(mission_id)
+                    if not mission:
+                        logger.error(
+                            f"[Monitor] Mission {mission_id} not found in store"
+                        )
+                        store.fail_mission(
+                            mission_id, "Mission not found after completion"
+                        )
+                        return
+
+                    # Extract learnings
+                    heuristics = call_learning_extractor(
+                        agent_response=response,
+                        task_context=mission.mission_text[:200],
+                    )
+                    logger.info(
+                        f"[Monitor] Extracted {len(heuristics)} heuristics from mission {mission_id}"
+                    )
+
+                    # Complete the mission
+                    store.complete_mission(mission_id, response, heuristics)
+
+                    # Record heuristics to building
+                    for h in heuristics:
+                        record_heuristic_to_building(h, mission_id)
+
+                    logger.info(
+                        f"✅ [Monitor] Mission {mission_id} completed successfully after {waited}s"
+                    )
+                    return
+
+                elif status == "error":
+                    # Mission failed
+                    error_msg = session_result.get("error", "Unknown error")
+                    logger.error(
+                        f"[Monitor] Mission {mission_id} failed with error: {error_msg}"
+                    )
+                    store.fail_mission(mission_id, error_msg)
+                    return
+
+                elif status == "running":
+                    # Still running, continue polling
+                    logger.debug(
+                        f"[Monitor] Mission {mission_id} still running after {waited}s"
+                    )
+                    time.sleep(poll_interval)
+                    waited += poll_interval
+                    continue
+
+                else:
+                    # Unknown status
+                    logger.warning(
+                        f"[Monitor] Unknown session status for mission {mission_id}: {status}"
+                    )
+                    time.sleep(poll_interval)
+                    waited += poll_interval
+
+            except Exception as poll_error:
+                logger.error(
+                    f"[Monitor] Error polling mission {mission_id}: {poll_error}",
+                    exc_info=True,
+                )
+                time.sleep(poll_interval)
+                waited += poll_interval
+
+        # Timeout reached
+        logger.error(f"[Monitor] Mission {mission_id} timed out after {max_wait}s")
+        store.fail_mission(mission_id, f"Mission timeout after {max_wait} seconds")
+
+    except Exception as e:
+        logger.error(
+            f"[Monitor] Critical error monitoring mission {mission_id}: {e}",
+            exc_info=True,
+        )
+        try:
+            store.fail_mission(mission_id, f"Monitoring error: {str(e)}")
+        except:
+            pass
+
+
+@router.get("/missions/{mission_id}/status")
+async def get_mission_status(mission_id: str):
+    """Get mission execution status."""
+    try:
+        store = get_mission_store()
+        mission = store.get_mission(mission_id)
+
+        if not mission:
+            raise HTTPException(status_code=404, detail="Mission not found")
+
+        return {
+            "mission_id": mission.id,
+            "status": mission.status,
+            "session_id": mission.session_id,
+            "created_at": mission.created_at,
+            "started_at": mission.started_at,
+            "completed_at": mission.completed_at,
+            "duration_seconds": mission.duration_seconds,
+            "progress": "running" if mission.status == "running" else None,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get mission status: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get mission status: {str(e)}"
+        )
+
+
+@router.post("/missions/{mission_id}/cancel")
+async def cancel_mission(mission_id: str):
+    """Cancel a running mission."""
+    try:
+        store = get_mission_store()
+        mission = store.get_mission(mission_id)
+
+        if not mission:
+            raise HTTPException(status_code=404, detail="Mission not found")
+
+        if mission.status not in ["pending", "running"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot cancel mission with status: {mission.status}",
+            )
+
+        # Try to kill the session if running
+        if mission.status == "running" and mission.session_id:
+            try:
+                manager = get_agent_manager_instance()
+                if manager:
+                    manager.kill_session(mission.session_id)
+            except Exception as kill_error:
+                logger.warning(
+                    f"Failed to kill session {mission.session_id}: {kill_error}"
+                )
+
+        # Mark as cancelled
+        store.cancel_mission(mission_id)
+
+        return {
+            "status": "cancelled",
+            "mission_id": mission_id,
+            "message": "Mission cancelled successfully",
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to cancel mission: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to cancel mission: {str(e)}"
+        )
+
+
+@router.get("/missions/{mission_id}/result")
+async def get_mission_result(mission_id: str):
+    """Get full mission result."""
+    try:
+        store = get_mission_store()
+        mission = store.get_mission(mission_id)
+
+        if not mission:
+            raise HTTPException(status_code=404, detail="Mission not found")
+
+        if mission.status not in ["completed", "failed"]:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Mission not finished (status: {mission.status})",
+            )
+
+        return {
+            "mission_id": mission.id,
+            "status": mission.status,
+            "result": mission.result,
+            "error": mission.error,
+            "heuristics": mission.heuristics,
+            "duration_seconds": mission.duration_seconds,
+            "completed_at": mission.completed_at,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get mission result: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get mission result: {str(e)}"
+        )
+
+
+# =============================================================================
+# END NEW ASYNC MISSION SYSTEM
+# =============================================================================
 
 
 @router.post("/spawn_direct")

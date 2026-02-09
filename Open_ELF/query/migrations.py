@@ -10,6 +10,7 @@ Usage:
 """
 
 import sqlite3
+import logging
 from pathlib import Path
 from typing import Optional, List, Tuple
 
@@ -18,11 +19,8 @@ try:
     from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
     logger = get_logger("migrations")
 except ImportError:
-    import logging
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("migrations")
-
-logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
 
 def get_db_path(db_path: Optional[str] = None) -> Path:
     """Get database path, with fallbacks."""

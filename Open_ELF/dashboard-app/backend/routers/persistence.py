@@ -21,7 +21,13 @@ from pydantic import BaseModel
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_critical,
+        log_error,
+        log_warning,
+        log_info,
+    )
 
     logger = get_logger("persistence")
 except ImportError:
@@ -234,6 +240,55 @@ def save_embedding(
         return False
 
 
+def generate_and_save_embedding_async(
+    source_id: int, source_type: str, text: str, metadata: Optional[Dict] = None
+):
+    """Generate and save embedding asynchronously in background.
+
+    This function runs in a background task and can take several minutes
+    (embedding generation can take 5+ minutes).
+    """
+    try:
+        logger.info(
+            f"Starting async embedding generation for {source_type} {source_id}"
+        )
+
+        # Generate embedding (this can take 5+ minutes)
+        embedding_vector = generate_embedding(text)
+
+        if not embedding_vector:
+            logger.warning(f"No embedding generated for {source_type} {source_id}")
+            return False
+
+        # Save to database in a new connection
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO embeddings 
+                (source_id, source_type, text_content, embedding, metadata, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    source_id,
+                    source_type,
+                    text,
+                    json.dumps(embedding_vector),
+                    json.dumps(metadata) if metadata else None,
+                    datetime.now().isoformat(),
+                ),
+            )
+            conn.commit()
+
+        logger.info(f"Successfully saved embedding for {source_type} {source_id}")
+        return True
+    except Exception as e:
+        logger.error(
+            f"Error in async embedding generation for {source_type} {source_id}: {e}"
+        )
+        return False
+
+
 # ==============================================================================
 # Heuristics Endpoints
 # ==============================================================================
@@ -244,6 +299,7 @@ async def create_heuristic(
     heuristic: HeuristicCreate, background_tasks: BackgroundTasks
 ):
     """Create a new heuristic in the database with automatic embedding generation."""
+    heuristic_id = None
     try:
         with get_db() as conn:
             cursor = conn.cursor()
@@ -277,33 +333,33 @@ async def create_heuristic(
 
             heuristic_id = cursor.lastrowid
 
-            # Generate and save embedding
-            embedding_text = (
-                f"{heuristic.domain}: {heuristic.rule}. {heuristic.explanation or ''}"
-            )
-            save_embedding(
-                conn,
-                heuristic_id,
-                "heuristic",
-                embedding_text,
-                metadata={
-                    "domain": heuristic.domain,
-                    "confidence": heuristic.confidence,
-                    "is_golden": heuristic.is_golden,
-                },
-            )
-
+            # Commit immediately before embedding generation (which can take 5+ minutes)
             conn.commit()
 
-            logger.info(
-                f"Created heuristic {heuristic_id} with embedding: {heuristic.domain}"
-            )
+            logger.info(f"Created heuristic {heuristic_id}: {heuristic.domain}")
 
-            return {
-                "status": "ok",
-                "heuristic_id": heuristic_id,
-                "message": f"Heuristic created successfully with embedding in domain: {heuristic.domain}",
-            }
+        # Schedule embedding generation in background task
+        # This prevents blocking the HTTP response
+        embedding_text = (
+            f"{heuristic.domain}: {heuristic.rule}. {heuristic.explanation or ''}"
+        )
+        background_tasks.add_task(
+            generate_and_save_embedding_async,
+            heuristic_id,
+            "heuristic",
+            embedding_text,
+            {
+                "domain": heuristic.domain,
+                "confidence": heuristic.confidence,
+                "is_golden": heuristic.is_golden,
+            },
+        )
+
+        return {
+            "status": "ok",
+            "heuristic_id": heuristic_id,
+            "message": f"Heuristic created successfully. Embedding will be generated in background.",
+        }
 
     except Exception as e:
         logger.error(f"Error creating heuristic: {e}")

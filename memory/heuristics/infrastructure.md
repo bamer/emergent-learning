@@ -14,3 +14,23 @@ Self-test failed at database integrity check - failures table missing. Database 
 
 ---
 
+## H-93: Treat >90% disk usage as critical; trigger automatic cleanup before escalation.
+
+**Confidence**: 0.85
+**Source**: observation
+**Created**: 2026-02-09
+
+Disk pressure caused service instability on 2026-02-09 when usage reached ~92%. Log cleanup of ~174MB resolved the issue.
+
+---
+
+## H-94: After escalation is resolved, clear escalation counter and archive files to prevent residual flags
+
+**Confidence**: 0.8
+**Source**: observation
+**Created**: 2026-02-09
+
+Residual escalation_count=1 persisted after services recovered autonomously. Archiving escalation files documents resolution and clears state.
+
+---
+

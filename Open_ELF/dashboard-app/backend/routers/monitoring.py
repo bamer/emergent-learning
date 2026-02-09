@@ -1403,6 +1403,8 @@ async def get_escalations(
         escalation_event_types = [
             "sentinel_cycle",  # Sentinel monitoring cycles with status
             "watcher_escalation",  # Watcher escalations
+            "file.watcher.updated",  # Watcher file monitoring events
+            "watcher_check",  # Watcher check events
             "ceo_alert",  # CEO alerts
             "critical_event",  # General critical events
             "agent_escalation",  # Generic agent escalation

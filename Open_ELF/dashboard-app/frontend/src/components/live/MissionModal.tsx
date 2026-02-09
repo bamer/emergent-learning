@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { X, Zap, Play, RefreshCw, Cpu, Activity, Code, Search, Lightbulb, FileCode, Sparkles, Wand2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { X, Zap, Play, RefreshCw, Cpu, Activity, Code, Search, Lightbulb, FileCode, Sparkles, Wand2, XCircle } from 'lucide-react';
+import { useNotificationContext } from '../../context/NotificationContext';
 
 interface ModelInfo {
   id: string;
@@ -24,6 +26,26 @@ interface MissionResult {
   heuristics_count: number;
   execution_time_ms: number;
   response_preview?: string;
+}
+
+interface MissionStatus {
+  mission_id: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  session_id?: string;
+  created_at: string;
+  started_at?: string;
+  completed_at?: string;
+  duration_seconds?: number;
+}
+
+interface AsyncMissionResult {
+  mission_id: string;
+  status: string;
+  result?: string;
+  error?: string;
+  heuristics?: any[];
+  duration_seconds?: number;
+  completed_at?: string;
 }
 
 interface MissionModalProps {
@@ -101,6 +123,7 @@ const PROMPT_CATEGORIES: PromptCategory[] = [
 ];
 
 export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }: MissionModalProps) {
+  const notifications = useNotificationContext();
   const [missionText, setMissionText] = useState('');
   const [executionMode, setExecutionMode] = useState<'smart' | 'auto' | 'swarm' | 'manual'>('smart');
   const [availableModels, setAvailableModels] = useState<ModelInfo[]>([]);
@@ -110,6 +133,12 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
   const [modalKey, setModalKey] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string>('Code');
   const [selectedPrompt, setSelectedPrompt] = useState<string>('');
+
+  // Async mission state
+  const [currentMission, setCurrentMission] = useState<MissionStatus | null>(null);
+  const [asyncMissionResult, setAsyncMissionResult] = useState<AsyncMissionResult | null>(null);
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
+  const [showFullResult, setShowFullResult] = useState(false);
 
   // Fetch available models
   useEffect(() => {
@@ -138,14 +167,25 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
   // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
+      // Reset ALL state including mission-related state
       setMissionText('');
       setExecutionMode('smart');
       setLastResult(null);
+      setCurrentMission(null);
+      setAsyncMissionResult(null);
+      setPollingInterval(null);
+      setShowFullResult(false);
       setSelectedCategory('Code');
       setSelectedPrompt('');
       setModalKey(prev => prev + 1);
+
+      // Clear any existing polling
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, pollingInterval]);
 
   // Update mission text when prompt selection changes
   useEffect(() => {
@@ -158,33 +198,98 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
     }
   }, [selectedPrompt, selectedCategory]);
 
+  // Poll mission status
+  const pollMissionStatus = useCallback(async (missionId: string) => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/agents/missions/${missionId}/status`);
+      if (response.ok) {
+        const status: MissionStatus = await response.json();
+        setCurrentMission(status);
+
+        if (status.status === 'completed' || status.status === 'failed') {
+          if (pollingInterval) {
+            clearInterval(pollingInterval);
+            setPollingInterval(null);
+          }
+
+          const resultResponse = await fetch(`${apiBaseUrl}/api/v1/agents/missions/${missionId}/result`);
+          if (resultResponse.ok) {
+            const result: AsyncMissionResult = await resultResponse.json();
+            setAsyncMissionResult(result);
+          }
+          setIsExecuting(false);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to poll mission status:', err);
+    }
+  }, [apiBaseUrl, pollingInterval]);
+
+  // Cancel mission
+  const cancelMission = async () => {
+    if (!currentMission || currentMission.status === 'completed' || currentMission.status === 'failed') return;
+
+    try {
+      await fetch(`${apiBaseUrl}/api/v1/agents/missions/${currentMission.mission_id}/cancel`, { method: 'POST' });
+      if (pollingInterval) { clearInterval(pollingInterval); setPollingInterval(null); }
+      pollMissionStatus(currentMission.mission_id);
+      setIsExecuting(false);
+    } catch (err) {
+      console.error('Failed to cancel mission:', err);
+    }
+  };
+
   const executeMission = async () => {
     if (!missionText.trim()) return;
-    
+
     setIsExecuting(true);
     setLastResult(null);
-    
+    setAsyncMissionResult(null);
+
     try {
-      const response = await fetch(`${apiBaseUrl}/api/v1/agents/run`, {
+      // Step 1: Create mission
+      const createResponse = await fetch(`${apiBaseUrl}/api/v1/agents/missions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          mission: missionText,
-          mode: executionMode,
-          agent_type: selectedAgentName || undefined,
+          agent_type: selectedAgentName || 'auto',
+          mission_text: missionText,
+          model: selectedModel,
         }),
       });
-      
-      if (response.ok) {
-        const result = await response.json();
-        setLastResult(result);
-      } else {
-        console.error('Mission execution failed:', await response.text());
-      }
+
+      if (!createResponse.ok) throw new Error('Failed to create mission');
+      const createData = await createResponse.json();
+      const missionId = createData.mission_id;
+
+      setCurrentMission({
+        mission_id: missionId,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      });
+
+      // Mission created successfully - close modal and show toast
+      notifications.success('Mission Created', `Mission ${missionId} has been queued for execution`);
+      onClose();
+
+      // Step 2: Execute mission (in background)
+      const executeResponse = await fetch(`${apiBaseUrl}/api/v1/agents/missions/${missionId}/execute`, {
+        method: 'POST',
+      });
+
+      if (!executeResponse.ok) throw new Error('Failed to execute mission');
+      const executeData = await executeResponse.json();
+
+      setCurrentMission(prev => prev ? { ...prev, status: 'running', session_id: executeData.session_id, started_at: new Date().toISOString() } : null);
+
+      // Start polling every 3 seconds
+      const interval = setInterval(() => pollMissionStatus(missionId), 3000);
+      setPollingInterval(interval);
+
     } catch (err) {
       console.error('Failed to execute mission:', err);
-    } finally {
       setIsExecuting(false);
+      notifications.error('Mission Failed', `Failed to create or execute mission: ${err}`);
     }
   };
 
@@ -192,9 +297,16 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 overflow-hidden">
-      <div key={modalKey} className="bg-slate-800 rounded-lg border border-slate-700 p-6 w-full max-w-3xl max-h-[85vh] overflow-y-auto shadow-2xl">
+  return createPortal(
+    <div className="fixed inset-0 flex items-center justify-center z-[9999] bg-black/80 backdrop-blur-sm">
+      <div
+        key={modalKey}
+        className="bg-slate-800 rounded-lg border border-slate-700 p-6 w-full max-w-3xl shadow-2xl my-4 mx-4"
+        style={{
+          maxHeight: '85vh',
+          overflowY: 'auto'
+        }}
+      >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Zap className="w-5 h-5 text-violet-400" />
@@ -341,7 +453,7 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
           />
         </div>
         
-        {/* Last Result */}
+        {/* Last Result (sync execution) */}
         {lastResult && (
           <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded">
             <div className="flex items-center gap-2 mb-2">
@@ -358,6 +470,120 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
               <div className="mt-2 p-2 bg-slate-800 rounded text-xs text-slate-300 max-h-32 overflow-y-auto">
                 <strong>Response:</strong>
                 <p className="mt-1">{lastResult.response_preview}...</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Mission Status (async execution) */}
+        {currentMission && (
+          <div className={`mb-4 p-3 border rounded ${
+            currentMission.status === 'completed'
+              ? 'bg-emerald-500/10 border-emerald-500/20'
+              : currentMission.status === 'failed'
+              ? 'bg-red-500/10 border-red-500/20'
+              : 'bg-blue-500/10 border-blue-500/20'
+          }`}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                {currentMission.status === 'running' && (
+                  <RefreshCw className="w-4 h-4 text-blue-400 animate-spin" />
+                )}
+                {currentMission.status === 'pending' && (
+                  <Activity className="w-4 h-4 text-yellow-400" />
+                )}
+                <span className={`font-medium ${
+                  currentMission.status === 'completed'
+                    ? 'text-emerald-400'
+                    : currentMission.status === 'failed'
+                    ? 'text-red-400'
+                    : 'text-blue-400'
+                }`}>
+                  {currentMission.status === 'running' && 'Mission Running'}
+                  {currentMission.status === 'pending' && 'Mission Queued'}
+                  {currentMission.status === 'completed' && 'Mission Complete'}
+                  {currentMission.status === 'failed' && 'Mission Failed'}
+                </span>
+              </div>
+              {currentMission.status === 'running' && (
+                <button
+                  onClick={cancelMission}
+                  className="px-2 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+            <div className="text-xs text-slate-400 space-y-1">
+              <p>Mission ID: {currentMission.mission_id}</p>
+              {currentMission.session_id && <p>Session: {currentMission.session_id}</p>}
+              {currentMission.started_at && <p>Started: {new Date(currentMission.started_at).toLocaleTimeString()}</p>}
+              {currentMission.duration_seconds && <p>Duration: {currentMission.duration_seconds.toFixed(1)}s</p>}
+              {currentMission.status === 'running' && (
+                <button
+                  onClick={cancelMission}
+                  className="mt-2 px-3 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded flex items-center gap-1"
+                >
+                  <XCircle className="w-3 h-3" />
+                  Cancel
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Async Mission Result */}
+        {asyncMissionResult && (
+          <div className={`mb-4 border rounded ${
+            asyncMissionResult.status === 'completed'
+              ? 'bg-emerald-500/10 border-emerald-500/20'
+              : 'bg-red-500/10 border-red-500/20'
+          }`}>
+            <button
+              onClick={() => setShowFullResult(!showFullResult)}
+              className="w-full p-3 flex items-center justify-between text-left"
+            >
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4" />
+                <span className={`font-medium ${
+                  asyncMissionResult.status === 'completed'
+                    ? 'text-emerald-400'
+                    : 'text-red-400'
+                }`}>
+                  {asyncMissionResult.status === 'completed' ? 'Mission Result' : 'Mission Error'}
+                </span>
+              </div>
+              <span className="text-slate-400 text-xs">
+                {showFullResult ? '▲ Hide' : '▼ Show'}
+              </span>
+            </button>
+            {asyncMissionResult.completed_at && (
+              <div className="px-3 text-xs text-slate-400 pb-2">
+                Completed: {new Date(asyncMissionResult.completed_at).toLocaleString()}
+              </div>
+            )}
+            {asyncMissionResult.duration_seconds && (
+              <div className="px-3 text-xs text-slate-400 pb-2">
+                Duration: {asyncMissionResult.duration_seconds.toFixed(1)}s
+              </div>
+            )}
+            {asyncMissionResult.heuristics && asyncMissionResult.heuristics.length > 0 && (
+              <div className="px-3 text-xs text-slate-400 pb-2">
+                Heuristics Extracted: {asyncMissionResult.heuristics.length}
+              </div>
+            )}
+            {showFullResult && (
+              <div className="px-3 pb-3">
+                {asyncMissionResult.result && (
+                  <pre className="bg-slate-800 rounded p-2 text-xs text-slate-300 max-h-64 overflow-y-auto whitespace-pre-wrap break-all">
+                    {asyncMissionResult.result}
+                  </pre>
+                )}
+                {asyncMissionResult.error && (
+                  <pre className="bg-red-900/20 rounded p-2 text-xs text-red-300 max-h-64 overflow-y-auto whitespace-pre-wrap break-all">
+                    {asyncMissionResult.error}
+                  </pre>
+                )}
               </div>
             )}
           </div>
@@ -381,10 +607,11 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
             ) : (
               <Play className="w-4 h-4" />
             )}
-            {isExecuting ? 'Executing...' : 'Execute'}
+            {isExecuting ? 'Creating...' : 'Execute'}
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
