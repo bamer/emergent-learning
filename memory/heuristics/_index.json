@@ -1,0 +1,33 @@
+{
+  "updated_at": "2026-02-10T05:47:32.613347",
+  "total_heuristics": 26,
+  "domains": [
+    "elf-compliance",
+    "learnedgeneral",
+    "architecture",
+    "escalation",
+    "security",
+    "system",
+    "autonomousoperations",
+    "monitoring",
+    "parallel",
+    "watcher",
+    "infrastructure",
+    "database-performance",
+    "general",
+    "test",
+    "learnedarchitecture",
+    "api",
+    "testing",
+    "swarm",
+    "react",
+    "meta-learning",
+    "20260205_diagnostic_findings",
+    "functionaltest",
+    "system-migration",
+    "system-diagnostics",
+    "performance",
+    "development"
+  ],
+  "last_session_id": "7a91984ebd10"
+}
