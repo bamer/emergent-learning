@@ -20,7 +20,13 @@ from utils.database import get_base_path
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_critical,
+        log_error,
+        log_warning,
+        log_info,
+    )
 
     logger = get_logger("sessions")
 except ImportError:
@@ -263,7 +269,7 @@ async def trigger_summarize(
 
     Args:
         session_id: Session UUID
-        use_llm: Whether to use haiku (True) or fallback (False)
+        use_llm: Whether to use AgentManager's learning-extractor (True) or fallback (False)
 
     Returns:
         {"status": "queued", "session_id": "..."}
@@ -300,12 +306,9 @@ async def trigger_batch_summarize(
     Trigger batch summarization of old unsummarized sessions.
 
     Args:
-        older_than_hours: Only sessions older than this
-        limit: Max sessions to process
-        use_llm: Whether to use haiku
-
-    Returns:
-        {"status": "queued", "count": N}
+        older_than_hours: Minimum age in hours
+        limit: Maximum number to process
+        use_llm: Whether to use AgentManager's learning-extractor (True) or fallback (False)
     """
     try:
         cmd = [

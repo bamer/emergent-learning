@@ -65,13 +65,14 @@ async def _async_main(args: argparse.Namespace) -> int:
     """
     # Re-enable debug logging if requested
     import logging
+
     if args.debug:
         logging.getLogger("query.migrations").setLevel(logging.DEBUG)
         logging.getLogger("migrations").setLevel(logging.DEBUG)
         logging.getLogger("peewee").setLevel(logging.DEBUG)
         logging.getLogger("query.core").setLevel(logging.DEBUG)
         logging.getLogger("core").setLevel(logging.DEBUG)
-    
+
     # Initialize query system with error handling
     query_system = None
     exit_code = 0
@@ -282,7 +283,9 @@ async def _async_main(args: argparse.Namespace) -> int:
                     cursor.execute(
                         "SELECT rule, explanation, confidence FROM heuristics ORDER BY confidence DESC LIMIT 20"
                     )
-                    heuristics = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+                    heuristics = (
+                        cursor.fetchall()
+                    )  # Ajouté LIMIT pour éviter l\'accumulation mémoire
                     if heuristics:
                         output.append("## Project Heuristics" + chr(10) + chr(10))
                         for rule, expl, conf in heuristics:
@@ -301,7 +304,9 @@ async def _async_main(args: argparse.Namespace) -> int:
                     cursor.execute(
                         "SELECT type, summary FROM learnings ORDER BY created_at DESC LIMIT 10"
                     )
-                    learnings = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+                    learnings = (
+                        cursor.fetchall()
+                    )  # Ajouté LIMIT pour éviter l\'accumulation mémoire
                     if learnings:
                         output.append("## Project Learnings" + chr(10) + chr(10))
                         for ltype, summary in learnings:
@@ -327,7 +332,11 @@ async def _async_main(args: argparse.Namespace) -> int:
 
         elif args.context is not None:
             # Build full context (optionally with task description)
-            task = args.context if args.context != "task" else "Agent task context generation"
+            task = (
+                args.context
+                if args.context != "task"
+                else "Agent task context generation"
+            )
             domain = args.domain
             tags = args.tags.split(",") if args.tags else None
             result = await query_system.build_context(
@@ -422,10 +431,27 @@ async def _async_main(args: argparse.Namespace) -> int:
             tags = [t.strip() for t in args.tags.split(",")]
             result = await query_system.query_by_tags(tags, args.limit, args.timeout)
 
-        elif args.recent is not None:
-            result = await query_system.query_recent(
-                args.type, args.recent, args.timeout
-            )
+        elif args.recent is not None or args.learning is not None:
+            # Handle learnings query (args.learning is deprecated alias for --recent)
+            # args.learning takes priority if both are provided, default is 10
+            recent_count = None
+
+            if args.learning is not None:
+                recent_count = args.learning
+                print(f"[DEPRECATED] --learning is deprecated, use --recent instead")
+            elif args.recent is not None:
+                recent_count = args.recent
+
+            # If neither specified, don't process (help will show)
+            if recent_count is None:
+                print(
+                    f"QuerySystem args: recent={args.recent}, learning={args.learning}"
+                )  # DEBUG
+                pass  # Will exit with -1 (shows help)
+            else:
+                result = await query_system.query_recent(
+                    args.type, recent_count, args.timeout
+                )
 
         elif args.experiments:
             result = await query_system.get_active_experiments(args.timeout)
@@ -492,10 +518,11 @@ def main():
     """Command-line interface for the query system."""
     # Suppress verbose logging early (before imports that trigger migrations)
     import logging
+
     logging.getLogger("query.migrations").setLevel(logging.CRITICAL)
     logging.getLogger("migrations").setLevel(logging.CRITICAL)
     logging.getLogger("peewee").setLevel(logging.CRITICAL)
-    
+
     # Auto-run full setup on first use
     ensure_full_setup()
     # Auto-install hooks on first query
@@ -514,6 +541,11 @@ Examples:
   python query.py --experiments
   python query.py --ceo-reviews
   python query.py --stats
+
+  # LEARNINGS (replaces deprecated --learning argument)
+  python query.py --recent 20  # Get recent learnings (same as old --learning)
+  python query.py --recent 10 --type heuristic  # Filter by type
+  python query.py --context --depth deep  # Includes all learnings
 
   # Semantic search (Option B) - find relevant heuristics by task description
   python query.py --semantic "Refactor authentication module" --limit 5
@@ -540,8 +572,12 @@ Error Codes:
         "--base-path", type=str, help="Base path to emergent-learning directory"
     )
     parser.add_argument(
-        "--context", nargs="?", const="task", default=None, 
-        metavar="TASK_DESC", help="Build full context for agents (optionally with task description for semantic search)"
+        "--context",
+        nargs="?",
+        const="task",
+        default=None,
+        metavar="TASK_DESC",
+        help="Build full context for agents (optionally with task description for semantic search)",
     )
     parser.add_argument(
         "--depth",
@@ -553,6 +589,18 @@ Error Codes:
     )
     parser.add_argument("--domain", type=str, help="Query by domain")
     parser.add_argument("--tags", type=str, help="Query by tags (comma-separated)")
+
+    # LEARNINGS (deprecated alias for --recent, kept for backward compatibility)
+    parser.add_argument(
+        "--learning",
+        type=int,
+        nargs="?",  # Optional: --learning or --learning 10
+        const=10,  # Default if --learning is used without value
+        default=None,
+        metavar="N",
+        help="[DEPRECATED] Use --recent instead. Get N recent learnings (alias for --recent)",
+    )
+
     parser.add_argument(
         "--recent", type=int, metavar="N", help="Get N recent learnings"
     )

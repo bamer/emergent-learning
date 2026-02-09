@@ -5,12 +5,55 @@ All notable changes to the Emergent Learning Framework will be documented in thi
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.3] - 2026-02-08
+## [0.5.4] - 2026-02-09
+
+### Changed
+- **Dashboard Monitoring Alignment** - Complete monitoring system update for post-refactoring alignment
+  - Fixed orchestrator port: 9999 → 9998 in dashboard backend (`orchestrator.py`)
+  - CEO monitoring router created: 8 new endpoints for CEO inbox, metrics, monitor status
+  - Mission monitoring router created: 7 new endpoints for Mission Engine monitoring
+  - System services router created: 4 new endpoints replacing outdated agent registry
+  - Coordinator system monitoring added: 6 new endpoints for agents, messages, tasks
+  - AI analysis monitoring corrected: Now correctly tracks Watcher + Orchestrator (Sentinel merged)
+  - Pheromone trails monitoring added: 2 new endpoints for hotspots and recent entries
+
+- **AI Analysis Configuration (Corrected)** - Sentinel merged into Watcher
+  - **Watcher** (merged system, replaces old Watcher + Sentinel): AI analysis every 300s (5min), basic checks every 60s
+  - **Unified Orchestrator**: AI analysis every 900s (15min), basic checks every 10s
+  - **Removed**: Separate Sentinel monitoring (merged into Watcher)
+  - Note: Old CHANGELOG v0.5.3 incorrectly listed separate Sentinel intervals (this is corrected)
+
+### Added
+- **Dashboard Monitoring API Endpoints** - 27 new monitoring endpoints created
+  - CEO: `/api/v1/ceo/*` (8 endpoints)
+  - Missions: `/api/v1/missions/*` (7 endpoints)
+  - System Services: `/api/v1/system/*` (4 endpoints)
+  - Coordinator: `/api/v1/monitoring/coordinator/*` (6 endpoints)
+  - AI Analysis: `/api/v1/monitoring/ai-analysis/*` (2 endpoints)
+  - Pheromone Trails: `/api/v1/monitoring/trails/*` (2 endpoints)
+
+- **Documentation** - `MONITORING_UPDATE_SUMMARY.md` created
+  - Complete overview of all monitoring changes
+  - API endpoint inventory with testing instructions
+  - Frontend integration guide
+
+### Fixed
+- **CHANGELOG Inconsistency** - Corrected AI analysis intervals post-Sentinel merge
+  - Updated to reflect ARCHITECTURE.md accurate state: Sentinel merged into Watcher
+  - Removed incorrect separate Sentinel schedule references
+
+## [0.5.3] - 2026-02-08 (CORRECTED IN v0.5.4)
+
+### ⚠️ IMPORTANT CORRECTION (Fixed in v0.5.4)
+The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
+- **AI Analysis Error**: Listed separate Sentinel intervals but Sentinel was already merged into Watcher in v0.5.3
+- **Correct Intervals**: Watcher (merged) = AI every 5min, basic every 60s | Orchestrator = AI every 15min, basic every 10s
+- **Original Incorrect Text**: Listed Watcher (10min), Sentinel (5min), Orchestrator (15min) as separate systems
 
 ### Added
 - **Tier-Based AI Analysis System** - Optimized AI usage with configurable timing intervals
-  - **Watcher**: AI analysis every 10 minutes (basic checks every 60s)
-  - **Sentinel**: AI analysis every 5 minutes (basic checks every 30s)
+  - **Watcher** (merged system, now handles Watcher + Sentinel responsibilities): AI analysis every 5 minutes (CORRECTED from 10min), basic checks every 60s
+  - **Sentinel**: Merged into Watcher (no longer separate system)
   - **Unified Orchestrator**: AI analysis every 15 minutes (basic checks every 10s)
   - Added `_analyze_with_ai()` method using AgentManager for deep analysis
   - Added `basic_analysis()` method for non-AI cycle checks
@@ -33,15 +76,15 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - **System Startup Script** - Updated `start-elf-system.sh` to launch all services
-  - Added startup functions for: Unified Orchestrator, Sentinel Monitor, CEO Inbox Monitor
+  - Added startup functions for: Unified Orchestrator, Watcher (now merged system), CEO Inbox Monitor
   - Fixed orchestrator to use `start` argument
-  - All 6 services now start in correct order with proper dependencies
+  - All 4 services now start in correct order with proper dependencies
 
 - **Check-in Workflow** - Fixed bugs and improved reliability
   - Fixed wrong path: `src/query/query.py` → `query/query.py`
   - Fixed wrong port: UnifiedOrchestrator 9999 → process detection via pgrep
   - Fixed wrong port: Dashboard Frontend 5173 → 3001
-  - Added Sentinel detection in architecture status check
+  - Added Watcher detection (now includes merged Sentinel functionality) in architecture status check
   - Updated to use OpenCode AgentManager instead of haiku Task tool
 
 - **Configuration Updates** - Claude configuration files

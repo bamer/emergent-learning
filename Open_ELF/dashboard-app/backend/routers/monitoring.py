@@ -1648,3 +1648,657 @@ async def get_escalations_summary(
     except Exception as e:
         logger.error(f"Error fetching escalations summary: {e}")
         raise HTTPException(status_code=500, detail=f"Error fetching summary: {str(e)}")
+
+
+# ==============================================================================
+# Coordinator System Endpoints (v0.5.3 Refactoring)
+# ==============================================================================
+
+
+@router.get("/coordinator/agents")
+async def get_coordinator_agents():
+    """Get registered agents with heartbeat status from coord_agents table."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get all registered agents
+        cursor.execute("""
+            SELECT name, pid, status, capabilities, model, meta, registered_at, last_heartbeat
+            FROM coord_agents
+            ORDER BY last_heartbeat DESC
+        """)
+
+        agents = []
+        for row in cursor.fetchall():
+            agent = dict_from_row(row)
+
+            # Parse capabilities JSON
+            try:
+                agent["capabilities"] = (
+                    json.loads(agent["capabilities"]) if agent["capabilities"] else []
+                )
+            except:
+                agent["capabilities"] = []
+
+            # Parse meta JSON
+            try:
+                agent["meta"] = json.loads(agent["meta"]) if agent["meta"] else {}
+            except:
+                agent["meta"] = {}
+
+            # Mark stale agents (>120s no heartbeat)
+            if agent["last_heartbeat"]:
+                try:
+                    last_hb = datetime.fromisoformat(agent["last_heartbeat"])
+                    age_seconds = (datetime.now() - last_hb).total_seconds()
+                    agent["stale"] = age_seconds > 120
+                    agent["age_seconds"] = age_seconds
+                except:
+                    agent["stale"] = True
+                    agent["age_seconds"] = None
+            else:
+                agent["stale"] = True
+                agent["age_seconds"] = None
+
+            agents.append(agent)
+
+        conn.close()
+
+        return {"status": "ok", "agents": agents, "total": len(agents)}
+
+    except Exception as e:
+        logger.error(f"Error getting coordinator agents: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/coordinator/messages")
+async def get_coordinator_messages(limit: int = Query(50, ge=1, le=200)):
+    """Get inter-agent messages from coord_messages table."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get recent unread messages
+        cursor.execute(
+            """
+            SELECT id, from_agent, to_agent, msg_type, payload, created_at, read_at
+            FROM coord_messages
+            WHERE read_at IS NULL
+            ORDER BY created_at DESC
+            LIMIT ?
+        """,
+            (limit,),
+        )
+
+        messages = []
+        for row in cursor.fetchall():
+            msg = dict_from_row(row)
+            # Parse payload JSON
+            try:
+                msg["payload"] = json.loads(msg["payload"]) if msg["payload"] else {}
+            except:
+                msg["payload"] = {}
+            messages.append(msg)
+
+        conn.close()
+
+        return {"status": "ok", "messages": messages, "unread_count": len(messages)}
+
+    except Exception as e:
+        logger.error(f"Error getting coordinator messages: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/coordinator/messages/{to_agent}")
+async def get_messages_for_agent(to_agent: str, limit: int = Query(50, ge=1, le=200)):
+    """Get messages for a specific agent."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT id, from_agent, to_agent, msg_type, payload, created_at, read_at
+            FROM coord_messages
+            WHERE to_agent = ?
+            ORDER BY created_at DESC
+            LIMIT ?
+        """,
+            (to_agent, limit),
+        )
+
+        messages = []
+        for row in cursor.fetchall():
+            msg = dict_from_row(row)
+            try:
+                msg["payload"] = json.loads(msg["payload"]) if msg["payload"] else {}
+            except:
+                msg["payload"] = {}
+            messages.append(msg)
+
+        conn.close()
+
+        return {"status": "ok", "messages": messages, "total": len(messages)}
+
+    except Exception as e:
+        logger.error(f"Error getting messages for {to_agent}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/coordinator/messages/{message_id}/read")
+async def mark_message_read(message_id: int):
+    """Mark a message as read."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            UPDATE coord_messages
+            SET read_at = ?
+            WHERE id = ?
+        """,
+            (datetime.now().isoformat(), message_id),
+        )
+
+        conn.commit()
+        conn.close()
+
+        return {"status": "ok", "message": f"Message {message_id} marked as read"}
+
+    except Exception as e:
+        logger.error(f"Error marking message {message_id} as read: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/coordinator/tasks")
+async def get_coordinator_tasks(
+    state: Optional[str] = Query(
+        None, description="Filter by state: pending, in_progress, completed, failed"
+    ),
+    owner: Optional[str] = Query(None, description="Filter by task owner"),
+    limit: int = Query(50, ge=1, le=200),
+):
+    """Get swarm tasks from coord_tasks table."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Build query with filters
+        where_clause = "WHERE 1=1"
+        params = []
+
+        if state:
+            where_clause += " AND state = ?"
+            params.append(state)
+
+        if owner:
+            where_clause += " AND owner = ?"
+            params.append(owner)
+
+        query = f"""
+            SELECT id, owner, state, spec, result, created_at, updated_at, completed_at
+            FROM coord_tasks
+            {where_clause}
+            ORDER BY created_at DESC
+            LIMIT ?
+        """
+
+        params.append(limit)
+
+        cursor.execute(query, params)
+
+        tasks = []
+        for row in cursor.fetchall():
+            task = dict_from_row(row)
+            # Parse spec and result JSON
+            try:
+                task["spec"] = json.loads(task["spec"]) if task["spec"] else {}
+            except:
+                task["spec"] = {}
+            try:
+                task["result"] = json.loads(task["result"]) if task["result"] else None
+            except:
+                task["result"] = None
+            tasks.append(task)
+
+        conn.close()
+
+        return {"status": "ok", "tasks": tasks, "total": len(tasks)}
+
+    except Exception as e:
+        logger.error(f"Error getting coordinator tasks: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/coordinator/summary")
+async def get_coordinator_summary():
+    """Get coordinator system summary (agents, messages, tasks)."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Count agents by status
+        cursor.execute("""
+            SELECT status, COUNT(*) as count
+            FROM coord_agents
+            GROUP BY status
+        """)
+        agents_by_status = {row["status"]: row["count"] for row in cursor.fetchall()}
+
+        # Count unread messages
+        cursor.execute(
+            "SELECT COUNT(*) as count FROM coord_messages WHERE read_at IS NULL"
+        )
+        unread_messages = cursor.fetchone()["count"]
+
+        # Count tasks by state
+        cursor.execute("""
+            SELECT state, COUNT(*) as count
+            FROM coord_tasks
+            GROUP BY state
+        """)
+        tasks_by_state = {row["state"]: row["count"] for row in cursor.fetchall()}
+
+        # Get stale agents (>120s heartbeat)
+        cursor.execute("""
+            SELECT COUNT(*) as count
+            FROM coord_agents
+            WHERE datetime(last_heartbeat) < datetime('now', '-120 seconds')
+        """)
+        stale_agents = cursor.fetchone()["count"]
+
+        conn.close()
+
+        return {
+            "status": "ok",
+            "agents": {
+                "by_status": agents_by_status,
+                "total": sum(agents_by_status.values()),
+                "stale": stale_agents,
+            },
+            "messages": {"unread_count": unread_messages},
+            "tasks": {
+                "by_state": tasks_by_state,
+                "total": sum(tasks_by_state.values()),
+            },
+            "last_updated": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting coordinator summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==============================================================================
+# Tier-Based AI Analysis Monitoring (v0.5.3)
+# ==============================================================================
+
+
+@router.get("/ai-analysis/schedule")
+async def get_ai_analysis_schedule():
+    """
+    Get AI analysis status and schedule for Watcher.
+
+    Shows last analysis timestamp, next scheduled analysis, and configured intervals.
+
+    NOTE: Sentinel has been merged into Watcher (see ARCHITECTURE.md v0.5.3).
+    Only Watcher is tracked separately.
+
+    Configuration (post-merge):
+    - Watcher: AI analysis every 300s (5min), basic checks every 60s
+    - Orchestrator: AI analysis every 900s (15min), basic checks every 10s
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Configuration from ARCHITECTURE.md (post-Sentinel merge)
+        schedules = {
+            "watcher": {
+                "analysis_interval": 300,  # 5 minutes (post-merge)
+                "basic_check_interval": 60,  # 1 minute
+                "note": "Replaces old Watcher + Sentinel (merged)",
+            },
+            "orchestrator": {
+                "analysis_interval": 900,  # 15 minutes
+                "basic_check_interval": 10,  # 10 seconds
+                "note": "Unified Orchestrator AI analysis",
+            },
+        }
+
+        # Get last analysis times from event chronicle
+        agent_data = {}
+
+        for agent in schedules.keys():
+            # Get last AI analysis cycle
+            cursor.execute(
+                """
+                SELECT timestamp, data
+                FROM event_chronicle
+                WHERE event_type = ? AND source LIKE ?
+                ORDER BY timestamp DESC
+                LIMIT 1
+                """,
+                (f"{agent}_cycle", f"%{agent}%"),
+            )
+
+            row = cursor.fetchone()
+            if row:
+                last_analysis = row["timestamp"]
+                try:
+                    parse_data = json.loads(row["data"]) if row["data"] else {}
+                    ai_used = parse_data.get(
+                        "analysis", parse_data.get("data", {})
+                    ).get("ai_used", False)
+                except:
+                    ai_used = False
+            else:
+                last_analysis = None
+                ai_used = False
+
+            # Calculate next scheduled analysis
+            if last_analysis:
+                try:
+                    last_dt = datetime.fromisoformat(last_analysis)
+                    next_dt = datetime.fromtimestamp(
+                        last_dt.timestamp() + schedules[agent]["analysis_interval"]
+                    )
+                    # If next analysis already passed
+                    if next_dt < datetime.now():
+                        next_analysis = "Overdue"
+                    else:
+                        next_analysis = next_dt.isoformat()
+                except:
+                    next_analysis = None
+            else:
+                next_analysis = None
+
+            # Get last basic check
+            cursor.execute(
+                """
+                SELECT timestamp
+                FROM event_chronicle
+                WHERE event_type = ? AND source LIKE ?
+                ORDER BY timestamp DESC
+                LIMIT 1
+                """,
+                (f"{agent}_check", f"%{agent}%"),
+            )
+
+            check_row = cursor.fetchone()
+            last_check = check_row["timestamp"] if check_row else None
+
+            agent_data[agent] = {
+                "last_analysis": last_analysis,
+                "next_analysis": next_analysis,
+                "last_check": last_check,
+                "ai_used_in_last_analysis": ai_used,
+                "config": schedules[agent],
+            }
+
+        conn.close()
+
+        return {
+            "status": "ok",
+            "agents": agent_data,
+            "last_updated": datetime.now().isoformat(),
+            "note": "Sentinel merged into Watcher - now a single system (ARCHITECTURE.md)",
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting AI analysis schedule: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/ai-analysis/metrics")
+async def get_ai_analysis_metrics(hours: int = Query(24, ge=1, le=168)):
+    """Get AI analysis metrics over time period.
+
+    NOTE: Sentinel was merged into Watcher - only tracking Watcher and Orchestrator separately.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get analysis cycles with AI usage
+        cursor.execute(
+            """
+            SELECT 
+                timestamp,
+                event_type,
+                source,
+                data,
+                summary
+            FROM event_chronicle
+            WHERE timestamp > datetime('now', ?)
+            AND event_type IN ('watcher_cycle', 'orchestrator_cycle')
+            ORDER BY timestamp DESC
+            """,
+            (f"-{hours} hours",),
+        )
+
+        metrics = {
+            "watcher": {
+                "total_cycles": 0,
+                "ai_cycles": 0,
+                "basic_cycles": 0,
+                "cycle_times": [],
+            },
+            "orchestrator": {
+                "total_cycles": 0,
+                "ai_cycles": 0,
+                "basic_cycles": 0,
+                "cycle_times": [],
+            },
+            "total": 0,
+        }
+
+        for row in cursor.fetchall():
+            event_type = row["event_type"]
+            agent_name = event_type.replace("_cycle", "")
+
+            if agent_name not in ["watcher", "orchestrator"]:
+                continue
+
+            metrics[agent_name]["total_cycles"] += 1
+            metrics["total"] += 1
+
+            # Check if AI was used
+            try:
+                data = json.loads(row["data"]) if row["data"] else {}
+                ai_used = data.get("analysis", data.get("data", {})).get(
+                    "ai_used", False
+                )
+
+                if ai_used:
+                    metrics[agent_name]["ai_cycles"] += 1
+                else:
+                    metrics[agent_name]["basic_cycles"] += 1
+
+                # Extract cycle duration if available
+                if "duration" in data:
+                    metrics[agent_name]["cycle_times"].append(data["duration"])
+            except:
+                pass
+
+        # Calculate statistics
+        for agent in ["watcher", "orchestrator"]:
+            total = metrics[agent]["total_cycles"]
+            if total > 0:
+                metrics[agent]["ai_usage_rate"] = round(
+                    metrics[agent]["ai_cycles"] / total * 100, 2
+                )
+                if metrics[agent]["cycle_times"]:
+                    metrics[agent]["avg_cycle_duration"] = round(
+                        sum(metrics[agent]["cycle_times"])
+                        / len(metrics[agent]["cycle_times"]),
+                        2,
+                    )
+                else:
+                    metrics[agent]["avg_cycle_duration"] = None
+
+        conn.close()
+
+        return {
+            "status": "ok",
+            "metrics": metrics,
+            "period_hours": hours,
+            "last_updated": datetime.now().isoformat(),
+            "note": "Sentinel merged into Watcher - metrics reflect combined system",
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting AI analysis metrics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==============================================================================
+# Pheromone Trails Monitoring (v0.5.3)
+# ==============================================================================
+
+
+@router.get("/trails/hotspots")
+async def get_trail_hotspots(limit: int = Query(20, ge=1, le=100)):
+    """
+    Get file editing hotspots from pheromone trails.
+
+    Returns files with high edit frequencies.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if trails table exists
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='trails'"
+        )
+        table_exists = cursor.fetchone()
+
+        if not table_exists:
+            return {
+                "status": "ok",
+                "hotspots": [],
+                "total": 0,
+                "note": "trails table not found",
+            }
+
+        # Get hotspot files by edit count
+        cursor.execute(
+            """
+            SELECT 
+                filepath,
+                COUNT(*) as interaction_count,
+                COUNT(CASE WHEN action = 'edit' THEN 1 END) as edit_count,
+                COUNT(CASE WHEN action = 'read' THEN 1 END) as read_count,
+                MIN(timestamp) as first_seen,
+                MAX(timestamp) as last_seen
+            FROM trails
+            GROUP BY filepath
+            ORDER BY edit_count DESC, interaction_count DESC
+            LIMIT ?
+            """,
+            (limit,),
+        )
+
+        hotspots = []
+        for row in cursor.fetchall():
+            hotspots.append(
+                {
+                    "filepath": row["filepath"],
+                    "interaction_count": row["interaction_count"],
+                    "edit_count": row["edit_count"],
+                    "read_count": row["read_count"],
+                    "first_seen": row["first_seen"],
+                    "last_seen": row["last_seen"],
+                    "edit_to_read_ratio": round(
+                        row["edit_count"] / row["read_count"], 2
+                    )
+                    if row["read_count"] > 0
+                    else None,
+                }
+            )
+
+        conn.close()
+
+        return {
+            "status": "ok",
+            "hotspots": hotspots,
+            "total": len(hotspots),
+            "last_updated": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting trail hotspots: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/trails/recent")
+async def get_recent_trails(
+    limit: int = Query(50, ge=1, le=200),
+    action_filter: Optional[str] = Query(
+        None, description="Filter by action: read, edit, write, create, delete"
+    ),
+):
+    """
+    Get recent pheromone trail entries.
+
+    Shows recent file interactions tracked by the trail system.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if trails table exists
+        cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='trails'"
+        )
+        table_exists = cursor.fetchone()
+
+        if not table_exists:
+            return {
+                "status": "ok",
+                "trails": [],
+                "total": 0,
+                "note": "trails table not found",
+            }
+
+        # Build query
+        where_clause = "WHERE 1=1"
+        params = []
+
+        if action_filter:
+            where_clause += " AND action = ?"
+            params.append(action_filter)
+
+        query = f"""
+            SELECT 
+                timestamp,
+                filepath,
+                action,
+                session_id,
+                tool_name
+            FROM trails
+            {where_clause}
+            ORDER BY timestamp DESC
+            LIMIT ?
+        """
+
+        params.append(limit)
+        cursor.execute(query, params)
+
+        trails = [dict_from_row(row) for row in cursor.fetchall()]
+
+        conn.close()
+
+        return {
+            "status": "ok",
+            "trails": trails,
+            "total": len(trails),
+            "last_updated": datetime.now().isoformat(),
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting recent trails: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

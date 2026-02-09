@@ -14,6 +14,7 @@ Each router handles a specific domain of the API:
 - context: Project context and scope information
 - agents: Agent management and mission execution
 - missions: Mission Engine for creating and executing missions
+- ceo: CEO inbox monitoring and autonomous processing status (v0.5.3)
 """
 
 from .analytics import router as analytics_router
@@ -34,6 +35,9 @@ from .semantic import router as semantic_router
 from .agents import router as agents_router
 from .monitoring import router as monitoring_router
 from .persistence import router as persistence_router
+from .ceo import router as ceo_router
+from .missions import router as missions_router
+from .system import router as system_router
 
 __all__ = [
     "analytics_router",
@@ -54,4 +58,7 @@ __all__ = [
     "agents_router",
     "monitoring_router",
     "persistence_router",
+    "ceo_router",
+    "missions_router",
+    "system_router",
 ]

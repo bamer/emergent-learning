@@ -18,7 +18,13 @@ from pydantic import BaseModel
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_critical,
+        log_error,
+        log_warning,
+        log_info,
+    )
 
     logger = get_logger("orchestrator")
 except ImportError:
@@ -33,7 +39,8 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/orchestrator", tags=["orchestrator"])
 
 # Enhanced Event Bridge Orchestrator API
-ORCHESTRATOR_API_URL = "http://localhost:9999"
+# NOTE: Updated to port 9998 to match Unified Orchestrator (2026-02-09 refactoring)
+ORCHESTRATOR_API_URL = "http://localhost:9998"
 
 
 class OrchestratorRequest(BaseModel):

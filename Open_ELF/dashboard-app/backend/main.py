@@ -129,6 +129,9 @@ from routers import (
     agents_router,
     monitoring_router,
     persistence_router,
+    ceo_router,
+    missions_router,
+    system_router,
 )
 from routers.auth import init_redis
 
@@ -324,7 +327,13 @@ from routers.workflows import set_paths as set_workflows_paths
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_critical,
+        log_error,
+        log_warning,
+        log_info,
+    )
 
     logger = get_logger("main")
 except ImportError:
@@ -359,6 +368,9 @@ app.include_router(semantic_router)
 app.include_router(agents_router)
 app.include_router(monitoring_router)
 app.include_router(persistence_router)
+app.include_router(ceo_router)
+app.include_router(missions_router)
+app.include_router(system_router)
 
 # ==============================================================================
 # SQL Query Whitelist (Defense-in-Depth for SQL Injection Prevention)
