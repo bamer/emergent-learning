@@ -24,3 +24,13 @@ Godot uses different keycodes for physical vs position keys. Arrows are position
 
 ---
 
+## H-108: Godot project.godot input actions need BOTH keyboard and arrow keys for ui_left/RIGHT/UP/DOWN to work both on WASD and arrow keys. If events array is empty, Input.get_vector() returns ZERO Vector2 and movement won't work.
+
+**Confidence**: 0.95
+**Source**: observation
+**Created**: 2026-02-10
+
+InputMap actions define reusable action names (ui_left, ui_right, etc.) that map to multiple physical keys. project.godot [input] section should have events array populated with InputEventKey objects for both WASD and arrow keys. Empty events = no input detected.
+
+---
+

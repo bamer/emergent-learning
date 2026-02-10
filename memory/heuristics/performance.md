@@ -54,3 +54,14 @@ Successfully optimized 26 SQL queries by replacing SELECT * with specific column
 
 ---
 
+## H-112: Object pooling essential for Godot with many projectiles
+
+**Confidence**: 0.7
+**Source**: orchestration
+**Project**: `/home/bamer/shootemup_game`
+**Created**: 2026-02-10
+
+Pool sizes: 50 projectiles, 20 enemies maintains 60 FPS during intense combat
+
+---
+
