@@ -74,7 +74,7 @@ class EventBridge:
         # Import LearningProcessor
         self.learning_processor = None
         try:
-            from core.learning_processor import LearningProcessor, ToolEvent
+            from learning_processor import LearningProcessor, ToolEvent
             self.learning_processor = LearningProcessor()
             self.ToolEvent = ToolEvent
             logger.info("✅ LearningProcessor loaded")

@@ -166,9 +166,10 @@ class Watcher:
                 cursor.execute("SELECT COUNT(*) FROM pheromone_trails")
                 metrics["database"]["pheromone_trails"] = cursor.fetchone()[0]
 
-                # Recent activity
+                # Recent activity - FIXED: Count recent heuristics (where LearningProcessor inserts)
+                # instead of learnings table which is not used by the current learning pipeline
                 cursor.execute(
-                    "SELECT COUNT(*) FROM learnings WHERE created_at > datetime('now', '-1 hour')"
+                    "SELECT COUNT(*) FROM heuristics WHERE created_at > datetime('now', '-1 hour')"
                 )
                 metrics["database"]["recent_learnings"] = cursor.fetchone()[0]
 

@@ -132,3 +132,5 @@ These are proven principles with high confidence. They are ALWAYS loaded into co
 **Why:** Async lets you do other work while agents run. Multiple agents can run in parallel. Sync wastes time waiting. There's NO good reason to block immediately on spawn.
 **Promoted:** 2025-12-13 (CEO identified that sync is pointless - async + block when needed is always better)
 **Validations:** CONSTITUTIONAL - default behavior change
+
+

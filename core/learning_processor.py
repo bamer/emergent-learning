@@ -328,6 +328,7 @@ class LearningProcessor:
         - Lay trails
         - Advisory verification
         - Auto-failure recording
+        - Execute PostToolUse hooks
         """
         result = {
             "outcome": "unknown",
@@ -337,6 +338,7 @@ class LearningProcessor:
             "trails_recorded": 0,
             "advisory_warnings": [],
             "failure_auto_recorded": False,
+            "hooks_executed": 0,
         }
         
         # Determine outcome
@@ -375,11 +377,66 @@ class LearningProcessor:
         # Check for golden rule promotion
         self._check_golden_rule_promotion()
         
+        # Execute PostToolUse hooks (e.g., sync-golden-rules.py)
+        hooks_executed = self._execute_post_tool_hooks(event)
+        result["hooks_executed"] = hooks_executed
+        
         # Clear session state for next tool
         self.session_state["heuristics_consulted"] = []
         self._save_session_state()
         
         return result
+    
+    def _execute_post_tool_hooks(self, event: ToolEvent) -> int:
+        """Execute all PostToolUse hooks from hooks/PostToolUse/ directory."""
+        import subprocess
+        import os
+        
+        hooks_dir = Path.home() / ".opencode" / "hooks" / "PostToolUse"
+        if not hooks_dir.exists():
+            return 0
+        
+        count = 0
+        # Find all Python files except utilities (starting with _ or sgr_logger)
+        hook_files = [
+            f for f in hooks_dir.glob("*.py")
+            if not f.name.startswith("_") 
+            and f.name not in ("sgr_logger.py", "sync-golden-rules-logging.py")
+        ]
+        
+        for hook_file in sorted(hook_files):
+            try:
+                # Prepare hook input data
+                hook_data = {
+                    "tool": event.tool_name,
+                    "tool_name": event.tool_name,
+                    "tool_input": event.tool_input,
+                    "tool_output": event.tool_output,
+                    "session": {"id": event.session_id} if event.session_id else {},
+                    "timestamp": event.timestamp or datetime.now().isoformat(),
+                }
+                
+                # Execute hook with stdin
+                proc = subprocess.run(
+                    [sys.executable, str(hook_file)],
+                    input=json.dumps(hook_data),
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    cwd=str(Path.home() / ".opencode")
+                )
+                
+                if proc.returncode == 0:
+                    count += 1
+                else:
+                    print(f"[HOOK_ERROR] {hook_file.name}: {proc.stderr[:200]}", file=sys.stderr)
+                    
+            except subprocess.TimeoutExpired:
+                print(f"[HOOK_TIMEOUT] {hook_file.name}", file=sys.stderr)
+            except Exception as e:
+                print(f"[HOOK_EXCEPTION] {hook_file.name}: {e}", file=sys.stderr)
+        
+        return count
     
     def _determine_outcome(self, tool_output: Dict) -> Tuple[str, str]:
         """Determine if tool execution succeeded, failed, or is unknown."""
@@ -760,7 +817,7 @@ class LearningProcessor:
             
             for warning in warnings:
                 cursor.execute("""
-                    INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context, created_at)
+                    INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context, timestamp)
                     VALUES ('advisory_warning', ?, 1, ?, ?, ?)
                 """, (
                     warning["category"],
@@ -939,7 +996,7 @@ class LearningProcessor:
             
             # Log the auto-capture
             cursor.execute("""
-                INSERT INTO metrics (metric_type, metric_name, metric_value, context, created_at)
+                INSERT INTO metrics (metric_type, metric_name, metric_value, context, timestamp)
                 VALUES ('auto_failure_capture', 'capture', 1, ?, ?)
             """, (description[:100], timestamp.isoformat()))
             
@@ -997,7 +1054,7 @@ class LearningProcessor:
                 
                 # Log promotion
                 cursor.execute("""
-                    INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context, created_at)
+                    INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context, timestamp)
                     VALUES ('golden_rule_promotion', 'promotion', ?, ?, ?, ?)
                 """, (
                     candidate["id"],
