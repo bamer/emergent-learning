@@ -172,30 +172,34 @@ class EventBridge:
         logger.info("🌉 EventBridge v2.0 Starting")
         logger.info("=" * 70)
 
-        # Check OpenCode connection
+        # Check OpenCode connection using /global/health
         try:
-            response = self.http_session.get(f"{OPENCODE_SERVER}/", timeout=5)
+            response = self.http_session.get(
+                f"{OPENCODE_SERVER}/global/health", timeout=5
+            )
             if response.status_code != 200:
                 logger.error("❌ OpenCode server not accessible")
                 return False
+            health_data = response.json()
+            logger.info(
+                f"✅ Connected to OpenCode server (v{health_data.get('version', '?')})"
+            )
         except Exception as e:
             logger.error(f"❌ Cannot connect to OpenCode: {e}")
             return False
 
-        logger.info("✅ Connected to OpenCode server")
-
         self.running = True
         self.started_at = datetime.now()
 
-        # Start SSE listener in background thread
-        listener_thread = threading.Thread(target=self._listen_events, daemon=True)
-        listener_thread.start()
-        logger.info("👂 SSE listener started")
+        # Start SSE listener on /global/event endpoint
+        sse_thread = threading.Thread(target=self._listen_events, daemon=True)
+        sse_thread.start()
+        logger.info("👂 SSE listener started on /global/event")
 
-        # Start session polling thread (for detecting tools not captured via SSE)
+        # Start session polling as backup (for tools not captured via SSE)
         polling_thread = threading.Thread(target=self._poll_sessions, daemon=True)
         polling_thread.start()
-        logger.info("🔄 Session polling started")
+        logger.info("🔄 Session polling started (backup)")
 
         # Start status server
         self._start_status_server()
@@ -229,7 +233,7 @@ class EventBridge:
         while self.running:
             try:
                 response = self.http_session.get(
-                    f"{OPENCODE_SERVER}/event",
+                    f"{OPENCODE_SERVER}/global/event",
                     stream=True,
                     headers={
                         "Accept": "text/event-stream",
@@ -338,6 +342,18 @@ class EventBridge:
             # Process post-tool
             result = self.learning_processor.post_tool_process(tool_event)
 
+            # Log tool event to database
+            self._log_event(
+                "tool",
+                details=f"Tool: {tool_name}",
+                data={
+                    "tool": tool_name,
+                    "session_id": session_id,
+                    "input": tool_input,
+                    "outcome": result.get("outcome", "unknown"),
+                },
+            )
+
             logger.info(f"✅ LearningProcessor processed: {tool_name} -> {result}")
 
         except Exception as e:
@@ -431,8 +447,21 @@ class EventBridge:
                         parts = msg.get("parts", [])
                         for part in parts:
                             part_type = part.get("type")
-                            if part_type in ["tool_use", "tool"]:
-                                tool_name = part.get("tool", "unknown")
+                            # OpenCode envoie les outils dans "step-start", pas "tool_use"
+                            if part_type in ["tool_use", "tool", "step-start"]:
+                                # Pour step-start, extraire le tool_name du contenu
+                                if part_type == "step-start":
+                                    content = part.get("content", {})
+                                    tool_name = content.get("type", "unknown")
+                                    # Essayer d'extraire le tool name de step_name
+                                    step_name = part.get("step_name", "")
+                                    if not tool_name or tool_name == "unknown":
+                                        tool_name = (
+                                            step_name.replace(" ", "_").lower()
+                                            or "step"
+                                        )
+                                else:
+                                    tool_name = part.get("tool", "unknown")
                                 # Fix: Get tool_input from state.input, not directly from part
                                 tool_input = part.get("state", {}).get("input", {})
 
@@ -462,12 +491,12 @@ class EventBridge:
                 if total_tools_found > 0:
                     logger.info(f"✅ Poll complete: {total_tools_found} tools found")
 
-                # Wait before next poll
-                time.sleep(5)
+                # Wait before next poll ( réduit à 2 secondes pour réactivité )
+                time.sleep(2)
 
             except Exception as e:
                 logger.error(f"❌ Error polling sessions: {e}")
-                time.sleep(5)
+                time.sleep(3)
 
     def _start_status_server(self):
         """Start HTTP status server."""

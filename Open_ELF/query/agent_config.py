@@ -171,14 +171,14 @@ def get_default_agent_config() -> Dict[str, Any]:
         "always_include": {},
         "tier_overrides": {},
         "phase_weights": {
-            "plan": {"opus": 2.0, "sonnet": 1.5, "nvidia/qwen/qwen3-next-80b-a3b-instruct": 0.5},
-            "execute": {"opus": 1.0, "sonnet": 1.5, "nvidia/qwen/qwen3-next-80b-a3b-instruct": 1.5},
-            "review": {"opus": 2.0, "sonnet": 2.0, "nvidia/qwen/qwen3-next-80b-a3b-instruct": 0.5},
+            "plan": {"nvidia/moonshotai/kimi-k2.5": 2.0, "nvidia/minimaxai/minimax-m2.1": 1.5, "nvidia/deepseek-ai/deepseek-v3.1-terminus": 0.5},
+            "execute": {"nvidia/moonshotai/kimi-k2.5": 1.0, "nvidia/minimaxai/minimax-m2.1": 1.5, "nvidia/deepseek-ai/deepseek-v3.1-terminus": 1.5},
+            "review": {"nvidia/moonshotai/kimi-k2.5": 2.0, "nvidia/minimaxai/minimax-m2.1": 2.0, "nvidia/deepseek-ai/deepseek-v3.1-terminus": 0.5},
         },
         # Model tier mappings (OpenCode):
-        # nvidia/qwen/qwen3-next-80b-a3b-instruct -> llama/nemotron-v3-coder
-        # sonnet -> opencode/kimi-k2.5-free
-        # opus -> nvidia/qwen/qwen3-coder-480b-a35b-instruct
+        # nvidia/deepseek-ai/deepseek-v3.1-terminus -> llama/nemotron-v3-coder
+        # nvidia/minimaxai/minimax-m2.1 -> opencode/kimi-k2.5-free
+        # nvidia/moonshotai/kimi-k2.5 -> nvidia/qwen/qwen3-coder-480b-a35b-instruct
         "complexity_requirements": {
             "critical": "nvidia/qwen/qwen3-coder-480b-a35b-instruct",
             "high": "opencode/kimi-k2.5-free",
@@ -324,7 +324,7 @@ def get_config_value(key_path: str, default: Any = None) -> Any:
     Get a specific config value by dot-notation path.
 
     Args:
-        key_path: Dot-separated path like "phase_weights.plan.opus"
+        key_path: Dot-separated path like "phase_weights.plan.nvidia/moonshotai/kimi-k2.5"
         default: Default value if path not found
 
     Returns:

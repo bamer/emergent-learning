@@ -312,13 +312,8 @@ start_event_bridge() {
     # Vérifier que le script existe (nouveau emplacement)
     if [[ ! -f "${event_bridge_script}" ]]; then
         log_warning "⚠️ Script Event Bridge v2 introuvable: ${event_bridge_script}"
-        log_info "   Essai avec l'ancien Event Bridge..."
-        # Fallback vers l'ancien Event Bridge
-        event_bridge_script="${ELF_DIR}/orchestrator/event_bridge.py"
-        if [[ ! -f "${event_bridge_script}" ]]; then
-            log_warning "⚠️ Ancien Event Bridge aussi introuvable"
             return 0
-        fi
+
         cd "${ELF_DIR}/orchestrator"
         python3 "${event_bridge_script}" start >"${LOGS_DIR}/event-bridge.log" 2>&1 &
     else
