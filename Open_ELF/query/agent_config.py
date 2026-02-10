@@ -176,7 +176,7 @@ def get_default_agent_config() -> Dict[str, Any]:
             "review": {"nvidia/moonshotai/kimi-k2.5": 2.0, "nvidia/minimaxai/minimax-m2.1": 2.0, "nvidia/deepseek-ai/deepseek-v3.1-terminus": 0.5},
         },
         # Model tier mappings (OpenCode):
-        # nvidia/deepseek-ai/deepseek-v3.1-terminus -> llama/nemotron-v3-coder
+        # nvidia/deepseek-ai/deepseek-v3.1-terminus -> model: llamacpp/nemotron-v3-coder
         # nvidia/minimaxai/minimax-m2.1 -> opencode/kimi-k2.5-free
         # nvidia/moonshotai/kimi-k2.5 -> nvidia/qwen/qwen3-coder-480b-a35b-instruct
         "complexity_requirements": {

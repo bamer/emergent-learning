@@ -279,8 +279,15 @@ class EventBridge:
 
     def _handle_event(self, event: Dict[str, Any]):
         """Handle an event from OpenCode."""
-        event_type = event.get("type", "unknown")
-        event_properties = event.get("properties", {})
+        # Support both formats: {"type": "...", "properties": {...}}
+        # and {"payload": {"type": "...", "properties": {...}}}
+        if "payload" in event:
+            payload = event["payload"]
+            event_type = payload.get("type", "unknown")
+            event_properties = payload.get("properties", {})
+        else:
+            event_type = event.get("type", "unknown")
+            event_properties = event.get("properties", {})
 
         # Handle message.part.updated events (contains tool_use parts)
         if event_type == "message.part.updated":
@@ -323,13 +330,6 @@ class EventBridge:
             tool_output = props.get("output", {})
             session_id = props.get("session_id", "")
 
-            logger.info(f"🔧 Processing tool event: {tool_name}")
-            logger.debug(f"🔍 Event structure: {event}")
-            logger.debug(f"🔍 tool_input type: {type(tool_input)}, value: {tool_input}")
-            logger.debug(
-                f"🔍 tool_output type: {type(tool_output)}, value: {tool_output}"
-            )
-
             # Create ToolEvent
             tool_event = self.ToolEvent(
                 tool_name=tool_name,
@@ -354,8 +354,6 @@ class EventBridge:
                 },
             )
 
-            logger.info(f"✅ LearningProcessor processed: {tool_name} -> {result}")
-
         except Exception as e:
             logger.error(f"Error processing tool event: {e}")
 
@@ -373,16 +371,10 @@ class EventBridge:
         # Check for tool_use or tool part types
         if part_type in ["tool_use", "tool"]:
             tool_name = part.get("tool", "unknown")
-            # Fix: Get tool_input from state.input, not directly from part
-            tool_input = part.get("state", {}).get("input", {})
-
-            # DEBUG: Log the actual part structure
-            logger.debug(f"🔍 Tool part structure: {part}")
-            logger.debug(
-                f"🔍 Extracted tool_name: {tool_name}, tool_input: {tool_input}"
-            )
-
-            logger.info(f"🔧 Tool detected in message: {tool_name}")
+            # Get tool_input and tool_output from state
+            state = part.get("state", {})
+            tool_input = state.get("input", {})
+            tool_output = state.get("output", "")
 
             # Synthesize a tool event
             tool_event = {
@@ -390,9 +382,9 @@ class EventBridge:
                 "properties": {
                     "tool": tool_name,
                     "input": tool_input,
-                    "output": {},
+                    "output": tool_output,
                     "session_id": session_id,
-                    "success": True,
+                    "success": state.get("status") == "completed",
                 },
             }
 
@@ -462,18 +454,12 @@ class EventBridge:
                                         )
                                 else:
                                     tool_name = part.get("tool", "unknown")
-                                # Fix: Get tool_input from state.input, not directly from part
-                                tool_input = part.get("state", {}).get("input", {})
-
-                                # DEBUG: Log the actual part structure
-                                logger.debug(f"🔍 Polling tool part structure: {part}")
-                                logger.debug(
-                                    f"🔍 Extracted tool_name: {tool_name}, tool_input: {tool_input}"
-                                )
+                                # Get tool_input and tool_output from state
+                                state = part.get("state", {})
+                                tool_input = state.get("input", {})
+                                tool_output = state.get("output", "")
 
                                 total_tools_found += 1
-
-                                logger.info(f"🔧 Tool found via polling: {tool_name}")
 
                                 # Synthesize and process tool event
                                 tool_event = {
@@ -481,15 +467,15 @@ class EventBridge:
                                     "properties": {
                                         "tool": tool_name,
                                         "input": tool_input,
-                                        "output": {},
+                                        "output": tool_output,
                                         "session_id": session_id,
-                                        "success": True,
+                                        "success": state.get("status") == "completed",
                                     },
                                 }
                                 self._process_tool_event(tool_event)
 
                 if total_tools_found > 0:
-                    logger.info(f"✅ Poll complete: {total_tools_found} tools found")
+                    logger.debug(f"📊 Poll: {total_tools_found} tools processed")
 
                 # Wait before next poll ( réduit à 2 secondes pour réactivité )
                 time.sleep(2)

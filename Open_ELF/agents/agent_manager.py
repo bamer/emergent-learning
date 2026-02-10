@@ -49,7 +49,7 @@ import logging  # Import here for class type hints
 # Chemins par défaut
 DEFAULT_AGENTS_DIR = Path("/home/bamer/.opencode/agents/OPC_ELF_System_Agents")
 DEFAULT_OPENCODE_URL = "http://localhost:4096"
-DEFAULT_MODEL = "llama/nemotron-v3-coder"  # Modèle rapide et gratuit
+DEFAULT_MODEL = "model: llamacpp/nemotron-v3-coder"  # Modèle rapide et gratuit
 DEFAULT_WORKDIR = Path("/home/bamer/.opencode/emergent-learning")
 SDK_CLIENT_PATH = Path(__file__).with_name("opencode_sdk_client.mjs")
 

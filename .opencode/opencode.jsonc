@@ -7,7 +7,7 @@
     "opencode-pty",
     "opencode-antigravity-auth@1.4.6"
   ],
-  "model": "llama/nemotron-v3-coder",
+  "model": "model: llamacpp/nemotron-v3-coder",
   "default_agent": "unified-orchestrator",
   "tools": {
     "write": true,

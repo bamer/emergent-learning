@@ -853,12 +853,14 @@ class LearningProcessor:
                     nested_input = tool_input.get("input", {})
                     if isinstance(nested_input, dict):
                         command = nested_input.get("command", "")
-                        logger.debug(
-                            f"🔍 Found nested input, extracted command: {command[:100]}..."
-                        )
                 # Extract paths from common commands
                 patterns = [
-                    r"\b(?:cat|ls|find|grep|rm|touch|mv|cp)\s+([^\s|;>]+)",
+                    # Python modules and scripts
+                    r"/[a-zA-Z0-9_/]+\.py",
+                    r"[a-zA-Z0-9_/]+\.py",
+                    # Common file ops
+                    r"\b(?:cat|ls|find|grep|rm|touch|mv|cp|chmod|chown)\s+([^\s|;>]+)",
+                    # Direct paths
                     r"(?:^|\s)(/[^\s|;>]+)",
                 ]
                 for pattern in patterns:

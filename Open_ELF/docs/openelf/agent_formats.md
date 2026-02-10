@@ -55,7 +55,7 @@ name: researcher
 description: Deep investigation specialist - explores codebases, APIs, and documentation to uncover root causes and gather evidence
 mode: primary
 temperature: 0.6
-model: llama/nemotron-v3-coder
+model: model: llamacpp/nemotron-v3-coder
 permissions:
   bash:
     "rm -rf *": "ask"

@@ -5,6 +5,48 @@ All notable changes to the Emergent Learning Framework will be documented in thi
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.9] - 2026-02-11
+
+### Fixed
+- **EventBridge SSE Endpoint** - Fixed wrong endpoint path
+  - Changed from `/event` to `/global/event` (OpenCode real SSE endpoint)
+  - Changed from `/` to `/global/health` for health check
+  - SSE stream now works correctly with proper event format
+
+- **Tool Output Extraction** - Fixed empty tool_output in LearningProcessor
+  - `tool_output` was always empty `{}` in synthesized tool events
+  - Now correctly extracts `state.output` from OpenCode tool parts
+  - LearningProcessor can now analyze tool outputs for heuristics and trails
+
+- **Bash Path Extraction** - Improved file path extraction from bash commands
+  - Added pattern for Python modules/scripts (`/[...].py`, `[...].py`)
+  - Fixed bash command parsing to extract more file paths
+  - Paths now properly recorded in pheromone_trails table
+
+- **Log Noise Reduction** - Reduced verbose logging in EventBridge v2
+  - Removed repetitive "Processing tool event" and "LearningProcessor processed" logs
+  - Removed verbose debug logs showing full event/part structures
+  - Changed polling summary from INFO to DEBUG level
+  - EventBridge now logs only errors and important status changes
+
+- **Event Chronicle Recording** - Fixed event logging to metrics table
+  - Added `_log_event()` call in `_process_tool_event()` for tool events
+  - Events now properly recorded in `metrics` table with type, name, and data
+  - 7438+ tool events now logged per hour vs. 0 before fix
+
+### Changed
+- **EventBridge Architecture** - Dual streaming mode (SSE + polling backup)
+  - Primary: SSE stream on `/global/event` for real-time events
+  - Backup: Polling every 2 seconds for tools not captured via SSE
+  - Both paths now extract complete tool state including input and output
+
+### Status (2026-02-11)
+- **Trails**: ✅ WORKING (38,378 total, ~1000/hour)
+- **Pheromone Trails**: ✅ WORKING (697 total, tracked per file)
+- **Tool Events**: ✅ WORKING (16,000+ in last hour)
+- **Heuristics**: ⚠️ PARTIAL (115 total, need manual extraction or explicit markers)
+- **Learnings**: ⚠️ PARTIAL (421 total, mostly from manual records)
+
 ## [0.5.8] - 2026-02-10
 
 ### Added

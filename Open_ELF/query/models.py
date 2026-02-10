@@ -857,7 +857,7 @@ class SessionSummary(BaseModel):
     session_file_size = fields.IntegerField(null=True)
     session_last_modified = fields.DateTimeField(null=True)
     summarized_at = fields.DateTimeField(default=datetime.utcnow)
-    summarizer_model = fields.TextField(default="llama/nemotron-v3-coder")
+    summarizer_model = fields.TextField(default="model: llamacpp/nemotron-v3-coder")
     summary_version = fields.IntegerField(default=1)
     is_stale = fields.BooleanField(default=False)
     needs_resummarize = fields.BooleanField(default=False)
