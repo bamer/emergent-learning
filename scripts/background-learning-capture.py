@@ -519,7 +519,7 @@ def run_capture_loop():
                 if conn:
                     cursor = conn.cursor()
                     cursor.execute(
-                        "SELECT COUNT(*) FROM heuristics WHERE source_type = 'auto-capture'"
+                        "SELECT COUNT(*) FROM heuristics WHERE source_type = 'auto'"
                     )
                     auto_count = cursor.fetchone()[0]
                     cursor.execute(

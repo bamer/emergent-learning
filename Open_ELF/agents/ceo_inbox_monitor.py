@@ -77,16 +77,34 @@ class CEOInboxMonitor:
     def get_pending_escalations(self) -> List[Path]:
         """Get list of pending escalation files."""
         escalations = []
-        # Support three file naming patterns
-        patterns = ["escalation_*.md", "watcher_esc_*.md", "escalation-*.md"]
-        for pattern in patterns:
-            for file in CEO_INBOX_DIR.glob(pattern):
-                # Skip archive directory
-                if file.parent == CEO_ARCHIVE_DIR:
-                    continue
-                # Avoid duplicates
-                if file not in escalations:
-                    escalations.append(file)
+        # Support two file naming patterns:
+        # - CEO escalations from Orchestrator (L2 → L3): ceo_escalation_*.md, orchestrator_esc_*.md
+        # - Old Watcher escalations (L1 → direct): watcher_esc_*.md (legacy, will be deprecated)
+        # Note: New Watcher escalations now go to .coordination/escalations/ for Orchestrator to process
+        ceo_patterns = ["ceo_escalation_*.md", "orchestrator_*.md"]
+        legacy_watch_patterns = ["watcher_esc_*.md", "escalation_*.md", "watcher_esc_*"]
+
+        for file in CEO_INBOX_DIR.glob("*"):
+            # Skip archive directory
+            if file.parent == CEO_ARCHIVE_DIR:
+                continue
+            if file.suffix == ".md":
+                # Only process CEO escalations, not Watcher ones
+                filename = file.name.lower()
+                is_ceo_escalation = any(
+                    pattern.replace("*", "") in filename for pattern in ceo_patterns
+                )
+                is_legacy_watcher = any(
+                    pattern.replace("*", "") in filename
+                    for pattern in legacy_watch_patterns
+                )
+
+                if is_ceo_escalation or (
+                    is_legacy_watcher and "watcher_esc" not in filename
+                ):
+                    # Avoid duplicates
+                    if file not in escalations:
+                        escalations.append(file)
         return sorted(escalations)
 
     def process_escalation(self, file_path: Path) -> Dict[str, Any]:
