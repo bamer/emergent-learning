@@ -46,7 +46,7 @@ Should show: ✅ All checks passed!
 
 ## What's Working Now ✅
 
-- ✅ Paths converted from ~/.claude to ~/.opencode
+- ✅ Paths converted from ~/.opencode to ~/.opencode
 - ✅ Database with 27 tables created
 - ✅ Hook system installed and ready
 - ✅ Plugin symlinked to ~/.opencode/plugins/
@@ -103,10 +103,10 @@ Should work without errors.
 
 ## Tools You Have
 
-1. **convert-claude-to-opencode.js** - Convert agent formats
+1. **convert-opencode-to-opencode.js** - Convert agent formats
    ```bash
    cd /path/to/agents
-   node ~/.opencode/emergent-learning/convert-claude-to-opencode.js
+   node ~/.opencode/emergent-learning/convert-opencode-to-opencode.js
    ```
 
 2. **validate_migration.py** - Health check (run anytime)
@@ -114,7 +114,7 @@ Should work without errors.
    python3 ~/.opencode/emergent-learning/validate_migration.py
    ```
 
-3. **fix_paths.py** - Update any remaining .claude paths
+3. **fix_paths.py** - Update any remaining .opencode paths
    ```bash
    python3 ~/.opencode/emergent-learning/fix_paths.py
    ```
@@ -162,7 +162,7 @@ Should work without errors.
 3. **This week:**
    - [ ] Verify all features working
    - [ ] Review `MIGRATION_SUMMARY.md` for any outstanding issues
-   - [ ] Test agent conversion with `convert-claude-to-opencode.js`
+   - [ ] Test agent conversion with `convert-opencode-to-opencode.js`
    - [ ] Check logs regularly: `tail -f logs/*.log`
 
 ---

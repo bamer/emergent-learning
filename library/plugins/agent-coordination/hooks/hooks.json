@@ -1,5 +1,5 @@
 {
-  "$schema": "https://claude.ai/schemas/hooks.json",
+  "$schema": "https://opencode.ai/schemas/hooks.json",
   "hooks": [
     {
       "name": "coordination-pre-task",

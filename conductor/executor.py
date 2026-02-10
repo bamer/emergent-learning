@@ -132,8 +132,8 @@ class CLIExecutor:
         })
 
         # For CLI execution, we need to spawn the actual process
-        # This uses claude CLI with the prompt
-        result_text, result_dict = self._spawn_claude_task(
+        # This uses opencode CLI with the prompt
+        result_text, result_dict = self._spawn_opencode_task(
             node_id=validated_node_id,
             prompt=prompt,
             agent_type=validated_agent_type
@@ -204,7 +204,7 @@ Report findings in ## FINDINGS section with format:
 Types: fact, discovery, warning, blocker, hypothesis
 Importance: low, normal, high, critical
 """
-            result_text, result_dict = self._spawn_claude_task(
+            result_text, result_dict = self._spawn_opencode_task(
                 node_id=f"{validated_node_id}-{validated_role}-{i}",
                 prompt=ant_prompt,
                 agent_type=validated_agent_type
@@ -270,7 +270,7 @@ Importance: low, normal, high, critical
                 except KeyError:
                     pass
 
-            result_text, result_dict = self._spawn_claude_task(
+            result_text, result_dict = self._spawn_opencode_task(
                 node_id=f"{validated_node_id}-parallel-{i}",
                 prompt=sub_prompt,
                 agent_type=validated_agent_type
@@ -296,12 +296,12 @@ Importance: low, normal, high, critical
             "parallel_results": results
         }
 
-    def _spawn_claude_task(self, node_id: str, prompt: str,
+    def _spawn_opencode_task(self, node_id: str, prompt: str,
                           agent_type: str = "general-purpose") -> Tuple[str, Dict]:
         """
         Spawn a Claude Code task and capture results.
 
-        This is the core execution that actually runs claude CLI.
+        This is the core execution that actually runs opencode CLI.
 
         Args:
             node_id: Node identifier (must be pre-validated)
@@ -343,17 +343,17 @@ Importance: low, normal, high, critical
         # Write prompt to file
         prompt_file.write_text(prompt, encoding='utf-8')
 
-        # Build claude command
+        # Build opencode command
         # Using --print for non-interactive output capture
         cmd = [
-            "claude",
+            "opencode",
             "--print",  # Non-interactive, print result
             "--dangerously-skip-permissions",  # Skip confirmations
             "-p", prompt
         ]
 
         try:
-            # Execute claude CLI with validated node_id in environment
+            # Execute opencode CLI with validated node_id in environment
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -395,7 +395,7 @@ Importance: low, normal, high, critical
                 "files_modified": []
             }
         except FileNotFoundError:
-            return "[ERROR] claude CLI not found", {
+            return "[ERROR] opencode CLI not found", {
                 "error": "cli_not_found",
                 "findings": [],
                 "files_modified": []

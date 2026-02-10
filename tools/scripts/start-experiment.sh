@@ -327,7 +327,7 @@ log_success "Database record created (ID: $experiment_id)"
 # Git commit with locking
 # ============================================
 if [ -d "$BASE_DIR/.git" ]; then
-    LOCK_FILE="$BASE_DIR/.git/claude-lock"
+    LOCK_FILE="$BASE_DIR/.git/opencode-lock"
 
     if ! acquire_git_lock "$LOCK_FILE" 30; then
         error_msg "$EXIT_LOCK_ERROR" \

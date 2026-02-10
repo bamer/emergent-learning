@@ -20,7 +20,7 @@ That's it.
 
 Each iteration:
 - Ralph Loop finds next incomplete story
-- Spawns fresh `claude-code` session
+- Spawns fresh `opencode-code` session
 - Session reads story details, implements, tests, commits
 - Session updates `progress.txt` with learnings
 - Session exits (clean context)

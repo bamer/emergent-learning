@@ -30,11 +30,11 @@
     {
       "id": "RALPH-002",
       "title": "Integrate with Opencode Sessions",
-      "description": "Ensure each ralph.sh iteration spawns a fresh claude-code session with proper context",
+      "description": "Ensure each ralph.sh iteration spawns a fresh opencode-code session with proper context",
       "priority": 2,
       "status": "pending",
       "acceptance_criteria": [
-        "claude-code invocation reads prompt.md",
+        "opencode-code invocation reads prompt.md",
         "Session can access git history and current PRD",
         "Session updates progress.txt with learnings",
         "Session commits work automatically",

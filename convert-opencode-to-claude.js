@@ -59,15 +59,15 @@ function parseFrontmatter(content) {
  * Converts OpenCode frontmatter to Claude format
  */
 function convertFrontmatter(ocFrontmatter) {
-  const claude = {};
+  const opencode = {};
   
   // Map OpenCode fields to Claude fields
-  claude.name = ocFrontmatter.id || ocFrontmatter.name;
-  claude.description = ocFrontmatter.description;
+  opencode.name = ocFrontmatter.id || ocFrontmatter.name;
+  opencode.description = ocFrontmatter.description;
   
   // Map tools from OpenCode permissions to Claude
   if (ocFrontmatter.tools) {
-    claude.tools = ocFrontmatter.tools;
+    opencode.tools = ocFrontmatter.tools;
   } else if (ocFrontmatter.permissions) {
     // Extract allowed tools from permissions block
     const tools = [];
@@ -77,16 +77,16 @@ function convertFrontmatter(ocFrontmatter) {
     if (ocFrontmatter.permissions.edit) tools.push('Edit');
     if (ocFrontmatter.permissions.write) tools.push('Write');
     if (ocFrontmatter.permissions.bash) tools.push('Bash');
-    claude.tools = tools.join(', ');
+    opencode.tools = tools.join(', ');
   }
   
   // Map model
-  claude.model = mapModel(ocFrontmatter.model);
+  opencode.model = mapModel(ocFrontmatter.model);
   
   // Map permissionMode (default to 'default' if not specified)
-  claude.permissionMode = ocFrontmatter.mode === 'subagent' ? 'plan' : 'default';
+  opencode.permissionMode = ocFrontmatter.mode === 'subagent' ? 'plan' : 'default';
   
-  return claude;
+  return opencode;
 }
 
 /**
@@ -106,8 +106,8 @@ function mapModel(model) {
 /**
  * Generates Claude markdown from converted data
  */
-function generateClaudeMarkdown(claudeFrontmatter, body) {
-  const fm = Object.entries(claudeFrontmatter)
+function generateClaudeMarkdown(opencodeFrontmatter, body) {
+  const fm = Object.entries(opencodeFrontmatter)
     .map(([key, value]) => {
       if (Array.isArray(value)) {
         return `${key}: [${value.map(v => `"${v}"`).join(', ')}]`;
@@ -149,8 +149,8 @@ function processAgent(filePath) {
     return;
   }
   
-  const claudeFrontmatter = convertFrontmatter(frontmatter);
-  const claudeMarkdown = generateClaudeMarkdown(claudeFrontmatter, body);
+  const opencodeFrontmatter = convertFrontmatter(frontmatter);
+  const opencodeMarkdown = generateClaudeMarkdown(opencodeFrontmatter, body);
   
   // Determine output path
   const relativePath = path.relative(SOURCE_DIR, filePath);
@@ -159,7 +159,7 @@ function processAgent(filePath) {
   // Ensure output directory exists
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   
-  fs.writeFileSync(outputPath, claudeMarkdown);
+  fs.writeFileSync(outputPath, opencodeMarkdown);
   console.log(`✅ Converted: ${relativePath}`);
 }
 

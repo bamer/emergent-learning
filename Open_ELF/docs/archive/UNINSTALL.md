@@ -196,7 +196,7 @@ cp ~/elf-backup.db ~/.opencode/emergent-learning/memory/index.db
 After removing, verify Opencode still works:
 
 ```bash
-claude --version
+opencode --version
 ```
 
 And check no ELF directories remain:

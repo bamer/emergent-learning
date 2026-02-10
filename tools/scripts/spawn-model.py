@@ -179,7 +179,7 @@ def update_token_usage(model: str, approx_tokens: int):
             config = yaml.safe_load(f)
 
         if 'session_usage' not in config:
-            config['session_usage'] = {'claude': 0, 'gemini': 0, 'codex': 0}
+            config['session_usage'] = {'opencode': 0, 'gemini': 0, 'codex': 0}
 
         config['session_usage'][model] = config['session_usage'].get(model, 0) + approx_tokens
 
@@ -304,9 +304,9 @@ Examples:
                 print(f"Confidence: {suggestion['confidence']:.0%}", file=sys.stderr)
                 print("---", file=sys.stderr)
         else:
-            model = 'claude'
+            model = 'opencode'
             if not args.quiet:
-                print("Auto-detection unavailable, defaulting to claude", file=sys.stderr)
+                print("Auto-detection unavailable, defaulting to opencode", file=sys.stderr)
 
     # Build full prompt with file contents if provided
     full_prompt = prompt
@@ -326,13 +326,13 @@ Examples:
         result = run_gemini(full_prompt, args.timeout)
     elif model == 'codex':
         result = run_codex(full_prompt, args.timeout, args.mode)
-    elif model == 'claude':
+    elif model == 'opencode':
         # Claude is the current session - just return the prompt for it to handle
         result = {
             'success': True,
             'output': f"[Route to Claude - current session]\n\nTask: {prompt}",
             'error': None,
-            'model': 'claude'
+            'model': 'opencode'
         }
     else:
         result = {

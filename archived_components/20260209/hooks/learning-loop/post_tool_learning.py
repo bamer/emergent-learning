@@ -1179,7 +1179,7 @@ def main():
                                 "file",
                                 scent,
                                 strength,
-                                "claude-main",
+                                "opencode-main",
                                 f"{tool_name} operation",
                                 datetime.now().isoformat(),
                             ),
@@ -1253,7 +1253,7 @@ def main():
                 name=description[:100],
                 node_type="single",
                 prompt_template=tool_input.get("prompt", "")[:500],
-                config={"model": "claude"},
+                config={"model": "opencode"},
             )
             exec_id = conductor.record_node_start(
                 run_id, node, tool_input.get("prompt", "")

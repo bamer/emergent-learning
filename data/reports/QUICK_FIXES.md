@@ -78,7 +78,7 @@ In `scripts/record-failure.sh` and `scripts/record-heuristic.sh`, modify git com
 **BEFORE (lines 273-297)**:
 ```bash
 if [ -d ".git" ]; then
-    LOCK_FILE="$BASE_DIR/.git/claude-lock"
+    LOCK_FILE="$BASE_DIR/.git/opencode-lock"
 
     if ! acquire_git_lock "$LOCK_FILE" 30; then
         log "ERROR" "Could not acquire git lock"
@@ -103,7 +103,7 @@ fi
 **AFTER**:
 ```bash
 if [ -d ".git" ]; then
-    LOCK_FILE="$BASE_DIR/.git/claude-lock"
+    LOCK_FILE="$BASE_DIR/.git/opencode-lock"
 
     if ! acquire_git_lock "$LOCK_FILE" 30; then
         log "ERROR" "Could not acquire git lock, rolling back"

@@ -13,7 +13,7 @@
 python --version      # Expected: 3.8.0+
 node --version        # Expected: v18.0.0+
 bun --version         # Alternative to Node
-claude --version      # Should show version
+opencode --version      # Should show version
 ```
 
 **Python dependencies (installed automatically by installer):**

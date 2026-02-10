@@ -4,7 +4,7 @@ domain: testing
 confidence: 0.8
 tags: proposals, testing, workflow
 source: observation
-submitted_by: claude-agent
+submitted_by: opencode-agent
 submitted_at: 2025-12-11 23:50:00
 ---
 

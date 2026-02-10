@@ -47,7 +47,7 @@ sqlite_with_retry "$DB_PATH" "INSERT INTO table VALUES (...);"
 
 ### Git Locking
 ```bash
-LOCK_FILE="$BASE_DIR/.git/claude-lock"
+LOCK_FILE="$BASE_DIR/.git/opencode-lock"
 
 if acquire_git_lock "$LOCK_FILE" 10; then
     # Do git operations
@@ -160,7 +160,7 @@ release_git_lock "$LOCK_FILE"
 ls -la ~/.opencode/emergent-learning/.git/*.dir
 
 # Manually clean (if confirmed stale)
-rmdir ~/.opencode/emergent-learning/.git/claude-lock.dir
+rmdir ~/.opencode/emergent-learning/.git/opencode-lock.dir
 ```
 
 ### Database Locked Errors

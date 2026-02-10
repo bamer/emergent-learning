@@ -438,7 +438,7 @@ ls -la ~/.opencode/hooks/PreToolUse/
 chmod +x ~/.opencode/hooks/PreToolUse/pre_tool_semantic_memory.py
 
 # Check Opencode config
-claude config get hooks
+opencode config get hooks
 ```
 
 ### No Thinking Blocks Extracted

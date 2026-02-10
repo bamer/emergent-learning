@@ -343,8 +343,8 @@ The run-dashboard.sh script will now detect this issue and warn you before faili
 
 ## Links
 
-- [Opencode Docs](https://docs.anthropic.com/en/docs/claude-code)
-- [Hooks System](https://docs.anthropic.com/en/docs/claude-code/hooks)
+- [Opencode Docs](https://docs.anthropic.com/en/docs/opencode-code)
+- [Hooks System](https://docs.anthropic.com/en/docs/opencode-code/hooks)
 - [Community & Support](https://github.com/Spacehunterz/Emergent-Learning-Framework_ELF/discussions)
 
 ## License
@@ -378,7 +378,7 @@ SOFTWARE.
 ## Credits
 
 - **Agent Pool:** [wshobson/agents](https://github.com/wshobson/agents) - 100 specialized agent personas by [@wshobson](https://github.com/wshobson)
-- **Persistent semantic memory system for Opencode:** [zacdcook/claude-code-semantic-memory](https://github.com/zacdcook/claude-code-semantic-memory) by [@zacdcook](https://github.com/zacdcook)
+- **Persistent semantic memory system for Opencode:** [zacdcook/opencode-code-semantic-memory](https://github.com/zacdcook/opencode-code-semantic-memory) by [@zacdcook](https://github.com/zacdcook)
 
 ## Contributors 🙏
 

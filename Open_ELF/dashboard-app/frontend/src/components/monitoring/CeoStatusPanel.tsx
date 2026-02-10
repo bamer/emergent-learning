@@ -161,15 +161,15 @@ export function CeoStatusPanel({
       
       setItems(inboxData || []);
       
-      // Calculate metrics
-      const pending = inboxData.filter((item: CeoItem) => item.status === 'Pending');
+      // Calculate metrics (case-insensitive status matching)
+      const pending = inboxData.filter((item: CeoItem) => item.status.toLowerCase() === 'pending');
       const metrics: CeoMetrics = {
         pending: pending.length,
-        critical: pending.filter((item: CeoItem) => item.priority.includes('Critical')).length,
-        high: pending.filter((item: CeoItem) => item.priority.includes('High')).length,
-        medium: pending.filter((item: CeoItem) => item.priority.includes('Medium')).length,
-        low: pending.filter((item: CeoItem) => item.priority.includes('Low')).length,
-        resolved: inboxData.filter((item: CeoItem) => item.status !== 'Pending').length,
+        critical: pending.filter((item: CeoItem) => item.priority.toLowerCase().includes('critical')).length,
+        high: pending.filter((item: CeoItem) => item.priority.toLowerCase().includes('high')).length,
+        medium: pending.filter((item: CeoItem) => item.priority.toLowerCase().includes('medium')).length,
+        low: pending.filter((item: CeoItem) => item.priority.toLowerCase().includes('low')).length,
+        resolved: inboxData.filter((item: CeoItem) => item.status.toLowerCase() !== 'pending').length,
         total: inboxData.length
       };
       setMetrics(metrics);
@@ -740,7 +740,7 @@ Please check the ceo-inbox directory and process any pending items. For each ite
                   </div>
                 ) : (
                   items
-                    .filter(item => item.status === 'Pending')
+                    .filter(item => item.status.toLowerCase() === 'pending')
                     .map((item) => {
                       const isExpanded = expandedItems.has(item.filename);
                       const priorityConfig = getPriorityConfig(item.priority);
@@ -801,14 +801,14 @@ Please check the ceo-inbox directory and process any pending items. For each ite
             {/* History Tab */}
             {selectedTab === 'history' && (
               <div className="space-y-3">
-                {items.filter(item => item.status !== 'Pending').length === 0 ? (
+                {items.filter(item => item.status.toLowerCase() !== 'pending').length === 0 ? (
                   <div className="text-center text-slate-500 py-8">
                     <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p>No resolved items yet</p>
                   </div>
                 ) : (
                   items
-                    .filter(item => item.status !== 'Pending')
+                    .filter(item => item.status.toLowerCase() !== 'pending')
                     .map((item) => {
                       const priorityConfig = getPriorityConfig(item.priority);
                       return (

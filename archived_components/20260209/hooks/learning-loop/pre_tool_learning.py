@@ -581,7 +581,7 @@ def extract_domain_from_context(tool_name: str, tool_input: dict) -> List[str]:
         "file": ["file", "read", "write", "path", "directory"],
         "cli": ["cli", "command", "terminal", "shell"],
         "coordination": ["coordination", "handoff", "blackboard"],
-        "documentation": ["document", "readme", "claude.md"],
+        "documentation": ["document", "readme", "opencode.md"],
         "task-management": [
             "task",
             "todo",

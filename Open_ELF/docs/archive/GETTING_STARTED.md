@@ -14,15 +14,15 @@ ELF extends Opencode. You need it installed first.
 
 **Check if you have it:**
 ```bash
-claude --version
+opencode --version
 ```
 
 **If not installed:**
 ```bash
-npm install -g @anthropic-ai/claude-code
+npm install -g @anthropic-ai/opencode-code
 ```
-Or visit: https://docs.anthropic.com/en/docs/claude-code for installation options.
-Then verify with `claude --version`.
+Or visit: https://docs.anthropic.com/en/docs/opencode-code for installation options.
+Then verify with `opencode --version`.
 
 ### Required: Python 3.8+
 
@@ -124,7 +124,7 @@ Just use Opencode normally! The hooks will:
 - Record outcomes after tasks
 
 ```bash
-claude
+opencode
 ```
 
 That's it. The framework works in the background.
@@ -183,7 +183,7 @@ python ~/.opencode/emergent-learning/query/query.py --stats
 
 ## Troubleshooting
 
-### "claude: command not found"
+### "opencode: command not found"
 Opencode isn't installed or not in PATH. See Step 0.
 
 ### "python: command not found"

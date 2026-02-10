@@ -205,7 +205,7 @@ chmod +x ~/.opencode/hooks/learning-loop/*.py
 
 ```bash
 # Check Opencode settings
-claude config get hooks
+opencode config get hooks
 
 # Verify hook files exist
 ls -la ~/.opencode/hooks/*/
@@ -260,4 +260,4 @@ You can add your own hooks alongside ELF hooks:
 }
 ```
 
-See [Opencode Hooks Documentation](https://docs.anthropic.com/en/docs/claude-code/hooks) for full reference.
+See [Opencode Hooks Documentation](https://docs.anthropic.com/en/docs/opencode-code/hooks) for full reference.

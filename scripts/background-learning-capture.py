@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """
-Background Learning Capture Service
-Runs continuously to capture learnings from ELF system activity.
-This is a PERMANENT FIX for the learning extraction problem.
+FIXED VERSION: Background Learning Capture Service
+
+Changes:
+1. Added project_path detection and recording
+2. Fixed domain extraction from text (no more "first word" guessing)
+3. Added domain validation (rejects invalid domains)
+4. Added proper sanitization of domain field
 """
 
 import json
@@ -13,7 +17,7 @@ import logging
 from datetime import datetime, timedelta
 from pathlib import Path
 import requests
-import threading
+import subprocess
 
 # Configuration
 ELF_DIR = Path.home() / ".opencode" / "emergent-learning"
@@ -32,6 +36,53 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Valid domain patterns (letters, numbers, hyphens only)
+VALID_DOMAIN_PATTERN = re.compile(r"^[a-z0-9][a-z0-9\-]*[a-z0-9]$|^[a-z0-9]$")
+
+# Pre-approved domains (prevent garbage extraction)
+APPROVED_DOMAINS = {
+    "react",
+    "python",
+    "javascript",
+    "typescript",
+    "testing",
+    "api",
+    "database",
+    "frontend",
+    "backend",
+    "security",
+    "performance",
+    "debugging",
+    "workflow",
+    "infrastructure",
+    "system",
+    "architecture",
+    "development",
+    "ci-cd",
+    "monitoring",
+    "deployment",
+    "git",
+    "docker",
+    "kubernetes",
+    "general",
+    "core-principles",
+    "golden",
+    "system-patterns",
+    "system-quality",
+    "database-performance",
+    "autonomousoperations",
+    "project-management",
+    "system-migration",
+    "system-diagnostics",
+    "securitysafety",
+    "elf-compliance",
+    "functionaltest",
+    "learnedarchitecture",
+    "learnedgeneral",
+    "test",
+    "test-domain",
+}
+
 # Heuristic extraction patterns
 HEURISTIC_INDICATORS = [
     "should",
@@ -49,10 +100,53 @@ HEURISTIC_INDICATORS = [
 ]
 
 LEARNING_PATTERNS = [
-    (r"\[LEARNED:([^\]]+)\]\s*([^.]+)", "explicit"),
-    (r"\[LEARNING:([^\]]+)\]\s*([^.]+)", "explicit"),
-    (r"\[LEARN:([^\]]+)\]\s*([^.]+)", "explicit"),
+    (
+        r"\[LEARNED:\s*([a-z0-9\-]+)\]\s*([^.]+)",
+        "explicit",
+    ),  # Strict: only valid domain chars
+    (r"\[LEARNING:\s*([a-z0-9\-]+)\]\s*([^.]+)", "explicit"),
+    (r"\[LEARN:\s*([a-z0-9\-]+)\]\s*([^.]+)", "explicit"),
 ]
+
+
+def get_current_project_path() -> Path | None:
+    """Get the current project path using git."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0:
+            return Path(result.stdout.strip())
+    except Exception:
+        pass
+    return None
+
+
+def validate_domain(domain: str) -> str | None:
+    """Validate domain string. Returns valid domain or None if invalid."""
+    if not domain:
+        return None
+
+    domain = domain.strip().lower()
+
+    # Check if pre-approved
+    if domain in APPROVED_DOMAINS:
+        return domain
+
+    # Check if domain follows valid pattern
+    if not VALID_DOMAIN_PATTERN.match(domain):
+        logger.debug(f"Invalid domain rejected: {domain}")
+        return None
+
+    # Domain must be reasonable (1-30 chars)
+    if len(domain) < 2 or len(domain) > 30:
+        logger.debug(f"Domain length rejected: {domain} (length: {len(domain)})")
+        return None
+
+    return domain
 
 
 def get_db():
@@ -73,11 +167,15 @@ def extract_heuristics_from_text(text: str, domain_hint: str = "general") -> lis
     if not text:
         return heuristics
 
-    # 1. Extract explicit [LEARNED:] markers
+    # 1. Extract explicit [LEARNED:domain] markers with strict validation
     for pattern, marker_type in LEARNING_PATTERNS:
         matches = re.findall(pattern, text, re.IGNORECASE | re.MULTILINE)
         for domain, rule in matches:
-            domain = domain.strip().lower() if domain else domain_hint
+            domain = validate_domain(domain)
+            if not domain:
+                logger.debug(f"Skipping marker with invalid domain: {domain}")
+                continue
+
             rule = rule.strip()
             if len(rule) > 15:
                 heuristics.append(
@@ -91,6 +189,7 @@ def extract_heuristics_from_text(text: str, domain_hint: str = "general") -> lis
                 )
 
     # 2. Extract implicit patterns (sentences with heuristic keywords)
+    # Use domain_hint instead of guessing from first word
     sentences = re.split(r"[.!?\n]+", text)
     for sentence in sentences:
         sentence = sentence.strip()
@@ -106,18 +205,15 @@ def extract_heuristics_from_text(text: str, domain_hint: str = "general") -> lis
             clean = re.sub(r"\s+", " ", clean)
 
             if clean and len(clean) > 20:
-                # Determine domain from first word
-                words = clean.split()
-                domain = (
-                    re.sub(r"[^a-z]", "", words[0].lower()) if words else domain_hint
-                )
+                # Use validated domain_hint, don't guess from first word
+                domain = validate_domain(domain_hint) or "general"
 
                 # Check for duplicates
                 is_duplicate = any(h["rule"].startswith(clean[:30]) for h in heuristics)
                 if not is_duplicate:
                     heuristics.append(
                         {
-                            "domain": domain if domain else "general",
+                            "domain": domain,
                             "rule": clean,
                             "confidence": 0.5,
                             "source": "implicit-pattern",
@@ -143,11 +239,14 @@ def extract_heuristics_from_metrics(
         activity = metrics_data.get("activity", {})
         quality = metrics_data.get("quality", {})
 
+        # Default domain for metrics extraction
+        domain = validate_domain(domain_hint) or "system"
+
         # Heuristic: Low activity might indicate a problem
         if "activity_score" in activity and activity["activity_score"] == 0:
             heuristics.append(
                 {
-                    "domain": "system-monitoring",
+                    "domain": domain,
                     "rule": "When system activity score is 0, investigate potential service disruptions or idle periods",
                     "confidence": 0.7,
                     "source": "metrics-analysis",
@@ -162,7 +261,7 @@ def extract_heuristics_from_metrics(
         ):
             heuristics.append(
                 {
-                    "domain": "system-quality",
+                    "domain": domain,
                     "rule": "Systems with over 30 high-confidence heuristics demonstrate stable learning patterns",
                     "confidence": 0.8,
                     "source": "metrics-analysis",
@@ -174,7 +273,7 @@ def extract_heuristics_from_metrics(
         if "quality_score" in quality and quality["quality_score"] < 0.6:
             heuristics.append(
                 {
-                    "domain": "system-quality",
+                    "domain": domain,
                     "rule": "Quality scores below 0.6 indicate need for heuristic refinement or validation",
                     "confidence": 0.75,
                     "source": "metrics-analysis",
@@ -189,7 +288,7 @@ def extract_heuristics_from_metrics(
 
 
 def record_heuristic(heuristic: dict) -> bool:
-    """Record a heuristic to the database with embedding."""
+    """Record a heuristic to the database with project_path."""
     try:
         conn = get_db()
         if not conn:
@@ -197,10 +296,14 @@ def record_heuristic(heuristic: dict) -> bool:
 
         cursor = conn.cursor()
 
+        # Get current project path
+        project_path = get_current_project_path()
+        project_path_str = str(project_path) if project_path else None
+
         # Check for existing
         cursor.execute(
-            "SELECT id, times_validated FROM heuristics WHERE domain = ? AND rule = ?",
-            (heuristic["domain"], heuristic["rule"]),
+            "SELECT id, times_validated FROM heuristics WHERE domain = ? AND rule = ? AND (project_path IS NULL OR project_path = ?)",
+            (heuristic["domain"], heuristic["rule"], project_path_str),
         )
         existing = cursor.fetchone()
 
@@ -208,7 +311,7 @@ def record_heuristic(heuristic: dict) -> bool:
             # Update validation count
             cursor.execute(
                 """
-                UPDATE heuristics 
+                UPDATE heuristics
                 SET times_validated = times_validated + 1,
                     confidence = MIN(1.0, confidence + 0.02),
                     updated_at = CURRENT_TIMESTAMP
@@ -221,12 +324,12 @@ def record_heuristic(heuristic: dict) -> bool:
             logger.debug(f"Updated heuristic: {heuristic['rule'][:50]}...")
             return True
 
-        # Insert new heuristic
+        # Insert new heuristic with project_path
         cursor.execute(
             """
-            INSERT INTO heuristics 
-            (domain, rule, explanation, confidence, source_type, times_validated, times_violated, is_golden, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, 0, 0, 0, ?, ?)
+            INSERT INTO heuristics
+            (domain, rule, explanation, confidence, source_type, times_validated, times_violated, is_golden, created_at, updated_at, project_path)
+            VALUES (?, ?, ?, ?, ?, 0, 0, 0, ?, ?, ?)
             """,
             (
                 heuristic["domain"],
@@ -236,6 +339,7 @@ def record_heuristic(heuristic: dict) -> bool:
                 heuristic["source"],
                 heuristic["timestamp"],
                 heuristic["timestamp"],
+                project_path_str,
             ),
         )
 
@@ -263,6 +367,7 @@ def record_heuristic(heuristic: dict) -> bool:
 
         logger.info(
             f"✨ NEW HEURISTIC: [{heuristic['domain']}] {heuristic['rule'][:60]}..."
+            + (f" [{Path(project_path).name}]" if project_path else " [global]")
         )
         return True
 
@@ -288,7 +393,7 @@ def capture_from_event_chronicle():
             AND (summary IS NOT NULL OR data IS NOT NULL)
             ORDER BY timestamp DESC
             LIMIT 100
-        """)
+            """)
 
         events = cursor.fetchall()
         conn.close()
@@ -306,9 +411,12 @@ def capture_from_event_chronicle():
 
             # Extract from text content
             if content:
-                text_heuristics = extract_heuristics_from_text(
-                    content, event["source"] if event["source"] else "general"
+                domain_hint = (
+                    event["source"]
+                    if event["source"] and event["source"] not in ["event", "api"]
+                    else "general"
                 )
+                text_heuristics = extract_heuristics_from_text(content, domain_hint)
                 heuristics.extend(text_heuristics)
                 logger.debug(
                     f"Event {event['id']}: Found {len(text_heuristics)} text heuristics"

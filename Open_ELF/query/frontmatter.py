@@ -360,7 +360,7 @@ This is the content.
     print(f"\nContent preview: {content[:50]}...")
 
     # Test update
-    updated = update_frontmatter(test_content, {'status': 'reviewed', 'reviewer': 'claude'})
+    updated = update_frontmatter(test_content, {'status': 'reviewed', 'reviewer': 'opencode'})
     new_fm, _ = parse_frontmatter(updated)
     print(f"\nAfter update: {new_fm}")
 

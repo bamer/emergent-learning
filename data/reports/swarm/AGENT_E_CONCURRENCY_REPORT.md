@@ -367,7 +367,7 @@ write_atomic "/path/to/file.md" "$content"
 sqlite_with_retry "$DB_PATH" "INSERT INTO table VALUES (...);"
 
 # Use Git lock
-LOCK_FILE="$BASE_DIR/.git/claude-lock"
+LOCK_FILE="$BASE_DIR/.git/opencode-lock"
 if acquire_git_lock "$LOCK_FILE" 10; then
     # ... do git operations ...
     release_git_lock "$LOCK_FILE"

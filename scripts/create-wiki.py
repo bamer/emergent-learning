@@ -66,7 +66,7 @@ installation = """# Installation Guide
 python --version      # Expected: 3.8.0+
 node --version        # Expected: v18.0.0+
 bun --version         # Alternative to Node
-claude --version      # Should show version
+opencode --version      # Should show version
 ```
 
 ## Install Options
@@ -528,7 +528,7 @@ Add your custom AGENTS.md content AFTER the ELF section.
 
 **Step 4: Test**
 ```bash
-claude
+opencode
 # Say "check in" - should query building
 python src/query/query.py --stats
 ```

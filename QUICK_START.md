@@ -59,13 +59,13 @@ To convert Claude agents to OpenCode format:
 
 ```bash
 cd /path/to/agents
-node ~/.opencode/emergent-learning/convert-claude-to-opencode.js
+node ~/.opencode/emergent-learning/convert-opencode-to-opencode.js
 
 # Converted files appear in: ./converted-opencode/
 ```
 
 This converter:
-- ✅ Converts paths from `.claude` to `.opencode`
+- ✅ Converts paths from `.opencode` to `.opencode`
 - ✅ Updates frontmatter format
 - ✅ Maps model to `opencode/big-pickle`
 - ✅ Converts permissions

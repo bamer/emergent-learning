@@ -75,7 +75,7 @@ Added validation to all methods that handle identifiers:
 - Validates `node.id` before creating parallel IDs
 - Validates `agent_type` before spawning tasks
 
-#### `_spawn_claude_task()` (CRITICAL)
+#### `_spawn_opencode_task()` (CRITICAL)
 - Validates `node_id` before:
   - Creating temp files with node_id in filename
   - Setting `CLAUDE_SWARM_NODE` environment variable

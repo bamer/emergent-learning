@@ -14,7 +14,7 @@ Add 99 specialized agents from wshobson/agents to your existing system. Keep eve
 | Component | Action |
 |-----------|--------|
 | wshobson/agents | INSTALL (99 agents) |
-| claude-flow | SKIP (don't need it) |
+| opencode-flow | SKIP (don't need it) |
 | Your blackboard | KEEP |
 | Your basic-memory | KEEP |
 | Your ELF | KEEP |
@@ -245,7 +245,7 @@ git checkout ~/.opencode/commands/swarm.md
 
 | Skipped | Why |
 |---------|-----|
-| claude-flow | Don't need it - adds complexity, risk |
+| opencode-flow | Don't need it - adds complexity, risk |
 | Hive-Mind | Your blackboard works fine |
 | AgentDB | basic-memory + ELF sufficient |
 | 100 MCP tools | Mostly redundant |

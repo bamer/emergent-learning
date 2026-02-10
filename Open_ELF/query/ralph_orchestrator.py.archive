@@ -30,7 +30,7 @@ The original ralph_orchestrator.py had critical architectural flaws:
 ## The Real Ralph Loop Architecture
 
 The correct implementation:
-- **ralph.sh** - Bash loop spawning fresh claude-code sessions
+- **ralph.sh** - Bash loop spawning fresh opencode-code sessions
 - **prd.json** - Structured task list with completion tracking
 - **prompt.md** - Instructions generated per iteration
 - **progress.txt** - Append-only learnings (institutional memory)

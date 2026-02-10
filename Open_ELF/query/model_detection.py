@@ -143,7 +143,7 @@ def detect_installed_models() -> Dict[str, Dict[str, Any]]:
         Dictionary with model info: {
             'gemini': {'installed': True, 'version': '0.15.3', 'path': '/path/to/gemini'},
             'codex': {'installed': True, 'version': '0.76.0', 'path': '/path/to/codex'},
-            'claude': {'installed': True, 'version': 'current', 'path': None}
+            'opencode': {'installed': True, 'version': 'current', 'path': None}
         }
     """
     models = {}
@@ -249,7 +249,7 @@ def suggest_model_for_task(
         {
             'suggested': 'gemini',
             'reason': 'Large frontend refactor with 50+ files',
-            'alternatives': ['claude', 'codex'],
+            'alternatives': ['opencode', 'codex'],
             'confidence': 0.8
         }
     """
@@ -263,7 +263,7 @@ def suggest_model_for_task(
 
     if not available:
         return {
-            'suggested': 'claude',
+            'suggested': 'opencode',
             'reason': 'No external models available',
             'alternatives': [],
             'confidence': 1.0

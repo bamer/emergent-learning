@@ -324,7 +324,7 @@ def ensure_full_setup():
         "needs_user_choice" - Has existing config, Claude should ask user
         "install_failed" - Something went wrong
     """
-    global_claude_md = Path.home() / ".opencode" / "CLAUDE.md"
+    global_opencode_md = Path.home() / ".opencode" / "CLAUDE.md"
     
     # Detect OS and find appropriate installer
     is_windows = platform.system() == "Windows"
@@ -336,7 +336,7 @@ def ensure_full_setup():
         return "ok"
 
     # Case 1: No CLAUDE.md - new user, auto-install
-    if not global_claude_md.exists():
+    if not global_opencode_md.exists():
         print("")
         print("=" * 60)
         print("[ELF] Welcome! First-time setup...")
@@ -371,7 +371,7 @@ def ensure_full_setup():
 
     # Case 2: Has CLAUDE.md with ELF already
     try:
-        with open(global_claude_md, 'r', encoding='utf-8') as f:
+        with open(global_opencode_md, 'r', encoding='utf-8') as f:
             content = f.read()
         if "Emergent Learning Framework" in content or "query the building" in content.lower():
             return "ok"

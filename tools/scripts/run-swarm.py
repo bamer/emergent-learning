@@ -5,7 +5,7 @@ Swarm Orchestrator - Run unlimited agents without context exhaustion.
 This script generates agent prompts that enforce file-based output,
 ensuring context stays flat regardless of how many agents you spawn.
 
-Supports multi-model agents: claude, gemini, codex
+Supports multi-model agents: opencode, gemini, codex
 - Claude agents: Use Task tool (native subagents)
 - Gemini/Codex agents: Use spawn-model.py (external CLIs)
 
@@ -232,9 +232,9 @@ Remember: Write results to file, return only the path. This is mandatory.
     return prompt
 
 
-def is_claude_model(model: str) -> bool:
+def is_opencode_model(model: str) -> bool:
     """Check if model is a Claude variant (uses Task tool)."""
-    return model.lower() in ['sonnet', 'opus', 'haiku', 'claude']
+    return model.lower() in ['sonnet', 'opus', 'haiku', 'opencode']
 
 
 def is_external_model(model: str) -> bool:
@@ -245,14 +245,14 @@ def is_external_model(model: str) -> bool:
 def get_available_models_string() -> str:
     """Get string of available models for display."""
     if not HAS_MODEL_DETECTION:
-        return "claude (sonnet, opus, haiku)"
+        return "opencode (sonnet, opus, haiku)"
 
     models = detect_installed_models()
     available = []
     for name, info in models.items():
         if info.get('installed'):
             available.append(name)
-    return ', '.join(available) if available else 'claude only'
+    return ', '.join(available) if available else 'opencode only'
 
 
 def generate_orchestrator_instructions(config: dict, available_models: Dict[str, Any] = None) -> str:
@@ -268,13 +268,13 @@ def generate_orchestrator_instructions(config: dict, available_models: Dict[str,
         available_models = detect_installed_models()
 
     # Categorize agents by model type
-    claude_agents = [a for a in agents if is_claude_model(a.get("model", "sonnet"))]
+    opencode_agents = [a for a in agents if is_opencode_model(a.get("model", "sonnet"))]
     external_agents = [a for a in agents if is_external_model(a.get("model", ""))]
 
     agent_list = []
     for i, agent in enumerate(agents, 1):
         model = agent.get("model", "sonnet")
-        model_type = "Task tool" if is_claude_model(model) else "spawn-model.py"
+        model_type = "Task tool" if is_opencode_model(model) else "spawn-model.py"
         agent_list.append(f'{i}. **{agent["name"]}** ({model} via {model_type}): {agent.get("description", "No description")}')
 
     instructions = f'''# Swarm Orchestration Instructions
@@ -303,7 +303,7 @@ Generated: {datetime.now().isoformat()}
 - **Mode:** {mode}
 - **Batch size:** {batch_size}
 - **Compact between batches:** {compact_between}
-- **Claude agents:** {len(claude_agents)}
+- **Claude agents:** {len(opencode_agents)}
 - **External agents (gemini/codex):** {len(external_agents)}
 
 ## How to Execute
@@ -318,9 +318,9 @@ python <elf-repo>/tools/scripts/run-swarm.py --config swarm.yaml --init-only
 '''
 
     # Claude agents section
-    if claude_agents:
+    if opencode_agents:
         instructions += "**Claude Agents** (via Task tool):\n\n"
-        for agent in claude_agents:
+        for agent in opencode_agents:
             model = agent.get("model", "sonnet")
             instructions += f'''```
 Task tool:

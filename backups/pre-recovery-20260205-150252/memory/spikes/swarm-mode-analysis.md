@@ -95,7 +95,7 @@ python run-swarm.py --config test-swarm.yaml --generate-prompts
 
 ```bash
 # Test 2: Context scaling (20+ agents)
-# Test 3: Model mixing (claude + gemini)
+# Test 3: Model mixing (opencode + gemini)
 # Test 4: Fault tolerance (agent failures)
 ```
 

@@ -246,8 +246,8 @@ curl http://localhost:8888/api/chronicle/events?source=watcher&hours=24
 ### 1. Verify big-pickle is available
 
 ```bash
-claude --help  # Should work
-claude --model opencode/big-pickle --help  # Should show big-pickle
+opencode --help  # Should work
+opencode --model opencode/big-pickle --help  # Should show big-pickle
 ```
 
 ### 2. Run single pass
@@ -287,8 +287,8 @@ sqlite3 memory/index.db "SELECT * FROM event_chronicle WHERE source='watcher';"
 Check:
 
 ```bash
-which claude  # Should exist
-claude --model opencode/big-pickle --version  # Should work
+which opencode  # Should exist
+opencode --model opencode/big-pickle --version  # Should work
 ```
 
 ### "Database error"
@@ -325,7 +325,7 @@ Edit `run_with_bigpickle.py` to change:
 
 ```python
 # Model name (line ~50)
-["claude", "--print", "--model", "opencode/big-pickle"]
+["opencode", "--print", "--model", "opencode/big-pickle"]
 
 # Timeout (line ~55)
 timeout=120,  # seconds

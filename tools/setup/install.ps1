@@ -673,8 +673,8 @@ if ($InstallSwarm) {
     Write-Host "  Copied agent personas" -ForegroundColor Green
 
     # Copy agent coordination plugin (goes to different location, always safe)
-    $claudePluginsDir = Join-Path $ClaudeDir "plugins"
-    $pluginsDir = Join-Path $claudePluginsDir "agent-coordination"
+    $opencodePluginsDir = Join-Path $ClaudeDir "plugins"
+    $pluginsDir = Join-Path $opencodePluginsDir "agent-coordination"
     $pluginsUtilsDir = Join-Path $pluginsDir "utils"
     $pluginsHooksDir = Join-Path $pluginsDir "hooks"
     New-Item -ItemType Directory -Path $pluginsUtilsDir -Force | Out-Null
@@ -751,12 +751,12 @@ if ($InstallDashboard) {
 Write-Host ""
 Write-Host "[Step 4/5] Checking optional components..." -ForegroundColor Yellow
 try {
-    $claudeVersion = claude --version 2>&1
-    Write-Host "  Opencode: $claudeVersion" -ForegroundColor Green
+    $opencodeVersion = opencode --version 2>&1
+    Write-Host "  Opencode: $opencodeVersion" -ForegroundColor Green
 }
 catch {
     Write-Host "  WARNING: Opencode not found (optional for now)" -ForegroundColor Yellow
-    Write-Host "  Note: ELF requires Opencode to work. Install from: https://claude.ai/download" -ForegroundColor Yellow
+    Write-Host "  Note: ELF requires Opencode to work. Install from: https://opencode.ai/download" -ForegroundColor Yellow
     Write-Host "  Installation will continue, but ELF won't be functional until you install Opencode." -ForegroundColor Yellow
 }
 
@@ -914,20 +914,20 @@ catch {
 }
 
 # === CLAUDE.MD SETUP (Issue #13: Interactive prompts) ===
-$claudeMdDst = Join-Path $ClaudeDir "AGENTS.md"
+$opencodeMdDst = Join-Path $ClaudeDir "AGENTS.md"
 $templatesDir = Join-Path $ScriptDir "templates"
-$claudeMdSrc = Join-Path $templatesDir "AGENTS.md.template"
+$opencodeMdSrc = Join-Path $templatesDir "AGENTS.md.template"
 
-if (-not (Test-Path $claudeMdDst)) {
+if (-not (Test-Path $opencodeMdDst)) {
     # No existing AGENTS.md - fresh install
-    if (Test-Path $claudeMdSrc) {
-        Copy-Item -Path $claudeMdSrc -Destination $claudeMdDst
+    if (Test-Path $opencodeMdSrc) {
+        Copy-Item -Path $opencodeMdSrc -Destination $opencodeMdDst
         Write-Host "  Created AGENTS.md" -ForegroundColor Green
     }
 }
 else {
     # Existing AGENTS.md found - check if ELF already configured
-    $existingContent = Get-Content $claudeMdDst -Raw
+    $existingContent = Get-Content $opencodeMdDst -Raw
     if ($existingContent -match "Emergent Learning Framework") {
         Write-Host "  AGENTS.md already contains ELF configuration (skipped)" -ForegroundColor Green
     }
@@ -948,9 +948,9 @@ else {
             "1" {
                 # Merge: Keep existing + append ELF
                 $backupFile = Join-Path $ClaudeDir "AGENTS.md.backup"
-                Copy-Item -Path $claudeMdDst -Destination $backupFile -Force
+                Copy-Item -Path $opencodeMdDst -Destination $backupFile -Force
 
-                $elfContent = Get-Content $claudeMdSrc -Raw
+                $elfContent = Get-Content $opencodeMdSrc -Raw
                 $mergedContent = @"
 $existingContent
 
@@ -961,14 +961,14 @@ $existingContent
 
 $elfContent
 "@
-                [System.IO.File]::WriteAllText($claudeMdDst, $mergedContent, [System.Text.UTF8Encoding]::new($false))
+                [System.IO.File]::WriteAllText($opencodeMdDst, $mergedContent, [System.Text.UTF8Encoding]::new($false))
                 Write-Host "  Merged ELF with your config (backup: AGENTS.md.backup)" -ForegroundColor Green
             }
             "2" {
                 # Replace: Backup existing, use ELF only
                 $backupFile = Join-Path $ClaudeDir "AGENTS.md.backup"
-                Copy-Item -Path $claudeMdDst -Destination $backupFile -Force
-                Copy-Item -Path $claudeMdSrc -Destination $claudeMdDst -Force
+                Copy-Item -Path $opencodeMdDst -Destination $backupFile -Force
+                Copy-Item -Path $opencodeMdSrc -Destination $opencodeMdDst -Force
                 Write-Host "  Replaced with ELF config (your config backed up to AGENTS.md.backup)" -ForegroundColor Green
             }
             "3" {
@@ -1085,5 +1085,5 @@ Write-Host "  # 3. Test the query system:"
 Write-Host "  python3 ~/.opencode/emergent-learning/query/query.py --context"
 Write-Host ""
 Write-Host "  # 4. Start using Opencode (it will now query the building automatically!)"
-Write-Host "  claude"
+Write-Host "  opencode"
 Write-Host ""

@@ -224,7 +224,7 @@ The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
   - Updated to use OpenCode AgentManager instead of haiku Task tool
 
 - **Configuration Updates** - Claude configuration files
-  - `.claude/CLAUDE.md`: Removed haiku references, added AgentManager integration
+  - `.opencode/CLAUDE.md`: Removed haiku references, added AgentManager integration
   - `.opencode/commands/checkin.md`: Updated session summarization workflow
   - `.opencode/skills/agent-coordination/`: Fixed skill path references
 
@@ -472,7 +472,7 @@ The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
 
 ### Added
 - **Async Query Engine** - Complete migration to async architecture using peewee-aio
-- **ELF MCP Server** - Native MCP integration for claude-flow
+- **ELF MCP Server** - Native MCP integration for opencode-flow
 - **Step-file Workflows** - Resumable task architecture with frontmatter state
 - **Party Definitions** - Agent team compositions for complex tasks
 - **Golden Rule Categories** - Filter rules by domain/category

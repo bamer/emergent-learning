@@ -383,7 +383,7 @@ conductor.set_node_executor(executor.execute)
 
 1. **Validate inputs**: Check node_id and agent_type for security
 2. **Create signal file**: Write execution metadata
-3. **Spawn subprocess**: Execute `claude --print -p "{prompt}"`
+3. **Spawn subprocess**: Execute `opencode --print -p "{prompt}"`
 4. **Capture output**: Parse stdout/stderr
 5. **Extract findings**: Parse `## FINDINGS` section
 6. **Extract files**: Detect modified files

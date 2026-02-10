@@ -408,7 +408,7 @@ requires-python = ">=3.8"
 authors = [
     { name = "Spacehunterz" }
 ]
-keywords = ["claude", "ai", "memory", "learning", "agents"]
+keywords = ["opencode", "ai", "memory", "learning", "agents"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

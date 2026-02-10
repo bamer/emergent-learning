@@ -203,7 +203,7 @@ BOOST_CONFIG = {
 
 ```bash
 # Start Opencode
-claude
+opencode
 
 # Enter plan mode or create a plan file
 # Write plan to ~/.opencode/plans/test.md

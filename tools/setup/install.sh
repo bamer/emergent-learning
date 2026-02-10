@@ -386,9 +386,9 @@ import os
 import sys
 from pathlib import Path
 
-claude_dir = Path.home() / ".opencode"
+opencode_dir = Path.home() / ".opencode"
 base_dir_env = os.environ.get("ELF_BASE_PATH") or os.environ.get("BASE_DIR")
-elf_dir = Path(base_dir_env).expanduser() if base_dir_env else (claude_dir / "emergent-learning")
+elf_dir = Path(base_dir_env).expanduser() if base_dir_env else (opencode_dir / "emergent-learning")
 
 # Hook paths: Prefer src/ (actual files) over hooks/ (symlinks may not work reliably)
 hook_candidates = [
@@ -397,7 +397,7 @@ hook_candidates = [
 ]
 # Use the first existing path, defaulting to the post-installation location
 elf_hooks = next((p for p in hook_candidates if p.exists()), hook_candidates[0])
-settings_file = claude_dir / "settings.json"
+settings_file = opencode_dir / "settings.json"
 
 # Get venv python path from environment, or detect it
 venv_python = os.environ.get("VENV_PYTHON_PATH", "")

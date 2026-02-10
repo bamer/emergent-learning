@@ -878,16 +878,29 @@ async def get_watcher_status():
 
         # Check if watcher process is actually running
         result = subprocess.run(
-            ["pgrep", "-f", "watcher/elf_watcher.py"], capture_output=True, text=True
+            ["pgrep", "-f", "core/watcher.py"], capture_output=True, text=True
         )
         is_running = result.returncode == 0
 
         # Get watcher cycles for additional context
-        # Count escalations from watcher events in last hour
+        # Count ALL watcher checks (not just last hour)
         cursor.execute(
             """
             SELECT COUNT(*) as count,
-                   MAX(timestamp) as last_check,
+                   MAX(timestamp) as last_check
+            FROM event_chronicle
+            WHERE event_type = 'watcher_check'
+            """
+        )
+        row = cursor.fetchone()
+        total_checks_all = row["count"] if row and row["count"] else 0
+        last_check = row["last_check"] if row and row["last_check"] else None
+
+        # Count escalations from watcher events in last hour (only for recent status)
+        cursor.execute(
+            """
+            SELECT COUNT(*) as count,
+                   MAX(timestamp) as last_check_hour,
                    COUNT(CASE WHEN status IN ('critical') THEN 1 END) as critical_escalations,
                    COUNT(CASE WHEN status IN ('warning') THEN 1 END) as warning_count
             FROM event_chronicle
@@ -897,12 +910,11 @@ async def get_watcher_status():
         )
 
         row = cursor.fetchone()
-        last_check = row["last_check"] if row and row["last_check"] else None
         critical_count = (
             row["critical_escalations"] if row and row["critical_escalations"] else 0
         )
         warning_count = row["warning_count"] if row and row["warning_count"] else 0
-        total_cycles = row["count"] if row and row["count"] else 0
+        total_cycles = total_checks_all  # Use all-time total, not last hour
 
         conn.close()
 
@@ -928,7 +940,7 @@ async def get_watcher_status():
             "total_checks": total_cycles,
             "escalations_count": critical_count,
             "current_status": current_status,
-            "analysis_summary": f"Watcher {'active' if is_running else 'inactive'}. {critical_count} critical, {warning_count} warnings in last hour.",
+            "analysis_summary": f"Watcher {'active' if is_running else 'inactive'}. Total checks: {total_checks_all}. {critical_count} critical, {warning_count} warnings in last hour.",
         }
 
         config = {

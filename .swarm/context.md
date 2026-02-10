@@ -4,7 +4,7 @@
 
 | Tool | Calls | Success | Failed | Avg Duration |
 |------|-------|---------|--------|--------------|
-| bash | 55 | 55 | 0 | 2048ms |
-| read | 3 | 3 | 0 | 10ms |
-| write | 1 | 1 | 0 | 23ms |
-| query | 1 | 1 | 0 | 11ms |
+| bash | 30 | 30 | 0 | 5277ms |
+| read | 6 | 6 | 0 | 103ms |
+| grep | 2 | 2 | 0 | 896ms |
+| write | 2 | 2 | 0 | 1082ms |

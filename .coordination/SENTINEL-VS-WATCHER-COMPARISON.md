@@ -79,8 +79,8 @@ User Interaction → Hook → Spawns Watcher → Haiku (30s check)
 
 ### Models Used
 
-- **Haiku** (claude-3-haiku): ~$0.001 per check
-- **Opus** (claude-3-opus): ~$0.10 per intervention
+- **Haiku** (opencode-3-haiku): ~$0.001 per check
+- **Opus** (opencode-3-opus): ~$0.10 per intervention
 - **Frequency**: Haiku every 30s, Opus ~5-10x per day
 - **Cost**: ~$3.88/day (vs $288/day if Opus every 30s)
 
@@ -134,7 +134,7 @@ Sleep 30s → repeat
 
 ### Models Used
 
-- **Haiku** (claude-3-haiku): Every 30 seconds
+- **Haiku** (opencode-3-haiku): Every 30 seconds
 - **Cost**: ~$2.88/day
 - **Frequency**: 2,880 checks per day
 - **Purpose**: Dashboard health analysis

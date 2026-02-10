@@ -35,11 +35,10 @@ import argparse
 import logging
 
 # Add parent directories to path
-BASE_DIR = Path(__file__).parent.parent.parent
+BASE_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(BASE_DIR))
-sys.path.insert(0, str(BASE_DIR / "query"))
 
-from ollama_embedder import (
+from query.ollama_embedder import (
     OllamaEmbedder,
     ollama_available,
     DEFAULT_MODEL,
@@ -274,10 +273,13 @@ def store_embedding():
         embedding_id = cursor.lastrowid
 
         # Update FTS index
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO embeddings_fts(rowid, text_content, source_type)
             VALUES (?, ?, ?)
-        """, (embedding_id, text, source_type))
+        """,
+            (embedding_id, text, source_type),
+        )
 
         conn.commit()
         conn.close()
@@ -325,22 +327,29 @@ def semantic_search():
 
         # FTS5 candidate pre-filtering
         try:
-            fts_query = ' OR '.join(
-                f'"{word}"' for word in query.split()
+            fts_query = " OR ".join(
+                f'"{word}"'
+                for word in query.split()
                 if len(word) > 2 and word.isalnum()
             )
             if fts_query and source_type:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT rowid FROM embeddings_fts
                     WHERE embeddings_fts MATCH ? AND source_type = ?
                     LIMIT 200
-                """, (fts_query, source_type))
+                """,
+                    (fts_query, source_type),
+                )
             elif fts_query:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT rowid FROM embeddings_fts
                     WHERE embeddings_fts MATCH ?
                     LIMIT 200
-                """, (fts_query,))
+                """,
+                    (fts_query,),
+                )
             else:
                 cursor.execute("SELECT id FROM embeddings LIMIT 200")
             candidate_ids = [row[0] for row in cursor.fetchall()]
@@ -351,15 +360,26 @@ def semantic_search():
 
         if not candidate_ids:
             conn.close()
-            return jsonify({"query": query, "results": [], "total_matches": 0, "returned": 0, "min_similarity_applied": min_similarity})
+            return jsonify(
+                {
+                    "query": query,
+                    "results": [],
+                    "total_matches": 0,
+                    "returned": 0,
+                    "min_similarity_applied": min_similarity,
+                }
+            )
 
-        placeholders = ','.join('?' * len(candidate_ids))
-        cursor.execute(f"""
+        placeholders = ",".join("?" * len(candidate_ids))
+        cursor.execute(
+            f"""
             SELECT id, source_id, source_type, text_content,
                    COALESCE(embedding_blob, NULL) as emb_blob,
                    embedding, metadata, created_at
             FROM embeddings WHERE id IN ({placeholders})
-        """, candidate_ids)
+        """,
+            candidate_ids,
+        )
 
         results = []
         for row in cursor.fetchall():
@@ -392,11 +412,11 @@ def semantic_search():
 
         # Sort by similarity and take top_k
         results.sort(key=lambda x: x["similarity"], reverse=True)
-        
+
         # Filter by minimum similarity threshold
         if min_similarity > 0:
             results = [r for r in results if r["similarity"] >= min_similarity]
-        
+
         top_results = results[:top_k]
 
         return jsonify(

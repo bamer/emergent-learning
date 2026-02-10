@@ -164,7 +164,7 @@ def call_haiku(prompt: str) -> Optional[Dict[str, Any]]:
     """
     DEPRECATED: Disabled per Golden Rule #11 (No External APIs - Subscription Only).
 
-    Calling 'claude' CLI with '--model haiku' uses the Anthropic API directly,
+    Calling 'opencode' CLI with '--model haiku' uses the Anthropic API directly,
     violating the subscription-only policy. Use generate_fallback_summary() instead.
 
     If LLM-powered summarization is needed, it should be done within a Opencode

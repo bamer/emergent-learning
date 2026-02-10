@@ -29,7 +29,7 @@ All domain names follow the naming convention (lowercase, alphanumeric, hyphens)
 
 Examples of valid domains:
   - agent-behavior
-  - claude-code-tools
+  - opencode-code-tools
   - computer-vision
   - service-auto-launch
   - test-edge-cases

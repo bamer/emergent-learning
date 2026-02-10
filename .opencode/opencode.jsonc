@@ -114,7 +114,7 @@
             }
           }
         },
-        "antigravity-claude-sonnet-4-5": {
+        "antigravity-opencode-sonnet-4-5": {
           "name": "Claude Sonnet 4.5 (Antigravity)",
           "limit": {
             "context": 200000,
@@ -131,7 +131,7 @@
             ]
           }
         },
-        "antigravity-claude-sonnet-4-5-thinking": {
+        "antigravity-opencode-sonnet-4-5-thinking": {
           "name": "Claude Sonnet 4.5 Thinking (Antigravity)",
           "limit": {
             "context": 200000,
@@ -160,7 +160,7 @@
             }
           }
         },
-        "antigravity-claude-opus-4-5-thinking": {
+        "antigravity-opencode-opus-4-5-thinking": {
           "name": "Claude Opus 4.5 Thinking (Antigravity)",
           "limit": {
             "context": 200000,

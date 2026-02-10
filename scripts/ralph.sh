@@ -54,8 +54,8 @@ check_prerequisites() {
         exit 1
     fi
 
-    if ! command -v claude-code &> /dev/null; then
-        echo "⚠️  claude-code not found in PATH"
+    if ! command -v opencode-code &> /dev/null; then
+        echo "⚠️  opencode-code not found in PATH"
         echo "   Ralph Loop needs Opencode CLI to spawn sessions"
     fi
 }
@@ -313,7 +313,7 @@ main() {
         echo ""
 
         # Capture Claude output for ELF observation
-        if claude-code --dangerously-skip-permissions < "$PROMPT_FILE" 2>&1 | tee "$LOG_FILE"; then
+        if opencode-code --dangerously-skip-permissions < "$PROMPT_FILE" 2>&1 | tee "$LOG_FILE"; then
             update_story_status "$STORY_ID" "done"
             echo ""
             echo "✅ Story complete: [$STORY_ID] $STORY_TITLE"

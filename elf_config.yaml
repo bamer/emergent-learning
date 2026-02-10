@@ -81,7 +81,7 @@ elf_config:
     parties_file: "agents/parties.yaml"
     coordination_dir: ".coordination"
     models:
-      claude: ["sonnet", "opus", "haiku"]
+      opencode: ["sonnet", "opus", "haiku"]
       external: ["gemini", "codex"]
     max_concurrent: 5
     timeout: 300

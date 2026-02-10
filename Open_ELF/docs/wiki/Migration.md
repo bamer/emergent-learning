@@ -71,7 +71,7 @@ Add your custom AGENTS.md content AFTER the ELF section.
 
 **Step 4: Test**
 ```bash
-claude
+opencode
 # Say "check in" - should query building
 python ~/.opencode/emergent-learning/src/query/query.py --stats
 ```

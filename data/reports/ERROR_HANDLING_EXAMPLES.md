@@ -131,7 +131,7 @@ log_success "Created markdown file: $filepath"
 # Basic git lock, exits on failure
 cd "$BASE_DIR"
 if [ -d ".git" ]; then
-    LOCK_FILE="$BASE_DIR/.git/claude-lock"
+    LOCK_FILE="$BASE_DIR/.git/opencode-lock"
 
     if ! acquire_git_lock "$LOCK_FILE" 30; then
         log "ERROR" "Could not acquire git lock"
@@ -163,7 +163,7 @@ fi
 ```bash
 # Graceful degradation - data saved even if git fails
 if [ -d "$BASE_DIR/.git" ]; then
-    LOCK_FILE="$BASE_DIR/.git/claude-lock"
+    LOCK_FILE="$BASE_DIR/.git/opencode-lock"
 
     if ! acquire_git_lock "$LOCK_FILE" 30; then
         error_msg "$EXIT_LOCK_ERROR" \

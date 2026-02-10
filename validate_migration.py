@@ -3,7 +3,7 @@
 validate_migration.py - Validate ELF OpenCode migration status
 
 Checks:
-1. All paths converted from .claude to .opencode
+1. All paths converted from .opencode to .opencode
 2. Database initialization
 3. Hook system setup
 4. Configuration files
@@ -47,8 +47,8 @@ def check_paths():
     ))
     
     results.append(check(
-        "No .claude paths in Python files",
-        validate_no_claude_paths(),
+        "No .opencode paths in Python files",
+        validate_no_opencode_paths(),
         "Run: python3 fix_paths.py"
     ))
     
@@ -181,14 +181,14 @@ def check_query_system():
             f"Expected: {query_file}"
         ))
     
-    # Check for .claude references in query files
+    # Check for .opencode references in query files
     has_old_paths = False
     for query_file in query_files:
         if query_file.exists():
             content = query_file.read_text(errors='ignore')
-            if '.claude' in content:
+            if '.opencode' in content:
                 has_old_paths = True
-                print(f"     {YELLOW}→ Found .claude reference in {query_file.name}{RESET}")
+                print(f"     {YELLOW}→ Found .opencode reference in {query_file.name}{RESET}")
     
     results.append(check(
         "Query files use .opencode paths",
@@ -244,11 +244,11 @@ def check_config():
     return all(results)
 
 
-def validate_no_claude_paths() -> bool:
-    """Check if any files still have .claude references."""
+def validate_no_opencode_paths() -> bool:
+    """Check if any files still have .opencode references."""
     patterns = [
-        '/.claude/emergent-learning',
-        '~/.claude/emergent-learning',
+        '/.opencode/emergent-learning',
+        '~/.opencode/emergent-learning',
     ]
     
     # Files to skip (examples, documentation, etc.)

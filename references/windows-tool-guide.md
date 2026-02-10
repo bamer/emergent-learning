@@ -154,5 +154,5 @@ Need to run commands?
 
 ## Sources
 - GitHub Issues: #9883, #3461, #4507, #12299
-- Community: claude-code-windows-setup
+- Community: opencode-code-windows-setup
 - Swarm investigation: 2025-12-02

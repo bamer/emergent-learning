@@ -67,7 +67,7 @@ qs = await QuerySystem.create(debug=True)
 # With session tracking
 qs = await QuerySystem.create(
     session_id="session_123",
-    agent_id="claude-opus-4.5"
+    agent_id="opencode-opus-4.5"
 )
 
 # Location-aware (for project-specific heuristics)

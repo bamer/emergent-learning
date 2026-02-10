@@ -77,11 +77,16 @@ class CEOInboxMonitor:
     def get_pending_escalations(self) -> List[Path]:
         """Get list of pending escalation files."""
         escalations = []
-        for file in CEO_INBOX_DIR.glob("escalation_*.md"):
-            # Skip archive directory
-            if file.parent == CEO_ARCHIVE_DIR:
-                continue
-            escalations.append(file)
+        # Support three file naming patterns
+        patterns = ["escalation_*.md", "watcher_esc_*.md", "escalation-*.md"]
+        for pattern in patterns:
+            for file in CEO_INBOX_DIR.glob(pattern):
+                # Skip archive directory
+                if file.parent == CEO_ARCHIVE_DIR:
+                    continue
+                # Avoid duplicates
+                if file not in escalations:
+                    escalations.append(file)
         return sorted(escalations)
 
     def process_escalation(self, file_path: Path) -> Dict[str, Any]:

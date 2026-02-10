@@ -9,13 +9,13 @@
 ## ✅ Completed Actions
 
 ### 1. Path Conversion (COMPLETE)
-- **Enhanced converter script**: Updated `convert-claude-to-opencode.js` 
+- **Enhanced converter script**: Updated `convert-opencode-to-opencode.js` 
   - Now handles markdown body path conversions
   - Converts both frontmatter and content references
   - Maps Claude models to `opencode/big-pickle`
 
 - **Batch path migration**: Ran `fix_paths.py` 
-  - Converted 62 files from `.claude` to `.opencode` paths
+  - Converted 62 files from `.opencode` to `.opencode` paths
   - Updated Python files, documentation, shell scripts
   - All database paths now use new location
 
@@ -142,7 +142,7 @@ python3 ~/.opencode/emergent-learning/query/checkout.py --final
 
 ## 📋 What Works Now
 
-✅ **Path System**: All `.claude` references converted to `.opencode`  
+✅ **Path System**: All `.opencode` references converted to `.opencode`  
 ✅ **Database**: Schema complete with 27 tables  
 ✅ **Plugin**: ELF_superpowers.js installed and symlinked  
 ✅ **Query System**: Functional and using correct paths  
@@ -153,9 +153,9 @@ python3 ~/.opencode/emergent-learning/query/checkout.py --final
 
 ## 🔧 Tools Created for Migration
 
-1. **convert-claude-to-opencode.js** - Convert agent formats
+1. **convert-opencode-to-opencode.js** - Convert agent formats
    ```bash
-   cd /path/to/agents && node ~/.opencode/emergent-learning/convert-claude-to-opencode.js
+   cd /path/to/agents && node ~/.opencode/emergent-learning/convert-opencode-to-opencode.js
    ```
 
 2. **fix_paths.py** - Bulk path conversion
@@ -215,7 +215,7 @@ export ELF_BASE_PATH=~/.opencode/emergent-learning
 python3 ~/.opencode/emergent-learning/query/query.py --list-heuristics
 
 # Test model
-claude --print --model opencode/big-pickle "test: return OK"
+opencode --print --model opencode/big-pickle "test: return OK"
 
 # Check plugin
 ls -la ~/.opencode/plugins/ELF_superpowers.js
@@ -273,7 +273,7 @@ python3 ~/.opencode/emergent-learning/query/checkout.py --final
 
 **"Watcher not running"**
 → Test manually: `python3 watcher/run_with_bigpickle.py`
-→ Check model: `claude --print --model opencode/big-pickle "test"`
+→ Check model: `opencode --print --model opencode/big-pickle "test"`
 → Verify logs: `tail ~/.opencode/emergent-learning/logs/watcher.log`
 
 ---

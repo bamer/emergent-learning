@@ -482,7 +482,7 @@ log "INFO" "Database record created (ID: $LAST_ID)"
 # Git commit (failure here should rollback everything)
 cd "$BASE_DIR"
 if [ -d ".git" ]; then
-    LOCK_FILE="$BASE_DIR/.git/claude-lock"
+    LOCK_FILE="$BASE_DIR/.git/opencode-lock"
 
     if ! acquire_git_lock "$LOCK_FILE" 30; then
         log "ERROR" "Could not acquire git lock"

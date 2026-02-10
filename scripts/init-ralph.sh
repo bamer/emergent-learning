@@ -383,7 +383,7 @@ main() {
     echo "Next steps:"
     echo "  1. Review prd.json and update stories as needed"
     echo "  2. Run: bash $SCRIPT_DIR/ralph.sh"
-    echo "  3. Each iteration: ralph.sh spawns a fresh claude-code session"
+    echo "  3. Each iteration: ralph.sh spawns a fresh opencode-code session"
     echo "  4. Sessions read prompt.md and update progress.txt"
     echo ""
     echo "To run Ralph Loop:"

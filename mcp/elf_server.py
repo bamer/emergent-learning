@@ -3,7 +3,7 @@
 ELF MCP Server - Emergent Learning Framework exposed via Model Context Protocol.
 
 This server exposes ELF's knowledge and recording capabilities to external tools
-like claude-flow, enabling them to:
+like opencode-flow, enabling them to:
 - Query the building for context (golden rules, heuristics, learnings)
 - Record heuristics and failures
 - Check pending CEO decisions
@@ -11,7 +11,7 @@ like claude-flow, enabling them to:
 
 Usage:
     python elf_server.py                    # Run with stdio transport (default)
-    claude mcp add elf python ~/.opencode/emergent-learning/mcp/elf_server.py
+    opencode mcp add elf python ~/.opencode/emergent-learning/mcp/elf_server.py
 """
 
 import json

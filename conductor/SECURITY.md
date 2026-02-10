@@ -65,7 +65,7 @@ All execution methods validate identifiers before use:
    - Creating parallel node IDs
    - Spawning multiple subprocesses
 
-4. **`_spawn_claude_task()`** - Validates `node_id` and `agent_type` before:
+4. **`_spawn_opencode_task()`** - Validates `node_id` and `agent_type` before:
    - Creating temporary files with node_id in filename
    - Passing node_id in subprocess environment variable `CLAUDE_SWARM_NODE`
    - Writing result files
@@ -90,7 +90,7 @@ All execution methods validate identifiers before use:
 
 ```python
 # SECURE: Uses list of arguments, validated node_id
-cmd = ["claude", "--print", "--dangerously-skip-permissions", "-p", prompt]
+cmd = ["opencode", "--print", "--dangerously-skip-permissions", "-p", prompt]
 result = subprocess.run(
     cmd,
     capture_output=True,

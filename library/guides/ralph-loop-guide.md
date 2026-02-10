@@ -66,7 +66,7 @@ while true:
   1. Read prd.json - find incomplete stories
   2. Select highest priority incomplete story
   3. Generate prompt.md with story details
-  4. Spawn fresh claude-code session
+  4. Spawn fresh opencode-code session
   5. Session implements, tests, commits
   6. Update story status based on result
   7. Continue until all done

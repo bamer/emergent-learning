@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * convert-claude-to-opencode.js
+ * convert-opencode-to-opencode.js
  * Converts Claude Code format to OpenCode.ai format
  *
- * Usage: node convert-claude-to-opencode.js [--watch]
+ * Usage: node convert-opencode-to-opencode.js [--watch]
  */
 
 const fs = require('fs');
@@ -50,38 +50,38 @@ function parseFrontmatter(content) {
 }
 
 /**
- * Converts path references from ~/.claude to ~/.opencode in markdown body
+ * Converts path references from ~/.opencode to ~/.opencode in markdown body
  */
 function convertPathsInBody(body) {
   return body
     // Convert ~/.opencode/emergent-learning to ~/.opencode/emergent-learning
-    .replace(/~\/\.claude\/emergent-learning/g, '~/.opencode/emergent-learning')
+    .replace(/~\/\.opencode\/emergent-learning/g, '~/.opencode/emergent-learning')
     // Convert /home/user/.opencode/emergent-learning to /home/user/.opencode/emergent-learning
-    .replace(/\/\.claude\/emergent-learning/g, '/.opencode/emergent-learning')
-    // Convert claude CLI references (keep opencode/big-pickle model)
-    .replace(/claude --print --model (haiku|opus|sonnet)/g, 'claude --print --model opencode/big-pickle')
-    .replace(/claude --print --model gpt-4/g, 'claude --print --model opencode/big-pickle')
+    .replace(/\/\.opencode\/emergent-learning/g, '/.opencode/emergent-learning')
+    // Convert opencode CLI references (keep opencode/big-pickle model)
+    .replace(/opencode --print --model (haiku|opus|sonnet)/g, 'opencode --print --model opencode/big-pickle')
+    .replace(/opencode --print --model gpt-4/g, 'opencode --print --model opencode/big-pickle')
     // Update python command references
-    .replace(/python .*\/.claude\/emergent-learning\//g, (match) => {
-      return match.replace(/\.claude/, '.opencode');
+    .replace(/python .*\/.opencode\/emergent-learning\//g, (match) => {
+      return match.replace(/\.opencode/, '.opencode');
     });
 }
 
 /**
  * Converts Claude frontmatter to OpenCode format
  */
-function convertFrontmatter(claudeFrontmatter) {
+function convertFrontmatter(opencodeFrontmatter) {
   const opencode = {};
   
   // Map Claude fields to OpenCode fields
-  opencode.name = claudeFrontmatter.name;
-  opencode.description = claudeFrontmatter.description;
+  opencode.name = opencodeFrontmatter.name;
+  opencode.description = opencodeFrontmatter.description;
   
   // Map tools from Claude to OpenCode permissions
-  if (claudeFrontmatter.tools) {
-    const tools = Array.isArray(claudeFrontmatter.tools) 
-      ? claudeFrontmatter.tools 
-      : claudeFrontmatter.tools.split(',').map(t => t.trim());
+  if (opencodeFrontmatter.tools) {
+    const tools = Array.isArray(opencodeFrontmatter.tools) 
+      ? opencodeFrontmatter.tools 
+      : opencodeFrontmatter.tools.split(',').map(t => t.trim());
     
     // Convert to OpenCode permissions format
     opencode.permissions = {
@@ -95,23 +95,23 @@ function convertFrontmatter(claudeFrontmatter) {
   }
   
   // Map model from Claude aliases to OpenCode format
-  opencode.model = mapModel(claudeFrontmatter.model);
+  opencode.model = mapModel(opencodeFrontmatter.model);
   
   // Map permissionMode
-  opencode.mode = claudeFrontmatter.permissionMode === 'plan' ? 'subagent' : 'default';
+  opencode.mode = opencodeFrontmatter.permissionMode === 'plan' ? 'subagent' : 'default';
   
   // Map skills (if present)
-  if (claudeFrontmatter.skills) {
-    opencode.skills = Array.isArray(claudeFrontmatter.skills) 
-      ? claudeFrontmatter.skills 
-      : claudeFrontmatter.skills.split(',').map(s => s.trim());
+  if (opencodeFrontmatter.skills) {
+    opencode.skills = Array.isArray(opencodeFrontmatter.skills) 
+      ? opencodeFrontmatter.skills 
+      : opencodeFrontmatter.skills.split(',').map(s => s.trim());
   }
   
   // Map hooks (if present)
-  if (claudeFrontmatter.hooks) {
-    opencode.hooks = Array.isArray(claudeFrontmatter.hooks) 
-      ? claudeFrontmatter.hooks 
-      : claudeFrontmatter.hooks.split(',').map(h => h.trim());
+  if (opencodeFrontmatter.hooks) {
+    opencode.hooks = Array.isArray(opencodeFrontmatter.hooks) 
+      ? opencodeFrontmatter.hooks 
+      : opencodeFrontmatter.hooks.split(',').map(h => h.trim());
   }
   
   return opencode;
@@ -215,18 +215,18 @@ function convert() {
   
   // Process all .md files in current directory and subdirectories
   const agentFiles = findMarkdownFiles(process.cwd());
-  const claudeFiles = agentFiles.filter(file => {
+  const opencodeFiles = agentFiles.filter(file => {
     const content = fs.readFileSync(file, 'utf8');
     const { frontmatter } = parseFrontmatter(content);
     return frontmatter && frontmatter.name && frontmatter.description;
   });
   
-  if (claudeFiles.length === 0) {
+  if (opencodeFiles.length === 0) {
     console.log('No Claude agent files found. Looking for .md files with frontmatter...');
     return;
   }
   
-  claudeFiles.forEach(processAgent);
+  opencodeFiles.forEach(processAgent);
   
   console.log('\n✨ Conversion complete!');
   console.log(`   Output: ${OUTPUT_DIR}`);

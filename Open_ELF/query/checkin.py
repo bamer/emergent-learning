@@ -61,7 +61,7 @@ class CheckinOrchestrator:
             self.interactive = interactive
 
         self.elf_home = self._resolve_elf_home()
-        self.selected_model = os.environ.get("ELF_MODEL", "claude")
+        self.selected_model = os.environ.get("ELF_MODEL", "opencode")
         self.architecture_ports = {
             "event_bridge": 9998,
             "unified_orchestrator": 9998,
@@ -357,7 +357,7 @@ class CheckinOrchestrator:
         if not self.interactive:
             # Non-interactive: Output JSON hint for Claude to use AskUserQuestion
             print(
-                '[PROMPT_NEEDED] {"type": "model", "question": "Select AI model", "options": ["claude", "gemini", "codex", "skip"]}'
+                '[PROMPT_NEEDED] {"type": "model", "question": "Select AI model", "options": ["opencode", "gemini", "codex", "skip"]}'
             )
             return self.selected_model  # Claude will handle this
 
@@ -373,7 +373,7 @@ class CheckinOrchestrator:
             response = input("   Select [c/g/o/s]: ").strip().lower()
 
             model_map = {
-                "c": "claude",
+                "c": "opencode",
                 "g": "gemini",
                 "o": "codex",
                 "s": self.selected_model,  # Keep current
@@ -387,7 +387,7 @@ class CheckinOrchestrator:
             os.environ["ELF_MODEL"] = selected
             self.selected_model = selected
 
-            if selected != "claude":
+            if selected != "opencode":
                 print(f"   [OK] Using {selected}")
 
             return selected
