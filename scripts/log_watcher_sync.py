@@ -17,12 +17,12 @@ from typing import Dict, List
 LOG_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
 ROTATION_SCRIPT = "/home/bamer/.opencode/emergent-learning/scripts/auto_log_rotation.py"
 WATCH_CONFIG = "/home/bamer/.opencode/emergent-learning/scripts/watch_config.json"
-STATUS_FILE = Path("/home/bamer/.opencode/emergent-learning/logs/watcher_status.json")
+STATUS_FILE = Path("/home/bamer/.opencode/emergent-learning/logs/sentinel_status.json")
 
 # Seuils par fichier (taille en MB)
 DEFAULT_THRESHOLDS = {
     "event-bridge.log": {"size_mb": 1, "interval_minutes": 5},  # Log très actif
-    "watcher.log": {"size_mb": 2, "interval_minutes": 10},
+    "sentinel.log": {"size_mb": 2, "interval_minutes": 10},
     "orchestrator.log": {"size_mb": 2, "interval_minutes": 15},
     "backend.log": {"size_mb": 3, "interval_minutes": 20},
     "opencode-server.log": {"size_mb": 3, "interval_minutes": 20},
@@ -314,15 +314,15 @@ class LogWatcher:
 def signal_handler(signum, frame):
     """Gestionnaire de signal pour arrêt propre"""
     print(f"\n[Watch] Signal {signum} reçu, arrêt en cours...")
-    global watcher
-    if watcher:
-        watcher.running = False
+    global sentinel
+    if sentinel:
+        sentinel.running = False
 
 
 def main():
     """Point d'entrée principal"""
-    global watcher
-    watcher = LogWatcher()
+    global sentinel
+    sentinel = LogWatcher()
 
     # Gestion des signaux pour arrêt propre
     signal.signal(signal.SIGINT, signal_handler)
@@ -333,7 +333,7 @@ def main():
 
         if command == "status":
             # Affiche le statut actuel
-            status = watcher.get_status()
+            status = sentinel.get_status()
             print(
                 f"[Watch] Surveillance {'✅ active' if status.get('running') else '❌ inactive'}"
             )
@@ -346,7 +346,7 @@ def main():
                 f"[Watch] Rotations déclenchées: {status.get('rotations_triggered', 0)}"
             )
 
-            stats = watcher.get_directory_stats()
+            stats = sentinel.get_directory_stats()
             if "error" not in stats:
                 print(
                     f"[Watch] Fichiers actifs: {stats['active_files']}/{stats['total_files']}"
@@ -357,17 +357,17 @@ def main():
         elif command == "config":
             # Affiche la configuration
             print(f"[Watch] Configuration des seuils:")
-            for file_name, threshold in watcher.thresholds.items():
+            for file_name, threshold in sentinel.thresholds.items():
                 print(
                     f"  {file_name}: {threshold['size_mb']}MB (intervalle: {threshold['interval_minutes']}min)"
                 )
             print(
-                f"[Watch] Seuils globaux: {watcher.global_size_mb}MB / {watcher.global_file_count} fichiers"
+                f"[Watch] Seuils globaux: {sentinel.global_size_mb}MB / {sentinel.global_file_count} fichiers"
             )
             return
 
     # Lance la surveillance
-    watcher.run_monitoring()
+    sentinel.run_monitoring()
 
 
 if __name__ == "__main__":

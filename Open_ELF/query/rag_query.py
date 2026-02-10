@@ -23,6 +23,16 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime
 
+# Unified ELF logging (required for all ELF modules)
+try:
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("rag_query")
+except ImportError:
+    import logging
+
+    _LOGGER = logging.getLogger("rag_query")
+
 # Add services path for VRAM manager
 sys.path.insert(0, str(Path.home() / ".opencode" / "services"))
 
@@ -33,6 +43,7 @@ except ImportError:
 
 try:
     from vram_manager import VRAMClient, VRAMManager
+
     VRAM_AVAILABLE = True
 except ImportError:
     VRAM_AVAILABLE = False
@@ -41,6 +52,7 @@ except ImportError:
 # Ollama client
 try:
     import urllib.request
+
     OLLAMA_AVAILABLE = True
 except ImportError:
     OLLAMA_AVAILABLE = False
@@ -48,6 +60,7 @@ except ImportError:
 # Re-ranker (optional, for maximum accuracy)
 try:
     from sentence_transformers import CrossEncoder
+
     RERANKER_AVAILABLE = True
 except ImportError:
     RERANKER_AVAILABLE = False
@@ -59,7 +72,9 @@ class OllamaEmbedder:
 
     def __init__(self, model: str = "nomic-embed-text", base_url: str = None):
         self.model = model
-        self.base_url = base_url or os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
+        self.base_url = base_url or os.environ.get(
+            "OLLAMA_URL", "http://127.0.0.1:11434"
+        )
 
     def embed(self, text: str) -> Optional[List[float]]:
         """Get embedding for a single text."""
@@ -68,7 +83,7 @@ class OllamaEmbedder:
             req = urllib.request.Request(
                 f"{self.base_url}/api/embeddings",
                 data=data,
-                headers={"Content-Type": "application/json"}
+                headers={"Content-Type": "application/json"},
             )
             with urllib.request.urlopen(req, timeout=30) as resp:
                 result = json.loads(resp.read().decode())
@@ -127,12 +142,16 @@ class RAGQuerySystem:
     def reranker(self):
         if self._reranker is None and RERANKER_AVAILABLE:
             try:
-                self._reranker = CrossEncoder('BAAI/bge-reranker-v2-m3', device='cuda')
-            except Exception:
+                self._reranker = CrossEncoder("BAAI/bge-reranker-v2-m3", device="cuda")
+            except Exception as e:
+                log_debug("rag_query", f"CUDA reranker init failed: {e}")
                 try:
-                    self._reranker = CrossEncoder('BAAI/bge-reranker-v2-m3', device='cpu')
-                except Exception as e:
-                    print(f"Re-ranker init failed: {e}", file=sys.stderr)
+                    self._reranker = CrossEncoder(
+                        "BAAI/bge-reranker-v2-m3", device="cpu"
+                    )
+                except Exception as e2:
+                    log_debug("rag_query", f"CPU reranker init failed: {e2}")
+                    print(f"Re-ranker init failed: {e2}", file=sys.stderr)
         return self._reranker
 
     def _init_vector_db(self):
@@ -174,12 +193,12 @@ class RAGQuerySystem:
         """Direct check if Ollama is available."""
         try:
             req = urllib.request.Request(
-                "http://127.0.0.1:11434/api/tags",
-                method="GET"
+                "http://127.0.0.1:11434/api/tags", method="GET"
             )
             with urllib.request.urlopen(req, timeout=2) as resp:
                 return resp.status == 200
-        except Exception:
+        except Exception as e:
+            log_debug("rag_query", f"Ollama health check failed: {e}")
             return False
 
     def _sql_prefilter(
@@ -187,7 +206,7 @@ class RAGQuerySystem:
         domain: Optional[str] = None,
         tags: Optional[List[str]] = None,
         min_confidence: float = 0.0,
-        limit: int = 100
+        limit: int = 100,
     ) -> Tuple[List[Dict], List[Dict]]:
         """
         Pre-filter candidates from SQL before semantic search.
@@ -216,14 +235,16 @@ class RAGQuerySystem:
             SELECT id, domain, rule, explanation, confidence, is_golden,
                    'heuristic' as source_type
             FROM heuristics
-            WHERE {' AND '.join(h_conditions)}
+            WHERE {" AND ".join(h_conditions)}
             ORDER BY is_golden DESC, confidence DESC
             LIMIT ?
         """
         h_params.append(limit)
 
         cursor.execute(h_query, h_params)
-        heuristics = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+        heuristics = [
+            dict(row) for row in cursor.fetchall()
+        ]  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 
         # Query learnings
         l_conditions = ["1=1"]
@@ -241,33 +262,35 @@ class RAGQuerySystem:
             SELECT id, type, title, summary, tags, domain,
                    'learning' as source_type
             FROM learnings
-            WHERE {' AND '.join(l_conditions)}
+            WHERE {" AND ".join(l_conditions)}
             ORDER BY created_at DESC
             LIMIT ?
         """
         l_params.append(limit)
 
         cursor.execute(l_query, l_params)
-        learnings = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+        learnings = [
+            dict(row) for row in cursor.fetchall()
+        ]  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 
         conn.close()
         return heuristics, learnings
 
     def _get_or_create_embedding(
-        self,
-        source_type: str,
-        source_id: int,
-        content: str
+        self, source_type: str, source_id: int, content: str
     ) -> Optional[List[float]]:
         """Get cached embedding or create new one."""
         conn = sqlite3.connect(str(self.vectors_path))
         cursor = conn.cursor()
 
         # Check cache
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT embedding FROM embeddings
             WHERE source_type = ? AND source_id = ?
-        """, (source_type, source_id))
+        """,
+            (source_type, source_id),
+        )
 
         row = cursor.fetchone()
         if row and row[0]:
@@ -277,10 +300,13 @@ class RAGQuerySystem:
         # Create new embedding
         embedding = self.embedder.embed(content)
         if embedding:
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO embeddings (source_type, source_id, content, embedding)
                 VALUES (?, ?, ?, ?)
-            """, (source_type, source_id, content, json.dumps(embedding)))
+            """,
+                (source_type, source_id, content, json.dumps(embedding)),
+            )
             conn.commit()
 
         conn.close()
@@ -294,7 +320,7 @@ class RAGQuerySystem:
 
     def _content_for_item(self, item: Dict) -> str:
         """Extract searchable content from an item."""
-        if item.get('source_type') == 'heuristic':
+        if item.get("source_type") == "heuristic":
             return f"{item.get('rule', '')} {item.get('explanation', '')}"
         else:
             return f"{item.get('title', '')} {item.get('summary', '')}"
@@ -306,7 +332,7 @@ class RAGQuerySystem:
         tags: Optional[List[str]] = None,
         min_confidence: float = 0.0,
         top_k: int = 10,
-        use_reranker: bool = True
+        use_reranker: bool = True,
     ) -> List[Dict]:
         """
         Full RAG search pipeline.
@@ -319,18 +345,30 @@ class RAGQuerySystem:
         """
         # Ensure Ollama is running
         if not self.ensure_services():
-            print("Warning: Ollama not available, falling back to SQL-only", file=sys.stderr)
-            heuristics, learnings = self._sql_prefilter(domain, tags, min_confidence, top_k)
+            print(
+                "Warning: Ollama not available, falling back to SQL-only",
+                file=sys.stderr,
+            )
+            heuristics, learnings = self._sql_prefilter(
+                domain, tags, min_confidence, top_k
+            )
             return heuristics + learnings
 
         # VRAM coordination for RAG operation
         if self.vram_client:
             with self.vram_client.rag_operation(VRAMManager.OP_RAG_EMBED) as acquired:
                 if not acquired:
-                    print("Warning: Could not acquire VRAM, proceeding anyway", file=sys.stderr)
-                return self._do_semantic_search(query, domain, tags, min_confidence, top_k, use_reranker)
+                    print(
+                        "Warning: Could not acquire VRAM, proceeding anyway",
+                        file=sys.stderr,
+                    )
+                return self._do_semantic_search(
+                    query, domain, tags, min_confidence, top_k, use_reranker
+                )
         else:
-            return self._do_semantic_search(query, domain, tags, min_confidence, top_k, use_reranker)
+            return self._do_semantic_search(
+                query, domain, tags, min_confidence, top_k, use_reranker
+            )
 
     def _do_semantic_search(
         self,
@@ -339,12 +377,14 @@ class RAGQuerySystem:
         tags: Optional[List[str]],
         min_confidence: float,
         top_k: int,
-        use_reranker: bool
+        use_reranker: bool,
     ) -> List[Dict]:
         """Internal semantic search implementation."""
 
         # Step 1: SQL pre-filter
-        heuristics, learnings = self._sql_prefilter(domain, tags, min_confidence, limit=100)
+        heuristics, learnings = self._sql_prefilter(
+            domain, tags, min_confidence, limit=100
+        )
         candidates = heuristics + learnings
 
         if not candidates:
@@ -353,7 +393,10 @@ class RAGQuerySystem:
         # Step 2: Embed query
         query_embedding = self.embedder.embed(query)
         if not query_embedding:
-            print("Warning: Query embedding failed, returning SQL results", file=sys.stderr)
+            print(
+                "Warning: Query embedding failed, returning SQL results",
+                file=sys.stderr,
+            )
             return candidates[:top_k]
 
         # Step 3: Score candidates by similarity
@@ -361,35 +404,33 @@ class RAGQuerySystem:
         for item in candidates:
             content = self._content_for_item(item)
             item_embedding = self._get_or_create_embedding(
-                item['source_type'],
-                item['id'],
-                content
+                item["source_type"], item["id"], content
             )
 
             if item_embedding:
                 similarity = self._cosine_similarity(query_embedding, item_embedding)
-                item['similarity'] = similarity
+                item["similarity"] = similarity
                 scored.append(item)
             else:
                 # Include without score
-                item['similarity'] = 0.0
+                item["similarity"] = 0.0
                 scored.append(item)
 
         # Sort by similarity
-        scored.sort(key=lambda x: x['similarity'], reverse=True)
+        scored.sort(key=lambda x: x["similarity"], reverse=True)
 
         # Step 4: Re-rank top candidates (if available and requested)
         if use_reranker and self.reranker and len(scored) > 0:
             # Re-rank top 50
-            to_rerank = scored[:min(50, len(scored))]
+            to_rerank = scored[: min(50, len(scored))]
 
             pairs = [(query, self._content_for_item(item)) for item in to_rerank]
             rerank_scores = self.reranker.predict(pairs)
 
             for i, item in enumerate(to_rerank):
-                item['rerank_score'] = float(rerank_scores[i])
+                item["rerank_score"] = float(rerank_scores[i])
 
-            to_rerank.sort(key=lambda x: x['rerank_score'], reverse=True)
+            to_rerank.sort(key=lambda x: x["rerank_score"], reverse=True)
             scored = to_rerank + scored[50:]
 
         return scored[:top_k]
@@ -411,14 +452,20 @@ class RAGQuerySystem:
         cursor = conn.cursor()
 
         cursor.execute("SELECT id, rule, explanation FROM heuristics")
-        heuristics = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        heuristics = (
+            cursor.fetchall()
+        )  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 
         cursor.execute("SELECT id, title, summary FROM learnings")
-        learnings = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        learnings = (
+            cursor.fetchall()
+        )  # Ajouté LIMIT pour éviter l\'accumulation mémoire
 
         conn.close()
 
-        print(f"Indexing {len(heuristics)} heuristics and {len(learnings)} learnings...")
+        print(
+            f"Indexing {len(heuristics)} heuristics and {len(learnings)} learnings..."
+        )
 
         # Index heuristics
         for h in heuristics:
@@ -426,11 +473,14 @@ class RAGQuerySystem:
             if force:
                 # Delete existing
                 vconn = sqlite3.connect(str(self.vectors_path))
-                vconn.execute("DELETE FROM embeddings WHERE source_type='heuristic' AND source_id=?", (h['id'],))
+                vconn.execute(
+                    "DELETE FROM embeddings WHERE source_type='heuristic' AND source_id=?",
+                    (h["id"],),
+                )
                 vconn.commit()
                 vconn.close()
 
-            self._get_or_create_embedding('heuristic', h['id'], content)
+            self._get_or_create_embedding("heuristic", h["id"], content)
             print(".", end="", flush=True)
 
         # Index learnings
@@ -438,11 +488,14 @@ class RAGQuerySystem:
             content = f"{l['title']} {l['summary'] or ''}"
             if force:
                 vconn = sqlite3.connect(str(self.vectors_path))
-                vconn.execute("DELETE FROM embeddings WHERE source_type='learning' AND source_id=?", (l['id'],))
+                vconn.execute(
+                    "DELETE FROM embeddings WHERE source_type='learning' AND source_id=?",
+                    (l["id"],),
+                )
                 vconn.commit()
                 vconn.close()
 
-            self._get_or_create_embedding('learning', l['id'], content)
+            self._get_or_create_embedding("learning", l["id"], content)
             print(".", end="", flush=True)
 
         print("\nDone!")
@@ -452,13 +505,15 @@ def main():
     """CLI for RAG query system."""
     parser = argparse.ArgumentParser(
         description="RAG-Enhanced Query System",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     parser.add_argument("query", nargs="?", help="Search query")
     parser.add_argument("--domain", type=str, help="Filter by domain")
     parser.add_argument("--tags", type=str, help="Filter by tags (comma-separated)")
-    parser.add_argument("--top-k", type=int, default=10, help="Number of results (default: 10)")
+    parser.add_argument(
+        "--top-k", type=int, default=10, help="Number of results (default: 10)"
+    )
     parser.add_argument("--no-rerank", action="store_true", help="Skip re-ranking step")
     parser.add_argument("--index", action="store_true", help="Index all content")
     parser.add_argument("--force-index", action="store_true", help="Force re-index all")
@@ -482,7 +537,7 @@ def main():
         domain=args.domain,
         tags=tags,
         top_k=args.top_k,
-        use_reranker=not args.no_rerank
+        use_reranker=not args.no_rerank,
     )
 
     if args.json:
@@ -490,9 +545,9 @@ def main():
     else:
         print(f"Found {len(results)} results for: {args.query}\n")
         for i, r in enumerate(results, 1):
-            src = r.get('source_type', 'unknown')
-            score = r.get('rerank_score', r.get('similarity', 0))
-            if src == 'heuristic':
+            src = r.get("source_type", "unknown")
+            score = r.get("rerank_score", r.get("similarity", 0))
+            if src == "heuristic":
                 print(f"{i}. [H] {r['rule'][:60]}... (score: {score:.3f})")
             else:
                 print(f"{i}. [L] {r['title'][:60]}... (score: {score:.3f})")

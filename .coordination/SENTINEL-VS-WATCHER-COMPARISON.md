@@ -17,7 +17,7 @@
 | **Output** | Exit codes, log files, blackboard | event_chronicle records |
 | **API Support** | None (file-based) | REST API (/api/chronicle) |
 | **Integration** | Hooks, main Claude interaction | Learning loop events |
-| **Status** | Existing, tested, production-ready | New, not integrated with watcher |
+| **Status** | Existing, tested, production-ready | New, not integrated with sentinel |
 
 ---
 
@@ -61,20 +61,20 @@ User Interaction → Hook → Spawns Watcher → Haiku (30s check)
 ### Workflow
 
 1. User interaction triggers hook reminder
-2. Main Claude spawns watcher via `python watcher/launcher.py`
+2. Main Claude spawns sentinel via `python sentinel/launcher.py`
 3. Watcher does one comprehensive pass
 4. Watcher analyzes blackboard.json (agent states)
 5. Watcher detects issues (stale agents, errors)
 6. Watcher either: fixes directly OR escalates to CEO
 7. Watcher logs findings and exits
-8. Main Claude continues, next interaction spawns new watcher
+8. Main Claude continues, next interaction spawns new sentinel
 
 ### What It Monitors
 
 - **Agent heartbeats**: last_seen timestamps
 - **Agent status**: active, completed, failed, restarting
 - **Blackboard state**: coordination data between agents
-- **Stop signals**: watcher-stop file
+- **Stop signals**: sentinel-stop file
 - **Agent files**: agent_*.md metadata
 
 ### Models Used
@@ -150,7 +150,7 @@ Sleep 30s → repeat
 
 ### 2. **Trigger Model**
 
-- **Watcher**: Event-driven (user interaction → spawn watcher)
+- **Watcher**: Event-driven (user interaction → spawn sentinel)
 - **Sentinel**: Continuous loop (runs 24/7 independently)
 
 ### 3. **Cost Model**
@@ -194,7 +194,7 @@ You have access to:
 
 **YES - Watcher will work perfectly with your current setup.**
 
-The watcher uses:
+The sentinel uses:
 
 - **Haiku**: ~$0.001 per check (very affordable)
 - **CEO**: ~$0.10 per intervention (rare, only when needed)
@@ -248,7 +248,7 @@ Instead of choosing one, integrate them both:
    - Detecting stale agents → `event_type: agent_stale`
    - Restarting agents → `event_type: agent_restart`
    - Escalating to CEO → `event_type: escalation_needed`
-   - Completing monitoring → `event_type: watcher_cycle`
+   - Completing monitoring → `event_type: sentinel_cycle`
 
 2. Learning hook continues writing:
    - `event_type: learning_loop_completion`
@@ -264,11 +264,11 @@ Instead of choosing one, integrate them both:
 
 ## Proposed Modification to Watcher
 
-### Add to watcher_loop.py
+### Add to sentinel_loop.py
 
 ```python
 def log_to_event_chronicle(event_type: str, status: str, summary: str, data: dict = None):
-    """Log watcher events to event_chronicle for dashboard visibility."""
+    """Log sentinel events to event_chronicle for dashboard visibility."""
     import json
     import sqlite3
     from datetime import datetime
@@ -284,8 +284,8 @@ def log_to_event_chronicle(event_type: str, status: str, summary: str, data: dic
     """, (
         datetime.now().isoformat(),
         event_type,
-        'watcher',
-        'watcher-main',
+        'sentinel',
+        'sentinel-main',
         status,
         summary,
         json.dumps(data) if data else None,
@@ -296,13 +296,13 @@ def log_to_event_chronicle(event_type: str, status: str, summary: str, data: dic
     conn.close()
 ```
 
-### Add to watcher summary output
+### Add to sentinel summary output
 
-Before exiting, watcher calls:
+Before exiting, sentinel calls:
 
 ```python
 log_to_event_chronicle(
-    event_type='watcher_cycle',
+    event_type='sentinel_cycle',
     status='nominal',  # or 'stale', 'error', 'complete'
     summary=f'Checked {agents_count} agents, {issues_found} issues',
     data={
@@ -340,7 +340,7 @@ Same as Option A: $3.88/day
 (No additional cost, just better visibility)
 ```
 
-**Recommendation**: Option C (Hybrid) is best value - same cost as watcher, better dashboard integration.
+**Recommendation**: Option C (Hybrid) is best value - same cost as sentinel, better dashboard integration.
 
 ---
 
@@ -350,15 +350,15 @@ Same as Option A: $3.88/day
 
 **Files to Modify**:
 
-1. `watcher/watcher_loop.py` - Add event_chronicle logging
-2. `watcher/README.md` - Document event_chronicle integration
-3. Remove `dashboard_sentinel.py` (replace with watcher integration)
+1. `sentinel/sentinel_loop.py` - Add event_chronicle logging
+2. `sentinel/README.md` - Document event_chronicle integration
+3. Remove `dashboard_sentinel.py` (replace with sentinel integration)
 4. Remove `agents/sentinel_startup.py` (not needed)
 
 **Keep**:
 
-- `dashboard-app/backend/routers/chronicle.py` (use for watcher events too)
-- `hooks/learning-loop/post_tool_learning.py` (integrate with watcher events)
+- `dashboard-app/backend/routers/chronicle.py` (use for sentinel events too)
+- `hooks/learning-loop/post_tool_learning.py` (integrate with sentinel events)
 - `.coordination/sentinel-config.yaml` (rename to monitor-config.yaml)
 
 **New Files**:
@@ -390,7 +390,7 @@ Same as Option A: $3.88/day
 
 **Reasoning**:
 
-1. ✅ Stays true to ELF standard (uses existing watcher)
+1. ✅ Stays true to ELF standard (uses existing sentinel)
 2. ✅ Cost-optimal (tiered approach)
 3. ✅ Better visibility (event_chronicle)
 4. ✅ Unified event stream (dashboard)
@@ -399,7 +399,7 @@ Same as Option A: $3.88/day
 
 **Next Steps**:
 
-1. Modify watcher to log to event_chronicle
+1. Modify sentinel to log to event_chronicle
 2. Remove duplicate Sentinel code
 3. Keep event_chronicle infrastructure (reuse)
 4. Update documentation
@@ -430,13 +430,13 @@ Same as Option A: $3.88/day
 - Simpler but less efficient
 - Effort: 0 (keep current work)
 
-**Recommendation**: **A** - Modify watcher to use event_chronicle
+**Recommendation**: **A** - Modify sentinel to use event_chronicle
 
 ---
 
 ## Final Notes
 
-The watcher is a **production-tested system** that's been designed specifically for ELF multi-agent orchestration. Integrating it with event_chronicle would:
+The sentinel is a **production-tested system** that's been designed specifically for ELF multi-agent orchestration. Integrating it with event_chronicle would:
 
 - ✅ Give you the best of both worlds
 - ✅ Maintain ELF standards

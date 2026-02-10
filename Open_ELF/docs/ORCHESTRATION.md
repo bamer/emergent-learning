@@ -114,7 +114,7 @@ python agents/unified_orchestrator.py kill architect --force
 |-------|------|------------|------|
 | orchestrator | Coordination centrale | ✅ | 🎯 |
 | sentinel | Surveillance continue | ✅ | 🔍 |
-| watcher | Vérifications périodiques | ✅ | 👁️ |
+| sentinel | Vérifications périodiques | ✅ | 👁️ |
 | researcher | Investigation | ❌ | 🔬 |
 | architect | Conception | ❌ | 🏗️ |
 | skeptic | Analyse critique | ❌ | ❓ |
@@ -127,7 +127,7 @@ Tous les agents loguent dans `/home/bamer/.opencode/emergent-learning/logs/`:
 
 - `unified_orchestrator.log`: Logs de l'orchestrateur
 - `sentinel.log`: Logs du sentinel
-- `watcher.log`: Logs du watcher
+- `sentinel.log`: Logs du sentinel
 - `researcher.log`: Logs du researcher
 - `architect.log`: Logs de l'architect
 - `skeptic.log`: Logs du skeptic

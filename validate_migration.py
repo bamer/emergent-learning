@@ -199,24 +199,24 @@ def check_query_system():
     return all(results)
 
 
-def check_watcher():
-    """Validate watcher system."""
+def check_sentinel():
+    """Validate sentinel system."""
     print(f"\n{YELLOW}=== Watcher System ==={RESET}")
     
     results = []
     
-    watcher_files = [
-        ELF_DIR / "watcher" / "run_with_bigpickle.py",
-        ELF_DIR / "watcher" / "watcher_loop.py",
-        ELF_DIR / "logs" / "watcher.log",
+    sentinel_files = [
+        ELF_DIR / "sentinel" / "run_with_bigpickle.py",
+        ELF_DIR / "sentinel" / "sentinel_loop.py",
+        ELF_DIR / "logs" / "sentinel.log",
     ]
     
-    for watcher_file in watcher_files:
-        expected = "should exist" if watcher_file.suffix == '.py' else "log file"
+    for sentinel_file in sentinel_files:
+        expected = "should exist" if sentinel_file.suffix == '.py' else "log file"
         results.append(check(
-            f"{watcher_file.name} {expected}",
-            watcher_file.exists() or watcher_file.suffix == '.log',
-            f"Expected: {watcher_file}"
+            f"{sentinel_file.name} {expected}",
+            sentinel_file.exists() or sentinel_file.suffix == '.log',
+            f"Expected: {sentinel_file}"
         ))
     
     return all(results)
@@ -289,7 +289,7 @@ def main():
         ("Hooks", check_hooks),
         ("Plugin", check_plugin),
         ("Query System", check_query_system),
-        ("Watcher", check_watcher),
+        ("Watcher", check_sentinel),
         ("Configuration", check_config),
     ]
     

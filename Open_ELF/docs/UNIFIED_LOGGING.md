@@ -93,7 +93,7 @@ All logs are centralized in:
 ├── central_orchestrator.log
 ├── dashboard.log
 ├── event_bridge.log
-├── elf_watcher.log
+├── elf_sentinel.log
 ├── sentinel_monitor.log
 ├── unified_orchestrator.log
 ├── CRASH.log  # Critical errors that crashed the system
@@ -147,7 +147,7 @@ The following components have been migrated to use the unified logging system:
 - ✅ `agents/pattern_response_handler.py`
 - ✅ `orchestrator/event_bridge.py`
 - ✅ `orchestrator/unified_orchestrator.py`
-- ✅ `watcher/elf_watcher.py`
+- ✅ `sentinel/elf_sentinel.py`
 - ✅ `core/central_orchestrator.py`
 
 ### Mission Engine

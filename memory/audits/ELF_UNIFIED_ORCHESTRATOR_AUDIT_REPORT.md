@@ -36,8 +36,8 @@ This audit evaluates all monitoring components in the ELF Dashboard to determine
 
 ### 2. Watcher Status Endpoint
 - **File**: `backend/routers/monitoring.py`
-- **Endpoint**: `GET /api/v1/watcher/status`
-- **Data Source**: `pgrep -f "watcher/launcher.py"` (Process check)
+- **Endpoint**: `GET /api/v1/sentinel/status`
+- **Data Source**: `pgrep -f "sentinel/launcher.py"` (Process check)
 - **Location**: System process monitoring
 - **Integration**: ✅ **INTEGRATED** - Checks actual running process
 - **Status**: Process is running (PID 3529887)
@@ -113,8 +113,8 @@ This audit evaluates all monitoring components in the ELF Dashboard to determine
 
 #### 3. WatcherStatusPanel
 - **File**: `monitoring/WatcherStatusPanel.tsx`
-- **API Endpoint**: `/api/v1/watcher/status`
-- **Data Source**: Process check (pgrep for watcher/launcher.py)
+- **API Endpoint**: `/api/v1/sentinel/status`
+- **Data Source**: Process check (pgrep for sentinel/launcher.py)
 - **Integration**: ✅ **FULLY INTEGRATED** - Checks actual process
 - **Real Data**:
   - Process detected: YES (PID 3529887)
@@ -175,11 +175,11 @@ This audit evaluates all monitoring components in the ELF Dashboard to determine
 
 #### 1. WatcherEventHistory
 - **File**: `monitoring/WatcherEventHistory.tsx`
-- **API Endpoint**: `/api/v1/monitoring/watcher/events`
+- **API Endpoint**: `/api/v1/monitoring/sentinel/events`
 - **Data Source**: ❌ **SIMULATED** - This endpoint returns mock data
 - **Integration**: ⚠️ NOT INTEGRATED with Unified Orchestrator
-- **Status**: ❌ MOCK DATA - No real watcher event history
-- **Recommendation**: Implement real watcher event logging to database
+- **Status**: ❌ MOCK DATA - No real sentinel event history
+- **Recommendation**: Implement real sentinel event logging to database
 
 #### 2. OrchestratorEventHistory
 - **File**: `monitoring/OrchestratorEventHistory.tsx`
@@ -198,13 +198,13 @@ This audit evaluates all monitoring components in the ELF Dashboard to determine
 |-----------|----------------|-------------|-------------|---------|
 | SentinelMonitorPanel | `/sentinel/status` | SQL (event_chronicle) | ✅ Unified Orchestrator | ✅ Working |
 | EventChronicleViewer | `/chronicle/stats`, `/chronicle/events` | SQL (event_chronicle) | ✅ Unified Orchestrator | ✅ Working |
-| WatcherStatusPanel | `/watcher/status` | Process check (pgrep) | ✅ Real Process | ✅ Working |
+| WatcherStatusPanel | `/sentinel/status` | Process check (pgrep) | ✅ Real Process | ✅ Working |
 | OrchestratorStatusPanel | `/orchestrator/status` | Unified Orchestrator API | ✅ Unified Orchestrator | ✅ Working |
 | CeoStatusPanel | `/ceo-inbox`, `/agents/status` | File system + Agent system | ✅ real CEO data | ✅ Working |
 | EventBridgeStatusPanel | `/event-bridge/status` | Unified Orchestrator API | ✅ Unified Orchestrator | ✅ Working |
 | OllamaStatus | `/monitoring/ollama/status` | Ollama API | ✅ Ollama API | ✅ Working |
 | SystemHealthPanel | `/health/status` | Health metrics | ✅ Real Health | ✅ Working |
-| **WatcherEventHistory** | `/monitoring/watcher/events` | Mock/Generated | ❌ Not Integrated | ❌ Mock Data |
+| **WatcherEventHistory** | `/monitoring/sentinel/events` | Mock/Generated | ❌ Not Integrated | ❌ Mock Data |
 | **OrchestratorEventHistory** | `/monitoring/orchestrator/events` | Mock/Limited | ⚠️ Partial | ❌ Mock Data |
 
 ---
@@ -266,7 +266,7 @@ This audit evaluates all monitoring components in the ELF Dashboard to determine
 
 ### High Priority
 1. **Implement Real Watcher Event History**
-   - Create endpoint to log watcher events to event_chronicle
+   - Create endpoint to log sentinel events to event_chronicle
    - Replace mock data in WatcherEventHistory component
 
 2. **Implement Real Orchestrator Event History**

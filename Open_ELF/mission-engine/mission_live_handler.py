@@ -168,7 +168,7 @@ class LiveMissionHandler:
         Args:
             title: Titre affiché dans le Live Tab
             description: Description complète
-            agent: Agent à utiliser (watcher, sentinel, researcher, etc.)
+            agent: Agent à utiliser (sentinel, sentinel, researcher, etc.)
             priority: Priorité (LOW, MEDIUM, HIGH, CRITICAL)
             auto_execute: Si True, démarre l'exécution immédiatement
             context: Contexte additionnel
@@ -207,7 +207,7 @@ class LiveMissionHandler:
         self,
         target: str,
         analysis_type: str = "general",
-        agent: str = "watcher",
+        agent: str = "sentinel",
     ) -> Mission:
         """
         Crée une mission d'analyse pour le Live.
@@ -669,7 +669,7 @@ if __name__ == "__main__":
     mission1 = handler.create_live_mission(
         title="🔍 Analyse système",
         description="Vérifier l'état de tous les services",
-        agent="watcher",
+        agent="sentinel",
         priority="HIGH",
         auto_execute=False,
     )

@@ -9,13 +9,13 @@
 
 ## Summary
 
-Successfully implemented a modern hybrid monitoring system using OpenCode's big-pickle model. This replaces the original tiered watcher pattern with a more efficient approach that combines frequent basic checks with periodic deep AI analysis.
+Successfully implemented a modern hybrid monitoring system using OpenCode's big-pickle model. This replaces the original tiered sentinel pattern with a more efficient approach that combines frequent basic checks with periodic deep AI analysis.
 
 ## Architecture Changes
 
 ### New Hybrid Architecture
 ```
-elf_watcher.py (Single Process)
+elf_sentinel.py (Single Process)
 ├── Basic System Checks (every 60s)
 │   ├── Service health monitoring
 │   ├── Immediate issue detection
@@ -62,7 +62,7 @@ elf_watcher.py (Single Process)
 - **Sentinel Monitor**: Integration with overall monitoring ecosystem
 
 ### Process Management
-- **Stop Signal**: Graceful shutdown via `.coordination/watcher-stop`
+- **Stop Signal**: Graceful shutdown via `.coordination/sentinel-stop`
 - **Cycle Tracking**: Internal counter for scheduling AI analysis
 - **Error Recovery**: Automatic retry on communication failures
 
@@ -72,7 +72,7 @@ elf_watcher.py (Single Process)
 ```
 OpenCode big-pickle
 └── Direct EventBridge API
-    └── elf_watcher.py (single process)
+    └── elf_sentinel.py (single process)
         ├── Basic checks → immediate response
         └── AI analysis → async EventBridge processing
 ```
@@ -92,7 +92,7 @@ OpenCode big-pickle
 - **Response Time**: Faster issue detection with immediate basic checks
 
 ### Maintainability
-- **Single File**: All logic contained in `elf_watcher.py`
+- **Single File**: All logic contained in `elf_sentinel.py`
 - **No Dependencies**: No external launcher or complex orchestration
 - **Easy Debugging**: Clear logging and console output
 
@@ -137,18 +137,18 @@ OpenCode big-pickle
 
 ### Quick Start
 ```bash
-# Start watcher
-python Open_ELF/watcher/elf_watcher.py
+# Start sentinel
+python Open_ELF/sentinel/elf_sentinel.py
 
 # Or using start script
-./scripts/start-watcher.sh
+./scripts/start-sentinel.sh
 
 # Check status
-pgrep -f "elf_watcher.py"
+pgrep -f "elf_sentinel.py"
 ```
 
 ### Configuration
-Default settings in `elf_watcher.py`:
+Default settings in `elf_sentinel.py`:
 ```python
 BASIC_POLL_INTERVAL = 60    # seconds
 AI_ANALYSIS_INTERVAL = 300  # seconds (5 minutes)
@@ -158,15 +158,15 @@ EVENT_BRIDGE_URL = "http://localhost:9998"
 ### Monitoring Commands
 ```bash
 # View logs
-tail -f /tmp/elf_watcher.log
+tail -f /tmp/elf_sentinel.log
 
 # Check coordination log
-tail -f .coordination/watcher-log.md
+tail -f .coordination/sentinel-log.md
 
 # Stop gracefully
-touch .coordination/watcher-stop
+touch .coordination/sentinel-stop
 ```
 
 ## Conclusion
 
-The hybrid monitoring approach provides superior performance and maintainability while preserving all essential functionality of the original tiered watcher pattern. The integration of OpenCode big-pickle enables both immediate system monitoring and deep analytical capabilities within a single, efficient process.
+The hybrid monitoring approach provides superior performance and maintainability while preserving all essential functionality of the original tiered sentinel pattern. The integration of OpenCode big-pickle enables both immediate system monitoring and deep analytical capabilities within a single, efficient process.

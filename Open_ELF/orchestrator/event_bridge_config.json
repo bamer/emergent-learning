@@ -15,7 +15,7 @@
       "session.status": 5,
       "tool": 5,
       "session.updated": 5,
-      "watcher_check": 10
+      "sentinel_check": 10
     },
     "max_events_per_minute": 100
   },

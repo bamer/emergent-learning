@@ -281,7 +281,7 @@ cat > /home/bamer/.opencode/emergent-learning/.coordination/missions/mission-inn
   "taskId": "innovation-005",
   "role": "creative",
   "description": "Explore alternative approaches to the current file monitoring system that could reduce resource consumption by 50%",
-  "context": "Current watcher system uses 15% CPU during normal operation. Looking for more efficient solutions.",
+  "context": "Current sentinel system uses 15% CPU during normal operation. Looking for more efficient solutions.",
   "priority": "medium"
 }
 EOF

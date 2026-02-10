@@ -18,7 +18,7 @@ HIGH_PRIORITY_FILES = [
     "/home/bamer/.opencode/emergent-learning/Open_ELF/agents/sentinel_monitor.py",
     "/home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator/event_bridge.py",
     "/home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator/unified_orchestrator.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/watcher/elf_watcher.py",
+    "/home/bamer/.opencode/emergent-learning/Open_ELF/sentinel/elf_sentinel.py",
 ]
 
 MEDIUM_PRIORITY_FILES = [

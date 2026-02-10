@@ -11,7 +11,7 @@
 All monitoring endpoints are working correctly:
 - `/api/v1/sentinel/status` - Sentinel cycles and patterns
 - `/api/v1/event-bridge/status` - Event bridge running status
-- `/api/v1/watcher/status` - Watcher control status
+- `/api/v1/sentinel/status` - Watcher control status
 - `/api/v1/health/status` - System health metrics
 - `/api/v1/chronicle/stats` - Event chronicle statistics
 - `/api/v1/orchestrator/status` - Orchestrator status (FIXED)

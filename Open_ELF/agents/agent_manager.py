@@ -11,10 +11,10 @@ Usage:
     manager = AgentManager()
 
     # Interroger un agent spécifique
-    response = manager.ask_agent("watcher", "Analyze system health and report anomalies")
+    response = manager.ask_agent("sentinel", "Analyze system health and report anomalies")
 
     # Ou utiliser la méthode de convenance
-    result = manager.watcher("Check all services status")
+    result = manager.sentinel("Check all services status")
 """
 
 import json
@@ -470,7 +470,7 @@ class AgentManager:
         de l'agent et envoie la requête comme message utilisateur.
 
         Args:
-            agent_name: Nom de l'agent (ex: "watcher", "sentinel", "ceo")
+            agent_name: Nom de l'agent (ex: "sentinel", "sentinel", "ceo")
             user_request: Requête utilisateur (pas un prompt système !)
             context: Contexte optionnel à inclure
 
@@ -604,9 +604,9 @@ class AgentManager:
 
     # Méthodes de convenance pour les agents principaux
 
-    def watcher(self, request: str, context: Optional[Dict] = None) -> Dict[str, Any]:
+    def sentinel(self, request: str, context: Optional[Dict] = None) -> Dict[str, Any]:
         """Interroge l'agent Watcher"""
-        return self.ask_agent("watcher", request, context)
+        return self.ask_agent("sentinel", request, context)
 
     def sentinel(self, request: str, context: Optional[Dict] = None) -> Dict[str, Any]:
         """Interroge l'agent Sentinel"""
@@ -954,7 +954,7 @@ def get_agent_manager(
         from agents.agent_manager import get_agent_manager
 
         manager = get_agent_manager()
-        result = manager.watcher("Analyze system health")
+        result = manager.sentinel("Analyze system health")
     """
     global _agent_manager_instance
     if _agent_manager_instance is None:
@@ -994,5 +994,5 @@ if __name__ == "__main__":
     print("\nExemple d'utilisation:")
     print("  from agents.agent_manager import get_agent_manager")
     print("  manager = get_agent_manager()")
-    print('  result = manager.watcher("Analyze current system state")')
+    print('  result = manager.sentinel("Analyze current system state")')
     print('  print(result["response"])')

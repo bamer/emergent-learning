@@ -113,7 +113,7 @@ class EscalationFileHandler(FileSystemEventHandler):
             logger.info(f"📬 New escalation file detected: {filename}")
             # Schedule async processing
             asyncio.create_task(
-                self.orchestrator.process_watcher_escalation(event.src_path)
+                self.orchestrator.process_sentinel_escalation(event.src_path)
             )
 
 
@@ -137,7 +137,7 @@ class UnifiedOrchestrator:
         # Service tracking
         self.learning_capture_active = False
         self.learning_capture_pid: Optional[str] = None
-        self.watcher_pid: Optional[str] = None
+        self.sentinel_pid: Optional[str] = None
 
         # Health tracking
         self._services_health: Dict[str, bool] = {}
@@ -145,7 +145,7 @@ class UnifiedOrchestrator:
         self._last_health_check: Optional[datetime] = None
         self.started_at: Optional[datetime] = None
 
-        # AI Analysis timing (Tier-based like watcher/sentinel)
+        # AI Analysis timing (Tier-based like sentinel/sentinel)
         self.main_loop_interval = 10  # seconds (basic cycle)
         self.ai_analysis_interval = 900  # seconds (15 minutes for AI analysis)
         self.cycle_count = 0
@@ -168,7 +168,7 @@ class UnifiedOrchestrator:
         self.processed_escalations = set()
         self.last_autonomous_check = datetime.now()
 
-    async def process_watcher_escalation(self, filepath: str):
+    async def process_sentinel_escalation(self, filepath: str):
         """Process a Watcher escalation file from L1 agent."""
         escalation_file = Path(filepath)
         filename = escalation_file.name
@@ -192,7 +192,7 @@ class UnifiedOrchestrator:
                 elif "warning" in severity_text:
                     severity = "warning"
 
-            self._log_to_watcher_log(
+            self._log_to_sentinel_log(
                 escalation_file,
                 f"Processed (severity: {severity})",
                 {"severity": severity},
@@ -240,17 +240,17 @@ class UnifiedOrchestrator:
         except Exception as e:
             logger.error(f"❌ Failed to forward escalation to CEO: {e}")
 
-    def _log_to_watcher_log(
+    def _log_to_sentinel_log(
         self, escalation_file: Path, action_taken: str, assessment: Dict[str, Any]
     ):
-        """Log escalation processing to watcher-log.md."""
+        """Log escalation processing to sentinel-log.md."""
         try:
-            watcher_log = ELF_DIR / ".coordination" / "watcher-log.md"
+            sentinel_log = ELF_DIR / ".coordination" / "sentinel-log.md"
             log_entry = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | STATUS: processed | NOTES: Processed escalation {escalation_file.name} | Action: {action_taken}\n"
-            with open(watcher_log, "a") as f:
+            with open(sentinel_log, "a") as f:
                 f.write(log_entry)
         except Exception as e:
-            logger.error(f"❌ Failed to log to watcher-log.md: {e}")
+            logger.error(f"❌ Failed to log to sentinel-log.md: {e}")
 
     async def _archive_escalation(self, source_file: Path, target_file: Path):
         """Archive processed escalation file."""
@@ -263,7 +263,7 @@ class UnifiedOrchestrator:
         """Check health of all managed services asynchronously."""
         health_status = {
             "event_bridge": False,
-            "watcher": False,
+            "sentinel": False,
             "learning_capture": False,
         }
 
@@ -276,11 +276,11 @@ class UnifiedOrchestrator:
         try:
             result = await asyncio.to_thread(
                 subprocess.run,
-                ["pgrep", "-f", "core/watcher.py"],
+                ["pgrep", "-f", "core/sentinel.py"],
                 capture_output=True,
                 text=True,
             )
-            health_status["watcher"] = result.stdout.strip() != ""
+            health_status["sentinel"] = result.stdout.strip() != ""
         except:
             pass
 
@@ -363,11 +363,11 @@ class UnifiedOrchestrator:
             return 0
 
     def _log_autonomous_checks(self, checks: Dict[str, Any]):
-        """Log autonomous system checks to watcher-log.md."""
+        """Log autonomous system checks to sentinel-log.md."""
         try:
-            watcher_log = ELF_DIR / ".coordination" / "watcher-log.md"
-            log_entry = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | STATUS: autonomous-check | NOTES: L2 check | EventBridge: {checks['service_health'].get('event_bridge')} | Watcher: {checks['service_health'].get('watcher')} | Learning: {checks['service_health'].get('learning_capture')} | Learnings: {checks['learnings_count']} | Heuristics: {checks['heuristics_count']}\n"
-            with open(watcher_log, "a") as f:
+            sentinel_log = ELF_DIR / ".coordination" / "sentinel-log.md"
+            log_entry = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | STATUS: autonomous-check | NOTES: L2 check | EventBridge: {checks['service_health'].get('event_bridge')} | Watcher: {checks['service_health'].get('sentinel')} | Learning: {checks['service_health'].get('learning_capture')} | Learnings: {checks['learnings_count']} | Heuristics: {checks['heuristics_count']}\n"
+            with open(sentinel_log, "a") as f:
                 f.write(log_entry)
         except Exception as e:
             logger.error(f"❌ Failed to log autonomous checks: {e}")
@@ -396,7 +396,7 @@ class UnifiedOrchestrator:
         processor = asyncio.create_task(self._process_events())
         logger.info("⚙️  Event processor started")
 
-        # 4. Start escalation file watcher
+        # 4. Start escalation file sentinel
         if WATCHDOG_AVAILABLE:
             self.escalation_observer = Observer()
             event_handler = EscalationFileHandler(self)
@@ -405,7 +405,7 @@ class UnifiedOrchestrator:
                 event_handler, path=str(ESCALATION_DIR), recursive=False
             )
             self.escalation_observer.start()
-            logger.info("📂 Escalation file watcher started")
+            logger.info("📂 Escalation file sentinel started")
         else:
             logger.warning("⚠️ Escalation processing not available (watchdog missing)")
 
@@ -450,7 +450,7 @@ class UnifiedOrchestrator:
 
         if self.escalation_observer:
             self.escalation_observer.stop()
-            logger.info("✅ Escalation file watcher stopped")
+            logger.info("✅ Escalation file sentinel stopped")
 
         autonomous_checker.cancel()
         logger.info("✅ Autonomous system checks stopped")
@@ -632,10 +632,10 @@ class UnifiedOrchestrator:
                 self._restart_learning_capture()
 
         # Watcher
-        elif "watcher" in service_lower:
+        elif "sentinel" in service_lower:
             if status.lower() in ["down", "inactive", "stopped", "failed"]:
                 logger.info("🔄 Attempting to restart Watcher...")
-                self._restart_watcher()
+                self._restart_sentinel()
 
         # Escalate critical issues
         if event.severity == "critical":
@@ -687,7 +687,7 @@ class UnifiedOrchestrator:
             logger.error(f"❌ Error restarting Learning Capture: {e}")
             return False
 
-    def _restart_watcher(self) -> bool:
+    def _restart_sentinel(self) -> bool:
         """Restart Watcher service.
 
         Returns:
@@ -695,14 +695,14 @@ class UnifiedOrchestrator:
         """
         try:
             # Kill existing
-            subprocess.run(["pkill", "-f", "core/watcher.py"], capture_output=True)
+            subprocess.run(["pkill", "-f", "core/sentinel.py"], capture_output=True)
             import time
 
             time.sleep(2)
 
             # Start new
             process = subprocess.Popen(
-                ["python3", str(BASE_DIR / "core" / "watcher.py")],
+                ["python3", str(BASE_DIR / "core" / "sentinel.py")],
                 cwd=str(OPEN_ELF_DIR),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -712,7 +712,7 @@ class UnifiedOrchestrator:
 
             # Verify
             check = subprocess.run(
-                ["pgrep", "-f", "core/watcher.py"],
+                ["pgrep", "-f", "core/sentinel.py"],
                 capture_output=True,
                 text=True,
             )
@@ -751,11 +751,11 @@ class UnifiedOrchestrator:
         """Check health of all managed services.
 
         Args:
-            health_status: Status dict with keys: event_bridge, watcher, learning_capture
+            health_status: Status dict with keys: event_bridge, sentinel, learning_capture
         """
         health_status = {
             "event_bridge": False,
-            "watcher": False,
+            "sentinel": False,
             "learning_capture": False,
         }
 
@@ -770,15 +770,15 @@ class UnifiedOrchestrator:
         # Watcher (pgrep)
         try:
             result = subprocess.run(
-                ["pgrep", "-f", "core/watcher.py"],
+                ["pgrep", "-f", "core/sentinel.py"],
                 capture_output=True,
                 text=True,
             )
-            health_status["watcher"] = result.returncode == 0
+            health_status["sentinel"] = result.returncode == 0
             if result.returncode == 0:
-                self.watcher_pid = result.stdout.strip()
+                self.sentinel_pid = result.stdout.strip()
         except:
-            logger.error(f'❌ Failed health_status["watcher"]')
+            logger.error(f'❌ Failed health_status["sentinel"]')
             pass
 
         # Learning Capture (pgrep)
@@ -848,7 +848,7 @@ class UnifiedOrchestrator:
         return f"""
 System Health Summary:
 - EventBridge: {"✅ Running" if services.get("event_bridge") else "❌ Down"}
-- Watcher: {"✅ Running" if services.get("watcher") else "❌ Down"}
+- Watcher: {"✅ Running" if services.get("sentinel") else "❌ Down"}
 - Learning Capture: {"✅ Running" if services.get("learning_capture") else "❌ Down"}
 - Events Processed: {state.get("events_processed", 0)}
 - Uptime: {state.get("uptime_seconds", 0):.0f} seconds
@@ -894,7 +894,7 @@ System Health Summary:
             "orchestrator": {"running": self.running, "uptime_seconds": uptime},
             "services": {
                 "event_bridge": self._services_health.get("event_bridge", False),
-                "watcher": self._services_health.get("watcher", False),
+                "sentinel": self._services_health.get("sentinel", False),
                 "learning_capture": {
                     "active": self.learning_capture_active,
                     "pid": self.learning_capture_pid,

@@ -262,7 +262,7 @@ All critical events and escalations are recorded in the database:
 Monitors key directories for system changes:
 - CEO inbox for manual escalations
 - Mission directory for assigned tasks
-- Event chronicle for watcher alerts
+- Event chronicle for sentinel alerts
 - Configuration files for updates
 
 ## Extending Capabilities

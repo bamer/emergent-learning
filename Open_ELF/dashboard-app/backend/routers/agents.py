@@ -96,7 +96,7 @@ VALID_AGENT_TYPES = {
     "swarm-orchestrator",
     "title",
     "unified-orchestrator",
-    "watcher",
+    "sentinel",
 }
 
 

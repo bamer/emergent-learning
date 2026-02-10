@@ -15,3 +15,14 @@ Silently swallowing errors makes debugging impossible and hides real problems. T
 
 ---
 
+## H-148: Never silently swallow exceptions - always log errors with log_debug() or re-raise
+
+**Confidence**: 0.95
+**Source**: observation
+**Project**: `/home/bamer/.opencode/emergent-learning`
+**Created**: 2026-02-10
+
+Enforced error logging across 12 ELF files. Pattern: replace 'except Exception: pass' with 'except Exception as e: log_debug("module", f"Error: {e}")'. Never silently swallow exceptions - always log or re-raise. This ensures visibility into failures and prevents silent bugs.
+
+---
+

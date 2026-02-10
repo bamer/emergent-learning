@@ -10,7 +10,7 @@
 
 ## Issue Summary
 
-**ELF watcher system has been in continuous CRITICAL state for extended period with repeated escalation failures.**
+**ELF sentinel system has been in continuous CRITICAL state for extended period with repeated escalation failures.**
 
 ### Timeline of Events
 

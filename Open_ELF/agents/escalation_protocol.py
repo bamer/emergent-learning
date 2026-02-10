@@ -35,7 +35,7 @@ class AgentRole(Enum):
 
     ORCHESTRATOR = "orchestrator"  # Central coordination
     SENTINEL = "sentinel"  # Continuous monitoring
-    WATCHER = "watcher"  # Periodic checks
+    WATCHER = "sentinel"  # Periodic checks
     RESEARCHER = "researcher"  # Deep investigation
     ARCHITECT = "architect"  # System design
     SKEPTIC = "skeptic"  # Critical analysis
@@ -95,7 +95,7 @@ class EscalationProtocol:
             ),
             # Watcher escalations
             EscalationRule(
-                name="watcher_stale_agent",
+                name="sentinel_stale_agent",
                 condition="Agent becomes unresponsive",
                 from_role=AgentRole.WATCHER,
                 to_role=AgentRole.ORCHESTRATOR,
@@ -103,7 +103,7 @@ class EscalationProtocol:
                 cooldown_minutes=10,
             ),
             EscalationRule(
-                name="watcher_complex_issue",
+                name="sentinel_complex_issue",
                 condition="Complex issue requiring human decision",
                 from_role=AgentRole.WATCHER,
                 to_role=AgentRole.CEO,

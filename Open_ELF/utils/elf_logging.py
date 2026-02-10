@@ -18,7 +18,7 @@ Usage:
     logger.info("Message")
 
     # Database event logging
-    from elf_logging import log_event, log_watcher_check
+    from elf_logging import log_event, log_sentinel_check
 
     log_event(event_type="tool_execution", source="my_agent", summary="Task completed")
 
@@ -264,8 +264,8 @@ EVENT_TYPES = {
     "file_change": "Watcher detected a file change",
     "file_creation": "Watcher detected a new file",
     "file_deletion": "Watcher detected a deleted file",
-    "watcher_status": "Watcher status update",
-    "watcher_check": "Watcher performed check",
+    "sentinel_status": "Watcher status update",
+    "sentinel_check": "Watcher performed check",
     # Orchestrator events
     "agent_question": "Agent received a question",
     "agent_response": "Agent generated a response",
@@ -292,7 +292,7 @@ def log_event(
 
     Args:
         event_type: Type of event (use EVENT_TYPES values for consistency)
-        source: Component that generated the event (e.g., 'watcher', 'orchestrator')
+        source: Component that generated the event (e.g., 'sentinel', 'orchestrator')
         summary: Human-readable summary of the event
         data: Optional JSON-serializable data payload
         source_id: Optional identifier for the event source
@@ -339,11 +339,11 @@ def log_event(
         return None
 
 
-def log_watcher_check(
+def log_sentinel_check(
     tier: int, status: str, summary: str, details: Optional[Dict[str, Any]] = None
 ) -> Optional[int]:
     """
-    Log a watcher check event.
+    Log a sentinel check event.
 
     Args:
         tier: Watcher tier (1 or 2)
@@ -361,8 +361,8 @@ def log_watcher_check(
     }
 
     return log_event(
-        event_type="watcher_check",
-        source="watcher",
+        event_type="sentinel_check",
+        source="sentinel",
         summary=f"Tier {tier} check: {summary}",
         data=data,
         status=status,
@@ -375,7 +375,7 @@ def log_file_event(
     details: Optional[Dict[str, Any]] = None,
 ) -> Optional[int]:
     """
-    Log a file watcher event.
+    Log a file sentinel event.
 
     Args:
         action: Type of file action
@@ -401,7 +401,7 @@ def log_file_event(
 
     return log_event(
         event_type=event_type,
-        source="watcher",
+        source="sentinel",
         summary=f"File {action}: {file_path}",
         data=data,
         status="success",
@@ -540,14 +540,14 @@ if __name__ == "__main__":
     )
     print(f"✅ Event logged with ID: {event_id}")
 
-    # Test watcher event logging
-    watcher_event_id = log_watcher_check(
+    # Test sentinel event logging
+    sentinel_event_id = log_sentinel_check(
         tier=1,
         status="success",
-        summary="Test watcher check",
-        details={"test": "watcher"},
+        summary="Test sentinel check",
+        details={"test": "sentinel"},
     )
-    print(f"✅ Watcher event logged with ID: {watcher_event_id}")
+    print(f"✅ Watcher event logged with ID: {sentinel_event_id}")
 
     # Test orchestrator event logging
     orch_event_id = log_orchestrator_event(

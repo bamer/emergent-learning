@@ -206,8 +206,8 @@ class DecisionEngine:
             return await self.handle_system_health(event)
         elif event.type == "ceo_escalation":
             return await self.handle_ceo_escalation(event)
-        elif event.type == "watcher_alert":
-            return await self.handle_watcher_alert(event)
+        elif event.type == "sentinel_alert":
+            return await self.handle_sentinel_alert(event)
         else:
             return await self.handle_generic_event(event)
 
@@ -279,13 +279,13 @@ class DecisionEngine:
         else:
             return f"ceo_notified: {escalation_reason}"
 
-    async def handle_watcher_alert(self, event: Event) -> str:
-        """Handle watcher system alerts."""
+    async def handle_sentinel_alert(self, event: Event) -> str:
+        """Handle sentinel system alerts."""
         alert_type = event.data.get("alert_type", "generic")
         alert_details = event.data.get("details", "")
 
         if event.severity == "critical":
-            logger.error(f"🚨 Critical watcher alert: {alert_type}")
+            logger.error(f"🚨 Critical sentinel alert: {alert_type}")
             return await self.initiate_emergency_protocol(event)
         elif event.severity == "error":
             logger.warning(f"⚠️ Watcher alert: {alert_type}")
@@ -435,7 +435,7 @@ class UnifiedOrchestrator:
             asyncio.create_task(self._listen_opencode_events()),
             asyncio.create_task(self._monitor_ceo_inbox()),
             asyncio.create_task(self._monitor_system_health()),
-            asyncio.create_task(self._monitor_watcher_events()),
+            asyncio.create_task(self._monitor_sentinel_events()),
         ]
         logger.info("👂 Event listeners started")
 
@@ -661,9 +661,9 @@ class UnifiedOrchestrator:
         except Exception:
             return False
 
-    async def _monitor_watcher_events(self):
-        """Monitor watcher events from event chronicle."""
-        logger.info("👀 Monitoring watcher events")
+    async def _monitor_sentinel_events(self):
+        """Monitor sentinel events from event chronicle."""
+        logger.info("👀 Monitoring sentinel events")
         EVENT_CHRONICLE_DIR = (
             Path.home() / ".opencode" / "emergent-learning" / "event_chronicle"
         )
@@ -692,22 +692,22 @@ class UnifiedOrchestrator:
                                     event_data = json.loads(line.strip())
                                     event_type = event_data.get("event_type", "")
 
-                                    # Look for watcher-related events
+                                    # Look for sentinel-related events
                                     if (
-                                        "watcher" in event_type.lower()
+                                        "sentinel" in event_type.lower()
                                         or "sentinel" in event_type.lower()
                                     ):
-                                        # Create watcher event
+                                        # Create sentinel event
                                         event = Event(
-                                            id=f"watcher_{int(time.time() * 1000000)}",
-                                            type="watcher_alert",
+                                            id=f"sentinel_{int(time.time() * 1000000)}",
+                                            type="sentinel_alert",
                                             severity=self._determine_severity(
                                                 {
                                                     "type": event_type,
                                                     "properties": event_data,
                                                 }
                                             ),
-                                            source="watcher_system",
+                                            source="sentinel_system",
                                             data=event_data,
                                             timestamp=datetime.now(),
                                         )
@@ -727,7 +727,7 @@ class UnifiedOrchestrator:
                 await asyncio.sleep(30)  # Check every 30 seconds
 
             except Exception as e:
-                logger.error(f"❌ Error monitoring watcher events: {e}")
+                logger.error(f"❌ Error monitoring sentinel events: {e}")
                 await asyncio.sleep(60)
 
     async def _process_events(self):

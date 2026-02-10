@@ -301,7 +301,7 @@ async def kill_agent(request: KillRequest):
     """
     valid_agents = [
         "sentinel",
-        "watcher",
+        "sentinel",
         "researcher",
         "architect",
         "skeptic",
@@ -362,7 +362,7 @@ def _test_agent(
             "creative",
             "ceo",
             "sentinel",
-            "watcher",
+            "sentinel",
         ]
         if agent_type not in valid_agents:
             return {
@@ -456,7 +456,7 @@ async def test_agent(request: TestRequest):
         "creative",
         "ceo",
         "sentinel",
-        "watcher",
+        "sentinel",
     ]
 
     if request.agent_type not in valid_agents:
@@ -533,7 +533,7 @@ async def list_available_agents():
             "can_spawn": False,
         },
         {
-            "type": "watcher",
+            "type": "sentinel",
             "name": "Watcher",
             "description": "Vérifications périodiques et interventions",
             "icon": "👁️",

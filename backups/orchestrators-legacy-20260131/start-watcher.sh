@@ -3,15 +3,15 @@
 # Start the OpenCode Watcher using big-pickle model
 #
 # Usage:
-#   ./start-watcher.sh              # Start normally
-#   ./start-watcher.sh --daemon     # Start in background
+#   ./start-sentinel.sh              # Start normally
+#   ./start-sentinel.sh --daemon     # Start in background
 #
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ELF_DIR="$(dirname "$SCRIPT_DIR")"
-WATCHER_DIR="$ELF_DIR/watcher"
+WATCHER_DIR="$ELF_DIR/sentinel"
 LAUNCHER_SCRIPT="$WATCHER_DIR/launcher.py"
 
 # Detect Python command
@@ -52,15 +52,15 @@ export OPENCODE_WATCHER_MODEL="${OPENCODE_WATCHER_MODEL:-opencode/big-pickle}"
 
 # Start launcher
 if [ "$DAEMON" = true ]; then
-    echo "Starting OpenCode watcher (daemon mode)..."
+    echo "Starting OpenCode sentinel (daemon mode)..."
     echo "Model: $OPENCODE_WATCHER_MODEL"
-    nohup $PYTHON_CMD "$LAUNCHER_SCRIPT" > /tmp/elf-watcher.log 2>&1 &
+    nohup $PYTHON_CMD "$LAUNCHER_SCRIPT" > /tmp/elf-sentinel.log 2>&1 &
     PID=$!
     echo "Watcher started with PID: $PID"
-    echo "Monitor logs at: /tmp/elf-watcher.log"
+    echo "Monitor logs at: /tmp/elf-sentinel.log"
     echo "Stop with: kill $PID"
 else
-    echo "Starting OpenCode watcher..."
+    echo "Starting OpenCode sentinel..."
     echo "Model: $OPENCODE_WATCHER_MODEL"
     echo "Press Ctrl+C to stop"
     $PYTHON_CMD "$LAUNCHER_SCRIPT"

@@ -60,7 +60,7 @@ Health summary consistently reported Watcher as down despite it running for 69+ 
 **Source**: observation
 **Created**: 2026-02-10
 
-Health monitoring must use current process locations, not legacy paths. When moving services, update all health check patterns including pgrep, pkill, and restart commands. Issue: unified_orchestrator.py used 'watcher/elf_watcher.py' but actual path is 'core/watcher.py'.
+Health monitoring must use current process locations, not legacy paths. When moving services, update all health check patterns including pgrep, pkill, and restart commands. Issue: unified_orchestrator.py used 'sentinel/elf_sentinel.py' but actual path is 'core/sentinel.py'.
 
 ---
 

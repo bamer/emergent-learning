@@ -3,12 +3,12 @@
 # Start Watcher with big-pickle (OpenCode - zero cost)
 #
 # Replaces Claude Haiku tier with local big-pickle model
-# Keeps standard ELF watcher structure and coordination
+# Keeps standard ELF sentinel structure and coordination
 #
 # Usage:
-#   ./scripts/start-watcher-bigpickle.sh                # Continuous (30s interval)
-#   ./scripts/start-watcher-bigpickle.sh --once         # Single pass
-#   ./scripts/start-watcher-bigpickle.sh --interval 60  # Custom interval
+#   ./scripts/start-sentinel-bigpickle.sh                # Continuous (30s interval)
+#   ./scripts/start-sentinel-bigpickle.sh --once         # Single pass
+#   ./scripts/start-sentinel-bigpickle.sh --interval 60  # Custom interval
 ################################################################################
 
 set -e
@@ -48,13 +48,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Run watcher
+# Run sentinel
 if [ "$MODE" = "single" ]; then
-    echo "🔍 Running single watcher pass with big-pickle..."
-    python3 "$PROJECT_ROOT/watcher/run_with_bigpickle.py"
+    echo "🔍 Running single sentinel pass with big-pickle..."
+    python3 "$PROJECT_ROOT/sentinel/run_with_bigpickle.py"
 else
-    echo "🔍 Starting watcher with big-pickle (interval: ${INTERVAL}s)"
+    echo "🔍 Starting sentinel with big-pickle (interval: ${INTERVAL}s)"
     echo "   Press Ctrl+C to stop"
     echo ""
-    python3 "$PROJECT_ROOT/watcher/run_with_bigpickle.py" --loop "$INTERVAL"
+    python3 "$PROJECT_ROOT/sentinel/run_with_bigpickle.py" --loop "$INTERVAL"
 fi

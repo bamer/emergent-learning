@@ -1,10 +1,10 @@
-# Heuristics: watcher
+# Heuristics: sentinel
 
-Generated from failures, successes, and observations in the **watcher** domain.
+Generated from failures, successes, and observations in the **sentinel** domain.
 
 ---
 
-## H-4: ELF watcher system compliance verification
+## H-4: ELF sentinel system compliance verification
 
 **Confidence**: 0.95
 **Source**: observation

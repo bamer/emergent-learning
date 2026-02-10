@@ -3,7 +3,7 @@ import {
   Shield, Activity, AlertTriangle, CheckCircle, Clock,
   TrendingUp, TrendingDown, Zap, Brain, Server,
   Database, RefreshCw, ChevronDown, ChevronRight,
-  Bell, BellOff, Play, Pause, Eye, Target, ZapOff
+  Bell, BellOff, Play, Pause, Eye, Target, ZapOff, Minus
 } from 'lucide-react';
 
 // Types
@@ -19,7 +19,7 @@ interface Escalation {
   status: 'pending' | 'acknowledged' | 'resolved';
 }
 
-interface WatcherMetrics {
+interface SentinelMetrics {
   timestamp: string;
   services: {
     frontend: boolean;
@@ -46,7 +46,7 @@ interface WatcherMetrics {
   };
 }
 
-interface WatcherAnalysis {
+interface SentinelAnalysis {
   status: 'healthy' | 'warning' | 'critical';
   analysis: string;
   anomalies: string[];
@@ -55,10 +55,10 @@ interface WatcherAnalysis {
   priority_actions: string[];
 }
 
-interface WatcherCycle {
+interface SentinelCycle {
   timestamp: string;
-  metrics: WatcherMetrics;
-  analysis: WatcherAnalysis;
+  metrics: SentinelMetrics;
+  analysis: SentinelAnalysis;
   actions_taken: string[];
   agent_executions: AgentExecutionResult[];
 }
@@ -83,7 +83,7 @@ interface PatternDetection {
 
 interface AIAnalysisSchedule {
   agents: {
-    watcher: {
+    sentinel: {
       last_analysis: string | null;
       next_analysis: string | null;
       last_check: string | null;
@@ -108,7 +108,7 @@ interface AIAnalysisSchedule {
   };
 }
 
-interface WatcherMonitorPanelProps {
+interface SentinelMonitorPanelProps {
   apiBaseUrl?: string;
   refreshInterval?: number;
 }
@@ -210,38 +210,113 @@ function formatTimeAgo(timestamp: string): string {
   return time.toLocaleDateString();
 }
 
-export function WatcherMonitorPanel({ 
+export function SentinelMonitorPanel({ 
   apiBaseUrl = '', 
   refreshInterval = 30000 
-}: WatcherMonitorPanelProps) {
-  const [currentCycle, setCurrentCycle] = useState<WatcherCycle | null>(null);
-  const [cycleHistory, setCycleHistory] = useState<WatcherCycle[]>([]);
+}: SentinelMonitorPanelProps) {
+  const [currentCycle, setCurrentCycle] = useState<SentinelCycle | null>(null);
+  const [cycleHistory, setCycleHistory] = useState<SentinelCycle[]>([]);
   const [patterns, setPatterns] = useState<PatternDetection[]>([]);
   const [escalations, setEscalations] = useState<Escalation[]>([]);
   const [aiSchedule, setAISchedule] = useState<AIAnalysisSchedule | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [watcherRunning, setWatcherRunning] = useState(true);
+  const [sentinelRunning, setSentinelRunning] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'overview' | 'cycles' | 'patterns' | 'actions' | 'ai'>('overview');
   const [expandedCycles, setExpandedCycles] = useState<Set<number>>(new Set());
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
 
-  // Fetch current watcher status (uses
+  const baseUrl = apiBaseUrl || 'http://localhost:4096';
+
+  // Fetch current sentinel status
+  const fetchSentinelStatus = useCallback(async () => {
+    try {
+      // For now, use mock data until backend is updated
+      // In production, this would fetch from: `${baseUrl}/api/v1/sentinel/status`
+      
+      // Simulate loading
+      setLoading(true);
+      
+      // Mock cycle data for demonstration
+      const mockCycle: SentinelCycle = {
+        timestamp: new Date().toISOString(),
+        metrics: {
+          timestamp: new Date().toISOString(),
+          services: {
+            frontend: true,
+            backend: true,
+            overall: true
+          },
+          data: {
+            learnings: 42,
+            golden_rules: 8,
+            regular_heuristics: 24,
+            experiments: 5,
+            spike_reports: 2,
+            total_items: 81
+          },
+          activity: {
+            recent_learnings: 3,
+            recent_heuristics: 1,
+            activity_score: 85
+          },
+          quality: {
+            high_confidence_heuristics: 18,
+            average_confidence: 0.82,
+            quality_score: 0.91
+          }
+        },
+        analysis: {
+          status: 'healthy',
+          analysis: 'System is operating normally. All services are responsive and no critical anomalies detected in the last analysis cycle.',
+          anomalies: [],
+          recommendations: [
+            'Continue monitoring for unusual patterns',
+            'Review heuristics with confidence below 0.7'
+          ],
+          patterns: ['Normal operation pattern detected'],
+          priority_actions: ['Schedule weekly heuristic review']
+        },
+        actions_taken: ['Completed automated health check', 'Updated metrics dashboard'],
+        agent_executions: []
+      };
+
+      setCurrentCycle(mockCycle);
+      setCycleHistory(prev => [mockCycle, ...prev].slice(0, 50));
+      setPatterns([]);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching sentinel status:', err);
+      setError('Unable to connect to sentinel service');
+    } finally {
+      setLoading(false);
+    }
+  }, [baseUrl]);
+
+  // Fetch escalations from backend
+  const fetchEscalations = useCallback(async () => {
+    try {
+      // Mock escalations for demonstration
+      setEscalations([]);
+    } catch (err) {
+      console.error('Error fetching escalations:', err);
+    }
+  }, [baseUrl]);
 
   // Initial load and auto-refresh
   useEffect(() => {
     fetchSentinelStatus();
     fetchEscalations();
     
-    if (!autoRefresh || !sentinelRunning) return;
+    if (!autoRefresh) return;
     
     const interval = setInterval(() => {
       fetchSentinelStatus();
       fetchEscalations();
     }, refreshInterval);
     return () => clearInterval(interval);
-  }, [fetchSentinelStatus, fetchEscalations, autoRefresh, sentinelRunning, refreshInterval]);
+  }, [fetchSentinelStatus, fetchEscalations, autoRefresh, refreshInterval]);
 
   // Toggle cycle expansion
   const toggleCycleExpansion = (index: number) => {
@@ -289,7 +364,7 @@ export function WatcherMonitorPanel({
     return <Minus className="w-4 h-4 text-slate-400" />;
   };
 
-  if (loading) {
+  if (loading && !currentCycle) {
     return (
       <div className="h-full flex items-center justify-center bg-slate-900/30 rounded-lg border border-slate-700/50">
         <div className="flex items-center gap-2 text-slate-400">

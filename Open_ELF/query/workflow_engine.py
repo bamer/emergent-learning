@@ -23,9 +23,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+# Unified ELF logging (required for all ELF modules)
+try:
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("workflow_engine")
+except ImportError:
+    import logging
+
+    _LOGGER = logging.getLogger("workflow_engine")
+
 # Try to import yaml
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
@@ -64,7 +75,7 @@ class WorkflowStep:
         """Load step content (just-in-time loading)."""
         if self._content is None:
             if self.path.exists():
-                self._content = self.path.read_text(encoding='utf-8')
+                self._content = self.path.read_text(encoding="utf-8")
             else:
                 self._content = ""
         return self._content
@@ -107,12 +118,12 @@ class WorkflowState:
     def _default_state(self) -> Dict[str, Any]:
         """Create default workflow state."""
         return {
-            'workflow_status': 'not_started',
-            'steps_completed': [],
-            'current_step': 0,
-            'started': None,
-            'updated': None,
-            'checkpoints': [],
+            "workflow_status": "not_started",
+            "steps_completed": [],
+            "current_step": 0,
+            "started": None,
+            "updated": None,
+            "checkpoints": [],
         }
 
     @property
@@ -129,34 +140,34 @@ class WorkflowState:
 
     @property
     def steps_completed(self) -> List[int]:
-        return self.state.get('steps_completed', [])
+        return self.state.get("steps_completed", [])
 
     @property
     def current_step(self) -> int:
-        return self.state.get('current_step', 0)
+        return self.state.get("current_step", 0)
 
     @property
     def status(self) -> str:
-        return self.state.get('workflow_status', 'not_started')
+        return self.state.get("workflow_status", "not_started")
 
     def mark_step_complete(self, step_num: int, output: str = None) -> None:
         """Mark a step as completed and save state."""
-        now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-        if step_num not in self.state['steps_completed']:
-            self.state['steps_completed'].append(step_num)
-            self.state['steps_completed'].sort()
+        if step_num not in self.state["steps_completed"]:
+            self.state["steps_completed"].append(step_num)
+            self.state["steps_completed"].sort()
 
-        self.state['current_step'] = step_num + 1
-        self.state['updated'] = now
-        self.state['workflow_status'] = 'in_progress'
+        self.state["current_step"] = step_num + 1
+        self.state["updated"] = now
+        self.state["workflow_status"] = "in_progress"
 
         # Add checkpoint
         checkpoint = {
-            'step': step_num,
-            'completed_at': now,
+            "step": step_num,
+            "completed_at": now,
         }
-        self.state['checkpoints'].append(checkpoint)
+        self.state["checkpoints"].append(checkpoint)
 
         # Update content if output provided
         if output:
@@ -166,26 +177,26 @@ class WorkflowState:
 
     def mark_started(self) -> None:
         """Mark workflow as started."""
-        now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        self.state['workflow_status'] = 'in_progress'
-        self.state['started'] = now
-        self.state['updated'] = now
+        now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        self.state["workflow_status"] = "in_progress"
+        self.state["started"] = now
+        self.state["updated"] = now
         self._save()
 
     def mark_completed(self) -> None:
         """Mark workflow as completed."""
-        now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        self.state['workflow_status'] = 'completed'
-        self.state['updated'] = now
+        now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        self.state["workflow_status"] = "completed"
+        self.state["updated"] = now
         self._save()
 
     def mark_paused(self, reason: str = None) -> None:
         """Mark workflow as paused at current step."""
-        now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        self.state['workflow_status'] = 'paused'
-        self.state['updated'] = now
+        now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        self.state["workflow_status"] = "paused"
+        self.state["updated"] = now
         if reason:
-            self.state['pause_reason'] = reason
+            self.state["pause_reason"] = reason
         self._save()
 
     def append_content(self, content: str) -> None:
@@ -197,7 +208,7 @@ class WorkflowState:
         """Save state to output file."""
         full_content = format_frontmatter(self.state) + (self._content or "")
         self.output_path.parent.mkdir(parents=True, exist_ok=True)
-        self.output_path.write_text(full_content, encoding='utf-8')
+        self.output_path.write_text(full_content, encoding="utf-8")
 
 
 class WorkflowEngine:
@@ -226,7 +237,7 @@ class WorkflowEngine:
             self.config_path = workflow_path
         else:
             self.workflow_dir = workflow_path
-            self.config_path = workflow_path / 'workflow.yaml'
+            self.config_path = workflow_path / "workflow.yaml"
 
         self.config = self._load_config()
         self.steps = self._load_steps()
@@ -236,13 +247,13 @@ class WorkflowEngine:
         """Load workflow configuration."""
         if not self.config_path.exists():
             # Look for workflow.md as alternative
-            md_path = self.workflow_dir / 'workflow.md'
+            md_path = self.workflow_dir / "workflow.md"
             if md_path.exists():
                 fm, _ = read_file_with_frontmatter(md_path)
                 return fm
             return self._default_config()
 
-        content = self.config_path.read_text(encoding='utf-8')
+        content = self.config_path.read_text(encoding="utf-8")
 
         if YAML_AVAILABLE:
             return yaml.safe_load(content) or {}
@@ -253,27 +264,27 @@ class WorkflowEngine:
     def _default_config(self) -> Dict[str, Any]:
         """Default workflow configuration."""
         return {
-            'name': self.workflow_dir.name,
-            'description': 'Workflow',
-            'steps_dir': 'steps',
-            'output_dir': 'output',
-            'output_file': 'result.md',
+            "name": self.workflow_dir.name,
+            "description": "Workflow",
+            "steps_dir": "steps",
+            "output_dir": "output",
+            "output_file": "result.md",
         }
 
     def _basic_yaml_parse(self, content: str) -> Dict[str, Any]:
         """Basic YAML-like parser for simple configs."""
         result = {}
-        for line in content.split('\n'):
+        for line in content.split("\n"):
             line = line.strip()
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
-            if ':' in line and not line.startswith('-'):
-                key, value = line.split(':', 1)
+            if ":" in line and not line.startswith("-"):
+                key, value = line.split(":", 1)
                 key = key.strip()
-                value = value.strip().strip('"\'')
-                if value.lower() == 'true':
+                value = value.strip().strip("\"'")
+                if value.lower() == "true":
                     value = True
-                elif value.lower() == 'false':
+                elif value.lower() == "false":
                     value = False
                 elif value.isdigit():
                     value = int(value)
@@ -282,18 +293,18 @@ class WorkflowEngine:
 
     def _load_steps(self) -> List[WorkflowStep]:
         """Load all step files."""
-        steps_dir = self.workflow_dir / self.config.get('steps_dir', 'steps')
+        steps_dir = self.workflow_dir / self.config.get("steps_dir", "steps")
 
         if not steps_dir.exists():
             return []
 
         steps = []
-        step_files = sorted(steps_dir.glob('step-*.md'))
+        step_files = sorted(steps_dir.glob("step-*.md"))
 
         for path in step_files:
             # Extract step number from filename (step-01-name.md -> 1)
             try:
-                num_str = path.stem.split('-')[1]
+                num_str = path.stem.split("-")[1]
                 step_num = int(num_str)
             except (IndexError, ValueError):
                 continue
@@ -304,17 +315,17 @@ class WorkflowEngine:
 
     def _get_output_path(self) -> Path:
         """Get path to output file."""
-        output_dir = self.workflow_dir / self.config.get('output_dir', 'output')
-        output_file = self.config.get('output_file', 'result.md')
+        output_dir = self.workflow_dir / self.config.get("output_dir", "output")
+        output_file = self.config.get("output_file", "result.md")
         return output_dir / output_file
 
     @property
     def name(self) -> str:
-        return self.config.get('name', self.workflow_dir.name)
+        return self.config.get("name", self.workflow_dir.name)
 
     @property
     def description(self) -> str:
-        return self.config.get('description', '')
+        return self.config.get("description", "")
 
     @property
     def total_steps(self) -> int:
@@ -339,19 +350,24 @@ class WorkflowEngine:
 
     def can_resume(self) -> bool:
         """Check if workflow can be resumed."""
-        return self.state.status in ('in_progress', 'paused') and len(self.get_pending_steps()) > 0
+        return (
+            self.state.status in ("in_progress", "paused")
+            and len(self.get_pending_steps()) > 0
+        )
 
     def get_status_summary(self) -> Dict[str, Any]:
         """Get workflow status summary."""
         return {
-            'name': self.name,
-            'status': self.state.status,
-            'total_steps': self.total_steps,
-            'completed_steps': len(self.state.steps_completed),
-            'current_step': self.state.current_step,
-            'can_resume': self.can_resume(),
-            'next_step': self.get_next_step().step_num if self.get_next_step() else None,
-            'output_path': str(self.state.output_path),
+            "name": self.name,
+            "status": self.state.status,
+            "total_steps": self.total_steps,
+            "completed_steps": len(self.state.steps_completed),
+            "current_step": self.state.current_step,
+            "can_resume": self.can_resume(),
+            "next_step": self.get_next_step().step_num
+            if self.get_next_step()
+            else None,
+            "output_path": str(self.state.output_path),
         }
 
     def get_step_instructions(self, step_num: int) -> Optional[str]:
@@ -374,14 +390,14 @@ class WorkflowEngine:
 
         first_step = self.get_step(1)
         if not first_step:
-            return {'error': 'No steps defined in workflow'}
+            return {"error": "No steps defined in workflow"}
 
         return {
-            'status': 'started',
-            'workflow': self.name,
-            'step': 1,
-            'total_steps': self.total_steps,
-            'instructions': first_step.instructions,
+            "status": "started",
+            "workflow": self.name,
+            "step": 1,
+            "total_steps": self.total_steps,
+            "instructions": first_step.instructions,
         }
 
     def resume(self, from_step: int = None) -> Dict[str, Any]:
@@ -401,26 +417,26 @@ class WorkflowEngine:
         else:
             # Resume from next incomplete step
             step_num = self.state.current_step + 1
-            if step_num == 1 and self.state.status == 'not_started':
+            if step_num == 1 and self.state.status == "not_started":
                 return self.start()
 
         step = self.get_step(step_num)
         if not step:
             if step_num > self.total_steps:
                 return {
-                    'status': 'completed',
-                    'message': 'All steps completed',
-                    'output_path': str(self.state.output_path),
+                    "status": "completed",
+                    "message": "All steps completed",
+                    "output_path": str(self.state.output_path),
                 }
-            return {'error': f'Step {step_num} not found'}
+            return {"error": f"Step {step_num} not found"}
 
         return {
-            'status': 'resumed',
-            'workflow': self.name,
-            'step': step_num,
-            'total_steps': self.total_steps,
-            'completed': self.state.steps_completed,
-            'instructions': step.instructions,
+            "status": "resumed",
+            "workflow": self.name,
+            "step": step_num,
+            "total_steps": self.total_steps,
+            "completed": self.state.steps_completed,
+            "instructions": step.instructions,
         }
 
     def complete_step(self, step_num: int, output: str = None) -> Dict[str, Any]:
@@ -440,18 +456,18 @@ class WorkflowEngine:
         if not next_step:
             self.state.mark_completed()
             return {
-                'status': 'completed',
-                'workflow': self.name,
-                'message': 'Workflow completed successfully',
-                'output_path': str(self.state.output_path),
+                "status": "completed",
+                "workflow": self.name,
+                "message": "Workflow completed successfully",
+                "output_path": str(self.state.output_path),
             }
 
         return {
-            'status': 'step_completed',
-            'completed_step': step_num,
-            'next_step': step_num + 1,
-            'total_steps': self.total_steps,
-            'instructions': next_step.instructions,
+            "status": "step_completed",
+            "completed_step": step_num,
+            "next_step": step_num + 1,
+            "total_steps": self.total_steps,
+            "instructions": next_step.instructions,
         }
 
     def pause(self, reason: str = None) -> Dict[str, Any]:
@@ -466,11 +482,11 @@ class WorkflowEngine:
         """
         self.state.mark_paused(reason)
         return {
-            'status': 'paused',
-            'workflow': self.name,
-            'current_step': self.state.current_step,
-            'reason': reason,
-            'can_resume': True,
+            "status": "paused",
+            "workflow": self.name,
+            "current_step": self.state.current_step,
+            "reason": reason,
+            "can_resume": True,
         }
 
 
@@ -494,21 +510,22 @@ def list_workflows(base_dir: Path) -> List[Dict[str, Any]]:
             continue
 
         # Check for workflow.yaml or workflow.md
-        config_yaml = path / 'workflow.yaml'
-        config_md = path / 'workflow.md'
+        config_yaml = path / "workflow.yaml"
+        config_md = path / "workflow.md"
 
         if config_yaml.exists() or config_md.exists():
             try:
                 engine = WorkflowEngine(path)
                 workflows.append(engine.get_status_summary())
-            except Exception:
+            except Exception as e:
+                log_debug("workflow_engine", f"Failed to load workflow at {path}: {e}")
                 continue
 
     return workflows
 
 
 # CLI for testing
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     print("=== Workflow Engine Test ===\n")

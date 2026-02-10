@@ -24,7 +24,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Adds severity header to help CEO prioritize escalations
 
 - **CEO Inbox Monitor Escalation Processing** - Fixed escalation pattern matching
-  - Updated `get_pending_escalations()` to recognize all escalation patterns: watcher_esc_*, sentinel_esc_*, ceo_escalation_*, orchestrator_*
+  - Updated `get_pending_escalations()` to recognize all escalation patterns: sentinel_esc_*, sentinel_esc_*, ceo_escalation_*, orchestrator_*
   - CEO monitor now correctly detects and processes escalations from L2 forwarding
   - Integrated 60-minute autonomous system analysis with graceful handling of missing database tables
   - Archives processed escalations with results
@@ -61,7 +61,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Files affected:
     - `core/event_bridge_v2.py` (lines 95, 479)
     - `core/learning_processor.py` (lines 100, 133, 293, 314, multiple others)
-    - `core/watcher.py` (lines 113, 123)
+    - `core/sentinel.py` (lines 113, 123)
     - `core/monitoring_api.py` (lines 82, 89, 108, 132, 192)
   - All errors now logged with `logger.error(..., exc_info=True)` or re-raised
 
@@ -174,7 +174,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - **Complete Learning Workflow Refactoring** - Major architecture simplification
   - Created 3 new consolidated components replacing 8+ over-engineered files:
-    - `core/watcher.py` (500 lines) - Level 1 Agent (merged Watcher + Sentinel)
+    - `core/sentinel.py` (500 lines) - Level 1 Agent (merged Watcher + Sentinel)
     - `core/learning_processor.py` (700 lines) - All learning + trails centralized
     - `core/event_bridge_v2.py` (300 lines) - Simplified event routing
     - `core/__init__.py` - Core module initialization
@@ -191,7 +191,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - `ARCHIVE_DEPRECATED_FILES.sh` - Script to archive old components
   - All deprecated files moved to `archived_components/20260209/`:
     - `agents/sentinel_monitor.py` → archived (merged into Watcher)
-    - `Open_ELF/watcher/elf_watcher.py` → archived (replaced by core/watcher.py)
+    - `Open_ELF/sentinel/elf_sentinel.py` → archived (replaced by core/sentinel.py)
     - `Open_ELF/orchestrator/event_bridge.py` → archived (replaced by v2)
     - `hooks/learning-loop/*.py` → archived (consolidated into LearningProcessor)
     - `conductor/conductor.py` → archived (trails moved to LearningProcessor)
@@ -205,13 +205,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     - Watcher (L1) → Escalates to Orchestrator (L2) on warning/critical
     - Orchestrator (L2) → Escalates to CEO (L3) only on critical
     - CEO (L3) → Handles critical escalations with strategic decisions
-  - Updated `core/watcher.py` escalation logic with proper file format
+  - Updated `core/sentinel.py` escalation logic with proper file format
   - Escalation files now include "Orchestrator Instructions" for autonomous processing
 
 - **Startup Script Updated** - Uses new refactored components
   - `start-elf-system.sh` updated:
     - Event Bridge: Now uses `core/event_bridge_v2.py` instead of old `orchestrator/event_bridge.py`
-    - Watcher: Now uses `core/watcher.py` (merged Watcher + Sentinel)
+    - Watcher: Now uses `core/sentinel.py` (merged Watcher + Sentinel)
     - Logs show "Watcher v3.0 (Level 1 Agent)" with merged functionality
     - Sentinel monitor disabled (merged into Watcher)
   - Fallback support for backward compatibility during transition
@@ -229,7 +229,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Complete File Cleanup** - All old components fully removed from active codebase
   - Deleted deprecation stubs (were keeping empty placeholder files)
   - Only new refactored components remain in `core/` directory
-  - Old `hooks/`, `conductor/`, `Open_ELF/watcher/` directories cleaned
+  - Old `hooks/`, `conductor/`, `Open_ELF/sentinel/` directories cleaned
   - Archived files preserved in `archived_components/20260209/` for restoration if needed
 
 ### Fixed
@@ -352,7 +352,7 @@ The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
     2. `Open_ELF/utils/event_logger.py` - Database event logging (4 imports)
   - **After**: Single unified logging system `Open_ELF/utils/elf_logging.py`
     - All file-based logging functions: `get_logger()`, `log_info()`, `log_warning()`, `log_error()`, `log_critical()`
-    - All database event functions: `log_event()`, `log_watcher_check()`, `log_file_event()`, `log_orchestrator_event()`, `get_recent_events()`
+    - All database event functions: `log_event()`, `log_sentinel_check()`, `log_file_event()`, `log_orchestrator_event()`, `get_recent_events()`
     - Event types dictionary included for consistency
   - Updated all import statements across the codebase
   - Simplified import: `from Open_ELF.utils.elf_logging import get_logger, log_event, ...`
@@ -561,10 +561,10 @@ The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
 - **Python Script Installation** - Installer now copies all 21 Python scripts from tools/scripts/
   - Fixes pre-commit hook failures (check-invariants.py missing)
   - Ensures recording scripts (record-heuristic.py, etc.) are available
-- **Watcher Module Installation** - Tiered watcher system now properly installed
-  - src/watcher/ copied to ~/.opencode/emergent-learning/watcher/
-  - start-watcher.sh updated to use correct installed paths
-  - Fixes "launcher.py not found" error when starting watcher
+- **Watcher Module Installation** - Tiered sentinel system now properly installed
+  - src/sentinel/ copied to ~/.opencode/emergent-learning/sentinel/
+  - start-sentinel.sh updated to use correct installed paths
+  - Fixes "launcher.py not found" error when starting sentinel
 
 ## [0.2.0] - 2025-12-16
 

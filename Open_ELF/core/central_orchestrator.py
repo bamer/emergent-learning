@@ -79,8 +79,11 @@ class DecisionEngine:
             return await self._handle_sentinel_coordination(request)
         elif request.request_type == "pattern_coordination":
             return await self._handle_pattern_coordination(request)
-        elif request.request_type == "watcher_analysis":
-            return await self._handle_watcher_analysis(request)
+        elif request.request_type == "sentinel_analysis":
+            return await self._handle_sentinel_analysis(request)
+        elif request.request_type == "sentinel_analysis":
+            # Legacy support - redirect to sentinel_analysis
+            return await self._handle_sentinel_analysis(request)
         else:
             return OrchestratorResponse(
                 request_id=request.request_id,
@@ -259,9 +262,9 @@ Respond with JSON format:
             "timestamp": datetime.now().isoformat(),
         }
 
-        # Watcher escalation triage logic
-        if mission_type == "watcher_escalation":
-            return await self._triage_watcher_escalation(component, mission_data)
+        # Sentinel escalation triage logic (formerly sentinel)
+        if mission_type == "sentinel_escalation" or mission_type == "sentinel_escalation":
+            return await self._triage_sentinel_escalation(component, mission_data)
 
         # Sentinel monitoring triage logic
         elif mission_type == "sentinel_monitoring":
@@ -273,10 +276,10 @@ Respond with JSON format:
                 mission_type, component, mission_data
             )
 
-    async def _triage_watcher_escalation(
+    async def _triage_sentinel_escalation(
         self, component: str, mission_data: dict
     ) -> Dict[str, Any]:
-        """Triage watcher escalations: decide CEO vs auto-repair vs ignore."""
+        """Triage sentinel escalations: decide CEO vs auto-repair vs ignore."""
         analysis = mission_data.get("analysis", {})
         system_state = mission_data.get("system_state", {})
 
@@ -434,9 +437,9 @@ Respond with JSON format:
     ) -> OrchestratorResponse:
         """Handle coordination requests between components."""
 
-        # Special handling for watcher requests - use real AI analysis
-        if request.component == "watcher" and "prompt" in request.data:
-            return await self._handle_watcher_analysis(request)
+        # Special handling for sentinel requests - use real AI analysis
+        if request.component == "sentinel" and "prompt" in request.data:
+            return await self._handle_sentinel_analysis(request)
 
         components = request.data.get("components", [])
         coordination_type = request.data.get("type", "general")
@@ -454,12 +457,12 @@ Respond with JSON format:
             confidence=coordination_result.get("confidence", 0.8),
         )
 
-    async def _handle_watcher_analysis(
+    async def _handle_sentinel_analysis(
         self, request: OrchestratorRequest
     ) -> OrchestratorResponse:
-        """Handle watcher analysis requests using real AI via OpenCode."""
+        """Handle sentinel analysis requests using real AI via OpenCode."""
         prompt = request.data.get("prompt", "")
-        analysis_type = request.data.get("analysis_type", "tier1_watcher")
+        analysis_type = request.data.get("analysis_type", "tier1_sentinel")
 
         # Use OpenCode client to get real AI analysis
         try:
@@ -469,19 +472,19 @@ Respond with JSON format:
             if client:
                 # Send prompt to OpenCode for real analysis
                 success, ai_response = client.send_message(
-                    prompt=f"""You are an AI watcher analyzing system state.
+                    prompt=f"""You are an AI sentinel analyzing system state.
 
 {prompt}
 
-Please analyze and provide a concise watcher summary with STATUS field.
+Please analyze and provide a concise sentinel summary with STATUS field.
 
 Format your response as:
-== WATCHER SUMMARY ==
+== SENTINEL SUMMARY ==
 STATUS: <nominal|stale|error|stopped>
 ANALYSIS: <brief analysis>
 RECOMMENDATION: <what to do next>
 """,
-                    agent="watcher",
+                    agent="sentinel",
                 )
 
                 if success and ai_response:
@@ -507,7 +510,7 @@ RECOMMENDATION: <what to do next>
                         confidence=0.9,
                     )
         except Exception as e:
-            logger.error(f"Error calling OpenCode for watcher analysis: {e}")
+            logger.error(f"Error calling OpenCode for sentinel analysis: {e}")
 
         # Fallback if OpenCode fails
         return OrchestratorResponse(

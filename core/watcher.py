@@ -46,18 +46,18 @@ except ImportError:
 
 # Setup logging
 try:
-    from Open_ELF.utils.elf_logging import get_logger, log_watcher_check
+    from Open_ELF.utils.elf_logging import get_logger, log_sentinel_check
 
-    logger = get_logger("watcher")
+    logger = get_logger("sentinel")
     LOGGING_AVAILABLE = True
 except ImportError:
     import logging
 
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("watcher")
+    logger = logging.getLogger("sentinel")
     LOGGING_AVAILABLE = False
 
-    def log_watcher_check(*args, **kwargs):
+    def log_sentinel_check(*args, **kwargs):
         return None
 
 
@@ -267,11 +267,11 @@ class Watcher:
                 "metrics": metrics,
                 "patterns": patterns,
                 "cycle": self.cycle_count,
-                "analysis_type": "watcher_assessment",
+                "analysis_type": "sentinel_assessment",
             }
 
-            # Query watcher agent
-            result = self.agent_manager.watcher(
+            # Query sentinel agent
+            result = self.agent_manager.sentinel(
                 request="Analyze the current system state based on the provided metrics and patterns. "
                 "Focus on: 1) Overall health status, 2) Any anomalies or concerns, "
                 "3) Recommended actions with priority levels.",
@@ -387,7 +387,7 @@ class Watcher:
             ESCALATION_DIR.mkdir(parents=True, exist_ok=True)
             CEO_INBOX_DIR.mkdir(parents=True, exist_ok=True)
 
-            escalation_id = f"watcher_esc_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            escalation_id = f"sentinel_esc_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             # Write to coordination directory for Orchestrator (L2) to process
             escalation_file = ESCALATION_DIR / f"{escalation_id}.md"
 
@@ -438,7 +438,7 @@ class Watcher:
 
             # Log to database
             if LOGGING_AVAILABLE:
-                log_watcher_check(
+                log_sentinel_check(
                     tier=1,
                     status=analysis.get("status"),
                     summary=f"Escalation to Orchestrator: {escalation_id}",
@@ -461,7 +461,7 @@ class Watcher:
         """Log monitoring cycle to database."""
         if LOGGING_AVAILABLE:
             try:
-                log_watcher_check(
+                log_sentinel_check(
                     tier=1 if not analysis.get("ai_processed") else 2,
                     status=analysis.get("status", "unknown"),
                     summary=f"Cycle {self.cycle_count}: {analysis.get('analysis', '')[:100]}...",
@@ -608,8 +608,8 @@ class Watcher:
 
 def main():
     """Main entry point."""
-    watcher = Watcher()
-    watcher.run_continuous()
+    sentinel = Watcher()
+    sentinel.run_continuous()
 
 
 if __name__ == "__main__":

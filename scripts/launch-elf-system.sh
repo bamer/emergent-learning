@@ -135,7 +135,7 @@ opencode server --port 4096
         echo -e "${PURPLE}💡 CONTRÔLE DU SERVEUR:${NC}"
         echo -e "${BLUE}   • Monitorer: ${GREEN}curl http://localhost:4096/global/health${NC}"
         echo -e "${BLUE}   • Arrêter: ${RED}./launch-elf-system.sh --stop-opencode${NC}"
-        echo -e "${BLUE}   • Logs: ${YELLOW}.coordination/watcher-log.md${NC}"
+        echo -e "${BLUE}   • Logs: ${YELLOW}.coordination/sentinel-log.md${NC}"
         
         # Attendre que le serveur soit prêt
         echo -e "${BLUE}⏳ Attente de disponibilité du serveur...${NC}"
@@ -183,22 +183,22 @@ stop_opencode_server() {
     fi
 }
 
-# Fonction pour démarrer le watcher daemon
-start_watcher_daemon() {
+# Fonction pour démarrer le sentinel daemon
+start_sentinel_daemon() {
     echo -e "${PURPLE}👁️ Démarrage du Watcher Daemon...${NC}"
     
     cd "$ELF_DIR"
     
     # Démarrer en arrière-plan
-    $PYTHON_CMD watcher/enhanced_watcher.py --daemon --interval 30 &
+    $PYTHON_CMD sentinel/enhanced_sentinel.py --daemon --interval 30 &
     WATCHER_PID=$!
     
     echo -e "${GREEN}✅ Watcher démarré (PID: $WATCHER_PID)${NC}"
-    echo -e "   📝 Logs: ${BLUE}$ELF_DIR/.coordination/watcher-log.md${NC}"
-    echo -e "   🛑 Contrôle: ${BLUE}touch $ELF_DIR/.coordination/watcher-stop${NC}"
+    echo -e "   📝 Logs: ${BLUE}$ELF_DIR/.coordination/sentinel-log.md${NC}"
+    echo -e "   🛑 Contrôle: ${BLUE}touch $ELF_DIR/.coordination/sentinel-stop${NC}"
     
     # Sauvegarder le PID pour la gestion
-    echo $WATCHER_PID > "$ELF_DIR/.watcher.pid"
+    echo $WATCHER_PID > "$ELF_DIR/.sentinel.pid"
 }
 
 # Fonction pour effectuer une vérification de santé
@@ -220,7 +220,7 @@ run_health_check() {
     if [ -d "$ELF_DIR/.coordination" ]; then
         echo -e "${GREEN}✅ Répertoire coordination: EXISTE${NC}"
         echo -e "   Tableau noir: ${BLUE}$ELF_DIR/.coordination/blackboard.json${NC}"
-        echo -e "   Logs watcher: ${BLUE}$ELF_DIR/.coordination/watcher-log.md${NC}"
+        echo -e "   Logs sentinel: ${BLUE}$ELF_DIR/.coordination/sentinel-log.md${NC}"
     else
         echo -e "${YELLOW}⚠️  Répertoire coordination: MANQUANT${NC}"
         echo -e "   Création: $ELF_DIR/.coordination"
@@ -250,7 +250,7 @@ show_usage() {
     echo ""
     echo "Options:"
     echo "  --check          Vérifier santé système uniquement"
-    echo "  --daemon         Démarrer système complet avec watcher daemon"
+    echo "  --daemon         Démarrer système complet avec sentinel daemon"
     echo "  --opencode       Démarrer serveur OpenCode dans terminal séparée"
     echo "  --stop-opencode  Arrêter serveur OpenCode"
     echo "  --help, -h      Afficher cette aide"
@@ -311,7 +311,7 @@ case "${1:-}" in
         echo -e "${GREEN}✅ Prérequis vérifiés${NC}"
         echo ""
         
-        start_watcher_daemon
+        start_sentinel_daemon
         exit 0
         ;;
     --opencode|--opencode)

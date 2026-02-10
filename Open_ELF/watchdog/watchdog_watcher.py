@@ -23,16 +23,16 @@ if str(ELF_DIR) not in sys.path:
 try:
     from Open_ELF.utils import elf_logging
 
-    logger = elf_logging.get_logger("watchdog_watcher")
+    logger = elf_logging.get_logger("watchdog_sentinel")
 except ImportError:
     import logging
 
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("watchdog_watcher")
+    logger = logging.getLogger("watchdog_sentinel")
 
 # Configuration
-WATCHER_LOG_PATH = ELF_DIR / "logs" / "elf_watcher.log"
-WATCHER_SCRIPT_PATH = ELF_DIR / "Open_ELF" / "watcher" / "elf_watcher.py"
+WATCHER_LOG_PATH = ELF_DIR / "logs" / "elf_sentinel.log"
+WATCHER_SCRIPT_PATH = ELF_DIR / "Open_ELF" / "sentinel" / "elf_sentinel.py"
 MONITOR_INTERVAL = 30  # Check every 30 seconds
 WATCHER_TIMEOUT = 900  # 15 minutes (900 seconds) timeout
 
@@ -49,8 +49,8 @@ def get_last_log_timestamp():
 
         # Look for the last log line
         for line in reversed(lines):
-            if line.strip() and "- elf.elf_watcher - " in line:
-                # Extract timestamp from line format: "2026-02-08 21:35:10 - elf.elf_watcher - INFO - ..."
+            if line.strip() and "- elf.elf_sentinel - " in line:
+                # Extract timestamp from line format: "2026-02-08 21:35:10 - elf.elf_sentinel - INFO - ..."
                 parts = line.split(" - ")
                 if len(parts) >= 3:
                     timestamp_str = parts[0]
@@ -65,7 +65,7 @@ def get_last_log_timestamp():
         return None
 
 
-def is_watcher_running():
+def is_sentinel_running():
     """Check if Watcher process is running."""
     try:
         result = subprocess.run(
@@ -77,7 +77,7 @@ def is_watcher_running():
         return False
 
 
-def start_watcher():
+def start_sentinel():
     """Start the Watcher agent."""
     try:
         # Kill any existing Watcher process first
@@ -97,7 +97,7 @@ def start_watcher():
         return False
 
 
-def monitor_watcher():
+def monitor_sentinel():
     """Main watchdog monitoring loop."""
     logger.info("🚀 ELF Watcher Watchdog started")
     logger.info(f"Monitoring: {WATCHER_LOG_PATH}")
@@ -130,7 +130,7 @@ def monitor_watcher():
                     )
 
                     # Check if Watcher is still running
-                    if is_watcher_running():
+                    if is_sentinel_running():
                         logger.info("Restarting Watcher process...")
 
                         # Kill existing process
@@ -140,7 +140,7 @@ def monitor_watcher():
                         )
 
                         # Start new process
-                        if start_watcher():
+                        if start_sentinel():
                             logger.info("✅ Watcher restarted successfully")
 
                             # Log the restart to database if available
@@ -149,7 +149,7 @@ def monitor_watcher():
 
                                 log_event(
                                     event_type="watchdog_restart",
-                                    source="watchdog_watcher",
+                                    source="watchdog_sentinel",
                                     summary="Watcher restarted due to timeout",
                                     data={
                                         "time_since_last_log": time_since_last_log,
@@ -162,7 +162,7 @@ def monitor_watcher():
                             logger.error("❌ Failed to restart Watcher")
                     else:
                         logger.info("Watcher not running, starting...")
-                        if start_watcher():
+                        if start_sentinel():
                             logger.info("✅ Watcher started successfully")
                         else:
                             logger.error("❌ Failed to start Watcher")
@@ -179,4 +179,4 @@ def monitor_watcher():
 
 
 if __name__ == "__main__":
-    monitor_watcher()
+    monitor_sentinel()

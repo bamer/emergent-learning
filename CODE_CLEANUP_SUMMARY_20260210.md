@@ -51,7 +51,7 @@ logger.error(f"❌ Failed to load LearningProcessor: {e}", exc_info=True)
 |------|---------------|-------|-------|
 | `core/event_bridge_v2.py` | 95, 479 | `except: pass` | `logger.error(..., exc_info=True)` |
 | `core/learning_processor.py` | 100, 133, 293, 314, 495, 501, 503, 637, 705, 772, 930, 1011 | `print(...)` or `except: pass` | `logger.error(..., exc_info=True)` |
-| `core/watcher.py` | 113, 123 | `except: logger.debug(...)` | `logger.error(..., exc_info=True)` |
+| `core/sentinel.py` | 113, 123 | `except: logger.debug(...)` | `logger.error(..., exc_info=True)` |
 | `core/monitoring_api.py` | 82, 89, 108, 132, 192 | `except: pass` or `print()` | `logger.error(..., exc_info=True)` |
 
 **Pattern:**
@@ -143,7 +143,7 @@ def stop(self):
     logger.info("✅ EventBridge stopped")
 ```
 
-**Watcher (`core/watcher.py`):**
+**Watcher (`core/sentinel.py`):**
 ```python
 # Added to __init__:
 self.http_session = requests.Session()
@@ -211,7 +211,7 @@ HTTP session type: <class 'requests.sessions.Session'>
 Modified (6 files):
   core/event_bridge_v2.py         - Import fix + logger + Session + trail fix
   core/learning_processor.py      - Logger fixes + error fixes
-  core/watcher.py                 - Logger fix + Session
+  core/sentinel.py                 - Logger fix + Session
   core/monitoring_api.py          - Logger fixes
   core/init_golden_rules.py       - Logger fixes
   CHANGELOG.md                    - Documented changes

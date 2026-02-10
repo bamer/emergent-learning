@@ -94,6 +94,6 @@ memory/index.db.pre-*
 .coordination/event-bridge-heartbeat.json
 .coordination/event-bridge-heartbeat.json
 .gitignore
-.coordination/watcher-log.md
+.coordination/sentinel-log.md
 .coordination/event-bridge-heartbeat.json
 .coordination/event-bridge-heartbeat.json

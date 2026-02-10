@@ -97,7 +97,7 @@ POST /api/v1/system/services/{service}/control - Control service
 **Services Monitored**:
 - `orchestrator` - Unified Orchestrator (port 9998)
 - `event_bridge` - EventBridge service
-- `watcher` - Watcher monitoring agent
+- `sentinel` - Watcher monitoring agent
 - `sentinel` - Sentinel monitoring agent
 - `learning_capture` - Learning Capture service
 - `ceo_monitor` - CEO Inbox Monitor
@@ -311,7 +311,7 @@ curl http://localhost:3001/api/v1/missions
 curl http://localhost:3001/api/v1/system/services
 
 # Specific service
-curl http://localhost:3001/api/v1/system/services/watcher
+curl http://localhost:3001/api/v1/system/services/sentinel
 ```
 
 ### Test Coordinator

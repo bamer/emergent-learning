@@ -88,7 +88,7 @@ async def root():
         .model-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; padding: 24px 32px; }
         .model-card { background: #161b22; border: 1px solid #30363d; border-radius: 16px; overflow: hidden; }
         .model-card.event-bridge { border-left: 4px solid #58a6ff; }
-        .model-card.watcher { border-left: 4px solid #a371f7; }
+        .model-card.sentinel { border-left: 4px solid #a371f7; }
         .model-card.orchestrator { border-left: 4px solid #3fb950; }
         .model-card.ceo { border-left: 4px solid #f0883e; }
         
@@ -199,7 +199,7 @@ async def root():
         </div>
         
         <!-- Watcher Model Card -->
-        <div class="model-card watcher">
+        <div class="model-card sentinel">
             <div class="model-header">
                 <div class="top">
                     <span class="icon">👁️</span>

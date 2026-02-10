@@ -26,8 +26,8 @@ Spawn and manage coordinated agents using the blackboard pattern.
 
 **Single-Pass Watcher Model:**
 1. You spawn work agents with `[SWARM]` tag
-2. Hook reminds main Claude if watcher needed
-3. Main Claude spawns nvidia/qwen/qwen3-next-80b-a3b-instruct watcher (single pass)
+2. Hook reminds main Claude if sentinel needed
+3. Main Claude spawns nvidia/qwen/qwen3-next-80b-a3b-instruct sentinel (single pass)
 4. Watcher analyzes state, fixes problems, logs, exits
 5. Next user message triggers next monitoring cycle
 
@@ -44,7 +44,7 @@ Watchers do NOT self-perpetuate (cost control). The cycle is driven by user inte
 1. **Initialize** (if needed):
    ```bash
    mkdir -p ~/.opencode/emergent-learning/.coordination
-   python ~/.opencode/emergent-learning/watcher/watcher_loop.py clear
+   python ~/.opencode/emergent-learning/sentinel/sentinel_loop.py clear
    ```
 
 2. **Analyze & decompose** the task into parallel subtasks
@@ -78,9 +78,9 @@ Watchers do NOT self-perpetuate (cost control). The cycle is driven by user inte
    - run_in_background: true
    ```
 
-5. **Spawn watcher** (optional but recommended):
+5. **Spawn sentinel** (optional but recommended):
    ```bash
-   python ~/.opencode/emergent-learning/watcher/watcher_loop.py prompt
+   python ~/.opencode/emergent-learning/sentinel/sentinel_loop.py prompt
    ```
 
    Then spawn with Task tool:
@@ -92,13 +92,13 @@ Watchers do NOT self-perpetuate (cost control). The cycle is driven by user inte
    - prompt: (output from above command)
    ```
 
-   The watcher will:
+   The sentinel will:
    - Do ONE comprehensive monitoring pass
    - Detect problems (stale agents, errors)
    - Fix issues directly (update blackboard)
    - Log findings and exit
 
-   A UserPromptSubmit hook will remind you to spawn another watcher if needed.
+   A UserPromptSubmit hook will remind you to spawn another sentinel if needed.
 
 6. **Iterate** on follow-up tasks from queue (max 5 iterations)
 
@@ -106,13 +106,13 @@ Watchers do NOT self-perpetuate (cost control). The cycle is driven by user inte
 
 8. **Stop monitoring** when done:
    ```bash
-   python ~/.opencode/emergent-learning/watcher/watcher_loop.py stop
+   python ~/.opencode/emergent-learning/sentinel/sentinel_loop.py stop
    ```
 
 ### `/swarm show` (View State)
 
 ```bash
-python ~/.opencode/emergent-learning/watcher/watcher_loop.py status
+python ~/.opencode/emergent-learning/sentinel/sentinel_loop.py status
 ```
 
 Also check blackboard:
@@ -131,10 +131,10 @@ rm -rf ~/.opencode/emergent-learning/.coordination/*
 
 Stop monitoring:
 ```bash
-python ~/.opencode/emergent-learning/watcher/watcher_loop.py stop
+python ~/.opencode/emergent-learning/sentinel/sentinel_loop.py stop
 ```
 
-This creates a `watcher-stop` file that prevents future watcher spawns.
+This creates a `sentinel-stop` file that prevents future sentinel spawns.
 
 ---
 
@@ -150,5 +150,5 @@ Agents report in `## FINDINGS` section:
 
 - File-based IPC (no external services)
 - Windows compatible
-- Single-pass watchers (user-driven cycle)
+- Single-pass sentinels (user-driven cycle)
 - Max 5 iterations per swarm

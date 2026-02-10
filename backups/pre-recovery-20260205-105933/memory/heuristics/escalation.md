@@ -4,7 +4,7 @@ Generated from failures, successes, and observations in the **escalation** domai
 
 ---
 
-## H-27: ELF watcher system in critical state with repeated escalation failures - requires immediate CEO intervention
+## H-27: ELF sentinel system in critical state with repeated escalation failures - requires immediate CEO intervention
 
 **Confidence**: 0.9
 **Source**: system-monitoring

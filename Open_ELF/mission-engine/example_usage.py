@@ -28,7 +28,7 @@ def example_basic_mission():
     mission = engine.create_mission(
         title="Vérification système",
         description="Vérifier que tous les services fonctionnent correctement",
-        agent="watcher",
+        agent="sentinel",
         priority=MissionPriority.HIGH,
     )
     
@@ -102,7 +102,7 @@ def example_pattern_response():
     # Créer une mission de réponse
     mission = handler.create_pattern_response_mission(
         pattern=pattern,
-        agent="watcher",
+        agent="sentinel",
         recommendations=recommendations,
         context=context,
     )

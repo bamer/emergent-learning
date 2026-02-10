@@ -11,6 +11,16 @@ import os
 import sys
 import time
 
+# Unified ELF logging (required for all ELF modules)
+try:
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("config_loader")
+except ImportError:
+    import logging
+
+    _LOGGER = logging.getLogger("config_loader")
+
 _custom_golden_rules_cache: Optional[str] = None
 _custom_golden_rules_cache_time: float = 0
 _CUSTOM_GOLDEN_RULES_CACHE_TTL = 300
@@ -98,7 +108,8 @@ def load_yaml_file(path: Path) -> Optional[Dict]:
     try:
         with open(path, "r", encoding="utf-8") as f:
             return yaml.safe_load(f)
-    except Exception:
+    except Exception as e:
+        log_debug("config_loader", f"Failed to load YAML file {path}: {e}")
         return None
 
 
@@ -176,7 +187,8 @@ def load_custom_golden_rules() -> Optional[str]:
         _custom_golden_rules_cache = content
         _custom_golden_rules_cache_time = now
         return content
-    except Exception:
+    except Exception as e:
+        log_debug("config_loader", f"Failed to load custom golden rules: {e}")
         return None
 
 

@@ -79,8 +79,8 @@ class CEOInboxMonitor:
         escalations = []
         # Support all escalation patterns from L2 forwarding or L1 direct:
         # - CEO escalations from Orchestrator (L2 → L3): ceo_escalation_*.md, orchestrator_*.md
-        # - Watcher/Sentinel escalations (L1 → L3): watcher_esc_*.md, sentinel_esc_*.md (forwarded by L2)
-        ceo_patterns = ["ceo_escalation", "orchestrator", "watcher_esc", "sentinel_esc"]
+        # - Watcher/Sentinel escalations (L1 → L3): sentinel_esc_*.md, sentinel_esc_*.md (forwarded by L2)
+        ceo_patterns = ["ceo_escalation", "orchestrator", "sentinel_esc", "sentinel_esc"]
 
         inbox_path = CEO_INBOX_DIR / "inbox"
         if not inbox_path.exists():

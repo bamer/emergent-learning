@@ -16,7 +16,7 @@ The Unified OpenCode Orchestrator replaces the separate Event Bridge and traditi
 
 ### 1. Event Processing Layer
 - Listens to OpenCode SSE events in real-time
-- Monitors file system changes (CEO inbox, watcher events)
+- Monitors file system changes (CEO inbox, sentinel events)
 - Watches database health and system metrics
 - Converts all inputs to standardized internal events
 

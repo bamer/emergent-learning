@@ -4,7 +4,7 @@
 
 **Analysis:**
 
-- The watcher detects "HEALTH_CRITICAL" every 30 seconds
+- The sentinel detects "HEALTH_CRITICAL" every 30 seconds
 - Orchestrator fails to resolve escalations ("Orchestrator could not resolve")
 - Blackboard.json is missing (expected at /home/bamer/.opencode/emergent-learning/.coordination/blackboard.json)
 - Orchestrator state is stale (last updated Jan 31st, over 24 hours ago)
@@ -17,7 +17,7 @@
 - This is a stale monitoring loop from an abandoned swarm task
 - No agents are actually running or stuck
 - The system is idle and healthy
-- Clean up: Remove stale orchestrator state and stop the watcher loop
+- Clean up: Remove stale orchestrator state and stop the sentinel loop
 
 ## 2026-02-03T05:59:36 HANDLER DECISION
 
@@ -25,7 +25,7 @@
 
 **Analysis:**
 
-- The watcher detects "HEALTH_CRITICAL" every 30 seconds in the log
+- The sentinel detects "HEALTH_CRITICAL" every 30 seconds in the log
 - Orchestrator fails to resolve escalations ("Orchestrator could not resolve")
 - Blackboard.json shows system is "idle" with no active agents
 - This is a phantom monitoring loop from an abandoned swarm task (same issue from Feb 2nd)

@@ -23,10 +23,9 @@ export { default as SpikeReportsPanel } from './SpikeReportsPanel'
 export { default as StatsBar } from './StatsBar'
 export { default as TimelineView } from './TimelineView'
 export {
-  WatcherMonitorPanel,
+  SentinelMonitorPanel,
   EventChronicleViewer,
   SystemHealthPanel,
-  WatcherStatusPanel,
   EventBridgeStatusPanel,
   OrchestratorStatusPanel,
   OllamaStatus,

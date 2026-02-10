@@ -4,7 +4,7 @@
       "size_mb": 1,
       "interval_minutes": 5
     },
-    "watcher.log": {
+    "sentinel.log": {
       "size_mb": 2,
       "interval_minutes": 10
     },

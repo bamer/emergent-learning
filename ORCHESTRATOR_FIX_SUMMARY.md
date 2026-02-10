@@ -65,7 +65,7 @@ Add the new features to the working backup file manually:
                filename = Path(event.src_path).name
                logger.info(f"📬 New escalation file detected: {filename}")
                asyncio.create_task(
-                   self.orchestrator.process_watcher_escalation(event.src_path)
+                   self.orchestrator.process_sentinel_escalation(event.src_path)
                )
    ```
 
@@ -79,7 +79,7 @@ Add the new features to the working backup file manually:
 
 4. **Modify `UnifiedOrchestrator._start_async`** (add after event processor start):
    ```python
-   # After line 212: Start escalation file watcher
+   # After line 212: Start escalation file sentinel
    if WATCHDOG_AVAILABLE:
        self.escalation_observer = Observer()
        event_handler = EscalationFileHandler(self)
@@ -90,7 +90,7 @@ Add the new features to the working backup file manually:
            recursive=False
        )
        self.escalation_observer.start()
-       logger.info("📂 Escalation file watcher started")
+       logger.info("📂 Escalation file sentinel started")
    
    # After line 216: Start autonomous system checks
    autonomous_checker = asyncio.create_task(self._run_autonomous_system_checks())
@@ -99,13 +99,13 @@ Add the new features to the working backup file manually:
 
 5. **Add new methods to `UnifiedOrchestrator`** (before `start()` method):
    Use the code from `unified_orchestrator-UPDATED.py.broken` lines 313-918:
-   - `process_watcher_escalation(self, filepath: str)`
+   - `process_sentinel_escalation(self, filepath: str)`
    - `_perform_autonomous_assessment(self, escalation_file: Path, content: str, severity: str)`
    - `_analyze_with_agent_manager(self, escalation_file: Path, base_assessment: Dict[str, Any])`
-   - `_escalate_to_ceo(self, watcher_escalation_file: Path, watcher_content: str, assessment: Dict[str, Any])`
+   - `_escalate_to_ceo(self, sentinel_escalation_file: Path, sentinel_content: str, assessment: Dict[str, Any])`
    - `_format_service_health_for_ceo(self)`
    - `_extract_agent_analysis_summary(self, assessment: Dict) -> str`
-   - `_log_to_watcher_log(self, escalation_file: Path, action_taken: str, assessment: Dict[str, Any])`
+   - `_log_to_sentinel_log(self, escalation_file: Path, action_taken: str, assessment: Dict[str, Any])`
    - `_archive_escalation(self, source_file: Path, target_file: Path)`
    - `_check_services_health_async(self) -> Dict[str, bool]`
    - `_run_autonomous_system_checks(self)`
@@ -137,7 +137,7 @@ This requires understanding Python AST and indentation handling.
 | `scripts/record-heuristic.py` | ✅ Replaced | Added project_path tracking |
 | `Open_ELF/agents/learning-extractor/run_extractor.py` | ✅ Replaced | Added project_path tracking |
 | `Open_ELF/dashboard-app/backend/routers/monitoring.py` | ✅ Modified | Fixed total checks & process detection |
-| `core/watcher.py` | ✅ Modified | Escalation path fixed |
+| `core/sentinel.py` | ✅ Modified | Escalation path fixed |
 | `Open_ELF/agents/ceo_inbox_monitor.py` | ✅ Modified | Added filtering |
 | `unified_orchestrator-UPDATED.py.broken` | ⚠️ Reference | Has logic but broken indentation |
 | `unified_orchestrator.py` | ✅ Restored | Original working version |

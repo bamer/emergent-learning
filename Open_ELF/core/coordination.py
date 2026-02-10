@@ -15,9 +15,9 @@ Usage:
     from Open_ELF.core.coordination import CoordinationStore
     
     store = CoordinationStore()
-    store.register_agent("watcher", pid=12345, capabilities=["monitoring"])
-    store.heartbeat("watcher")
-    store.send_message("watcher", "orchestrator", "status", {"health": "ok"})
+    store.register_agent("sentinel", pid=12345, capabilities=["monitoring"])
+    store.heartbeat("sentinel")
+    store.send_message("sentinel", "orchestrator", "status", {"health": "ok"})
     messages = store.receive_messages("orchestrator")
     store.write_blackboard_snapshot()
 """

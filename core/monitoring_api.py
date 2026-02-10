@@ -50,7 +50,7 @@ COMPONENTS = {
         "name": "Learning Processor",
         "status": "running",
     },
-    "watcher": {"port": None, "name": "Watcher (Level 1)", "status": "running"},
+    "sentinel": {"port": None, "name": "Watcher (Level 1)", "status": "running"},
     "orchestrator": {
         "port": None,
         "name": "Orchestrator (Level 2)",
@@ -259,7 +259,7 @@ class MonitoringAPI:
                         ],
                     },
                     "agents": {
-                        "watcher": {"name": "Watcher (Level 1)", "status": "running"},
+                        "sentinel": {"name": "Watcher (Level 1)", "status": "running"},
                         "orchestrator": {
                             "name": "Orchestrator (Level 2)",
                             "status": "running",
@@ -325,7 +325,7 @@ class MonitoringAPI:
             "components": {
                 "event_bridge": "healthy",
                 "learning_processor": "healthy",
-                "watcher": "healthy",
+                "sentinel": "healthy",
                 "orchestrator": "healthy",
                 "ceo": "healthy",
             },

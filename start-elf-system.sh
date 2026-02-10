@@ -7,7 +7,7 @@
 # 2. Dashboard Backend (port 8888) with NEW: CEO, Missions, System Services routers
 # 3. Event Bridge (port 9998)
 # 4. Dashboard Frontend (port 3001)
-# 5. Watcher v3.0 (merged Watcher + Sentinel - Level 1 Agent)
+# 5. Sentinel v3.0 (merged Sentinel + Sentinel - Level 1 Agent)
 # 6. Learning Capture Service (auto-extraction des heuristiques)
 # 7. Unified Orchestrator (central decision-making)
 # 8. CEO Inbox Monitor (autonomous escalation processing)
@@ -22,10 +22,10 @@
 #     no-opencode - Démarre tout sauf OpenCode (si vous le gérez manuellement)
 #
 # REFACTORED v0.5.4 (2026-02-09):
-# - Sentinel merged into Watcher v3.0 (removed start_sentinel function)
+# - Sentinel merged into Sentinel v3.0 (removed start_sentinel function)
 # - Added CEO, Missions, System services routers to backend
 # - Fixed orchestrator port 9998 (was 9999)
-# - AI analysis corrected (Watcher 5min vs old Sentinel 5min)
+# - AI analysis corrected (Sentinel 5min vs old Sentinel 5min)
 
 set -euo pipefail
 
@@ -61,7 +61,7 @@ show_help() {
     echo "  $0 [MODE]"
     echo ""
     echo -e "${GREEN}MODES:${NC}"
-    echo "  test      Quick test mode (OpenCode, Dashboard, Orchestrator, Watcher only)"
+    echo "  test      Quick test mode (OpenCode, Dashboard, Orchestrator, Sentinel only)"
     echo "  minimal   Minimal services (Backend + Frontend only, for development)"
     echo "  no-opencode All services except OpenCode (for production use)"
     echo "  all       Full system startup (default)"
@@ -72,7 +72,7 @@ show_help() {
     echo "  • Dashboard Backend (port 8888) - with CEO, Missions, System Services routers"
     echo "  • EventBridge (port 9999)"
     echo "  • Unified Orchestrator (port 9998)"
-    echo "  • Watcher v3.0 (Level 1 Agent - Monitoring + Pattern Detection + AI Analysis)"
+    echo "  • Sentinel v3.0 (Level 1 Agent - Monitoring + Pattern Detection + AI Analysis)"
     echo "  • Dashboard Frontend (port 5173)"
     echo "  • Learning Capture Service"
     echo "  • CEO Inbox Monitor"
@@ -85,10 +85,10 @@ show_help() {
     echo "  • AI Analysis Schedule (/api/v1/monitoring/ai-analysis/* - 2 endpoints)"
     echo "  • Pheromone Trails (/api/v1/monitoring/trails/* - 2 endpoints)"
     echo "  • Orchestrator port corrected: 9999 → 9998"
-    echo "  • Sentinel merged into Watcher v3.0 (no longer separate service)"
+    echo "  • Sentinel merged into Sentinel v3.0 (no longer separate service)"
     echo ""
     echo -e "${YELLOW}NOTES:${NC}"
-    echo "  • Sentinel has been merged into Watcher v3.0 - no longer a separate service"
+    echo "  • Sentinel has been merged into Sentinel v3.0 - no longer a separate service"
     echo "  • Orchestrator is now Unified Orchestrator on port 9998"
     echo "  • Press Ctrl+C to stop all services cleanly"
     echo ""
@@ -104,7 +104,7 @@ OPENCODE_PID=""
 BACKEND_PID=""
 EVENT_BRIDGE_PID=""
 FRONTEND_PID=""
-WATCHER_PID=""
+SENTINEL_PID=""
 ORCHESTRATOR_PID=""
 LEARNING_CAPTURE_PID=""
 CEO_MONITOR_PID=""
@@ -137,10 +137,10 @@ cleanup() {
         sleep 1
         kill -9 "${FRONTEND_PID}" 2>/dev/null || true
     fi
-    if [[ -n "${WATCHER_PID:-}" ]]; then
-        kill "${WATCHER_PID}" 2>/dev/null || true
+    if [[ -n "${SENTINEL_PID:-}" ]]; then
+        kill "${SENTINEL_PID}" 2>/dev/null || true
         sleep 1
-        kill -9 "${WATCHER_PID}"  2>/dev/null || true
+        kill -9 "${SENTINEL_PID}"  2>/dev/null || true
     fi
     if [[ -n "${ORCHESTRATOR_PID:-}" ]]; then
         kill "${ORCHESTRATOR_PID}" 2>/dev/null || true
@@ -163,12 +163,11 @@ cleanup() {
     pkill -f "uvicorn main:app" 2>/dev/null || true
     pkill -f "event_bridge.py" 2>/dev/null || true
     pkill -f "npm run dev" 2>/dev/null || true
-    pkill -f "Open_ELF/watcher/launcher.py" 2>/dev/null || true
-    pkill -f "Open_ELF/watcher/elf_watcher.py" 2>/dev/null || true
+
     pkill -f "background-learning-capture.py" 2>/dev/null || true
     pkill -f "Open_ELF/agents/ceo_inbox_monitor.py" 2>/dev/null || true
     pkill -f "Open_ELF/orchestrator/unified_orchestrator.py" 2>/dev/null || true
-    # NOTE: Removed pkill for sentinel_monitor.py - Sentinel merged into Watcher v3.0
+    # NOTE: Removed pkill for sentinel_monitor.py - Sentinel merged into Sentinel v3.0
     
     log_success "✅ Nettoyage terminé"
     log "👋 Au revoir!"
@@ -200,7 +199,7 @@ all_services_running() {
     if is_running "${BACKEND_PID}" && \
        is_running "${EVENT_BRIDGE_PID}" && \
        is_running "${FRONTEND_PID}" && \
-       is_running "${WATCHER_PID}" && \
+       is_running "${SENTINEL_PID}" && \
        is_running "${ORCHESTRATOR_PID}"; then
         return 0
     fi
@@ -341,48 +340,46 @@ start_event_bridge() {
     fi
 }
 
-# Démarrer le Watcher v3.0 (refactored - merged Watcher + Sentinel)
-start_watcher() {
-    log "👁️ Démarrage du Watcher v3.0 (Level 1 Agent - merged Watcher + Sentinel)..."
+# Démarrer le Sentinel v3.0 (refactored - merged Sentinel + Sentinel)
+start_sentinel() {
+    log "👁️ Démarrage du Sentinel v3.0 (Level 1 Agent - merged Sentinel + Sentinel)..."
     
-    local watcher_script="${SCRIPT_DIR}/core/watcher.py"
+    local sentinel_script="${SCRIPT_DIR}/core/sentinel.py"
     
     # Vérifier que le script existe (nouveau emplacement)
-    if [[ ! -f "${watcher_script}" ]]; then
-        log_warning "⚠️ Script watcher v3.0 introuvable: ${watcher_script}"
-        log_info "   Essai avec l'ancien watcher..."
-        # Fallback vers l'ancien watcher
-        watcher_script="${ELF_DIR}/watcher/elf_watcher.py"
-        if [[ ! -f "${watcher_script}" ]]; then
-            log_warning "⚠️ Ancien watcher aussi introuvable"
+    if [[ ! -f "${sentinel_script}" ]]; then
+        log_warning "⚠️ Script sentinel v3.0 introuvable: ${sentinel_script}"
+
+        if [[ ! -f "${sentinel_script}" ]]; then
+            log_error"⚠️ Script sentinel v3.0 introuvable"
             return 0
         fi
     fi
     
-    # Tuer tout processus watcher existant avant de lancer (force restart)
-    log "🔄 Arrêt des anciennes instances du watcher..."
-    pkill -f "core/watcher.py" 2>/dev/null || true
-    pkill -f "Open_ELF/watcher/elf_watcher.py" 2>/dev/null || true
+    # Tuer tout processus sentinel existant avant de lancer (force restart)
+    log "🔄 Arrêt des anciennes instances du sentinel..."
+    pkill -f "core/sentinel.py" 2>/dev/null || true
+    pkill -f "Open_ELF/sentinel/elf_sentinel.py" 2>/dev/null || true
     pkill -f "Open_ELF/agents/sentinel_monitor.py" 2>/dev/null || true
     sleep 1  # Attendre que les processus se terminent
     
-    # Démarrer le watcher en arrière-plan
+    # Démarrer le sentinel en arrière-plan
     cd "${SCRIPT_DIR}"
-    python3 "${watcher_script}" >"${LOGS_DIR}/watcher.log" 2>&1 &
-    WATCHER_PID=$!
+    python3 "${sentinel_script}" >"${LOGS_DIR}/sentinel.log" 2>&1 &
+    SENTINEL_PID=$!
     cd - >/dev/null
     
-    # Attendre quelques secondes pour laisser le watcher démarrer
+    # Attendre quelques secondes pour laisser le sentinel démarrer
     sleep 2
     
     # Vérifier qu'il tourne
-    if is_running "${WATCHER_PID}"; then
-        log_success "✅ Watcher v3.0 démarré (PID: ${WATCHER_PID})"
+    if is_running "${SENTINEL_PID}"; then
+        log_success "✅ Sentinel v3.0 démarré (PID: ${SENTINEL_PID})"
         log_info "   Level 1 Agent: Monitoring + Pattern Detection + AI Analysis"
         log_info "   (includes Sentinel capabilities merged)"
         return 0
     else
-        log_warning "⚠️ Watcher v3.0 démarré mais non prêt (PID: ${WATCHER_PID})"
+        log_warning "⚠️ Sentinel v3.0 démarré mais non prêt (PID: ${SENTINEL_PID})"
         return 0  # Continuer même si non prêt
     fi
 }
@@ -580,12 +577,12 @@ show_status() {
         echo "❌ Dashboard Frontend"
     fi
     
-    if is_running "${WATCHER_PID}"; then
-        echo "✅ Watcher v3.0 (PID: ${WATCHER_PID})"
+    if is_running "${SENTINEL_PID}"; then
+        echo "✅ Sentinel v3.0 (PID: ${SENTINEL_PID})"
         echo "   Level 1: Monitoring + Pattern Detection + AI Analysis"
         echo "   includes Sentinel capabilities (merged)"
     else
-        echo "❌ Watcher"
+        echo "❌ Sentinel"
     fi
     
     if pgrep -f "Open_ELF/orchestrator/unified_orchestrator.py" >/dev/null 2>&1; then
@@ -639,7 +636,7 @@ test_mode() {
     start_backend || return 1
     start_event_bridge || return 1
     start_orchestrator || return 1  # Unified Orchestrator
-    start_watcher || return 1               # Watcher v3.0 (already includes Sentinel)
+    start_sentinel || return 1               # Sentinel v3.0 (already includes Sentinel)
     start_learning_capture || return 0 # Ne pas bloquer si échec
     start_ceo_monitor || return 0    # CEO Inbox Monitor
     
@@ -674,7 +671,7 @@ all_mode() {
     start_backend || return 1
     start_event_bridge || return 1
     start_orchestrator || return 1    # Unified Orchestrator
-    start_watcher || return 1               # Watcher v3.0 (merged Watcher + Sentinel)
+    start_sentinel || return 1               # Sentinel v3.0 (merged Sentinel + Sentinel)
     start_frontend || return 1
     start_learning_capture || return 0 # Ne pas bloquer si échec
     start_ceo_monitor || return 0    # CEO Inbox Monitor
@@ -703,7 +700,7 @@ no_opencode_mode() {
     start_backend || return 1
     start_event_bridge || return 1
     start_orchestrator || return 1 # Unified Orchestrator
-    start_watcher || return 1               # Watcher v3.0 (merged Watcher + Sentinel)
+    start_sentinel || return 1               # Sentinel v3.0 (merged Sentinel + Sentinel)
     start_frontend || return 1
     start_learning_capture || return 0 # Ne pas bloquer si échec
     start_ceo_monitor || return 0    # CEO Inbox Monitor

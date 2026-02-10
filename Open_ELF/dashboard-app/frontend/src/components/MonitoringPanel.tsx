@@ -5,7 +5,7 @@ import {
   Layers
 } from 'lucide-react';
 import {
-  WatcherMonitorPanel,
+  SentinelMonitorPanel,
   EventChronicleViewer,
   SystemHealthPanel,
   EventBridgeStatusPanel,
@@ -25,7 +25,7 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
   const [layoutMode, setLayoutMode] = useState<'grid' | 'list'>('grid');
 
   const views = [
-    { id: 'sentinel', label: 'Watcher/Sentinel (L1)', icon: Shield, component: WatcherMonitorPanel, description: 'Merged Watcher + Sentinel - Level 1 Agent' },
+    { id: 'sentinel', label: 'Sentinel (L1)', icon: Shield, component: SentinelMonitorPanel, description: 'Level 1 Agent - System Monitoring & Analysis' },
     { id: 'eventbridge', label: 'EventBridge v2', icon: Zap, component: EventBridgeStatusPanel, description: 'Event processing and tool detection' },
     { id: 'orchestrator', label: 'Orchestrator (L2)', icon: Cpu, component: OrchestratorStatusPanel, description: 'Task coordination and workflow management' },
     { id: 'ceo', label: 'CEO (L3)', icon: User, component: CeoStatusPanel, description: 'Strategic decisions and approvals' },
@@ -112,7 +112,7 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
             </span>
             <span className="flex items-center gap-1.5">
               <Shield className="w-3.5 h-3.5 text-violet-400" />
-              <span className="text-violet-400">L1: Watcher/Sentinel</span>
+              <span className="text-violet-400">L1: Sentinel</span>
             </span>
             <span className="flex items-center gap-1.5">
               <Cpu className="w-3.5 h-3.5 text-amber-400" />
@@ -136,26 +136,16 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
           layoutMode === 'grid' ? (
             /* Grid Layout - 2x4 */
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {/* L1: Watcher/Sentinel (Merged) */}
+              {/* L1: Sentinel */}
               <div className="min-h-[400px] lg:col-span-2 xl:col-span-1">
                 <div className="h-full">
-                  <div className="flex items-center gap-2 mb-2 px-1">
-                    <Shield className="w-4 h-4 text-violet-400" />
-                    <span className="text-xs font-medium text-violet-400">L1 Agent</span>
-                    <span className="text-xs text-slate-500">- Watcher + Sentinel (Merged)</span>
-                  </div>
-                  <WatcherMonitorPanel apiBaseUrl={apiBaseUrl} />
+                  <SentinelMonitorPanel apiBaseUrl={apiBaseUrl} />
                 </div>
               </div>
 
               {/* EventBridge v2 */}
               <div className="min-h-[400px]">
                 <div className="h-full">
-                  <div className="flex items-center gap-2 mb-2 px-1">
-                    <Zap className="w-4 h-4 text-rose-400" />
-                    <span className="text-xs font-medium text-rose-400">Event Processing</span>
-                    <span className="text-xs text-slate-500">- EventBridge v2</span>
-                  </div>
                   <EventBridgeStatusPanel apiBaseUrl={apiBaseUrl} />
                 </div>
               </div>
@@ -163,11 +153,6 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
               {/* L2: Orchestrator */}
               <div className="min-h-[400px]">
                 <div className="h-full">
-                  <div className="flex items-center gap-2 mb-2 px-1">
-                    <Cpu className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-medium text-amber-400">L2 Agent</span>
-                    <span className="text-xs text-slate-500">- Orchestrator</span>
-                  </div>
                   <OrchestratorStatusPanel apiBaseUrl={apiBaseUrl} />
                 </div>
               </div>
@@ -175,11 +160,6 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
               {/* L3: CEO */}
               <div className="min-h-[400px]">
                 <div className="h-full">
-                  <div className="flex items-center gap-2 mb-2 px-1">
-                    <User className="w-4 h-4 text-emerald-400" />
-                    <span className="text-xs font-medium text-emerald-400">L3 Agent</span>
-                    <span className="text-xs text-slate-500">- CEO</span>
-                  </div>
                   <CeoStatusPanel apiBaseUrl={apiBaseUrl} />
                 </div>
               </div>
@@ -187,11 +167,6 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
               {/* System Health */}
               <div className="min-h-[400px]">
                 <div className="h-full">
-                  <div className="flex items-center gap-2 mb-2 px-1">
-                    <Heart className="w-4 h-4 text-cyan-400" />
-                    <span className="text-xs font-medium text-cyan-400">Infrastructure</span>
-                    <span className="text-xs text-slate-500">- System Health</span>
-                  </div>
                   <SystemHealthPanel apiBaseUrl={apiBaseUrl} />
                 </div>
               </div>
@@ -199,11 +174,6 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
               {/* Ollama */}
               <div className="min-h-[400px]">
                 <div className="h-full">
-                  <div className="flex items-center gap-2 mb-2 px-1">
-                    <Brain className="w-4 h-4 text-pink-400" />
-                    <span className="text-xs font-medium text-pink-400">AI Services</span>
-                    <span className="text-xs text-slate-500">- Ollama</span>
-                  </div>
                   <OllamaStatus apiBaseUrl={apiBaseUrl} />
                 </div>
               </div>
@@ -211,11 +181,6 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
               {/* Event Chronicle - Full width */}
               <div className="min-h-[400px] lg:col-span-2 xl:col-span-3">
                 <div className="h-full">
-                  <div className="flex items-center gap-2 mb-2 px-1">
-                    <ScrollText className="w-4 h-4 text-blue-400" />
-                    <span className="text-xs font-medium text-blue-400">Event Log</span>
-                    <span className="text-xs text-slate-500">- Event Chronicle</span>
-                  </div>
                   <EventChronicleViewer apiBaseUrl={apiBaseUrl} />
                 </div>
               </div>
@@ -223,66 +188,30 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
           ) : (
             /* List Layout - Stacked with hierarchy indicators */
             <div className="space-y-6">
-              {/* L1: Watcher/Sentinel (Merged) */}
+              {/* L1: Sentinel */}
               <div className="relative">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-violet-500/20">
-                    <Shield className="w-4 h-4 text-violet-400" />
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-violet-400">Level 1: Watcher/Sentinel (Merged)</span>
-                    <p className="text-xs text-slate-500">Session monitoring, tool detection, and initial processing</p>
-                  </div>
-                </div>
-                <div className="h-[400px] ml-4 pl-4 border-l-2 border-violet-500/30">
-                  <WatcherMonitorPanel apiBaseUrl={apiBaseUrl} />
+                <div className="h-[400px]">
+                  <SentinelMonitorPanel apiBaseUrl={apiBaseUrl} />
                 </div>
               </div>
 
               {/* EventBridge v2 */}
               <div className="relative">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-rose-500/20">
-                    <Zap className="w-4 h-4 text-rose-400" />
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-rose-400">EventBridge v2</span>
-                    <p className="text-xs text-slate-500">SSE event streaming and tool usage detection</p>
-                  </div>
-                </div>
-                <div className="h-[400px] ml-4 pl-4 border-l-2 border-rose-500/30">
+                <div className="h-[400px]">
                   <EventBridgeStatusPanel apiBaseUrl={apiBaseUrl} />
                 </div>
               </div>
 
               {/* L2: Orchestrator */}
               <div className="relative">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500/20">
-                    <Cpu className="w-4 h-4 text-amber-400" />
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-amber-400">Level 2: Orchestrator</span>
-                    <p className="text-xs text-slate-500">Task coordination and workflow management</p>
-                  </div>
-                </div>
-                <div className="h-[400px] ml-4 pl-4 border-l-2 border-amber-500/30">
+                <div className="h-[400px]">
                   <OrchestratorStatusPanel apiBaseUrl={apiBaseUrl} />
                 </div>
               </div>
 
               {/* L3: CEO */}
               <div className="relative">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/20">
-                    <User className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-emerald-400">Level 3: CEO</span>
-                    <p className="text-xs text-slate-500">Strategic decisions and high-level approvals</p>
-                  </div>
-                </div>
-                <div className="h-[400px] ml-4 pl-4 border-l-2 border-emerald-500/30">
+                <div className="h-[400px]">
                   <CeoStatusPanel apiBaseUrl={apiBaseUrl} />
                 </div>
               </div>
@@ -311,10 +240,10 @@ export function MonitoringPanel({ apiBaseUrl = '' }: MonitoringPanelProps) {
                 <div className="flex items-center gap-3">
                   <Shield className="w-6 h-6 text-violet-400" />
                   <div>
-                    <h3 className="text-lg font-semibold text-violet-400">Watcher/Sentinel (Level 1 Agent)</h3>
+                    <h3 className="text-lg font-semibold text-violet-400">Sentinel (Level 1 Agent)</h3>
                     <p className="text-sm text-slate-400">
-                      Merged component handling session monitoring, SSE event processing, and tool detection.
-                      Previously separate Watcher and Sentinel components have been unified.
+                      System monitoring, pattern detection, and autonomous analysis.
+                      Detects anomalies, generates insights, and escalates when necessary.
                     </p>
                   </div>
                 </div>

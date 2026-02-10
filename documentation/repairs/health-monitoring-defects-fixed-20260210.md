@@ -13,14 +13,14 @@
 **Root Cause**:
 ```python
 # Line 426, 434, 444, 502 in unified_orchestrator.py
-["pgrep", "-f", "watcher/elf_watcher.py"]  # ❌ OLD pattern
+["pgrep", "-f", "sentinel/elf_sentinel.py"]  # ❌ OLD pattern
 ```
-But actual process uses: `core/watcher.py`
+But actual process uses: `core/sentinel.py`
 
 **Resolution**:
 ```bash
-sed -i 's|watcher/elf_watcher.py|core/watcher.py|g' unified_orchestrator.py
-sed -i 's|\["python3", "core/watcher.py"\]|["python3", str(BASE_DIR / "core" / "watcher.py")]|'
+sed -i 's|sentinel/elf_sentinel.py|core/sentinel.py|g' unified_orchestrator.py
+sed -i 's|\["python3", "core/sentinel.py"\]|["python3", str(BASE_DIR / "core" / "sentinel.py")]|'
 ```
 
 **Files Modified**: 

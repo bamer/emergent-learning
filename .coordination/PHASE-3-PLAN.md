@@ -8,7 +8,7 @@
 
 ## Overview
 
-Phase 3 will display watcher & learning loop events on the dashboard in real-time.
+Phase 3 will display sentinel & learning loop events on the dashboard in real-time.
 
 Current State:
 
@@ -17,7 +17,7 @@ Current State:
 - ✅ Watcher writes events automatically
 - ❌ Dashboard doesn't display them yet
 
-Goal: Show unified event stream (watcher + learning events) on dashboard
+Goal: Show unified event stream (sentinel + learning events) on dashboard
 
 ---
 
@@ -54,9 +54,9 @@ Last 24h:
 
 ### 3. Event Filters
 
-- By event_type (watcher_cycle, learning_loop_completion, etc.)
+- By event_type (sentinel_cycle, learning_loop_completion, etc.)
 - By status (healthy, warning, critical)
-- By source (watcher, learning_hook)
+- By source (sentinel, learning_hook)
 - By time range (last hour, last 24h, last 7d)
 
 ### 4. Event Details
@@ -199,8 +199,8 @@ Response:
   {
     "id": 42,
     "timestamp": "2026-01-28T10:30:45.123456",
-    "event_type": "watcher_cycle",
-    "source": "watcher",
+    "event_type": "sentinel_cycle",
+    "source": "sentinel",
     "status": "nominal",
     "summary": "Agents checked: 3",
     "data": { ... },
@@ -228,7 +228,7 @@ Response:
 {
   "query_hours": 24,
   "stats": {
-    "watcher_cycle": { "nominal": 48, "warning": 1 },
+    "sentinel_cycle": { "nominal": 48, "warning": 1 },
     "learning_loop_completion": { "healthy": 24, "critical": 1 }
   }
 }
@@ -371,7 +371,7 @@ export function EventTimelinePanel() {
 
 function EventRow({ event }: { event: Event }) {
   const iconMap = {
-    watcher_cycle: '🔍',
+    sentinel_cycle: '🔍',
     learning_loop_completion: '📚',
     heuristic_discovery: '💡',
     learning_discovery: '📝',
@@ -419,7 +419,7 @@ function EventRow({ event }: { event: Event }) {
 
 ### Manual Testing
 
-1. Start watcher: `./scripts/start-watcher-bigpickle.sh --interval 10`
+1. Start sentinel: `./scripts/start-sentinel-bigpickle.sh --interval 10`
 2. Run a learning task (to generate learning_loop_completion events)
 3. Check dashboard "Events" tab
 4. Verify events appear in real-time
@@ -473,7 +473,7 @@ sqlite3 memory/index.db "SELECT * FROM event_chronicle ORDER BY id DESC LIMIT 10
 Phase 3 is complete when:
 
 - ✅ Dashboard displays event_chronicle events
-- ✅ Events update as watcher/learning hooks run
+- ✅ Events update as sentinel/learning hooks run
 - ✅ Basic filters work (time range, type)
 - ✅ Statistics show event counts
 - ✅ No breaking changes to existing dashboard
@@ -487,6 +487,6 @@ Let me know and I'll:
 1. Create the useEvents hook
 2. Create EventTimelinePanel component
 3. Integrate into App.tsx
-4. Test with real watcher events
+4. Test with real sentinel events
 
 Which components would you like me to create first?

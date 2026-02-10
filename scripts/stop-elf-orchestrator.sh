@@ -114,7 +114,7 @@ COORD_DIR="$ELF_DIR/.coordination"
 if [ -d "$COORD_DIR" ]; then
     log "Cleaning up coordination files..."
     rm -f "$COORD_DIR"/*.lock 2>/dev/null || true
-    rm -f "$COORD_DIR"/watcher-stop 2>/dev/null || true
+    rm -f "$COORD_DIR"/sentinel-stop 2>/dev/null || true
 fi
 
 log_success "ELF Unified Orchestrator stopped"

@@ -24,6 +24,16 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any
 
+# Unified ELF logging (required for all ELF modules)
+try:
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("project")
+except ImportError:
+    import logging
+
+    _LOGGER = logging.getLogger("project")
+
 try:
     from query.config_loader import get_base_path
 except ImportError:
@@ -32,6 +42,7 @@ except ImportError:
 # yaml is optional - needed for config.yaml parsing
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
@@ -39,15 +50,15 @@ except ImportError:
 
 # Markers that indicate a project root (in priority order)
 PROJECT_MARKERS = [
-    '.elf',           # ELF project (highest priority)
-    '.git',           # Git repository
-    'package.json',   # Node.js project
-    'Cargo.toml',     # Rust project
-    'pyproject.toml', # Python project
-    'go.mod',         # Go module
-    'pom.xml',        # Maven project
-    'build.gradle',   # Gradle project
-    '.project-root',  # Explicit marker
+    ".elf",  # ELF project (highest priority)
+    ".git",  # Git repository
+    "package.json",  # Node.js project
+    "Cargo.toml",  # Rust project
+    "pyproject.toml",  # Python project
+    "go.mod",  # Go module
+    "pom.xml",  # Maven project
+    "build.gradle",  # Gradle project
+    ".project-root",  # Explicit marker
 ]
 
 
@@ -68,7 +79,9 @@ class ProjectContext:
 
     # Global paths (always set)
     global_root: Path = field(default_factory=lambda: get_base_path())
-    global_db_path: Path = field(default_factory=lambda: get_base_path() / "memory" / "index.db")
+    global_db_path: Path = field(
+        default_factory=lambda: get_base_path() / "memory" / "index.db"
+    )
 
     # Loaded configuration
     config: Dict[str, Any] = field(default_factory=dict)
@@ -79,18 +92,19 @@ class ProjectContext:
 
     def has_project_context(self) -> bool:
         """Check if we have project-specific ELF context."""
-        return self.mode == 'project' and self.elf_root is not None
+        return self.mode == "project" and self.elf_root is not None
 
     def get_context_md_content(self) -> Optional[str]:
         """Load and return the project context.md content if it exists."""
         if self.context_md_path and self.context_md_path.exists():
             try:
-                content = self.context_md_path.read_text(encoding='utf-8')
+                content = self.context_md_path.read_text(encoding="utf-8")
                 # Skip if it's just the template
-                if '[Describe your project here]' in content:
+                if "[Describe your project here]" in content:
                     return None
                 return content
-            except Exception:
+            except Exception as e:
+                log_debug("project", f"Failed to read context.md: {e}")
                 return None
         return None
 
@@ -148,7 +162,7 @@ def find_elf_root(start_path: Optional[Path] = None) -> Optional[Path]:
     current = start_path
 
     while True:
-        elf_dir = current / '.elf'
+        elf_dir = current / ".elf"
         if elf_dir.exists() and elf_dir.is_dir():
             return current
 
@@ -177,22 +191,22 @@ def find_inheritance_chain(elf_root: Path) -> List[Path]:
         return chain
 
     # Load config to check for explicit inherits_from
-    config_path = elf_root / '.elf' / 'config.yaml'
+    config_path = elf_root / ".elf" / "config.yaml"
     if config_path.exists():
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 config = yaml.safe_load(f) or {}
 
-            inherits_from = config.get('project', {}).get('inherits_from')
+            inherits_from = config.get("project", {}).get("inherits_from")
             if inherits_from:
                 parent_path = (elf_root / inherits_from).resolve()
-                parent_elf = parent_path / '.elf'
+                parent_elf = parent_path / ".elf"
                 if parent_elf.exists():
                     chain.append(parent_path)
                     # Recursively find grandparents
                     chain.extend(find_inheritance_chain(parent_path))
-        except Exception:
-            pass
+        except Exception as e:
+            log_debug("project", f"Failed to load inheritance config: {e}")
 
     return chain
 
@@ -210,15 +224,16 @@ def load_project_config(elf_root: Path) -> Dict[str, Any]:
     if not YAML_AVAILABLE:
         return {}
 
-    config_path = elf_root / '.elf' / 'config.yaml'
+    config_path = elf_root / ".elf" / "config.yaml"
     if not config_path.exists():
         return {}
 
     try:
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
             return config if isinstance(config, dict) else {}
-    except Exception:
+    except Exception as e:
+        log_debug("project", f"Failed to load project config: {e}")
         return {}
 
 
@@ -256,21 +271,21 @@ def detect_project_context(start_path: Optional[Path] = None) -> ProjectContext:
         inheritance_chain = find_inheritance_chain(elf_root)
 
         # Extract project name from config or directory name
-        project_name = config.get('project', {}).get('name')
+        project_name = config.get("project", {}).get("name")
         if not project_name:
             project_name = elf_root.name
 
         # Extract domains
-        domains = config.get('domains', [])
+        domains = config.get("domains", [])
 
         return ProjectContext(
-            mode='project',
+            mode="project",
             project_root=project_root or elf_root,
             project_name=project_name,
             elf_root=elf_root,
-            project_db_path=elf_root / '.elf' / 'learnings.db',
-            config_path=elf_root / '.elf' / 'config.yaml',
-            context_md_path=elf_root / '.elf' / 'context.md',
+            project_db_path=elf_root / ".elf" / "learnings.db",
+            config_path=elf_root / ".elf" / "config.yaml",
+            context_md_path=elf_root / ".elf" / "context.md",
             config=config,
             domains=domains,
             inheritance_chain=inheritance_chain,
@@ -280,13 +295,15 @@ def detect_project_context(start_path: Optional[Path] = None) -> ProjectContext:
         project_name = project_root.name if project_root else None
 
         return ProjectContext(
-            mode='global-only',
+            mode="global-only",
             project_root=project_root,
             project_name=project_name,
         )
 
 
-def get_effective_domains(ctx: ProjectContext, explicit_domain: Optional[str] = None) -> List[str]:
+def get_effective_domains(
+    ctx: ProjectContext, explicit_domain: Optional[str] = None
+) -> List[str]:
     """
     Get the effective domains for querying, merging project and explicit domains.
 
@@ -322,7 +339,7 @@ def format_project_status(ctx: ProjectContext) -> str:
     """
     lines = []
 
-    if ctx.mode == 'project':
+    if ctx.mode == "project":
         lines.append(f"[Project] Project: {ctx.project_name} ({ctx.elf_root})")
         lines.append(f"   Mode: ELF-enabled")
         if ctx.domains:
@@ -340,4 +357,4 @@ def format_project_status(ctx: ProjectContext) -> str:
 
     lines.append(f"[Global] Global: {ctx.global_root}")
 
-    return '\n'.join(lines)
+    return "\n".join(lines)

@@ -48,7 +48,7 @@ engine = MissionEngine()
 mission = engine.create_mission(
     title="Analyser le système",
     description="Vérifier l'état de tous les services",
-    agent="watcher",
+    agent="sentinel",
     priority=MissionPriority.HIGH
 )
 
@@ -257,7 +257,7 @@ python mission_live_handler.py
 ## 👥 Agents supportés
 
 Tous les agents définis dans `agents/OPC_ELF_System_Agents/` :
-- watcher
+- sentinel
 - sentinel
 - ceo
 - researcher

@@ -69,7 +69,7 @@ Successfully optimized the dashboard-app backend database queries, implementing 
 
 - **Experiments**: Database query caching experiments, Index performance benchmarks
 - **Heuristics**: database-performance.md, performance.md
-- **Similar Successes**: watcher-system-audit-2026-01-28.md
+- **Similar Successes**: sentinel-system-audit-2026-01-28.md
 
 ## Files Modified/Created
 

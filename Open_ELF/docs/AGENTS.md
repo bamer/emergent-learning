@@ -47,10 +47,10 @@ response = manager.ask_agent("unified-orchestrator", "Analyze system health")
 ```python
 from agent_manager import get_agent_manager
 manager = get_agent_manager()
-response = manager.watcher("Check service health")
+response = manager.sentinel("Check service health")
 ```
 
-**File**: `/home/bamer/.opencode/agents/OPC_ELF_System_Agents/watcher.md`
+**File**: `/home/bamer/.opencode/agents/OPC_ELF_System_Agents/sentinel.md`
 
 ### 3. Sentinel Monitor
 
@@ -196,10 +196,10 @@ from agents.agent_manager import AgentManager, get_agent_manager
 manager = get_agent_manager()
 
 # Ask an agent a question
-response = manager.ask_agent("watcher", "Check system health")
+response = manager.ask_agent("sentinel", "Check system health")
 
 # Or use convenience methods
-response = manager.watcher("Check all services")
+response = manager.sentinel("Check all services")
 response = manager.sentinel("Analyze recent patterns")
 response = manager.ceo("Review this escalation")
 ```
@@ -218,7 +218,7 @@ response = manager.ceo("Review this escalation")
 manager.ask_agent(agent_name: str, prompt: str) -> str
 
 # Convenience methods
-manager.watcher(prompt: str) -> str
+manager.sentinel(prompt: str) -> str
 manager.sentinel(prompt: str) -> str
 manager.ceo(prompt: str) -> str
 manager.architect(prompt: str) -> str
@@ -475,9 +475,9 @@ logger.info("Message")
 
 ### Call an Agent
 ```python
-response = manager.ask_agent("watcher", "Check health")
+response = manager.ask_agent("sentinel", "Check health")
 # Or
-response = manager.watcher("Check health")
+response = manager.sentinel("Check health")
 ```
 
 ### Log Directory

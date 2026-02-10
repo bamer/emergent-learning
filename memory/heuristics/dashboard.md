@@ -4,7 +4,7 @@ Generated from failures, successes, and observations in the **dashboard** domain
 
 ---
 
-## H-105: When counting total checks for Watcher status, count ALL watcher_check events without time filter. Otherwise dashboard shows last hour count instead of grand total. Also verify process detection path matches actual running script.
+## H-105: When counting total checks for Watcher status, count ALL sentinel_check events without time filter. Otherwise dashboard shows last hour count instead of grand total. Also verify process detection path matches actual running script.
 
 **Confidence**: 1.0
 **Source**: observation

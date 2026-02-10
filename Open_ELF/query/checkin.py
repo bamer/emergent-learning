@@ -139,7 +139,7 @@ class CheckinOrchestrator:
             "unified_orchestrator": "unknown",
             "dashboard_backend": "unknown",
             "dashboard_frontend": "unknown",
-            "watcher": "unknown",
+            "sentinel": "unknown",
             "learning_capture": "unknown",
         }
 
@@ -211,26 +211,26 @@ class CheckinOrchestrator:
         # Check Watcher
         try:
             result = subprocess.run(
-                ["pgrep", "-f", "watcher/launcher.py"], capture_output=True, text=True
+                ["pgrep", "-f", "sentinel/launcher.py"], capture_output=True, text=True
             )
-            status["watcher"] = "running" if result.returncode == 0 else "stopped"
+            status["sentinel"] = "running" if result.returncode == 0 else "stopped"
 
             # Also check API for detailed status
             try:
                 response = requests.get(
-                    "http://localhost:8888/api/v1/watcher/status", timeout=3
+                    "http://localhost:8888/api/v1/sentinel/status", timeout=3
                 )
                 if response.status_code == 200:
-                    watcher_data = response.json()
-                    status["watcher"] = (
+                    sentinel_data = response.json()
+                    status["sentinel"] = (
                         "running"
-                        if watcher_data.get("status_data", {}).get("is_running")
+                        if sentinel_data.get("status_data", {}).get("is_running")
                         else "stopped"
                     )
             except:
                 pass
         except:
-            status["watcher"] = "stopped"
+            status["sentinel"] = "stopped"
 
         # Check Sentinel Monitor
         try:
@@ -270,7 +270,7 @@ class CheckinOrchestrator:
             ("Sentinel Monitor", status["sentinel"]),
             ("Dashboard Backend", status["dashboard_backend"]),
             ("Dashboard Frontend", status["dashboard_frontend"]),
-            ("Watcher", status["watcher"]),
+            ("Watcher", status["sentinel"]),
             ("Learning Capture", status["learning_capture"]),
         ]
 

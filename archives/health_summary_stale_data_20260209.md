@@ -83,8 +83,8 @@ The System Health Summary is consistently providing incorrect information:
 
 1. **Health Check Querying Wrong Component**
    - The health summary may be checking for the OLD Watcher process structure
-   - Current Watcher location: `/home/bamer/.opencode/emergent-learning/core/watcher.py`
-   - Old location may have been: `/home/bamer/.opencode/emergent-learning/Open_ELF/watcher/`
+   - Current Watcher location: `/home/bamer/.opencode/emergent-learning/core/sentinel.py`
+   - Old location may have been: `/home/bamer/.opencode/emergent-learning/Open_ELF/sentinel/`
 
 2. **Stale Cached Data**
    - Health summary may be using cached metrics
@@ -104,7 +104,7 @@ The System Health Summary is consistently providing incorrect information:
 ```bash
 # Watcher process verification
 $ ps aux | grep "1496791"
-bamer    1496791  0.0  0.1  49724 35228 ?        S    22:32   0:00 python3 /home/bamer/.opencode/emergent-learning/core/watcher.py
+bamer    1496791  0.0  0.1  49724 35228 ?        S    22:32   0:00 python3 /home/bamer/.opencode/emergent-learning/core/sentinel.py
 
 # Learning Capture verification
 $ ps aux | grep "background-learning-capture"
@@ -145,7 +145,7 @@ $ curl -s http://localhost:9998/status
 ```bash
 # Find what generates the health summary
 # Could be:
-- /home/bamer/.opencode/emergent-learning/Open_ELF/watcher/status_report.py
+- /home/bamer/.opencode/emergent-learning/Open_ELF/sentinel/status_report.py
 - /home/bamer/.opencode/emergent-learning/scripts/health_check.sh
 - Dashboard API endpoint
 ```
@@ -153,8 +153,8 @@ $ curl -s http://localhost:9998/status
 **2. Verify Watcher Path Configuration**
 ```bash
 # Check if health check has hardcoded old path
-# Current correct path: /home/bamer/.opencode/emergent-learning/core/watcher.py
-# Old incorrect path may be: /home/bamer/.opencode/emergent-learning/Open_ELF/watcher/
+# Current correct path: /home/bamer/.opencode/emergent-learning/core/sentinel.py
+# Old incorrect path may be: /home/bamer/.opencode/emergent-learning/Open_ELF/sentinel/
 ```
 
 **3. Check for Caching Issues**

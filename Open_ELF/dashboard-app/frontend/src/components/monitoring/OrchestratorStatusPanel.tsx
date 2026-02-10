@@ -21,7 +21,7 @@ interface OrchestratorStatusData {
       running: boolean;
       pid?: string;
     };
-    watcher?: boolean;
+    sentinel?: boolean;
     event_bridge?: boolean;
   };
 }

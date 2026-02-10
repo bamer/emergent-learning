@@ -15,7 +15,7 @@ The system has been refactored from an over-engineered 8+ component architecture
 │                    AGENT HIERARCHY                           │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  Level 1: Watcher (core/watcher.py)                         │
+│  Level 1: Watcher (core/sentinel.py)                         │
 │  ├── Health Monitoring                                      │
 │  ├── Pattern Detection                                      │
 │  ├── AI Analysis (every 5 minutes)                          │
@@ -36,7 +36,7 @@ The system has been refactored from an over-engineered 8+ component architecture
 
 ## Component Overview
 
-### Level 1: Watcher (`core/watcher.py`)
+### Level 1: Watcher (`core/sentinel.py`)
 
 **Status**: ✅ **ACTIVE** (Replaces old Watcher + Sentinel)
 
@@ -54,10 +54,10 @@ The system has been refactored from an over-engineered 8+ component architecture
 
 **Usage**:
 ```python
-from core.watcher import Watcher
+from core.sentinel import Watcher
 
-watcher = Watcher()
-watcher.run_continuous()
+sentinel = Watcher()
+sentinel.run_continuous()
 ```
 
 ### Level 2: Unified Orchestrator
@@ -178,14 +178,14 @@ CEO (L3) makes strategic decisions
 emergent-learning/
 ├── core/                                    # NEW: Core components
 │   ├── __init__.py
-│   ├── watcher.py                          # Level 1 Agent (merged)
+│   ├── sentinel.py                          # Level 1 Agent (merged)
 │   ├── learning_processor.py               # All learning + trails
 │   └── event_bridge_v2.py                  # Simplified event routing
 │
 ├── Open_ELF/
 │   ├── agents/
 │   │   └── OPC_ELF_System_Agents/
-│   │       ├── watcher.md                      # Agent definition
+│   │       ├── sentinel.md                      # Agent definition
 │   │       ├── sentinel.md                     # Agent definition
 │   │       ├── ceo.md                          # Level 3 Agent definition
 │   │       └── ...
@@ -201,17 +201,17 @@ emergent-learning/
 # Start all services
 ./start-elf-system.sh
 
-# Start minimal (backend + watcher)
+# Start minimal (backend + sentinel)
 ./start-elf-system.sh minimal
 
 # Test compilation
-python -m py_compile core/watcher.py core/learning_processor.py core/event_bridge_v2.py
+python -m py_compile core/sentinel.py core/learning_processor.py core/event_bridge_v2.py
 ```
 
 ## Configuration
 
 ### Watcher Intervals
-Edit `core/watcher.py`:
+Edit `core/sentinel.py`:
 - `BASIC_INTERVAL = 60` - Health check interval (seconds)
 - `AI_INTERVAL = 300` - AI analysis interval (seconds)
 
@@ -232,10 +232,10 @@ If you have code using old components:
 **Old Watcher**:
 ```python
 # OLD (deprecated)
-from Open_ELF.watcher.elf_watcher import ElfWatcher
+from Open_ELF.sentinel.elf_sentinel import ElfWatcher
 
 # NEW
-from core.watcher import Watcher
+from core.sentinel import Watcher
 ```
 
 **Old Hooks**:
@@ -263,12 +263,12 @@ python core/event_bridge_v2.py start
 ### Watcher not starting
 ```bash
 # Check if old processes are running
-pkill -f "elf_watcher.py"
+pkill -f "elf_sentinel.py"
 pkill -f "sentinel_monitor.py"
 
-# Start new watcher
+# Start new sentinel
 cd /home/bamer/.opencode/emergent-learning
-python core/watcher.py
+python core/sentinel.py
 ```
 
 ### Trail data missing

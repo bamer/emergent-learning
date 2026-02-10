@@ -65,7 +65,7 @@ class OptimizedOpenCodeClient:
 - `agents/opconnection.py` → Wrapper autour de `get_opencode_client()`
 - `agents/opencode_client.py` → Wrapper avec API simplifiée
 - `agents/agent_execution_engine.py` → Pour exécuter des workflows agents
-- `watcher/launcher.py` → Via import depuis agents/
+- `sentinel/launcher.py` → Via import depuis agents/
 - `orchestrator/orchestrator.py` → Old orchestrator (archivé)
 - `core/central_orchestrator.py` → Central orchestrator
 
@@ -595,7 +595,7 @@ def send_message(self, message: str, agent: Optional[str] = None):
 | `agents/unified_orchestrator.py` | Création directe sessions | ❌ Problématique |
 | `agents/agent_execution_engine.py` | Utilise OptimizedOpenCodeClient | ✅ Actif |
 | `orchestrator/event_bridge.py` | Polling sessions | ⚠️ Complémentaire |
-| `watcher/launcher.py` | Utilise OptimizedOpenCodeClient | ✅ Actif |
+| `sentinel/launcher.py` | Utilise OptimizedOpenCodeClient | ✅ Actif |
 | `agents/opencode_swarm.py` | Gestion swarm (pas de client) | ⚠️ Metadata only |
 
 ### Sessions OpenCode actives

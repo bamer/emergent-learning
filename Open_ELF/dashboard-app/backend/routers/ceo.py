@@ -172,7 +172,7 @@ def calculate_ceo_metrics() -> CeoMetrics:
     # Process pending items (not in archive) - support multiple patterns
     all_files = (
         list(CEO_INBOX_DIR.glob("escalation_*.md")) +
-        list(CEO_INBOX_DIR.glob("watcher_esc_*.md")) +
+        list(CEO_INBOX_DIR.glob("sentinel_esc_*.md")) +
         list(CEO_INBOX_DIR.glob("escalation-*.md"))
     )
     
@@ -273,7 +273,7 @@ async def get_ceo_status():
         # Count pending items - support multiple file patterns
         all_files = (
             list(CEO_INBOX_DIR.glob("escalation_*.md")) +
-            list(CEO_INBOX_DIR.glob("watcher_esc_*.md")) +
+            list(CEO_INBOX_DIR.glob("sentinel_esc_*.md")) +
             list(CEO_INBOX_DIR.glob("escalation-*.md"))
         )
         pending_items = [f for f in all_files if f.parent != CEO_ARCHIVE_DIR]
@@ -326,7 +326,7 @@ async def get_ceo_items(
         # Support multiple escalation file patterns
         all_files = (
             list(CEO_INBOX_DIR.glob("escalation_*.md")) +
-            list(CEO_INBOX_DIR.glob("watcher_esc_*.md")) +
+            list(CEO_INBOX_DIR.glob("sentinel_esc_*.md")) +
             list(CEO_INBOX_DIR.glob("escalation-*.md"))
         )
         

@@ -19,11 +19,11 @@
 [2026-01-28 12:45:14,007] [INFO] [record-heuristic] Pre-flight checks passed
 [2026-01-28 12:45:14,011] [INFO] [record-heuristic] Script started
 [2026-01-28 12:45:14,011] [INFO] [record-heuristic] Running in non-interactive mode
-[2026-01-28 12:45:14,011] [INFO] [record-heuristic] Recording heuristic: ELF watcher system compliance verification (domain: watcher, confidence: 0.95)
+[2026-01-28 12:45:14,011] [INFO] [record-heuristic] Recording heuristic: ELF sentinel system compliance verification (domain: sentinel, confidence: 0.95)
 [2026-01-28 12:45:14,018] [INFO] [record-heuristic] Database record created (ID: 4)
-[2026-01-28 12:45:14,018] [INFO] [record-heuristic] Created new domain file: /home/bamer/.opencode/emergent-learning/memory/heuristics/watcher.md
-[2026-01-28 12:45:14,018] [INFO] [record-heuristic] Appended heuristic to: /home/bamer/.opencode/emergent-learning/memory/heuristics/watcher.md
-[2026-01-28 12:45:14,018] [INFO] [record-heuristic] Heuristic recorded successfully: ELF watcher system compliance verification
+[2026-01-28 12:45:14,018] [INFO] [record-heuristic] Created new domain file: /home/bamer/.opencode/emergent-learning/memory/heuristics/sentinel.md
+[2026-01-28 12:45:14,018] [INFO] [record-heuristic] Appended heuristic to: /home/bamer/.opencode/emergent-learning/memory/heuristics/sentinel.md
+[2026-01-28 12:45:14,018] [INFO] [record-heuristic] Heuristic recorded successfully: ELF sentinel system compliance verification
 [2026-01-28 13:01:58,360] [INFO] [record-heuristic] Pre-flight checks passed
 [2026-01-28 13:01:58,363] [INFO] [record-heuristic] Script started
 [2026-01-28 13:01:58,364] [INFO] [record-heuristic] Running in non-interactive mode

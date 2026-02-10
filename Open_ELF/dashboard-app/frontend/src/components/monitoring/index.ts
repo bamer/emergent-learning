@@ -1,7 +1,6 @@
-export { WatcherMonitorPanel } from './WatcherMonitorPanel'
+export { SentinelMonitorPanel } from './SentinelMonitorPanel'
 export { EventChronicleViewer } from './EventChronicleViewer'
 export { SystemHealthPanel } from './SystemHealthPanel'
-export { WatcherStatusPanel } from './WatcherStatusPanel'
 export { EventBridgeStatusPanel } from './EventBridgeStatusPanel'
 export { OrchestratorStatusPanel } from './OrchestratorStatusPanel'
 export { OllamaStatus } from './OllamaStatus'

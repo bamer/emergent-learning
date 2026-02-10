@@ -34,7 +34,7 @@
         "escalation": "user_notification after 2 consecutive failures"
       }
     },
-    "watcher": {
+    "sentinel": {
       "mission": "Observe system activity, detect anomalies, and report changes.",
       "objectives": [
         {

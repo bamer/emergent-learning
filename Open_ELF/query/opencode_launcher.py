@@ -4,7 +4,7 @@ OpenCode Launcher - Separate module for launching OpenCode server and agents
 
 This module handles:
 1. Auto-starting OpenCode server on port 4096
-2. Launching background services (watcher, orchestrator, CEO advisor)
+2. Launching background services (sentinel, orchestrator, CEO advisor)
 3. Verifying system is ready
 
 Called as an optional step from checkin workflow.
@@ -143,11 +143,11 @@ class OpenCodeLauncher:
             return False
 
     def launch_agents(self) -> bool:
-        """Launch background agents (watcher, orchestrator, CEO)."""
+        """Launch background agents (sentinel, orchestrator, CEO)."""
         print("\n[OpenCode] Launching agents...")
 
         agents = [
-            ("Watcher", "src/watcher/launcher.py"),
+            ("Watcher", "src/sentinel/launcher.py"),
             ("Orchestrator", "src/orchestrator.py"),
             ("CEO Advisor", "agents/dashboard_sentinel_ceo.py"),
         ]

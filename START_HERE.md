@@ -63,7 +63,7 @@ Should show: ✅ All checks passed!
 | **Auto-Learning** | Hooks not firing | Run `/elf_activate` |
 | **Golden Rules** | Not synced to DB | Run `python3 query/repair_database.py` |
 | **Session Continuity** | Lifecycle events missing | Manual: `python3 query/checkout.py --final` |
-| **Async Watcher** | Not auto-spawning | Test: `python3 watcher/run_with_bigpickle.py` |
+| **Async Watcher** | Not auto-spawning | Test: `python3 sentinel/run_with_bigpickle.py` |
 | **Swarm Agents** | Incomplete | See migration guide |
 | **Pheromone Trails** | Not recording | Need post-tool hook active |
 
@@ -139,7 +139,7 @@ Should work without errors.
 │   └── extract_patterns.py                ← NEW: Pattern extraction
 │
 ├── query/                                 ← Learning system
-├── watcher/                               ← System monitoring
+├── sentinel/                               ← System monitoring
 ├── agents/                                ← Agent definitions
 └── ELF_superpowers.js                     ← OpenCode plugin (symlinked)
 ```
@@ -157,7 +157,7 @@ Should work without errors.
    - [ ] Generate a `[LEARNED:]` marker and verify it's captured
    - [ ] Run `python3 query/repair_database.py` to sync golden rules
    - [ ] Check dashboard shows golden rules
-   - [ ] Test watcher: `python3 watcher/run_with_bigpickle.py`
+   - [ ] Test sentinel: `python3 sentinel/run_with_bigpickle.py`
 
 3. **This week:**
    - [ ] Verify all features working

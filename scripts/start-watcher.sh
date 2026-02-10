@@ -3,16 +3,16 @@
 # Start the Tiered Watcher System
 #
 # Usage:
-#   ./start-watcher.sh              # Start normally
-#   ./start-watcher.sh --daemon     # Start in background
+#   ./start-sentinel.sh              # Start normally
+#   ./start-sentinel.sh --daemon     # Start in background
 #
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ELF_DIR="$(dirname "$SCRIPT_DIR")"
-WATCHER_DIR="$ELF_DIR/watcher"
-LAUNCHER_SCRIPT="$WATCHER_DIR/elf_watcher.py"
+WATCHER_DIR="$ELF_DIR/sentinel"
+LAUNCHER_SCRIPT="$WATCHER_DIR/elf_sentinel.py"
 
 # Detect Python command
 if command -v python3 &> /dev/null; then
@@ -48,13 +48,13 @@ fi
 
 # Start launcher
 if [ "$DAEMON" = true ]; then
-    echo "Starting watcher in daemon mode..."
+    echo "Starting sentinel in daemon mode..."
     nohup $PYTHON_CMD "$LAUNCHER_SCRIPT" > /dev/null 2>&1 &
     PID=$!
     echo "Watcher started with PID: $PID"
-    echo "Monitor logs at: $ELF_DIR/.coordination/watcher-log.md"
+    echo "Monitor logs at: $ELF_DIR/.coordination/sentinel-log.md"
     echo "Stop with: kill $PID"
 else
-    echo "Starting watcher (Ctrl+C to stop)..."
+    echo "Starting sentinel (Ctrl+C to stop)..."
     $PYTHON_CMD "$LAUNCHER_SCRIPT"
 fi

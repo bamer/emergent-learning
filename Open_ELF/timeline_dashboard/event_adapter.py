@@ -54,7 +54,7 @@ EVENT_TYPE_MAPPING: Dict[str, str] = {
     "session.ended": "task_end",
     "session.started": "task_start",
     "server.heartbeat": "task_start",
-    "watcher_check": "task_start",
+    "sentinel_check": "task_start",
     "sentinel_cycle": "task_start",
     "checkin": "task_start",
     "checkout": "task_end",

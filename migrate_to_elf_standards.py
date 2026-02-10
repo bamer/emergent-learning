@@ -134,7 +134,7 @@ class ELFMigrator:
             "coordination": self._validate_coordination,
             "query": self._validate_query,
             "dashboard": self._validate_dashboard,
-            "watcher": self._validate_watcher,
+            "sentinel": self._validate_sentinel,
         }
 
         validator = validation_map.get(component)
@@ -289,10 +289,10 @@ class ELFMigrator:
         print("⚠️  Dashboard partially compliant (Phase 2 migration needed)")
         return True
 
-    def _validate_watcher(self) -> bool:
-        """Validate watcher system compliance"""
-        watcher_loop = self.elf_base / "watcher" / "watcher_loop.py"
-        if not watcher_loop.exists():
+    def _validate_sentinel(self) -> bool:
+        """Validate sentinel system compliance"""
+        sentinel_loop = self.elf_base / "sentinel" / "sentinel_loop.py"
+        if not sentinel_loop.exists():
             print("⚠️  Watcher system not found (optional component)")
             return True  # Watcher is optional
 
@@ -311,7 +311,7 @@ class ELFMigrator:
             "coordination",
             "query",
             "dashboard",
-            "watcher",
+            "sentinel",
         ]
 
         results = {}
@@ -409,7 +409,7 @@ def main():
             "coordination",
             "query",
             "dashboard",
-            "watcher",
+            "sentinel",
         ],
         help="Validate specific component",
     )

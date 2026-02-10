@@ -81,7 +81,7 @@ The ELF (Emergent Learning Framework) uses a unified architecture with three mai
 
 **Service Recovery:**
 - ✅ Learning Capture: Kills existing, starts new via `background-learning-capture.py`
-- ✅ Watcher: Kills existing, starts new via `watcher/launcher.py`
+- ✅ Watcher: Kills existing, starts new via `sentinel/launcher.py`
 - 🔴 EventBridge: Critical - cannot auto-recover (human intervention needed)
 
 **Usage:**
@@ -179,9 +179,9 @@ python -m uvicorn backend.main:app --host 0.0.0.0 --port 8888
 
 **Purpose:** Monitors filesystem for changes
 
-**Location:** `watcher/launcher.py`
+**Location:** `sentinel/launcher.py`
 
-**Logs:** `Open_ELF/logs/watcher.log` (TODO: verify)
+**Logs:** `Open_ELF/logs/sentinel.log` (TODO: verify)
 
 **Restart:** UnifiedOrchestrator auto-restarts if down
 
@@ -268,7 +268,7 @@ rm Open_ELF/test_enhanced_*.py
 pkill -f event_bridge.py
 pkill -f unified_orchestrator.py
 pkill -f background-learning-capture.py
-pkill -f watcher/launcher.py
+pkill -f sentinel/launcher.py
 ```
 
 ## Development

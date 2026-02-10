@@ -58,7 +58,7 @@
 ## Log Files
 
 - `.coordination/dashboard.log` - Backend API logs
-- `.coordination/watcher-log.md` - Watcher agent logs
+- `.coordination/sentinel-log.md` - Watcher agent logs
 - `.coordination/event-bridge-heartbeat.json` - Event bridge status
 - `event_chronicle/` - Immutable event logs (JSONL format)
 

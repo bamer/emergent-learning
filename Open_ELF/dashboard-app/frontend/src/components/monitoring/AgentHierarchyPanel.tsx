@@ -33,8 +33,8 @@ interface AgentHierarchyPanelProps {
 }
 
 const AGENT_CONFIG = {
-  watcher: {
-    name: 'Watcher (Level 1)',
+  sentinel: {
+    name: 'Sentinel (Level 1)',
     icon: Eye,
     color: 'text-purple-400',
     bgColor: 'bg-purple-500/10',
@@ -100,7 +100,7 @@ export function AgentHierarchyPanel({ apiBaseUrl = '' }: AgentHierarchyPanelProp
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [expandedAgents, setExpandedAgents] = useState<Set<string>>(new Set(['watcher']));
+  const [expandedAgents, setExpandedAgents] = useState<Set<string>>(new Set(['sentinel']));
 
   const fetchAgentStatus = useCallback(async () => {
     try {
@@ -206,7 +206,13 @@ export function AgentHierarchyPanel({ apiBaseUrl = '' }: AgentHierarchyPanelProp
       {/* Agent Hierarchy */}
       <div className="space-y-3">
         {Object.entries(AGENT_CONFIG).map(([agentId, config]) => {
-          const agent = agents.find(a => a.name.toLowerCase().includes(agentId));
+          const agent = agents.find(a => {
+    const nameLower = a.name.toLowerCase();
+    if (agentId === 'sentinel') {
+      return nameLower.includes('sentinel') || nameLower.includes('sentinel');
+    }
+    return nameLower.includes(agentId);
+  });
           const status = agent?.status || 'inactive';
           const statusConfig = STATUS_CONFIG[status];
           const isExpanded = expandedAgents.has(agentId);
@@ -215,7 +221,13 @@ export function AgentHierarchyPanel({ apiBaseUrl = '' }: AgentHierarchyPanelProp
 
           // Find escalations for this agent
           const agentEscalations = escalations.filter(
-            e => e.from_agent === agentId || e.to_agent === agentId
+            e => {
+              const fromMatch = e.from_agent === agentId || 
+                (agentId === 'sentinel' && (e.from_agent === 'sentinel' || e.from_agent === 'sentinel'));
+              const toMatch = e.to_agent === agentId || 
+                (agentId === 'sentinel' && (e.to_agent === 'sentinel' || e.to_agent === 'sentinel'));
+              return fromMatch || toMatch;
+            }
           );
 
           return (
@@ -337,14 +349,14 @@ export function AgentHierarchyPanel({ apiBaseUrl = '' }: AgentHierarchyPanelProp
       <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/30">
         <div className="text-sm font-medium text-slate-300 mb-2">Escalation Flow</div>
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-purple-400">Watcher (L1)</span>
+          <span className="text-purple-400">Sentinel (L1)</span>
           <span className="text-slate-500">→</span>
           <span className="text-blue-400">Orchestrator (L2)</span>
           <span className="text-slate-500">→</span>
           <span className="text-amber-400">CEO (L3)</span>
         </div>
         <div className="text-xs text-slate-500 mt-2">
-          Watcher escalates on warning/critical. Orchestrator escalates to CEO only on critical.
+          Sentinel escalates on warning/critical. Orchestrator escalates to CEO only on critical.
         </div>
       </div>
 

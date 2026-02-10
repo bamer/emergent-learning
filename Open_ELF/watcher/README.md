@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ELF Watcher is a modern continuous monitoring system that implements a hybrid approach combining frequent basic system checks with periodic deep AI analysis. This replaces the original tiered watcher pattern with a more efficient and practical implementation.
+The ELF Watcher is a modern continuous monitoring system that implements a hybrid approach combining frequent basic system checks with periodic deep AI analysis. This replaces the original tiered sentinel pattern with a more efficient and practical implementation.
 
 ## New Architecture
 
@@ -28,8 +28,8 @@ The ELF Watcher is a modern continuous monitoring system that implements a hybri
        ┌────────────────────────┐
        │   .coordination/       │
        │   - blackboard.json    │
-       │   - watcher-log.md     │
-       │   - watcher-stop       │
+       │   - sentinel-log.md     │
+       │   - sentinel-stop       │
        └────────────────────────┘
 ```
 
@@ -47,7 +47,7 @@ The ELF Watcher is a modern continuous monitoring system that implements a hybri
 
 ### Modern Implementation
 - **Hybrid Monitoring**: Combines fast system checks with intelligent AI analysis
-- **Self-Contained**: All functionality in one file (`elf_watcher.py`)
+- **Self-Contained**: All functionality in one file (`elf_sentinel.py`)
 - **Modern Dependencies**: Uses current Python libraries and practices
 
 ## Concept
@@ -84,49 +84,49 @@ The hybrid approach solves the problem of balancing continuous monitoring effici
 ```bash
 # From ELF directory
 cd /home/bamer/.opencode/emergent-learning
-python Open_ELF/watcher/elf_watcher.py
+python Open_ELF/sentinel/elf_sentinel.py
 
 # Or use the start script
 cd scripts
-./start-watcher.sh
+./start-sentinel.sh
 ```
 
 ### 2. Start in Background
 
 ```bash
 # Direct background execution
-nohup python Open_ELF/watcher/elf_watcher.py > /tmp/watcher.log 2>&1 &
+nohup python Open_ELF/sentinel/elf_sentinel.py > /tmp/sentinel.log 2>&1 &
 
 # Or using the start script
-./start-watcher.sh --daemon
+./start-sentinel.sh --daemon
 ```
 
 ### 3. Monitor Status
 
 ```bash
 # View logs
-tail -f /tmp/watcher.log
+tail -f /tmp/sentinel.log
 
 # Or check coordination log
-tail -f .coordination/watcher-log.md
+tail -f .coordination/sentinel-log.md
 
 # Check if running
-pgrep -f "elf_watcher.py"
+pgrep -f "elf_sentinel.py"
 ```
 
 ### 4. Stop Watcher
 
 ```bash
 # Graceful shutdown via stop file
-touch .coordination/watcher-stop
+touch .coordination/sentinel-stop
 
 # Or kill process
-pkill -f "elf_watcher.py"
+pkill -f "elf_sentinel.py"
 ```
 
 ## Configuration
 
-The watcher uses the following configuration constants in `elf_watcher.py`:
+The sentinel uses the following configuration constants in `elf_sentinel.py`:
 
 - `BASIC_POLL_INTERVAL = 60` (seconds between basic checks)
 - `AI_ANALYSIS_INTERVAL = 300` (seconds between AI analyses)
@@ -142,8 +142,8 @@ These can be modified directly in the source code if needed.
 - Checks EventBridge health at `http://localhost:9998/status`
 
 ### Dashboard Integration
-- Updates coordination log at `.coordination/watcher-log.md`
-- Process detection via `pgrep -f "elf_watcher.py"`
+- Updates coordination log at `.coordination/sentinel-log.md`
+- Process detection via `pgrep -f "elf_sentinel.py"`
 - Status information via dashboard backend monitoring API
 
 ## Exit Codes
@@ -157,7 +157,7 @@ Note: Unlike the original tiered approach, all escalation is handled internally 
 ## Maintenance
 
 ### Log Management
-Logs are written to `.coordination/watcher-log.md` in Markdown format:
+Logs are written to `.coordination/sentinel-log.md` in Markdown format:
 ```
 2026-02-07 00:00:00 | STATUS: healthy | NOTES: All systems operational
 ```

@@ -440,7 +440,7 @@ async def get_orchestrator_status():
 
     services_health = {
         "learning_capture": {"active": False, "running": False},
-        "watcher": False,
+        "sentinel": False,
         "event_bridge": False,
     }
 
@@ -476,11 +476,11 @@ async def get_orchestrator_status():
     # Check Watcher
     try:
         result = subprocess.run(
-            ["pgrep", "-f", "watcher/elf_watcher.py"], capture_output=True, text=True
+            ["pgrep", "-f", "sentinel/elf_sentinel.py"], capture_output=True, text=True
         )
-        services_health["watcher"] = result.returncode == 0
+        services_health["sentinel"] = result.returncode == 0
     except:
-        services_health["watcher"] = False
+        services_health["sentinel"] = False
 
     return {
         "status": "ok",
@@ -802,21 +802,21 @@ class WatcherControlRequest(BaseModel):
     action: str  # 'start', 'stop', 'restart'
 
 
-@router.get("/watcher/status")
-async def get_watcher_status():
-    """Get watcher status and recent logs."""
+@router.get("/sentinel/status")
+async def get_sentinel_status():
+    """Get sentinel status and recent logs."""
     try:
-        # Check if watcher is running by looking for recent activity
+        # Check if sentinel is running by looking for recent activity
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get recent watcher activity from event_chronicle
-        # Watcher creates events with event_type LIKE '%watcher%' (e.g., 'file.watcher.updated')
+        # Get recent sentinel activity from event_chronicle
+        # Watcher creates events with event_type LIKE '%sentinel%' (e.g., 'file.sentinel.updated')
         cursor.execute(
             """
             SELECT timestamp, event_type, source, data, summary, status
             FROM event_chronicle
-            WHERE event_type LIKE '%watcher%'
+            WHERE event_type LIKE '%sentinel%'
             ORDER BY timestamp DESC
             LIMIT 20
             """
@@ -843,10 +843,10 @@ async def get_watcher_status():
             )
 
         # Check unified ELF logger file for additional logs
-        watchdog_log_path = ELF_DIR / "logs" / "elf_watcher.log"
+        watchdog_log_path = ELF_DIR / "logs" / "elf_sentinel.log"
         if watchdog_log_path.exists():
             try:
-                # Read last 50 lines from watcher.log
+                # Read last 50 lines from sentinel.log
                 with open(watchdog_log_path, "r") as f:
                     lines = f.readlines()
                     recent_lines = lines[-50:] if len(lines) > 50 else lines
@@ -854,7 +854,7 @@ async def get_watcher_status():
                 # Parse log lines
                 import re
 
-                # Log format: 2026-02-06 17:58:00 - elf.watcher - INFO - Message
+                # Log format: 2026-02-06 17:58:00 - elf.sentinel - INFO - Message
                 log_pattern = re.compile(
                     r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) - (elf\.\w+) - (INFO|WARNING|ERROR) - (.+)"
                 )
@@ -872,31 +872,31 @@ async def get_watcher_status():
                             }
                         )
             except Exception as log_err:
-                _log_error(f"Error reading watcher.log: {log_err}")
+                _log_error(f"Error reading sentinel.log: {log_err}")
         else:
             _log_debug(f"Watcher log file not found: {watchdog_log_path}")
 
-        # Check if watcher process is actually running
+        # Check if sentinel process is actually running
         result = subprocess.run(
-            ["pgrep", "-f", "core/watcher.py"], capture_output=True, text=True
+            ["pgrep", "-f", "core/sentinel.py"], capture_output=True, text=True
         )
         is_running = result.returncode == 0
 
-        # Get watcher cycles for additional context
-        # Count ALL watcher checks (not just last hour)
+        # Get sentinel cycles for additional context
+        # Count ALL sentinel checks (not just last hour)
         cursor.execute(
             """
             SELECT COUNT(*) as count,
                    MAX(timestamp) as last_check
             FROM event_chronicle
-            WHERE event_type = 'watcher_check'
+            WHERE event_type = 'sentinel_check'
             """
         )
         row = cursor.fetchone()
         total_checks_all = row["count"] if row and row["count"] else 0
         last_check = row["last_check"] if row and row["last_check"] else None
 
-        # Count escalations from watcher events in last hour (only for recent status)
+        # Count escalations from sentinel events in last hour (only for recent status)
         cursor.execute(
             """
             SELECT COUNT(*) as count,
@@ -904,7 +904,7 @@ async def get_watcher_status():
                    COUNT(CASE WHEN status IN ('critical') THEN 1 END) as critical_escalations,
                    COUNT(CASE WHEN status IN ('warning') THEN 1 END) as warning_count
             FROM event_chronicle
-            WHERE event_type LIKE '%watcher%'
+            WHERE event_type LIKE '%sentinel%'
             AND timestamp > datetime('now', '-1 hour')
             """
         )
@@ -959,7 +959,7 @@ async def get_watcher_status():
         }
 
     except Exception as e:
-        logger.error(f"Error fetching watcher status: {e}")
+        logger.error(f"Error fetching sentinel status: {e}")
         # Return default response
         return {
             "status": "ok",
@@ -985,28 +985,28 @@ async def get_watcher_status():
         }
 
 
-@router.post("/watcher/control")
-async def control_watcher(request: WatcherControlRequest):
-    """Control watcher (start/stop/restart)."""
+@router.post("/sentinel/control")
+async def control_sentinel(request: WatcherControlRequest):
+    """Control sentinel (start/stop/restart)."""
     try:
         # Log the control action
         _log_info(f"Watcher control action: {request.action}")
 
         ELF_DIR = Path.home() / ".opencode" / "emergent-learning"
-        WATCHER_DIR = ELF_DIR / "watcher"
-        START_SCRIPT = Path.home() / ".opencode" / "scripts" / "start-watcher.sh"
-        STOP_FILE = ELF_DIR / ".coordination" / "watcher-stop"
-        PID_FILE = Path("/tmp") / "elf-watcher.pid"
+        WATCHER_DIR = ELF_DIR / "sentinel"
+        START_SCRIPT = Path.home() / ".opencode" / "scripts" / "start-sentinel.sh"
+        STOP_FILE = ELF_DIR / ".coordination" / "sentinel-stop"
+        PID_FILE = Path("/tmp") / "elf-sentinel.pid"
 
         if request.action == "start":
             # Remove stop file if it exists
             if STOP_FILE.exists():
                 STOP_FILE.unlink()
-                logger.info("Removed watcher stop file")
+                logger.info("Removed sentinel stop file")
 
             # Check if already running
             result = subprocess.run(
-                ["pgrep", "-f", "watcher/elf_watcher.py"],
+                ["pgrep", "-f", "sentinel/elf_sentinel.py"],
                 capture_output=True,
                 text=True,
             )
@@ -1019,9 +1019,9 @@ async def control_watcher(request: WatcherControlRequest):
                     "pid": result.stdout.strip(),
                 }
 
-            # Start the watcher
+            # Start the sentinel
             if START_SCRIPT.exists():
-                _log_info(f"Launching watcher via {START_SCRIPT}")
+                _log_info(f"Launching sentinel via {START_SCRIPT}")
                 subprocess.Popen(
                     [str(START_SCRIPT), "--daemon"],
                     cwd=str(ELF_DIR),
@@ -1031,7 +1031,7 @@ async def control_watcher(request: WatcherControlRequest):
                 )
                 time.sleep(1)
                 check = subprocess.run(
-                    ["pgrep", "-f", "watcher/elf_watcher.py"],
+                    ["pgrep", "-f", "sentinel/elf_sentinel.py"],
                     capture_output=True,
                     text=True,
                 )
@@ -1054,13 +1054,13 @@ async def control_watcher(request: WatcherControlRequest):
                 )
 
         elif request.action == "stop":
-            # Create stop file to signal watcher to stop
+            # Create stop file to signal sentinel to stop
             STOP_FILE.touch()
-            _log_info("Created watcher stop file")
+            _log_info("Created sentinel stop file")
 
             # Also try to kill the process directly
             result = subprocess.run(
-                ["pkill", "-f", "watcher/elf_watcher.py"],
+                ["pkill", "-f", "sentinel/elf_sentinel.py"],
                 capture_output=True,
                 text=True,
             )
@@ -1076,7 +1076,7 @@ async def control_watcher(request: WatcherControlRequest):
             # Stop first
             STOP_FILE.touch() if not STOP_FILE.exists() else None
             subprocess.run(
-                ["pkill", "-f", "watcher/elf_watcher.py"], capture_output=True
+                ["pkill", "-f", "sentinel/elf_sentinel.py"], capture_output=True
             )
 
             # Wait a moment
@@ -1088,7 +1088,7 @@ async def control_watcher(request: WatcherControlRequest):
 
             # Start again
             if START_SCRIPT.exists():
-                _log_info("Restarting watcher")
+                _log_info("Restarting sentinel")
                 subprocess.Popen(
                     [str(START_SCRIPT), "--daemon"],
                     cwd=str(ELF_DIR),
@@ -1115,22 +1115,22 @@ async def control_watcher(request: WatcherControlRequest):
     except HTTPException:
         raise
     except Exception as e:
-        _log_error(f"Error controlling watcher: {e}")
+        _log_error(f"Error controlling sentinel: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/monitoring/watcher/events")
-async def get_watcher_events():
-    """Get last 20 watcher events for monitoring card."""
+@router.get("/monitoring/sentinel/events")
+async def get_sentinel_events():
+    """Get last 20 sentinel events for monitoring card."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Get recent watcher events (watcher_check, watcher_status, file changes)
+        # Get recent sentinel events (sentinel_check, sentinel_status, file changes)
         cursor.execute("""
             SELECT id, timestamp, event_type, source, summary, data
             FROM event_chronicle 
-            WHERE event_type IN ('watcher_check', 'watcher_status', 'file_change', 'file_creation', 'file_deletion')
+            WHERE event_type IN ('sentinel_check', 'sentinel_status', 'file_change', 'file_creation', 'file_deletion')
             ORDER BY timestamp DESC 
             LIMIT 20
         """)
@@ -1142,7 +1142,7 @@ async def get_watcher_events():
             event_data["display_type"] = event_data.get("event_type", "unknown")
             event_data["display_time"] = event_data.get("timestamp", "")
             event_data["display_message"] = (
-                f"{event_data.get('source', 'watcher')}: {event_data.get('summary', 'No summary')}"
+                f"{event_data.get('source', 'sentinel')}: {event_data.get('summary', 'No summary')}"
             )
             events.append(event_data)
 
@@ -1156,7 +1156,7 @@ async def get_watcher_events():
         }
 
     except Exception as e:
-        logger.error(f"Error fetching watcher events: {e}")
+        logger.error(f"Error fetching sentinel events: {e}")
         return {"status": "error", "error": str(e)}
 
 
@@ -1388,7 +1388,7 @@ async def update_system_health():
 @router.get("/escalations")
 async def get_escalations(
     agent: Optional[str] = Query(
-        default=None, description="Filter by agent: watcher, sentinel, ceo"
+        default=None, description="Filter by agent: sentinel, sentinel, ceo"
     ),
     severity: Optional[str] = Query(
         default=None, description="Filter by severity: info, warning, critical"
@@ -1399,7 +1399,7 @@ async def get_escalations(
     hours: int = Query(default=24, description="Look back period in hours"),
 ):
     """
-    Get escalations from all agents (watcher, sentinel, CEO).
+    Get escalations from all agents (sentinel, sentinel, CEO).
 
     Escalations are events where agents have detected issues requiring attention.
     """
@@ -1414,9 +1414,9 @@ async def get_escalations(
         # Event types that represent escalations
         escalation_event_types = [
             "sentinel_cycle",  # Sentinel monitoring cycles with status
-            "watcher_escalation",  # Watcher escalations
-            "file.watcher.updated",  # Watcher file monitoring events
-            "watcher_check",  # Watcher check events
+            "sentinel_escalation",  # Watcher escalations
+            "file.sentinel.updated",  # Watcher file monitoring events
+            "sentinel_check",  # Watcher check events
             "ceo_alert",  # CEO alerts
             "critical_event",  # General critical events
             "agent_escalation",  # Generic agent escalation
@@ -1431,9 +1431,9 @@ async def get_escalations(
         # Filter by agent if specified
         if agent:
             agent = agent.lower()
-            if agent == "watcher":
+            if agent == "sentinel":
                 where_conditions.append(
-                    "(source LIKE '%watcher%' OR event_type LIKE '%watcher%')"
+                    "(source LIKE '%sentinel%' OR event_type LIKE '%sentinel%')"
                 )
             elif agent == "sentinel":
                 where_conditions.append(
@@ -1536,8 +1536,8 @@ def detect_agent_from_source(source: str, event_type: str) -> str:
     source_lower = source.lower() if source else ""
     event_lower = event_type.lower() if event_type else ""
 
-    if "watcher" in source_lower or "watcher" in event_lower:
-        return "watcher"
+    if "sentinel" in source_lower or "sentinel" in event_lower:
+        return "sentinel"
     elif "sentinel" in source_lower or "sentinel" in event_lower:
         return "sentinel"
     elif "ceo" in source_lower or "ceo" in event_lower:
@@ -1564,7 +1564,7 @@ def format_escalation_message(row, data: Dict) -> str:
     # Format based on event type
     if "sentinel" in event_type:
         return f"{severity_emoji} Sentinel: {summary}"
-    elif "watcher" in event_type:
+    elif "sentinel" in event_type:
         return f"{severity_emoji} Watcher: {summary}"
     elif "ceo" in event_type:
         return f"{severity_emoji} CEO: {summary}"
@@ -1586,7 +1586,7 @@ async def get_escalations_summary(
             """
             SELECT 
                 CASE 
-                    WHEN source LIKE '%watcher%' OR event_type LIKE '%watcher%' THEN 'watcher'
+                    WHEN source LIKE '%sentinel%' OR event_type LIKE '%sentinel%' THEN 'sentinel'
                     WHEN source LIKE '%sentinel%' OR event_type LIKE '%sentinel%' THEN 'sentinel'
                     WHEN source LIKE '%ceo%' OR event_type LIKE '%ceo%' THEN 'ceo'
                     WHEN source LIKE '%orchestrator%' OR event_type LIKE '%orchestrator%' THEN 'orchestrator'
@@ -1596,7 +1596,7 @@ async def get_escalations_summary(
                 status
             FROM event_chronicle
             WHERE timestamp > datetime('now', ?)
-            AND event_type IN ('sentinel_cycle', 'watcher_escalation', 'ceo_alert', 'critical_event', 'agent_escalation')
+            AND event_type IN ('sentinel_cycle', 'sentinel_escalation', 'ceo_alert', 'critical_event', 'agent_escalation')
             GROUP BY agent, status
         """,
             (f"-{hours} hours",),
@@ -1968,7 +1968,7 @@ async def get_ai_analysis_schedule():
 
         # Configuration from ARCHITECTURE.md (post-Sentinel merge)
         schedules = {
-            "watcher": {
+            "sentinel": {
                 "analysis_interval": 300,  # 5 minutes (post-merge)
                 "basic_check_interval": 60,  # 1 minute
                 "note": "Replaces old Watcher + Sentinel (merged)",
@@ -2085,14 +2085,14 @@ async def get_ai_analysis_metrics(hours: int = Query(24, ge=1, le=168)):
                 summary
             FROM event_chronicle
             WHERE timestamp > datetime('now', ?)
-            AND event_type IN ('watcher_cycle', 'orchestrator_cycle')
+            AND event_type IN ('sentinel_cycle', 'orchestrator_cycle')
             ORDER BY timestamp DESC
             """,
             (f"-{hours} hours",),
         )
 
         metrics = {
-            "watcher": {
+            "sentinel": {
                 "total_cycles": 0,
                 "ai_cycles": 0,
                 "basic_cycles": 0,
@@ -2111,7 +2111,7 @@ async def get_ai_analysis_metrics(hours: int = Query(24, ge=1, le=168)):
             event_type = row["event_type"]
             agent_name = event_type.replace("_cycle", "")
 
-            if agent_name not in ["watcher", "orchestrator"]:
+            if agent_name not in ["sentinel", "orchestrator"]:
                 continue
 
             metrics[agent_name]["total_cycles"] += 1
@@ -2136,7 +2136,7 @@ async def get_ai_analysis_metrics(hours: int = Query(24, ge=1, le=168)):
                 pass
 
         # Calculate statistics
-        for agent in ["watcher", "orchestrator"]:
+        for agent in ["sentinel", "orchestrator"]:
             total = metrics[agent]["total_cycles"]
             if total > 0:
                 metrics[agent]["ai_usage_rate"] = round(

@@ -17,7 +17,7 @@ Usage:
     mission = engine.create_mission(
         title="Analyser le système",
         description="Vérifier l'état de tous les services",
-        agent="watcher"
+        agent="sentinel"
     )
 
     # Exécuter
@@ -753,7 +753,7 @@ if __name__ == "__main__":
     mission = engine.create_mission(
         title="Test Mission",
         description="Mission de test pour vérifier le fonctionnement",
-        agent="watcher" if AGENT_MANAGER_AVAILABLE else None,
+        agent="sentinel" if AGENT_MANAGER_AVAILABLE else None,
         priority=MissionPriority.HIGH,
     )
 

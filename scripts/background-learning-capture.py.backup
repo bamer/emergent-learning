@@ -361,16 +361,16 @@ def capture_from_event_chronicle():
         logger.exception(e)
 
 
-def capture_from_watcher_log():
-    """Capture learnings from watcher log."""
+def capture_from_sentinel_log():
+    """Capture learnings from sentinel log."""
     try:
-        watcher_log = ELF_DIR / ".coordination" / "watcher-log.md"
-        if not watcher_log.exists():
+        sentinel_log = ELF_DIR / ".coordination" / "sentinel-log.md"
+        if not sentinel_log.exists():
             return
 
         # Read last hour of entries
-        content = watcher_log.read_text()
-        heuristics = extract_heuristics_from_text(content, "watcher")
+        content = sentinel_log.read_text()
+        heuristics = extract_heuristics_from_text(content, "sentinel")
 
         captured = 0
         for h in heuristics:
@@ -378,12 +378,12 @@ def capture_from_watcher_log():
                 captured += 1
 
         if captured > 0:
-            logger.info(f"👁️  Captured {captured} heuristics from watcher log")
+            logger.info(f"👁️  Captured {captured} heuristics from sentinel log")
         else:
-            logger.debug(f"👁️  Processed watcher log but captured 0 heuristics")
+            logger.debug(f"👁️  Processed sentinel log but captured 0 heuristics")
 
     except Exception as e:
-        logger.error(f"Error capturing from watcher log: {e}")
+        logger.error(f"Error capturing from sentinel log: {e}")
 
 
 def run_capture_loop():
@@ -403,7 +403,7 @@ def run_capture_loop():
 
             # Capture from multiple sources
             capture_from_event_chronicle()
-            capture_from_watcher_log()
+            capture_from_sentinel_log()
 
             # Every 10 cycles, log status
             if cycle % 10 == 0:

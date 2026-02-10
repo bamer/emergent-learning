@@ -19,9 +19,9 @@
 
 **Simplest possible approach:**
 
-1. ✅ **Keep watcher_loop.py unchanged** - generates standard prompts
+1. ✅ **Keep sentinel_loop.py unchanged** - generates standard prompts
 2. ✅ **Create tiny runner** - `run_with_bigpickle.py` - sends prompts to big-pickle
-3. ✅ **Keep event_chronicle** - records all watcher/learning events
+3. ✅ **Keep event_chronicle** - records all sentinel/learning events
 4. ✅ **Remove Sentinel** - was duplicate, not needed
 
 ### Architecture
@@ -32,7 +32,7 @@
 └─────────────────────────────────────────────────────┘
 
 WATCHER (Standard ELF):
-  watcher_loop.py → generates prompts
+  sentinel_loop.py → generates prompts
            ↓
   run_with_bigpickle.py → sends to big-pickle
            ↓
@@ -55,13 +55,13 @@ DASHBOARD:
 
 ### New Files (Minimal)
 
-- `watcher/run_with_bigpickle.py` (50 lines) - Runner for big-pickle
-- `scripts/start-watcher-bigpickle.sh` - Startup script
+- `sentinel/run_with_bigpickle.py` (50 lines) - Runner for big-pickle
+- `scripts/start-sentinel-bigpickle.sh` - Startup script
 - `.coordination/PHASE-2-FINAL-OPENCODE.md` - This doc
 
 ### Modified Files (0 - None!)
 
-- **watcher_loop.py** - No changes ✓
+- **sentinel_loop.py** - No changes ✓
 - **event_chronicle** - Already exists ✓
 - **Learning hook** - Already integrated ✓
 
@@ -78,21 +78,21 @@ DASHBOARD:
 ### Single Pass
 
 ```bash
-./scripts/start-watcher-bigpickle.sh --once
+./scripts/start-sentinel-bigpickle.sh --once
 
-1. Calls watcher_loop.py → generates prompt
+1. Calls sentinel_loop.py → generates prompt
 2. Sends prompt to big-pickle via CLI
 3. Big-pickle analyzes coordination state
 4. Records result to event_chronicle
-5. Logs to .coordination/watcher-log.md
+5. Logs to .coordination/sentinel-log.md
 6. Exits
 ```
 
 ### Continuous Loop
 
 ```bash
-./scripts/start-watcher-bigpickle.sh                # 30s intervals
-./scripts/start-watcher-bigpickle.sh --interval 60  # Custom interval
+./scripts/start-sentinel-bigpickle.sh                # 30s intervals
+./scripts/start-sentinel-bigpickle.sh --interval 60  # Custom interval
 
 Repeats single pass every N seconds (Ctrl+C to stop)
 ```
@@ -105,8 +105,8 @@ Repeats single pass every N seconds (Ctrl+C to stop)
 
 ```json
 {
-  "event_type": "watcher_cycle",
-  "source": "watcher",
+  "event_type": "sentinel_cycle",
+  "source": "sentinel",
   "status": "nominal|warning|critical",
   "summary": "Watcher analysis result",
   "data": {
@@ -135,7 +135,7 @@ Repeats single pass every N seconds (Ctrl+C to stop)
 This implementation follows standard ELF patterns:
 
 ✅ **File-based coordination** - `.coordination/blackboard.json`
-✅ **Single-pass watcher** - Analyze → Act → Exit
+✅ **Single-pass sentinel** - Analyze → Act → Exit
 ✅ **Event logging** - All events to chronicle
 ✅ **Graceful shutdown** - Stop file detection
 ✅ **Clean logs** - Structured output
@@ -165,38 +165,38 @@ This implementation follows standard ELF patterns:
 ### Start continuous monitoring
 
 ```bash
-./scripts/start-watcher-bigpickle.sh
+./scripts/start-sentinel-bigpickle.sh
 ```
 
 ### Single pass (manual check)
 
 ```bash
-./scripts/start-watcher-bigpickle.sh --once
+./scripts/start-sentinel-bigpickle.sh --once
 ```
 
 ### Run every 60 seconds
 
 ```bash
-./scripts/start-watcher-bigpickle.sh --interval 60
+./scripts/start-sentinel-bigpickle.sh --interval 60
 ```
 
 ### Check logs
 
 ```bash
-tail -f .coordination/watcher-log.md
+tail -f .coordination/sentinel-log.md
 tail -f logs/launcher.log
 ```
 
 ### View events
 
 ```bash
-sqlite3 memory/index.db "SELECT * FROM event_chronicle WHERE source='watcher' ORDER BY created_at DESC LIMIT 10;"
+sqlite3 memory/index.db "SELECT * FROM event_chronicle WHERE source='sentinel' ORDER BY created_at DESC LIMIT 10;"
 ```
 
 ### Query via API
 
 ```bash
-curl http://localhost:8888/api/chronicle/events?source=watcher&hours=24
+curl http://localhost:8888/api/chronicle/events?source=sentinel&hours=24
 ```
 
 ---
@@ -204,7 +204,7 @@ curl http://localhost:8888/api/chronicle/events?source=watcher&hours=24
 ## Why This Approach?
 
 1. **Simplest** - Just swap model, keep everything else
-2. **Clean** - Zero changes to watcher_loop.py
+2. **Clean** - Zero changes to sentinel_loop.py
 3. **Standard** - Follows ELF patterns exactly
 4. **Automatic** - Can run continuous or via cron
 5. **Zero Cost** - Uses local big-pickle
@@ -215,7 +215,7 @@ curl http://localhost:8888/api/chronicle/events?source=watcher&hours=24
 
 ## What Each Component Does
 
-### watcher_loop.py (Unchanged)
+### sentinel_loop.py (Unchanged)
 
 - Gathers coordination state from `blackboard.json`
 - Generates well-structured prompts for analysis
@@ -223,19 +223,19 @@ curl http://localhost:8888/api/chronicle/events?source=watcher&hours=24
 
 ### run_with_bigpickle.py (New - Minimal)
 
-- Imports `output_watcher_prompt()` from watcher_loop
+- Imports `output_sentinel_prompt()` from sentinel_loop
 - Sends prompt to big-pickle via CLI
 - Records results to event_chronicle
 - Can run once or in loop
 
 ### Scripts
 
-- `start-watcher-bigpickle.sh` - Easy launch
+- `start-sentinel-bigpickle.sh` - Easy launch
 - Handles arguments (--once, --interval, --help)
 
 ### event_chronicle
 
-- Unified event stream (watcher + learning events)
+- Unified event stream (sentinel + learning events)
 - REST API access via `/api/chronicle`
 - Perfect for dashboard visualization
 
@@ -253,28 +253,28 @@ opencode --model opencode/big-pickle --help  # Should show big-pickle
 ### 2. Run single pass
 
 ```bash
-./scripts/start-watcher-bigpickle.sh --once
+./scripts/start-sentinel-bigpickle.sh --once
 # Should analyze coordination state and output results
 ```
 
 ### 3. Check logs
 
 ```bash
-cat .coordination/watcher-log.md
+cat .coordination/sentinel-log.md
 # Should show pass result
 ```
 
 ### 4. Verify event recorded
 
 ```bash
-sqlite3 memory/index.db "SELECT * FROM event_chronicle WHERE source='watcher';"
-# Should show watcher_cycle event
+sqlite3 memory/index.db "SELECT * FROM event_chronicle WHERE source='sentinel';"
+# Should show sentinel_cycle event
 ```
 
 ### 5. Run continuous (10 seconds)
 
 ```bash
-./scripts/start-watcher-bigpickle.sh --interval 10
+./scripts/start-sentinel-bigpickle.sh --interval 10
 # Press Ctrl+C after a few passes
 ```
 
@@ -305,7 +305,7 @@ Check Python path:
 
 ```bash
 cd /home/bamer/.opencode/emergent-learning
-python3 watcher/run_with_bigpickle.py --once
+python3 sentinel/run_with_bigpickle.py --once
 ```
 
 ### Events not recorded
@@ -331,7 +331,7 @@ Edit `run_with_bigpickle.py` to change:
 timeout=120,  # seconds
 
 # Event type name (line ~60)
-event_type='watcher_cycle',  # Change if needed
+event_type='sentinel_cycle',  # Change if needed
 ```
 
 ---
@@ -340,13 +340,13 @@ event_type='watcher_cycle',  # Change if needed
 
 ### Immediate
 
-1. ✅ Run `./scripts/start-watcher-bigpickle.sh --once` to verify
-2. ✅ Check `.coordination/watcher-log.md` for output
-3. ✅ Start continuous: `./scripts/start-watcher-bigpickle.sh`
+1. ✅ Run `./scripts/start-sentinel-bigpickle.sh --once` to verify
+2. ✅ Check `.coordination/sentinel-log.md` for output
+3. ✅ Start continuous: `./scripts/start-sentinel-bigpickle.sh`
 
 ### Dashboard Integration (Phase 3)
 
-- Display watcher_cycle events on dashboard
+- Display sentinel_cycle events on dashboard
 - Show agent status timeline
 - Alert on issues detected
 
@@ -354,10 +354,10 @@ event_type='watcher_cycle',  # Change if needed
 
 ```bash
 # Add to crontab for 24/7 monitoring
-*/5 * * * * /home/bamer/.opencode/emergent-learning/watcher/run_with_bigpickle.py --loop 30
+*/5 * * * * /home/bamer/.opencode/emergent-learning/sentinel/run_with_bigpickle.py --loop 30
 
 # Or create systemd service
-# See watcher/README.md for example
+# See sentinel/README.md for example
 ```
 
 ---
@@ -366,7 +366,7 @@ event_type='watcher_cycle',  # Change if needed
 
 ✅ **Simplest Solution**
 
-- Kept watcher_loop.py exactly as-is
+- Kept sentinel_loop.py exactly as-is
 - Just wrap it with big-pickle caller
 - Add event_chronicle recording
 - Everything else works unchanged
@@ -393,18 +393,18 @@ event_type='watcher_cycle',  # Change if needed
 
 **Status: Ready for Production**
 
-Run: `./scripts/start-watcher-bigpickle.sh`
+Run: `./scripts/start-sentinel-bigpickle.sh`
 
 ---
 
 ## Final Architecture
 
 ```
-User/Cron → start-watcher-bigpickle.sh
+User/Cron → start-sentinel-bigpickle.sh
                   ↓
          run_with_bigpickle.py
                   ↓
-         watcher_loop.py (generate prompt)
+         sentinel_loop.py (generate prompt)
                   ↓
          big-pickle (analyze)
                   ↓

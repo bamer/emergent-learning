@@ -7,14 +7,14 @@
 **Root Causes Identified**:
 
 ### 1. Watcher Writes to Wrong Location
-**File**: `core/watcher.py` line 66
+**File**: `core/sentinel.py` line 66
 ```python
 CEO_INBOX_DIR = ELF_DIR / "ceo-inbox"  # ❌ Wrong - should be coordination directory
 ```
 
-**Problem**: Watcher writes escalation files directly to CEO inbox (`ceo-inbox/watcher_esc_*.md`) instead of to a coordination directory that Orchestrator monitors.
+**Problem**: Watcher writes escalation files directly to CEO inbox (`ceo-inbox/sentinel_esc_*.md`) instead of to a coordination directory that Orchestrator monitors.
 
-**Expected**: Watcher → `.coordination/escalations/watcher_esc_*.md` → Orchestrator monitors this directory
+**Expected**: Watcher → `.coordination/escalations/sentinel_esc_*.md` → Orchestrator monitors this directory
 
 ---
 
@@ -22,7 +22,7 @@ CEO_INBOX_DIR = ELF_DIR / "ceo-inbox"  # ❌ Wrong - should be coordination dire
 **File**: `Open_ELF/orchestrator/unified_orchestrator.py` (667 lines)
 
 **Missing Code**:
-- ✗ No file watcher for escalation directory
+- ✗ No file sentinel for escalation directory
 - ✗ No method to read/process Watcher escalation files
 - ✗ No autonomous system check logic
 - ✗ No method to act on "Orchestrator Instructions" from Watcher
@@ -37,7 +37,7 @@ Orchestrator only processes events from EventBridge queue (tool, message, error,
 
 **Problem**: CEO inbox monitor processes ALL escalation patterns:
 ```python
-patterns = ["escalation_*.md", "watcher_esc_*.md", "escalation-*.md"]
+patterns = ["escalation_*.md", "sentinel_esc_*.md", "escalation-*.md"]
 ```
 
 This means Watcher escalations go directly to CEO (L3) without Orchestrator (L2) ever seeing or processing them.
@@ -72,12 +72,12 @@ If critical → CEO (L3)
 
 ### Escalation Files in Wrong Location
 ```bash
-$ ls -lh /home/bamer/.opencode/emergent-learning/ceo-inbox/watcher_esc_*.md | wc -l
+$ ls -lh /home/bamer/.opencode/emergent-learning/ceo-inbox/sentinel_esc_*.md | wc -l
 9  # 9 Watcher escalations in CEO inbox (should be in coordination/)
 ```
 
 ### Watcher Escalation File Structure
-File: `ceo-inbox/watcher_esc_20260210_020623.md`
+File: `ceo-inbox/sentinel_esc_20260210_020623.md`
 ```markdown
 ## Orchestrator Instructions
 As the Level 2 agent, please:
@@ -92,7 +92,7 @@ The file contains "Orchestrator Instructions" but is in a location the Orchestra
 
 ### Orchestrator Missing Escalation Methods
 ```bash
-$ grep -n "def.*escalat\|def.*watcher.*process" Open_ELF/orchestrator/unified_orchestrator.py
+$ grep -n "def.*escalat\|def.*sentinel.*process" Open_ELF/orchestrator/unified_orchestrator.py
 459:    def _escalate_critical(self, service: str, status: str, details: Dict):
 ```
 
@@ -117,7 +117,7 @@ bamer 307110  python3 Open_ELF/orchestrator/unified_orchestrator.py start
 
 Add to `unified_orchestrator.py`:
 
-1. **File watcher for escalation directory**:
+1. **File sentinel for escalation directory**:
 ```python
 import aiofiles.os as aiofs
 from watchdog.observers import Observer
@@ -130,13 +130,13 @@ class EscalationFileHandler(FileSystemEventHandler):
     async def on_created(self, event):
         if event.is_directory:
             return
-        if event.src_path.endswith('.md') and 'watcher_esc' in event.src_path:
-            await self.orchestrator.process_watcher_escalation(event.src_path)
+        if event.src_path.endswith('.md') and 'sentinel_esc' in event.src_path:
+            await self.orchestrator.process_sentinel_escalation(event.src_path)
 ```
 
 2. **Process Watcher escalation method**:
 ```python
-async def process_watcher_escalation(self, filepath: Path):
+async def process_sentinel_escalation(self, filepath: Path):
     """Process a Watcher escalation file."""
     logger.info(f"📬 Processing Watcher escalation: {filepath.name}")
     
@@ -164,7 +164,7 @@ async def _run_periodic_checks(self):
 
 ### Fix 2: Update Watcher Escalation Output Location
 
-**File**: `core/watcher.py` line 66
+**File**: `core/sentinel.py` line 66
 
 **Change from**:
 ```python
@@ -190,7 +190,7 @@ CEO_INBOX_DIR = ELF_DIR / "ceo-inbox"
 
 **Change from**:
 ```python
-patterns = ["escalation_*.md", "watcher_esc_*.md", "escalation-*.md"]
+patterns = ["escalation_*.md", "sentinel_esc_*.md", "escalation-*.md"]
 ```
 
 **Change to**:
@@ -198,7 +198,7 @@ patterns = ["escalation_*.md", "watcher_esc_*.md", "escalation-*.md"]
 # Only process CEO escalations from Orchestrator (not Watcher)
 patterns = ["ceo_escalation_*.md", "orchestrator_esc_*.md"]
 # Or: Exclude Watcher escalations explicitly
-excludes = ["watcher_esc_*.md"]
+excludes = ["sentinel_esc_*.md"]
 ```
 
 ---
@@ -207,18 +207,18 @@ excludes = ["watcher_esc_*.md"]
 
 1. **Watcher creates escalation in correct location**:
    ```
-   .coordination/escalations/watcher_esc_20260210_HHMMSS.md
+   .coordination/escalations/sentinel_esc_20260210_HHMMSS.md
    ```
 
 2. **Orchestrator watches and processes**:
    - File system event detected
    - Reads escalation file
    - Performs autonomous checks (AgentManager, system analysis)
-   - Documents findings to `watcher-log.md`
+   - Documents findings to `sentinel-log.md`
    - If critical, creates CEO escalation
 
 3. **CEO only sees Orchestrator escalations**:
-   - CEO inbox monitor filters out `watcher_esc_*.md`
+   - CEO inbox monitor filters out `sentinel_esc_*.md`
    - Only processes truly critical issues from Orchestrator
 
 ---

@@ -7,7 +7,7 @@
   2. Verified all core services are healthy (`dashboard_backend`, `event_bridge`, `learning_capture`).
   3. Confirmed disk usage improved from ~92% to 82%.
   4. Reset `escalation_count` to 0 via coordination-state update (implicit).
-  5. Documented the incident in `watcher-log.md`.
+  5. Documented the incident in `sentinel-log.md`.
 - **Learning Recorded:**
   - **[LEARNED:escalation‑lifecycle]** After an escalation is resolved, automatically archive its markdown and reset the counter to avoid residual flags.
   - **[LEARNED:disk‑pressure‑monitor]** Treat >90% disk usage as critical and trigger automatic cleanup before escalation.

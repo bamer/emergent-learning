@@ -99,7 +99,7 @@ class UnifiedOrchestrator:
         # Service tracking
         self.learning_capture_active = False
         self.learning_capture_pid: Optional[str] = None
-        self.watcher_pid: Optional[str] = None
+        self.sentinel_pid: Optional[str] = None
 
         # Health tracking
         self._services_health: Dict[str, bool] = {}
@@ -107,7 +107,7 @@ class UnifiedOrchestrator:
         self._last_health_check: Optional[datetime] = None
         self.started_at: Optional[datetime] = None
 
-        # AI Analysis timing (Tier-based like watcher/sentinel)
+        # AI Analysis timing (Tier-based like sentinel/sentinel)
         self.main_loop_interval = 10  # seconds (basic cycle)
         self.ai_analysis_interval = 900  # seconds (15 minutes for AI analysis)
         self.cycle_count = 0
@@ -359,10 +359,10 @@ class UnifiedOrchestrator:
                 self._restart_learning_capture()
 
         # Watcher
-        elif "watcher" in service_lower:
+        elif "sentinel" in service_lower:
             if status.lower() in ["down", "inactive", "stopped", "failed"]:
                 logger.info("🔄 Attempting to restart Watcher...")
-                self._restart_watcher()
+                self._restart_sentinel()
 
         # Escalate critical issues
         if event.severity == "critical":
@@ -414,7 +414,7 @@ class UnifiedOrchestrator:
             logger.error(f"❌ Error restarting Learning Capture: {e}")
             return False
 
-    def _restart_watcher(self) -> bool:
+    def _restart_sentinel(self) -> bool:
         """Restart Watcher service.
 
         Returns:
@@ -423,7 +423,7 @@ class UnifiedOrchestrator:
         try:
             # Kill existing
             subprocess.run(
-                ["pkill", "-f", "core/watcher.py"], capture_output=True
+                ["pkill", "-f", "core/sentinel.py"], capture_output=True
             )
             import time
 
@@ -431,7 +431,7 @@ class UnifiedOrchestrator:
 
             # Start new
             process = subprocess.Popen(
-                ["python3", str(BASE_DIR / "core" / "watcher.py")],
+                ["python3", str(BASE_DIR / "core" / "sentinel.py")],
                 cwd=str(OPEN_ELF_DIR),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -441,7 +441,7 @@ class UnifiedOrchestrator:
 
             # Verify
             check = subprocess.run(
-                ["pgrep", "-f", "core/watcher.py"],
+                ["pgrep", "-f", "core/sentinel.py"],
                 capture_output=True,
                 text=True,
             )
@@ -480,11 +480,11 @@ class UnifiedOrchestrator:
         """Check health of all managed services.
 
         Args:
-            health_status: Status dict with keys: event_bridge, watcher, learning_capture
+            health_status: Status dict with keys: event_bridge, sentinel, learning_capture
         """
         health_status = {
             "event_bridge": False,
-            "watcher": False,
+            "sentinel": False,
             "learning_capture": False,
         }
 
@@ -499,15 +499,15 @@ class UnifiedOrchestrator:
         # Watcher (pgrep)
         try:
             result = subprocess.run(
-                ["pgrep", "-f", "core/watcher.py"],
+                ["pgrep", "-f", "core/sentinel.py"],
                 capture_output=True,
                 text=True,
             )
-            health_status["watcher"] = result.returncode == 0
+            health_status["sentinel"] = result.returncode == 0
             if result.returncode == 0:
-                self.watcher_pid = result.stdout.strip()
+                self.sentinel_pid = result.stdout.strip()
         except:
-            logger.error(f'❌ Failed health_status["watcher"]')
+            logger.error(f'❌ Failed health_status["sentinel"]')
             pass
 
         # Learning Capture (pgrep)
@@ -577,7 +577,7 @@ class UnifiedOrchestrator:
         return f"""
 System Health Summary:
 - EventBridge: {"✅ Running" if services.get("event_bridge") else "❌ Down"}
-- Watcher: {"✅ Running" if services.get("watcher") else "❌ Down"}
+- Watcher: {"✅ Running" if services.get("sentinel") else "❌ Down"}
 - Learning Capture: {"✅ Running" if services.get("learning_capture") else "❌ Down"}
 - Events Processed: {state.get("events_processed", 0)}
 - Uptime: {state.get("uptime_seconds", 0):.0f} seconds
@@ -623,7 +623,7 @@ System Health Summary:
             "orchestrator": {"running": self.running, "uptime_seconds": uptime},
             "services": {
                 "event_bridge": self._services_health.get("event_bridge", False),
-                "watcher": self._services_health.get("watcher", False),
+                "sentinel": self._services_health.get("sentinel", False),
                 "learning_capture": {
                     "active": self.learning_capture_active,
                     "pid": self.learning_capture_pid,

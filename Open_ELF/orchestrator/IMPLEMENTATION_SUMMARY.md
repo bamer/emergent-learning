@@ -10,7 +10,7 @@ We have successfully implemented a **Unified OpenCode Orchestrator** that replac
    - Listens to OpenCode SSE events in real-time
    - Monitors CEO inbox for escalations
    - Watches system health and database status
-   - Processes watcher events from event chronicle
+   - Processes sentinel events from event chronicle
    - Makes intelligent decisions using an AI-driven decision engine
    - Executes missions using persistent OpenCode sessions
    - Provides status reporting via HTTP endpoint
@@ -33,7 +33,7 @@ We have successfully implemented a **Unified OpenCode Orchestrator** that replac
 
 #### Event Processing
 - Real-time OpenCode SSE event listening
-- File system monitoring (CEO inbox, watcher events)
+- File system monitoring (CEO inbox, sentinel events)
 - Database health monitoring
 - Standardized internal event representation
 

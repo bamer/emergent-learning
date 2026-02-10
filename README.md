@@ -154,7 +154,7 @@ The ELF system uses multiple autonomous monitoring agents with tiered analysis:
 
 **Costs:** Basic cycles are near-free; AI analysis costs ~$0.01-0.10 per cycle. Overall cost reduction of 90%+ vs constant AI monitoring.
 
-Runs automatically - no user interaction required. See [Open_ELF/watcher/](Open_ELF/watcher/) for configuration and details.
+Runs automatically - no user interaction required. See [Open_ELF/sentinel/](Open_ELF/sentinel/) for configuration and details.
 
 ## How It Works
 

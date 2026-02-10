@@ -12,7 +12,7 @@
 ./alerts/.active_alerts
 ./alerts/alert_1764635353_103099.alert
 ./alerts/alert_1764635354_103099.alert
-./append_watcher_log.py
+./append_sentinel_log.py
 ./apps/ultrawork/frontend/bun.lock
 ./apps/ultrawork/frontend/index.html
 ./apps/ultrawork/frontend/package.json
@@ -46,8 +46,8 @@
 ./backups/orchestrators-legacy-20260131/sentinel_startup.py
 ./backups/orchestrators-legacy-20260131/sentinel_with_learning.py
 ./backups/orchestrators-legacy-20260131/start-sentinel.sh
-./backups/orchestrators-legacy-20260131/start-watcher-bigpickle.sh
-./backups/orchestrators-legacy-20260131/start-watcher.sh
+./backups/orchestrators-legacy-20260131/start-sentinel-bigpickle.sh
+./backups/orchestrators-legacy-20260131/start-sentinel.sh
 ./backups/orchestrators-legacy-20260131/swarm-orchestrator.js
 ./backups/pre-recovery-20260131-113051/index.db.backup
 ./backups/pre-recovery-20260131-113051/memory/elmemory.db
@@ -61,7 +61,7 @@
 ./backups/pre-recovery-20260131-113051/memory/heuristics/performance.md
 ./backups/pre-recovery-20260131-113051/memory/heuristics/swarm.md
 ./backups/pre-recovery-20260131-113051/memory/heuristics/system-migration.md
-./backups/pre-recovery-20260131-113051/memory/heuristics/watcher.md
+./backups/pre-recovery-20260131-113051/memory/heuristics/sentinel.md
 ./backups/pre-recovery-20260131-113051/memory/index.db.backup
 ./backups/pre-recovery-20260131-113051/memory/index.db-shm
 ./backups/pre-recovery-20260131-113051/memory/index.db-wal
@@ -72,7 +72,7 @@
 ./backups/pre-recovery-20260131-113051/memory/successes/20260130_test-success-after-wal.md
 ./backups/pre-recovery-20260131-113051/memory/successes/20260130_test-success-recording.md
 ./backups/pre-recovery-20260131-113051/memory/successes/20260130_test-with-immediate.md
-./backups/pre-recovery-20260131-113051/memory/successes/watcher-system-audit-2026-01-28.md
+./backups/pre-recovery-20260131-113051/memory/successes/sentinel-system-audit-2026-01-28.md
 ./build_system.py
 ./ceo-inbox/ceo_message_1769798379.md
 ./ceo-inbox/ceo_message_1769799623.md
@@ -267,5 +267,5 @@
 ./tests/test_self_healing.py
 ./upgrade_instructions.md
 ./watchdog.py
-./watcher.log
+./sentinel.log
 ```

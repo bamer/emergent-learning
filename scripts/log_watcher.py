@@ -20,12 +20,12 @@ import aiofiles.os
 LOG_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
 ROTATION_SCRIPT = "/home/bamer/.opencode/emergent-learning/scripts/auto_log_rotation.py"
 WATCH_CONFIG = "/home/bamer/.opencode/emergent-learning/scripts/watch_config.json"
-STATUS_FILE = Path("/home/bamer/.opencode/emergent-learning/logs/watcher_status.json")
+STATUS_FILE = Path("/home/bamer/.opencode/emergent-learning/logs/sentinel_status.json")
 
 # Default thresholds (size in MB)
 DEFAULT_THRESHOLDS = {
     "event-bridge.log": {"size_mb": 1, "interval_minutes": 5},  # Very active log
-    "watcher.log": {"size_mb": 2, "interval_minutes": 10},
+    "sentinel.log": {"size_mb": 2, "interval_minutes": 10},
     "orchestrator.log": {"size_mb": 2, "interval_minutes": 15},
     "backend.log": {"size_mb": 3, "interval_minutes": 20},
     "opencode-server.log": {"size_mb": 3, "interval_minutes": 20},
@@ -42,7 +42,7 @@ GLOBAL_FILE_COUNT_THRESHOLD = 15  # Rotation if more than 15 active files
 
 
 class AsyncLogWatcher:
-    """Async log watcher with improved I/O performance."""
+    """Async log sentinel with improved I/O performance."""
 
     def __init__(self):
         self.log_dir = LOG_DIR
@@ -314,7 +314,7 @@ class AsyncLogWatcher:
 
     async def run(self):
         """Main async run loop"""
-        print(f"[Watch] 🚀 Starting async log watcher...")
+        print(f"[Watch] 🚀 Starting async log sentinel...")
         print(f"[Watch] 📁 Monitoring: {self.log_dir}")
         print(
             f"[Watch] ⚙️ Global thresholds: {self.global_size_mb}MB, {self.global_file_count} files"
@@ -332,22 +332,22 @@ class AsyncLogWatcher:
         print(f"[Watch] 👋 Shutting down...")
 
     def stop(self):
-        """Stop the watcher"""
+        """Stop the sentinel"""
         self.running = False
 
 
 async def main():
     """Main entry point"""
-    watcher = AsyncLogWatcher()
+    sentinel = AsyncLogWatcher()
 
     def signal_handler(signum, frame):
         print(f"\n[Watch] Received signal {signum}")
-        watcher.stop()
+        sentinel.stop()
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    await watcher.run()
+    await sentinel.run()
 
 
 if __name__ == "__main__":

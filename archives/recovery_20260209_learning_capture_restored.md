@@ -45,7 +45,7 @@ Real Status:
 
 - CEO Inbox: ✅ Clean
   - Active escalations: 0
-  - Archived: 56 watcher escalation files (already archived)
+  - Archived: 56 sentinel escalation files (already archived)
   - Note: One escalation file was read but deleted during cleanup
 
 - System Resources:
@@ -53,7 +53,7 @@ Real Status:
   - Memory: 91% (2.7GB available)
   - CPU Load: Normal
 
-- Recent watcher_esc files: All archived to archive/watcher_escalations/
+- Recent sentinel_esc files: All archived to archive/sentinel_escalations/
 ```
 
 ---
@@ -73,9 +73,9 @@ The `background-learning-capture.py` process (PID 1496844 from earlier check) wa
    - Watcher showed as "Down" when it was actually running
 
 2. **Watchers Escalation Files** (Resolved during cleanup)
-   - 56 `watcher_esc_*.md` files found in CEO inbox
-   - These were artifacts from watcher cycles (likely normal operation)
-   - All archived to `archive/watcher_escalations/`
+   - 56 `sentinel_esc_*.md` files found in CEO inbox
+   - These were artifacts from sentinel cycles (likely normal operation)
+   - All archived to `archive/sentinel_escalations/`
 
 ---
 
@@ -113,9 +113,9 @@ The `background-learning-capture.py` process (PID 1496844 from earlier check) wa
 
 **Step 4: Cleanup**
 ```bash
-✓ Archived 56 watcher escalation files
+✓ Archived 56 sentinel escalation files
 ✓ CEO inbox clean: 0 active escalations
-✓ Archive organized: watcher_escalations/ subdirectory
+✓ Archive organized: sentinel_escalations/ subdirectory
 ```
 
 ---
@@ -160,7 +160,7 @@ The `background-learning-capture.py` process (PID 1496844 from earlier check) wa
 ### Immediate (Implemented Today)
 - ✅ Restarted background-learning-capture.py
 - ✅ Verified all services operational
-- ✅ Archived watcher escalation files
+- ✅ Archived sentinel escalation files
 - ✅ Documented resolution
 
 ### Short-term (Next Review)

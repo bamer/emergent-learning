@@ -4,7 +4,7 @@ MonitorAgent - Unified Monitoring for ELF System
 
 This adapts and replaces:
 - health_daemon.py (basic health checks)
-- watchdog_watcher.py (process monitoring)
+- watchdog_sentinel.py (process monitoring)
 
 Responsibilities:
 1. Collect system metrics (CPU, memory, disk, services)

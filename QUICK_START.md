@@ -80,7 +80,7 @@ This converter:
 | Heuristics Confidence | ✅ Schema ready | Test with patterns |
 | Golden Rules | 🚨 Not synced | Run `query/repair_database.py` |
 | Session Continuity | 🚨 Lifecycle hooks | Manual: `query/checkout.py` |
-| Async Watcher | 🚨 Not spawning | Run: `watcher/run_with_bigpickle.py` |
+| Async Watcher | 🚨 Not spawning | Run: `sentinel/run_with_bigpickle.py` |
 | Swarm Agents | 🚨 Incomplete | Pending implementation |
 | Pheromone Trails | 🚨 Not recording | Enable post-tool hook |
 
@@ -155,7 +155,7 @@ pkill -f "python3.*dashboard"
 3. **Check database** → `sqlite3 ... ".tables"`
 4. **Sync golden rules** → `python3 query/repair_database.py`
 5. **Test query** → `python3 query/query.py --domain learning`
-6. **Run watcher** → `python3 watcher/run_with_bigpickle.py`
+6. **Run sentinel** → `python3 sentinel/run_with_bigpickle.py`
 7. **Monitor logs** → `tail -f logs/*.log`
 
 ---

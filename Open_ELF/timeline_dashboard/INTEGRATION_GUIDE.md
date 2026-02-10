@@ -88,7 +88,7 @@ The integration supports these event types with proper icons and colors:
 Operational event types from the database are mapped to timeline-friendly types:
 - `agent_started`, `agent_stopped` → `task_start`, `task_end`
 - `heuristic_created` → `heuristic_consulted`
-- `tool_poll`, `message.updated`, `watcher_check` → `task_start`
+- `tool_poll`, `message.updated`, `sentinel_check` → `task_start`
 - `session.idle`, `session.status` → `task_end`
 - `server.heartbeat` → `task_start`
 - All unknown types → `task_start` with auto-generated label

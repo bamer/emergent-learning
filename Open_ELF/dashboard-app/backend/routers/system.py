@@ -183,17 +183,17 @@ def calculate_health(running: bool, last_heartbeat: Optional[str]) -> str:
 # ============================================================================
 
 
-def get_watcher_status() -> ServiceStatus:
+def get_sentinel_status() -> ServiceStatus:
     """Get Watcher monitoring status."""
-    proc_info = check_process_by_name("watcher")
+    proc_info = check_process_by_name("sentinel")
 
-    # Try to get heartbeat from watcher-log
+    # Try to get heartbeat from sentinel-log
     heartbeat = None
-    watcher_log = COORDINATION_DIR / "watcher-log.md"
-    if watcher_log.exists():
+    sentinel_log = COORDINATION_DIR / "sentinel-log.md"
+    if sentinel_log.exists():
         # Extract last timestamp from log
         try:
-            content = watcher_log.read_text()
+            content = sentinel_log.read_text()
             matches = list(re.finditer(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}", content))
             if matches:
                 heartbeat = matches[-1].group()
@@ -203,14 +203,14 @@ def get_watcher_status() -> ServiceStatus:
     health = calculate_health(proc_info["running"], heartbeat)
 
     return ServiceStatus(
-        name="watcher",
+        name="sentinel",
         type="agent",
         running=proc_info["running"],
         pid=proc_info["pid"],
         uptime_seconds=None,
         last_heartbeat=heartbeat,
         health=health,
-        metadata={"log_file": str(watcher_log)},
+        metadata={"log_file": str(sentinel_log)},
     )
 
 
@@ -381,7 +381,7 @@ async def get_system_services():
         services = {
             "orchestrator": get_orchestrator_status(),
             "event_bridge": get_event_bridge_status(),
-            "watcher": get_watcher_status(),
+            "sentinel": get_sentinel_status(),
             "sentinel": get_sentinel_status(),
             "learning_capture": get_learning_capture_status(),
             "ceo_monitor": get_ceo_monitor_status(),
@@ -416,7 +416,7 @@ async def get_service_status(service_name: str):
     service_getters = {
         "orchestrator": get_orchestrator_status,
         "event_bridge": get_event_bridge_status,
-        "watcher": get_watcher_status,
+        "sentinel": get_sentinel_status,
         "sentinel": get_sentinel_status,
         "learning_capture": get_learning_capture_status,
         "ceo_monitor": get_ceo_monitor_status,
@@ -442,7 +442,7 @@ async def get_system_health():
         services = services_response.services
 
         # Count critical components
-        critical_services = ["orchestrator", "event_bridge", "watcher", "sentinel"]
+        critical_services = ["orchestrator", "event_bridge", "sentinel", "sentinel"]
         critical_running = sum(
             1 for name in critical_services if services[name].running
         )
@@ -483,7 +483,7 @@ async def control_service(service_name: str, request: ServiceControlRequest):
     Note: This is a placeholder. Actual service control should be handled
     by the Unified Orchestrator or dedicated service management scripts.
     """
-    allowed_services = ["watcher", "sentinel", "learning_capture", "ceo_monitor"]
+    allowed_services = ["sentinel", "sentinel", "learning_capture", "ceo_monitor"]
     action = request.action.lower()
 
     if service_name.lower() not in allowed_services:

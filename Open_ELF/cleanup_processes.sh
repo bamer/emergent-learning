@@ -74,7 +74,7 @@ echo ""
 
 # 6. Show remaining ELF processes
 echo -e "${YELLOW}6. Remaining ELF processes (should be minimal):${NC}"
-ps aux | grep -E "(opencode|orchestrator|event_bridge|watcher|python.*ELF)" | grep -v grep | \
+ps aux | grep -E "(opencode|orchestrator|event_bridge|sentinel|python.*ELF)" | grep -v grep | \
     awk -F' ' '{printf "%5s %6s %5s %-60s %6s %6s\n", $2, $3"%", $4, $11, $9, $10}'
 echo ""
 

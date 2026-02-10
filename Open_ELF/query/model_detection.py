@@ -42,7 +42,7 @@ DEFAULT_ROUTING_CONFIG = {
                 "elf-integration",
                 "complex-refactoring",
                 "api-design",
-                "watcher-monitoring",
+                "sentinel-monitoring",
                 "coordination",
             ],
             "weaknesses": [],
@@ -200,7 +200,7 @@ def detect_installed_models() -> Dict[str, Dict[str, Any]]:
             "architecture",
             "orchestration",
             "elf-integration",
-            "watcher-monitoring",
+            "sentinel-monitoring",
         ],
     }
 
@@ -316,7 +316,7 @@ def suggest_model_for_task(
         "database": ("opencode", 0.3),
         "architecture": ("opencode", 0.3),
         "refactor": ("opencode", 0.2),
-        "watcher": ("opencode", 0.3),
+        "sentinel": ("opencode", 0.3),
         "monitoring": ("opencode", 0.3),
         "coordination": ("opencode", 0.3),
         "graphics": ("codex", 0.3),
