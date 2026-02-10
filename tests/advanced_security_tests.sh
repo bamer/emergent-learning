@@ -96,7 +96,7 @@ setup() {
 # Emergent Learning Framework
 
 **Date**: $(date '+%Y-%m-%d %H:%M:%S')
-**Auditor**: Opus Agent B (Filesystem Security Specialist)
+**Auditor**: CEO Agent B (Filesystem Security Specialist)
 **Framework Version**: 1.0.0
 
 ## Executive Summary
@@ -387,7 +387,7 @@ test_newline_injection_summary() {
 main() {
     echo "========================================"
     echo "  Advanced Filesystem Security Tests"
-    echo "  Opus Agent B - Security Audit"
+    echo "  CEO Agent B - Security Audit"
     echo "========================================"
 
     setup

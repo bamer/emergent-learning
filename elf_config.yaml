@@ -81,7 +81,7 @@ elf_config:
     parties_file: "agents/parties.yaml"
     coordination_dir: ".coordination"
     models:
-      opencode: ["sonnet", "opus", "haiku"]
+      opencode: ["sonnet", "opus", "nvidia/qwen/qwen3-next-80b-a3b-instruct"]
       external: ["gemini", "codex"]
     max_concurrent: 5
     timeout: 300

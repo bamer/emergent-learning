@@ -449,7 +449,7 @@ The Emergent Learning Framework has **good architectural bones** but **critical 
 
 ---
 
-**Test conducted by**: Opencode (Sonnet 4.5)
+**Test conducted by**: Opencode (Orchestrator 4.5)
 **Framework version**: commit 04e8937 (2025-12-01)
 **Total operations tested**: ~200+
 **Database backups**: Created at `.backup_before_test`, `.backup_final`

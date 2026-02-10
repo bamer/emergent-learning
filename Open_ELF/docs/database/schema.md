@@ -779,7 +779,7 @@ CREATE VIRTUAL TABLE spike_reports_fts USING fts4(
 | `session_file_size` | INTEGER | | File size in bytes |
 | `session_last_modified` | DATETIME | | File modification time |
 | `summarized_at` | DATETIME | DEFAULT CURRENT_TIMESTAMP | Summary time |
-| `summarizer_model` | TEXT | DEFAULT 'haiku' | Model used |
+| `summarizer_model` | TEXT | DEFAULT 'nvidia/qwen/qwen3-next-80b-a3b-instruct' | Model used |
 | `summary_version` | INTEGER | DEFAULT 1 | Format version |
 | `is_stale` | INTEGER | DEFAULT 0 | Needs update flag |
 | `needs_resummarize` | INTEGER | DEFAULT 0 | Resummary flag |

@@ -1,7 +1,7 @@
 # Security Audit: Input Validation Implementation
 
 **Date:** 2025-12-10
-**Auditor:** Claude (Sonnet 4.5)
+**Auditor:** Claude (Orchestrator 4.5)
 **Scope:** Conductor executor.py and related modules
 **Status:** COMPLETED
 
@@ -246,7 +246,7 @@ All identified security vulnerabilities have been remediated. The Conductor syst
 
 ## Sign-off
 
-Audit completed by: Claude (Sonnet 4.5)
+Audit completed by: Claude (Orchestrator 4.5)
 Date: 2025-12-10
 Reviewed by: [Pending human review]
 

@@ -17,7 +17,7 @@ Each optimization includes:
 **Problem:** Manual recording of learnings is inconsistent and often forgotten, leading to knowledge loss between sessions.
 
 **Solution:** 
-- Create a background haiku agent that automatically triggers at session end
+- Create a background nvidia/qwen/qwen3-next-80b-a3b-instruct agent that automatically triggers at session end
 - The agent should summarize the last 3 exchanges (user prompt + assistant response pairs) 
 - Generate structured markdown summaries in `/memory/sessions/` with proper metadata
 - Include "Last Exchange" section capturing final user question and Claude's answer verbatim

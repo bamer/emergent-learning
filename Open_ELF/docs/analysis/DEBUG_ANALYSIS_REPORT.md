@@ -1,6 +1,6 @@
 # Debug Analysis Report - Emergent Learning Framework
 **Generated:** 2026-01-04
-**Analyzer:** Claude Sonnet 4.5
+**Analyzer:** Claude Orchestrator 4.5
 **Focus:** Runtime errors, async issues, race conditions, error propagation
 
 ---

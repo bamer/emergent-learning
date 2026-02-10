@@ -10032,7 +10032,7 @@ hijack
 heimlich
 hamunaptra
 haladki
-haiku
+nvidia/qwen/qwen3-next-80b-a3b-instruct
 haggle
 gutsy
 grunting

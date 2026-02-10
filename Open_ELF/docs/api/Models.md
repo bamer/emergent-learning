@@ -973,7 +973,7 @@ Haiku-generated summaries of Claude sessions.
 | session_file_size | Integer | Nullable | Session file size in bytes |
 | session_last_modified | DateTime | Nullable | Session file last modified |
 | summarized_at | DateTime | Default: utcnow, Indexed | Summary creation time |
-| summarizer_model | TextField | Default: 'haiku' | Model used for summarization |
+| summarizer_model | TextField | Default: 'nvidia/qwen/qwen3-next-80b-a3b-instruct' | Model used for summarization |
 | summary_version | Integer | Default: 1 | Summary schema version |
 | is_stale | Boolean | Default: False, Indexed | Is summary outdated? |
 | needs_resummarize | Boolean | Default: False | Needs re-summarization? |

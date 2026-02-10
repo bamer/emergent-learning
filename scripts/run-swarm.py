@@ -115,7 +115,7 @@ created: "{timestamp}"
 coordination_dir: ".coordination"
 
 # Multi-model support: {available_models}
-# Claude models (sonnet, opus, haiku): Use Task tool (native)
+# Claude models (sonnet, opus, nvidia/qwen/qwen3-next-80b-a3b-instruct): Use Task tool (native)
 # External models (gemini, codex): Use spawn-model.py
 
 # Agent definitions
@@ -127,7 +127,7 @@ agents:
     task: |
       Your detailed task description here.
       Be specific about what needs to be done.
-    model: "sonnet"  # Claude: sonnet, opus, haiku | External: gemini, codex
+    model: "sonnet"  # Claude: sonnet, opus, nvidia/qwen/qwen3-next-80b-a3b-instruct | External: gemini, codex
 
   - name: "implementer"
     description: "Implement the designs"
@@ -135,7 +135,7 @@ agents:
       - "src/"
     task: |
       Another task description.
-    model: "haiku"
+    model: "nvidia/qwen/qwen3-next-80b-a3b-instruct"
 
 # Execution strategy
 strategy:
@@ -234,7 +234,7 @@ Remember: Write results to file, return only the path. This is mandatory.
 
 def is_opencode_model(model: str) -> bool:
     """Check if model is a Claude variant (uses Task tool)."""
-    return model.lower() in ['sonnet', 'opus', 'haiku', 'opencode']
+    return model.lower() in ['sonnet', 'opus', 'nvidia/qwen/qwen3-next-80b-a3b-instruct', 'opencode']
 
 
 def is_external_model(model: str) -> bool:
@@ -245,7 +245,7 @@ def is_external_model(model: str) -> bool:
 def get_available_models_string() -> str:
     """Get string of available models for display."""
     if not HAS_MODEL_DETECTION:
-        return "opencode (sonnet, opus, haiku)"
+        return "opencode (sonnet, opus, nvidia/qwen/qwen3-next-80b-a3b-instruct)"
 
     models = detect_installed_models()
     available = []
@@ -539,7 +539,7 @@ def detect_models_cli() -> None:
     print("-" * 50)
     print(f"Available for swarm: {', '.join(available)}")
     print("\nIn swarm.yaml, use:")
-    print("  - Claude: model: sonnet | opus | haiku")
+    print("  - Claude: model: sonnet | opus | nvidia/qwen/qwen3-next-80b-a3b-instruct")
     if 'gemini' in available:
         print("  - Gemini: model: gemini")
     if 'codex' in available:

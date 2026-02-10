@@ -10,7 +10,7 @@
 | Aspect | Watcher (Standard ELF) | Sentinel (Created in Phase 2) |
 |--------|----------------------|-------------------------------|
 | **Purpose** | Multi-agent swarm monitoring | Dashboard health monitoring |
-| **Model** | Haiku (Tier 1) + Opus (Tier 2) | Haiku (always) |
+| **Model** | Haiku (Tier 1) + CEO (Tier 2) | Haiku (always) |
 | **Cost** | $0.0038/day (~2,880 checks/day) | $2.88/day (continuous) |
 | **Interval** | 30-45 seconds per check | 30 seconds per cycle |
 | **Scope** | Agent coordination & state | Database metrics & activity |
@@ -28,7 +28,7 @@
 ```markdown
 User Interaction → Hook → Spawns Watcher → Haiku (30s check)
                                             ↓
-                                      Issue? → Exit 1 → Opus (deep analysis)
+                                      Issue? → Exit 1 → CEO (deep analysis)
                                             ↓
                                          Restart Haiku
 ```
@@ -55,7 +55,7 @@ User Interaction → Hook → Spawns Watcher → Haiku (30s check)
 
 - Spawns Haiku in subprocess
 - Monitors exit codes
-- Invokes Opus when needed
+- Invokes CEO when needed
 - Handles restarts and graceful shutdown
 
 ### Workflow
@@ -65,7 +65,7 @@ User Interaction → Hook → Spawns Watcher → Haiku (30s check)
 3. Watcher does one comprehensive pass
 4. Watcher analyzes blackboard.json (agent states)
 5. Watcher detects issues (stale agents, errors)
-6. Watcher either: fixes directly OR escalates to Opus
+6. Watcher either: fixes directly OR escalates to CEO
 7. Watcher logs findings and exits
 8. Main Claude continues, next interaction spawns new watcher
 
@@ -79,10 +79,10 @@ User Interaction → Hook → Spawns Watcher → Haiku (30s check)
 
 ### Models Used
 
-- **Haiku** (opencode-3-haiku): ~$0.001 per check
-- **Opus** (opencode-3-opus): ~$0.10 per intervention
-- **Frequency**: Haiku every 30s, Opus ~5-10x per day
-- **Cost**: ~$3.88/day (vs $288/day if Opus every 30s)
+- **Haiku** (opencode-3-nvidia/qwen/qwen3-next-80b-a3b-instruct): ~$0.001 per check
+- **CEO** (opencode-3-opus): ~$0.10 per intervention
+- **Frequency**: Haiku every 30s, CEO ~5-10x per day
+- **Cost**: ~$3.88/day (vs $288/day if CEO every 30s)
 
 ---
 
@@ -134,7 +134,7 @@ Sleep 30s → repeat
 
 ### Models Used
 
-- **Haiku** (opencode-3-haiku): Every 30 seconds
+- **Haiku** (opencode-3-nvidia/qwen/qwen3-next-80b-a3b-instruct): Every 30 seconds
 - **Cost**: ~$2.88/day
 - **Frequency**: 2,880 checks per day
 - **Purpose**: Dashboard health analysis
@@ -187,8 +187,8 @@ Sleep 30s → repeat
 You have access to:
 
 - ✅ Claude Haiku
-- ✅ Claude Opus (likely)
-- ✅ Claude Sonnet (main model)
+- ✅ Claude CEO (likely)
+- ✅ Claude Orchestrator (main model)
 
 ### Watcher Compatibility
 
@@ -197,7 +197,7 @@ You have access to:
 The watcher uses:
 
 - **Haiku**: ~$0.001 per check (very affordable)
-- **Opus**: ~$0.10 per intervention (rare, only when needed)
+- **CEO**: ~$0.10 per intervention (rare, only when needed)
 
 This is actually **cheaper** than the Sentinel I created, which uses Haiku continuously.
 
@@ -247,7 +247,7 @@ Instead of choosing one, integrate them both:
 1. Watcher logs to event_chronicle when:
    - Detecting stale agents → `event_type: agent_stale`
    - Restarting agents → `event_type: agent_restart`
-   - Escalating to Opus → `event_type: escalation_needed`
+   - Escalating to CEO → `event_type: escalation_needed`
    - Completing monitoring → `event_type: watcher_cycle`
 
 2. Learning hook continues writing:
@@ -322,7 +322,7 @@ log_to_event_chronicle(
 
 ```
 Daily: 2,880 Haiku checks × $0.001 = $2.88
-      + ~10 Opus calls × $0.10 = $1.00
+      + ~10 CEO calls × $0.10 = $1.00
       = $3.88/day
 ```
 

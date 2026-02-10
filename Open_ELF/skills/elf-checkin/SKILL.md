@@ -79,7 +79,7 @@ Parse and format context for readability
 - Displays relevant patterns
 
 ### Step 4: Previous Session Summary
-Spawn async haiku agent to summarize recent work
+Spawn async nvidia/qwen/qwen3-next-80b-a3b-instruct agent to summarize recent work
 - **Async execution** (doesn't block)
 - Shows continuity with previous sessions
 

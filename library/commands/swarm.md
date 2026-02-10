@@ -119,13 +119,13 @@ Agents are loaded from `~/.opencode/agents/plugins/` with catalog at `~/.opencod
        ## Output Format
        Report findings in ## FINDINGS section
    - subagent_type: "general-purpose"
-   - model: "opus" | "sonnet" | "haiku" (per agent tier)
+   - model: "opus" | "sonnet" | "nvidia/qwen/qwen3-next-80b-a3b-instruct" (per agent tier)
    - run_in_background: true
    ```
 
    **Model Selection by Agent Tier:**
-   - Tier 1 (Opus): architecture, security, code review agents
-   - Tier 2 (Inherit/Sonnet): most specialists
+   - Tier 1 (CEO): architecture, security, code review agents
+   - Tier 2 (Inherit/Orchestrator): most specialists
    - Tier 3 (Haiku): fast operational tasks
 
 6. **Spawn watcher** (optional but recommended):
@@ -137,7 +137,7 @@ Agents are loaded from `~/.opencode/agents/plugins/` with catalog at `~/.opencod
    ```
    - description: "[WATCHER] Monitor swarm"
    - subagent_type: "general-purpose"
-   - model: "haiku"
+   - model: "nvidia/qwen/qwen3-next-80b-a3b-instruct"
    - run_in_background: true
    - prompt: (output from above command)
    ```

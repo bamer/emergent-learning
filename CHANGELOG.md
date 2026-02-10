@@ -221,17 +221,17 @@ The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
   - Fixed wrong port: UnifiedOrchestrator 9999 → process detection via pgrep
   - Fixed wrong port: Dashboard Frontend 5173 → 3001
   - Added Watcher detection (now includes merged Sentinel functionality) in architecture status check
-  - Updated to use OpenCode AgentManager instead of haiku Task tool
+  - Updated to use OpenCode AgentManager instead of nvidia/qwen/qwen3-next-80b-a3b-instruct Task tool
 
 - **Configuration Updates** - Claude configuration files
-  - `.opencode/CLAUDE.md`: Removed haiku references, added AgentManager integration
+  - `.opencode/CLAUDE.md`: Removed nvidia/qwen/qwen3-next-80b-a3b-instruct references, added AgentManager integration
   - `.opencode/commands/checkin.md`: Updated session summarization workflow
   - `.opencode/skills/agent-coordination/`: Fixed skill path references
 
 ### Fixed
 - **Session Summarization** - Fixed workflow for automatic session memory
   - Now uses OpenCode AgentManager with researcher agent
-  - Removed deprecated haiku Task tool references
+  - Removed deprecated nvidia/qwen/qwen3-next-80b-a3b-instruct Task tool references
   - Properly saves summaries to `memory/sessions/` directory
 
 - **Pheromone Trails Not Recording** - Root cause was missing OpenCode hook registration

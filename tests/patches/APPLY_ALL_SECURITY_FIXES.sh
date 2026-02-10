@@ -150,7 +150,7 @@ if [ "$DRY_RUN" = false ]; then
             -m "- HIGH: TOCTOU symlink race (CVSS 7.1)" \
             -m "- MEDIUM: Hardlink attack (CVSS 5.4)" \
             -m "" \
-            -m "Security audit by: Opus Agent B" \
+            -m "Security audit by: CEO Agent B" \
             -m "Date: $(date +%Y-%m-%d)" || echo "No changes to commit"
 
         echo ""

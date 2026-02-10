@@ -27,7 +27,7 @@ Spawn and manage coordinated agents using the blackboard pattern.
 **Single-Pass Watcher Model:**
 1. You spawn work agents with `[SWARM]` tag
 2. Hook reminds main Claude if watcher needed
-3. Main Claude spawns haiku watcher (single pass)
+3. Main Claude spawns nvidia/qwen/qwen3-next-80b-a3b-instruct watcher (single pass)
 4. Watcher analyzes state, fixes problems, logs, exits
 5. Next user message triggers next monitoring cycle
 
@@ -87,7 +87,7 @@ Watchers do NOT self-perpetuate (cost control). The cycle is driven by user inte
    ```
    - description: "[WATCHER] Monitor swarm"
    - subagent_type: "general-purpose"
-   - model: "haiku"
+   - model: "nvidia/qwen/qwen3-next-80b-a3b-instruct"
    - run_in_background: true
    - prompt: (output from above command)
    ```

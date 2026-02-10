@@ -67,7 +67,7 @@ class TestGetDefaultAgentConfig(unittest.TestCase):
 
         assert 'opus' in config['phase_weights']['plan']
         assert 'sonnet' in config['phase_weights']['plan']
-        assert 'haiku' in config['phase_weights']['plan']
+        assert 'nvidia/qwen/qwen3-next-80b-a3b-instruct' in config['phase_weights']['plan']
 
         # Check complexity_requirements
         assert 'critical' in config['complexity_requirements']
@@ -213,7 +213,7 @@ class TestGetConfigValue(unittest.TestCase):
                 'plan': {
                     'opus': 2.0,
                     'sonnet': 1.5,
-                    'haiku': 0.5
+                    'nvidia/qwen/qwen3-next-80b-a3b-instruct': 0.5
                 }
             },
             'category_weights': {
@@ -457,7 +457,7 @@ class TestIntegration(unittest.TestCase):
         # Verify all phases have weights
         for phase in ['plan', 'execute', 'review']:
             assert phase in config['phase_weights']
-            for tier in ['opus', 'sonnet', 'haiku']:
+            for tier in ['opus', 'sonnet', 'nvidia/qwen/qwen3-next-80b-a3b-instruct']:
                 assert tier in config['phase_weights'][phase]
                 assert isinstance(config['phase_weights'][phase][tier], (int, float))
 

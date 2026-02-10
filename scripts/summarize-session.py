@@ -113,7 +113,7 @@ def find_session_file(session_id: str) -> Optional[Path]:
 def extract_session_data(file_path: Path) -> Dict[str, Any]:
     """
     Extract structured data from session JSONL without loading full content.
-    Returns metadata and truncated summaries suitable for haiku processing.
+    Returns metadata and truncated summaries suitable for nvidia/qwen/qwen3-next-80b-a3b-instruct processing.
     """
     tool_counts = Counter()
     files_touched = set()
@@ -236,7 +236,7 @@ def call_learning_extractor(prompt: str) -> Optional[Dict[str, Any]]:
 
 
 def generate_fallback_summary(session_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Generate a basic summary without LLM when haiku fails."""
+    """Generate a basic summary without LLM when nvidia/qwen/qwen3-next-80b-a3b-instruct fails."""
     tool_counts = session_data.get("tool_counts", {})
     files = session_data.get("files_touched", [])
 
@@ -415,7 +415,7 @@ def process_queue(limit: int = 10) -> int:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Summarize Claude sessions with haiku")
+    parser = argparse.ArgumentParser(description="Summarize Claude sessions with nvidia/qwen/qwen3-next-80b-a3b-instruct")
     parser.add_argument("session_id", nargs="?", help="Session ID to summarize")
     parser.add_argument("--batch", action="store_true", help="Batch summarize multiple sessions")
     parser.add_argument("--older-than", type=str, default="1h", help="Only sessions older than (e.g., 1h, 30m)")

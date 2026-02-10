@@ -1,12 +1,12 @@
 -- Session Summaries Table
--- Stores haiku-generated summaries of Claude sessions to prevent context flooding
+-- Stores nvidia/qwen/qwen3-next-80b-a3b-instruct-generated summaries of Claude sessions to prevent context flooding
 
 CREATE TABLE IF NOT EXISTS session_summaries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id TEXT NOT NULL UNIQUE,           -- UUID from .jsonl filename
     project TEXT NOT NULL,                      -- Project name
 
-    -- Summary content (haiku-generated)
+    -- Summary content (nvidia/qwen/qwen3-next-80b-a3b-instruct-generated)
     tool_summary TEXT,                          -- "Read 5 files, edited 3, ran 12 bash commands"
     content_summary TEXT,                       -- "Modified auth module, added user tests"
     conversation_summary TEXT,                  -- "Fixed login bug: investigated, patched, tested"
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS session_summaries (
 
     -- Summary metadata
     summarized_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    summarizer_model TEXT DEFAULT 'haiku',      -- Which model created summary
+    summarizer_model TEXT DEFAULT 'nvidia/qwen/qwen3-next-80b-a3b-instruct',      -- Which model created summary
     summary_version INTEGER DEFAULT 1,          -- For future format changes
 
     -- Flags
@@ -39,6 +39,6 @@ CREATE INDEX IF NOT EXISTS idx_session_summaries_stale ON session_summaries(is_s
 
 -- Track schema version
 INSERT OR IGNORE INTO schema_version (version, description)
-VALUES (3, 'Added session_summaries table for haiku-generated session summaries');
+VALUES (3, 'Added session_summaries table for nvidia/qwen/qwen3-next-80b-a3b-instruct-generated session summaries');
 
 ANALYZE session_summaries;

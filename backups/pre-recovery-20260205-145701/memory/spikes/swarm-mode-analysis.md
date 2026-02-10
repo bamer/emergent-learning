@@ -51,7 +51,7 @@ Swarm mode in ELF enables coordinated multi-agent execution without context exha
 
 **Multi-Model Support:**
 
-- Claude models (sonnet, opus, haiku): Native Task tool
+- Claude models (sonnet, opus, nvidia/qwen/qwen3-next-80b-a3b-instruct): Native Task tool
 - External models (gemini, codex): spawn-model.py wrapper
 - Auto-detection of available models
 

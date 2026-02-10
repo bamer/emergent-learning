@@ -59,7 +59,7 @@ function convertPathsInBody(body) {
     // Convert /home/user/.opencode/emergent-learning to /home/user/.opencode/emergent-learning
     .replace(/\/\.opencode\/emergent-learning/g, '/.opencode/emergent-learning')
     // Convert opencode CLI references (keep opencode/big-pickle model)
-    .replace(/opencode --print --model (haiku|opus|sonnet)/g, 'opencode --print --model opencode/big-pickle')
+    .replace(/opencode --print --model (nvidia/qwen/qwen3-next-80b-a3b-instruct|opus|sonnet)/g, 'opencode --print --model opencode/big-pickle')
     .replace(/opencode --print --model gpt-4/g, 'opencode --print --model opencode/big-pickle')
     // Update python command references
     .replace(/python .*\/.opencode\/emergent-learning\//g, (match) => {
@@ -124,7 +124,7 @@ function mapModel(model) {
   const modelMap = {
     'sonnet': 'opencode/big-pickle',
     'opus': 'opencode/big-pickle',
-    'haiku': 'opencode/big-pickle',
+    'nvidia/qwen/qwen3-next-80b-a3b-instruct': 'opencode/big-pickle',
     'gpt-4': 'opencode/big-pickle',
     'gpt-4o': 'opencode/big-pickle',
   };

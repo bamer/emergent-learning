@@ -232,7 +232,7 @@ If you realize mid-task that you did NOT query the building:
 
 When you see `[SessionStart] SUMMARIZE_PREVIOUS: /path/to/session.jsonl` in the startup output, you MUST:
 
-1. **Spawn a background haiku agent** to summarize the previous session
+1. **Spawn a background nvidia/qwen/qwen3-next-80b-a3b-instruct agent** to summarize the previous session
 2. The agent should:
    - Read the JSONL file
    - Extract user and assistant messages
@@ -245,7 +245,7 @@ When you see `[SessionStart] SUMMARIZE_PREVIOUS: /path/to/session.jsonl` in the 
 ```
 Task tool with:
 - subagent_type: "general-purpose"
-- model: "haiku"
+- model: "nvidia/qwen/qwen3-next-80b-a3b-instruct"
 - run_in_background: true
 - prompt: "Summarize the session at [path]. Read the JSONL, extract messages. IMPORTANT: You MUST include a 'Last Exchange' section capturing the final 3 user prompts and Claude responses verbatim - this is critical for session continuity. Write markdown summary to ~/.opencode/emergent-learning/memory/sessions/"
 ```

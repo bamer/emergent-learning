@@ -1,7 +1,7 @@
 # Recovery Scenarios Test Report
 
 **Date:** $(date)
-**Agent:** Opus Agent H2
+**Agent:** CEO Agent H2
 **Objective:** Achieve 10/10 backup and recovery score
 
 ---

@@ -4,8 +4,8 @@ Session Integration Module for Emergent Learning Framework
 
 Extends the QuerySystem with:
 1. Session context loading (from previous session logs)
-2. Pending proposals display (from Opus learning extractor)
-3. Trigger Opus extractor when unprocessed logs exist
+2. Pending proposals display (from CEO learning extractor)
+3. Trigger CEO extractor when unprocessed logs exist
 4. Session log search capability
 
 This module is designed to be imported by query.py or used standalone.
@@ -60,7 +60,7 @@ class SessionIntegration:
 
     Responsibilities:
     - Detect unprocessed session logs
-    - Trigger Opus learning extractor (async)
+    - Trigger CEO learning extractor (async)
     - Load session context for check-in
     - Load pending proposals
     - Provide session search capability
@@ -222,7 +222,7 @@ class SessionIntegration:
 
     def trigger_learning_extractor(self, log_files: List[Path]) -> bool:
         """
-        Trigger the Opus learning extractor agent in background.
+        Trigger the CEO learning extractor agent in background.
 
         Args:
             log_files: List of log files to process
@@ -405,7 +405,7 @@ class SessionIntegration:
         if not proposals:
             return ""
 
-        lines = ["\n# Pending Proposals (Opus Learning Extractor)\n"]
+        lines = ["\n# Pending Proposals (CEO Learning Extractor)\n"]
         lines.append(f"_{len(proposals)} proposal(s) awaiting review_\n")
 
         for p in proposals[:5]:  # Max 5 in check-in
@@ -438,11 +438,11 @@ class SessionIntegration:
         unprocessed = self.get_unprocessed_logs()
         if unprocessed:
             context_parts.append(f"\n## Session Logs Pending Analysis")
-            context_parts.append(f"_{len(unprocessed)} session log(s) from previous sessions await Opus analysis_\n")
+            context_parts.append(f"_{len(unprocessed)} session log(s) from previous sessions await CEO analysis_\n")
 
             # Trigger extractor in background
             if self.trigger_learning_extractor(unprocessed):
-                context_parts.append("*Opus Learning Extractor launched in background...*\n")
+                context_parts.append("*CEO Learning Extractor launched in background...*\n")
                 extractor_triggered = True
             else:
                 context_parts.append("*Learning extractor not available - logs will be processed next time*\n")

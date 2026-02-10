@@ -147,7 +147,7 @@ This implementation follows standard ELF patterns:
 ### Before (With Claude)
 
 - Watcher: Haiku ~$0.001/check × 2,880/day = $2.88/day
-- Watcher: Opus ~$0.10/call × 10/day = $1.00/day
+- Watcher: CEO ~$0.10/call × 10/day = $1.00/day
 - **Total: $3.88/day**
 
 ### After (With big-pickle)
@@ -382,7 +382,7 @@ event_type='watcher_cycle',  # Change if needed
 
 - Uses local big-pickle (free)
 - No Claude API bills
-- Same capabilities as Opus tier
+- Same capabilities as CEO tier
 
 ✅ **Standard ELF**
 

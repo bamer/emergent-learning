@@ -450,7 +450,7 @@ If you claim to support concurrency, you must test concurrency. Sequential tests
 
 ## Contact & Questions
 
-This testing was performed by Opencode (Sonnet 4.5) on 2025-12-01.
+This testing was performed by Opencode (Orchestrator 4.5) on 2025-12-01.
 
 **Questions about:**
 - Test methodology → See TESTING_COMPLETE.txt

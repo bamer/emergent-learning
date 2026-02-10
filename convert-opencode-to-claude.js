@@ -98,7 +98,7 @@ function mapModel(model) {
     'opencode/grok': 'opus',
     'gpt-4': 'sonnet',
     'gpt-4o': 'sonnet',
-    'haiku': 'haiku',
+    'nvidia/qwen/qwen3-next-80b-a3b-instruct': 'nvidia/qwen/qwen3-next-80b-a3b-instruct',
   };
   return modelMap[model] || 'sonnet';
 }
@@ -185,7 +185,7 @@ function convert() {
 name: context-scout
 description: Discovers and recommends OpenAgents Control context files using glob, read, and grep tools. Use when you need to find OpenAgents Control standards, guides, or domain knowledge in the .opencode/context directory.
 tools: Read, Grep, Glob
-model: haiku
+model: nvidia/qwen/qwen3-next-80b-a3b-instruct
 permissionMode: plan
 ---
 

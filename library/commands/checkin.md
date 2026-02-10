@@ -9,7 +9,7 @@ Query the Emergent Learning Framework for institutional knowledge and summarize 
    python ~/.opencode/emergent-learning/src/query/query.py --context
    ```
 
-2. **Summarize the previous session using Task(model="haiku"):**
+2. **Summarize the previous session using Task(model="nvidia/qwen/qwen3-next-80b-a3b-instruct"):**
 
    Check if previous session needs summarization:
    ```bash
@@ -26,7 +26,7 @@ if len(non_agent) >= 2:
     project = prev.parent.name
     file_path = str(prev).replace(chr(92), '/')  # Windows path fix
 
-    # Check if already summarized with haiku
+    # Check if already summarized with nvidia/qwen/qwen3-next-80b-a3b-instruct
     db = Path.home() / '.opencode/emergent-learning/memory/index.db'
     conn = sqlite3.connect(str(db))
     cur = conn.cursor()
@@ -34,7 +34,7 @@ if len(non_agent) >= 2:
     row = cur.fetchone()
     conn.close()
 
-    if row and row[0] == 'haiku':
+    if row and row[0] == 'nvidia/qwen/qwen3-next-80b-a3b-instruct':
         print(f'ALREADY_SUMMARIZED:{session_id[:8]}')
     else:
         print(f'NEEDS_SUMMARY:{session_id}|{project}|{file_path}')
@@ -44,7 +44,7 @@ else:
    ```
 
    If output shows `NEEDS_SUMMARY:session_id|project|file_path`:
-   - Use `Task(model="haiku", subagent_type="general-purpose", run_in_background=true)` with this prompt:
+   - Use `Task(model="nvidia/qwen/qwen3-next-80b-a3b-instruct", subagent_type="general-purpose", run_in_background=true)` with this prompt:
 
    ```
    Summarize session and write directly to database.
@@ -70,7 +70,7 @@ else:
       cur = conn.cursor()
       cur.execute('''INSERT OR REPLACE INTO session_summaries
           (session_id, project, tool_summary, conversation_summary, summarizer_model, summarized_at)
-          VALUES (?, ?, ?, ?, 'haiku', ?)''',
+          VALUES (?, ?, ?, ?, 'nvidia/qwen/qwen3-next-80b-a3b-instruct', ?)''',
           ('[session_id]', '[project]', '[your tool_summary]', '[your conversation_summary]', datetime.now().isoformat()))
       conn.commit()
       conn.close()

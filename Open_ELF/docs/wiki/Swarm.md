@@ -92,8 +92,8 @@ Swarm auto-selects agents based on task keywords:
 
 | Tier | Model | Agent Types |
 |------|-------|-------------|
-| Tier 1 | Opus | architecture, security, code review |
-| Tier 2 | Sonnet | most specialists |
+| Tier 1 | CEO | architecture, security, code review |
+| Tier 2 | Orchestrator | most specialists |
 | Tier 3 | Haiku | fast operational tasks |
 
 ## The Blackboard Pattern

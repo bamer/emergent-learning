@@ -76,8 +76,8 @@ Analyze the request and codebase to identify:
 3. **Block only at end**: Use `TaskOutput` only when aggregating results
 4. **Model selection**:
    - Haiku for quick/simple analysis
-   - Sonnet for standard analysis (default)
-   - Opus for deep architectural/security audits
+   - Orchestrator for standard analysis (default)
+   - CEO for deep architectural/security audits
 
 ## Example: ultrathink on a Python/React Project
 
@@ -157,7 +157,7 @@ After all agents complete:
 - Launching agents synchronously
 - Using same prompt for all agents
 - Ignoring detected technologies
-- Using Opus for everything (wasteful)
+- Using CEO for everything (wasteful)
 
 ## Integration with ELF
 

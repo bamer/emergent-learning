@@ -32,12 +32,12 @@ Add 99 specialized agents from wshobson/agents to your existing system. Keep eve
 - 99 specialized agents across domains
 - 107 progressive-disclosure skills
 - 67 plugins (install only what you need)
-- Model tiering (Opus/Sonnet/Haiku)
+- Model tiering (CEO/Orchestrator/Haiku)
 
 **Model Distribution:**
-- Tier 1 (Opus): 42 agents - architecture, security, code review
+- Tier 1 (CEO): 42 agents - architecture, security, code review
 - Tier 2 (Inherit): 42 agents - flexible specialists
-- Tier 3 (Sonnet): 51 agents - docs, testing, debugging
+- Tier 3 (Orchestrator): 51 agents - docs, testing, debugging
 - Tier 4 (Haiku): 18 agents - fast operational tasks
 
 ---
@@ -71,24 +71,24 @@ Add 99 specialized agents from wshobson/agents to your existing system. Keep eve
 │                   AGENT POOL (wshobson/agents)                   │
 │                                                                  │
 │   backend-development plugin:                                   │
-│   ├─ api-architect (Opus)                                       │
-│   ├─ backend-developer (Sonnet)                                 │
-│   └─ database-specialist (Sonnet)                               │
+│   ├─ api-architect (CEO)                                       │
+│   ├─ backend-developer (Orchestrator)                                 │
+│   └─ database-specialist (Orchestrator)                               │
 │                                                                  │
 │   security-hardening plugin:                                    │
-│   ├─ security-specialist (Opus)                                 │
-│   ├─ vulnerability-analyst (Opus)                               │
-│   └─ penetration-tester (Sonnet)                                │
+│   ├─ security-specialist (CEO)                                 │
+│   ├─ vulnerability-analyst (CEO)                               │
+│   └─ penetration-tester (Orchestrator)                                │
 │                                                                  │
 │   code-quality plugin:                                          │
-│   ├─ code-reviewer (Opus)                                       │
-│   ├─ refactoring-specialist (Sonnet)                            │
-│   └─ performance-analyst (Sonnet)                               │
+│   ├─ code-reviewer (CEO)                                       │
+│   ├─ refactoring-specialist (Orchestrator)                            │
+│   └─ performance-analyst (Orchestrator)                               │
 │                                                                  │
 │   infrastructure plugin:                                        │
-│   ├─ devops-engineer (Sonnet)                                   │
-│   ├─ kubernetes-specialist (Sonnet)                             │
-│   └─ cloud-architect (Opus)                                     │
+│   ├─ devops-engineer (Orchestrator)                                   │
+│   ├─ kubernetes-specialist (Orchestrator)                             │
+│   └─ cloud-architect (CEO)                                     │
 └─────────────────────────────────────────────────────────────────┘
                                 │
                                 v
@@ -161,16 +161,16 @@ User: /swarm "build authentication system"
 Swarm: Analyzing task... Recommended agents:
 
   SECURITY (required for auth):
-  [x] security-specialist (Opus) - Auth patterns, threat modeling
-  [x] vulnerability-analyst (Opus) - Security review
+  [x] security-specialist (CEO) - Auth patterns, threat modeling
+  [x] vulnerability-analyst (CEO) - Security review
 
   BACKEND (core implementation):
-  [x] api-architect (Opus) - API design
-  [x] backend-developer (Sonnet) - Implementation
-  [x] database-specialist (Sonnet) - Schema design
+  [x] api-architect (CEO) - API design
+  [x] backend-developer (Orchestrator) - Implementation
+  [x] database-specialist (Orchestrator) - Schema design
 
   QUALITY (verification):
-  [ ] code-reviewer (Opus) - Code review
+  [ ] code-reviewer (CEO) - Code review
   [ ] test-writer (Haiku) - Test coverage
 
   [Start] [Auto-select all] [Cancel]

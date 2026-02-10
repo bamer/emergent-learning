@@ -171,12 +171,12 @@ def get_default_agent_config() -> Dict[str, Any]:
         "always_include": {},
         "tier_overrides": {},
         "phase_weights": {
-            "plan": {"opus": 2.0, "sonnet": 1.5, "haiku": 0.5},
-            "execute": {"opus": 1.0, "sonnet": 1.5, "haiku": 1.5},
-            "review": {"opus": 2.0, "sonnet": 2.0, "haiku": 0.5},
+            "plan": {"opus": 2.0, "sonnet": 1.5, "nvidia/qwen/qwen3-next-80b-a3b-instruct": 0.5},
+            "execute": {"opus": 1.0, "sonnet": 1.5, "nvidia/qwen/qwen3-next-80b-a3b-instruct": 1.5},
+            "review": {"opus": 2.0, "sonnet": 2.0, "nvidia/qwen/qwen3-next-80b-a3b-instruct": 0.5},
         },
         # Model tier mappings (OpenCode):
-        # haiku -> llama/nemotron-v3-coder
+        # nvidia/qwen/qwen3-next-80b-a3b-instruct -> llama/nemotron-v3-coder
         # sonnet -> opencode/kimi-k2.5-free
         # opus -> nvidia/qwen/qwen3-coder-480b-a35b-instruct
         "complexity_requirements": {

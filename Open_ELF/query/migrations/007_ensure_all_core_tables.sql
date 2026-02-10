@@ -228,7 +228,7 @@ CREATE TABLE IF NOT EXISTS session_summaries (
     session_file_size INTEGER,
     session_last_modified DATETIME,
     summarized_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    summarizer_model TEXT DEFAULT 'haiku',
+    summarizer_model TEXT DEFAULT 'nvidia/qwen/qwen3-next-80b-a3b-instruct',
     summary_version INTEGER DEFAULT 1,
     is_stale INTEGER DEFAULT 0,
     needs_resummarize INTEGER DEFAULT 0
