@@ -97,6 +97,10 @@ class Watcher:
         self.agent_manager = None
         self.last_analysis = None
 
+        # HTTP session for connection pooling
+        self.http_session = requests.Session()
+        self.http_session.headers.update({"User-Agent": "ELF-Watcher-v3"})
+
         # Initialize AgentManager
         if AGENT_MANAGER_AVAILABLE:
             try:
@@ -108,7 +112,7 @@ class Watcher:
     def check_service_health(self, url: str, timeout: int = 5) -> bool:
         """Check if a service is healthy."""
         try:
-            response = requests.get(url, timeout=timeout)
+            response = self.http_session.get(url, timeout=timeout)
             return response.status_code == 200
         except Exception as e:
             logger.debug(f"Health check failed for {url}: {e}")

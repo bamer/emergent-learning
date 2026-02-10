@@ -314,7 +314,7 @@ class LearningProcessor:
 
             return heuristics[:limit]
         except Exception as e:
-            print(f"Error consulting heuristics: {e}", file=sys.stderr)
+            logger.error(f"Error consulting heuristics: {e}", exc_info=True)
             return []
         finally:
             conn.close()
@@ -492,15 +492,12 @@ class LearningProcessor:
                 if proc.returncode == 0:
                     count += 1
                 else:
-                    print(
-                        f"[HOOK_ERROR] {hook_file.name}: {proc.stderr[:200]}",
-                        file=sys.stderr,
-                    )
+                    logger.error(f"[HOOK_ERROR] {hook_file.name}: {proc.stderr[:200]}")
 
             except subprocess.TimeoutExpired:
-                print(f"[HOOK_TIMEOUT] {hook_file.name}", file=sys.stderr)
+                logger.error(f"[HOOK_TIMEOUT] {hook_file.name}")
             except Exception as e:
-                print(f"[HOOK_EXCEPTION] {hook_file.name}: {e}", file=sys.stderr)
+                logger.error(f"[HOOK_EXCEPTION] {hook_file.name}: {e}", exc_info=True)
 
         return count
 
@@ -634,7 +631,7 @@ class LearningProcessor:
             return validated, violated
 
         except Exception as e:
-            print(f"Error validating heuristics: {e}", file=sys.stderr)
+            logger.error(f"Error validating heuristics: {e}", exc_info=True)
             conn.rollback()
             return 0, 0
         finally:
@@ -702,7 +699,7 @@ class LearningProcessor:
             return count
 
         except Exception as e:
-            print(f"Error recording pheromone trails: {e}", file=sys.stderr)
+            logger.error(f"Error recording pheromone trails: {e}", exc_info=True)
             conn.rollback()
             return 0
         finally:
@@ -769,7 +766,7 @@ class LearningProcessor:
             return count
 
         except Exception as e:
-            print(f"Error recording workflow trails: {e}", file=sys.stderr)
+            logger.error(f"Error recording workflow trails: {e}", exc_info=True)
             conn.rollback()
             return 0
         finally:
@@ -809,21 +806,56 @@ class LearningProcessor:
         paths = set()
         tool_lower = tool_name.lower()
 
+        # DEBUG: Log the actual structure of tool_input
+        logger.debug(
+            f"🔍 _extract_file_paths: tool_name={tool_name}, tool_input type={type(tool_input)}, tool_input={tool_input}"
+        )
+
         if isinstance(tool_input, dict):
             if tool_lower in ["read", "edit", "write"]:
                 path = tool_input.get("file_path") or tool_input.get("filePath", "")
+                # Also check for nested structure
+                if not path:
+                    nested_input = tool_input.get("input", {})
+                    if isinstance(nested_input, dict):
+                        path = nested_input.get("file_path") or nested_input.get(
+                            "filePath", ""
+                        )
+                        logger.debug(f"🔍 Found nested input, extracted path: {path}")
                 if path:
                     paths.add(path)
+                    logger.debug(f"✅ Added path: {path}")
             elif tool_lower == "grep":
                 path = tool_input.get("path", "")
+                if not path:
+                    nested_input = tool_input.get("input", {})
+                    if isinstance(nested_input, dict):
+                        path = nested_input.get("path", "")
+                        logger.debug(f"🔍 Found nested input, extracted path: {path}")
                 if path:
                     paths.add(path)
             elif tool_lower == "glob":
                 pattern = tool_input.get("pattern") or tool_input.get("path", "")
+                if not pattern:
+                    nested_input = tool_input.get("input", {})
+                    if isinstance(nested_input, dict):
+                        pattern = nested_input.get("pattern") or nested_input.get(
+                            "path", ""
+                        )
+                        logger.debug(
+                            f"🔍 Found nested input, extracted pattern: {pattern}"
+                        )
                 if pattern:
                     paths.add(pattern)
             elif tool_lower == "bash":
                 command = tool_input.get("command", "")
+                if not command:
+                    nested_input = tool_input.get("input", {})
+                    if isinstance(nested_input, dict):
+                        command = nested_input.get("command", "")
+                        logger.debug(
+                            f"🔍 Found nested input, extracted command: {command[:100]}..."
+                        )
                 # Extract paths from common commands
                 patterns = [
                     r"\b(?:cat|ls|find|grep|rm|touch|mv|cp)\s+([^\s|;>]+)",
@@ -835,6 +867,7 @@ class LearningProcessor:
                         if path and not path.startswith("-"):
                             paths.add(path)
 
+        logger.debug(f"🔍 _extract_file_paths result: {list(paths)}")
         return list(paths)
 
     # =========================================================================
@@ -927,7 +960,7 @@ class LearningProcessor:
 
             conn.commit()
         except Exception as e:
-            print(f"Error logging advisory warnings: {e}", file=sys.stderr)
+            logger.error(f"Error logging advisory warnings: {e}", exc_info=True)
             conn.rollback()
         finally:
             conn.close()
@@ -1008,7 +1041,7 @@ class LearningProcessor:
             return count
 
         except Exception as e:
-            print(f"Error recording learnings: {e}", file=sys.stderr)
+            logger.error(f"Error recording learnings: {e}", exc_info=True)
             conn.rollback()
             return 0
         finally:
@@ -1139,13 +1172,10 @@ class LearningProcessor:
                 },
             )
 
-            print(
-                f"[LEARNING] Auto-recorded failure: {description[:50]}...",
-                file=sys.stderr,
-            )
+            logger.info(f"Auto-recorded failure: {description[:50]}...")
 
         except Exception as e:
-            print(f"Error auto-recording failure: {e}", file=sys.stderr)
+            logger.error(f"Error auto-recording failure: {e}", exc_info=True)
             conn.rollback()
         finally:
             conn.close()
@@ -1201,15 +1231,12 @@ class LearningProcessor:
                     ),
                 )
 
-                print(
-                    f"[LEARNING] Promoted to golden rule: {candidate['rule'][:50]}...",
-                    file=sys.stderr,
-                )
+                logger.info(f"Promoted to golden rule: {candidate['rule'][:50]}...")
 
             conn.commit()
 
         except Exception as e:
-            print(f"Error checking golden rule promotion: {e}", file=sys.stderr)
+            logger.error(f"Error checking golden rule promotion: {e}", exc_info=True)
             conn.rollback()
         finally:
             conn.close()
@@ -1255,7 +1282,7 @@ class LearningProcessor:
             conn.commit()
 
         except Exception as e:
-            print(f"Error decaying trails: {e}", file=sys.stderr)
+            logger.error(f"Error decaying trails: {e}", exc_info=True)
             conn.rollback()
         finally:
             conn.close()
@@ -1297,7 +1324,7 @@ class LearningProcessor:
             return [dict(row) for row in cursor.fetchall()]
 
         except Exception as e:
-            print(f"Error getting hot spots: {e}", file=sys.stderr)
+            logger.error(f"Error getting hot spots: {e}", exc_info=True)
             return []
         finally:
             conn.close()

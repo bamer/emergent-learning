@@ -5,6 +5,104 @@ All notable changes to the Emergent Learning Framework will be documented in thi
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.8] - 2026-02-10
+
+### Added
+- **Integrated Learning Loop in EventBridge** - Decentralized heuristic and trail learning
+  - Added `_extract_and_record_learnings()` method to directly capture heuristics from tool output
+  - Added `_extract_and_record_trails()` method to capture file paths from tool operations
+  - Both methods triggered automatically on successful tool execution in `_handle_tool_event()`
+  - Eliminates dependency on external PostToolUse hooks - learning now flows through EventBridge event stream
+  - Heuristic extraction identifies sentences with keywords: "should", "always", "never", "must", "best practice", "lesson", "insight", etc.
+  - Trail recording captures read/write operations with appropriate scent strength (0.5 for reads, 0.9 for writes)
+  - Proper UPSERT logic: new heuristics inserted with confidence 0.7, existing ones updated with validation count + 0.05 confidence boost
+
+- **Orchestrator L2→L3 Escalation Forwarding** - Connected Sentinel (L1) escalations to CEO (L3)
+  - Added `_forward_to_ceo_inbox()` method in UnifiedOrchestrator to forward escalations to CEO inbox
+  - Escalations flow: Sentinel (L1) → `.coordination/escalations/` → Orchestrator (L2) → `ceo-inbox/inbox/` → CEO (L3)
+  - Archives original escalations after forwarding to maintain audit trail
+  - Adds severity header to help CEO prioritize escalations
+
+- **CEO Inbox Monitor Escalation Processing** - Fixed escalation pattern matching
+  - Updated `get_pending_escalations()` to recognize all escalation patterns: watcher_esc_*, sentinel_esc_*, ceo_escalation_*, orchestrator_*
+  - CEO monitor now correctly detects and processes escalations from L2 forwarding
+  - Integrated 60-minute autonomous system analysis with graceful handling of missing database tables
+  - Archives processed escalations with results
+
+### Fixed
+- **Heuristic Recording** - Fixed database constraint issue
+  - Changed from ON CONFLICT clause (requires UNIQUE constraint) to explicit SELECT/INSERT/UPDATE logic
+  - Now properly handles duplicate detection by querying existing heuristics before insert
+  - All required columns populated: times_validated, times_violated, is_golden set to defaults
+  - Database transactions properly committed/rolled back on errors
+
+- **CEO 60-min Analysis** - Fixed alerts table dependency
+  - Wrapped alerts query in try/except to gracefully handle missing table
+  - System analysis now completes successfully even if alerts table doesn't exist
+  - All other metrics still collected and reported
+
+## [0.5.7] - 2026-02-10
+
+### Removed
+- **Legacy Code Files Permanently Deleted** - Clean codebase without old hooks or components
+  - Deleted `hooks/post_tool_use/post_tool_learning.py` (replaced by LearningProcessor)
+  - Deleted `hooks/post_tool_use/record_pheromone.py` (replaced by LearningProcessor)
+  - Deleted `archived_components/` directory (entire archive removed)
+  - NO backup or restoration path - final cleanup as per user requirements
+
+### Fixed
+- **LearningProcessor Import Path** - Fixed silent import failure in EventBridge
+  - Changed `from learning_processor import` to `from core.learning_processor import`
+  - Fixed incorrect `logger.warning()` that hid import errors
+  - Changed to `logger.error()` with `exc_info=True` for proper error logging
+
+- **All Silent Catch Blocks Fixed** - No more swallowed errors
+  - Every `except:` or `except Exception:` block now either logs OR raises
+  - Files affected:
+    - `core/event_bridge_v2.py` (lines 95, 479)
+    - `core/learning_processor.py` (lines 100, 133, 293, 314, multiple others)
+    - `core/watcher.py` (lines 113, 123)
+    - `core/monitoring_api.py` (lines 82, 89, 108, 132, 192)
+  - All errors now logged with `logger.error(..., exc_info=True)` or re-raised
+
+- **Trail Recording Bug** - Fixed `trails_recorded: 0` issue
+  - Root cause: Wrong data structure path in EventBridge
+  - Changed `part.get("input", {})` to `part.get("state", {}).get("input", {})`
+  - Fixed in two locations:
+    - Line 298: `_handle_message_part_updated_event()`
+    - Line 365: `_poll_sessions()`
+  - Result: Trails now record correctly (`trails_recorded: 2` instead of `0`)
+
+### Changed
+- **Unified Logger Enforcement** - All logging now uses ELF unified logger
+  - Replaced ALL `print()` statements with `logger.info/warning/error/debug()`
+  - Files affected:
+    - `core/event_bridge_v2.py` (lines 479, 481; line 477 is user output)
+    - `core/init_golden_rules.py` (all print statements for status/error/info)
+    - `core/learning_processor.py` (all `print(..., file=sys.stderr)` error statements)
+  - CLI final output (e.g., "Done!") still uses print as per exception
+  - Error messages now use `logger.error(..., exc_info=True)` for stack traces
+
+- **HTTP Connection Pooling** - Better performance with `requests.Session()`
+  - Added `self.http_session = requests.Session()` in EventBridge `__init__`
+  - Added `self.http_session = requests.Session()` in Watcher `__init__`
+  - Replaced all `requests.get()` calls with `self.http_session.get()`
+  - Added `stop()` method to EventBridge to properly close session
+  - Benefits:
+    - Connection pooling reuses TCP connections
+    - Better performance (avoids TCP handshake overhead)
+    - Resource efficiency (reduces open file descriptors)
+    - Cookie persistence for session state
+
+### Added
+- **Two New Golden Rules** (promoted to `is_golden=1`, confidence 1.0)
+  
+  **Rule #145 (infrastructure)**: "Always use the unified ELF logger (Open_ELF.utils.elf_logging) for ALL logging. NEVER use print() or exotic loggers."
+  - Explanation: Using print() or exotic loggers defeats the purpose of a unified logging system. The ELF unified logger ensures all logs go to the same location, have consistent formatting, and can be tracked in the database.
+
+  **Rule #146 (error-handling)**: "NEVER silently ignore errors. Every error MUST be either logged with the unified ELF logger OR raised (or both). Use logger.error() with exc_info=True for exception details. Bare 'except:' or 'except Exception:' blocks without logging are strictly forbidden."
+  - Explanation: Silently swallowing errors makes debugging impossible and hides real problems. The 'ça marche ou ça crash' philosophy means we should either handle errors properly with logging or let the system crash visibly.
+
 ## [0.5.6] - 2026-02-10
 
 ### Added

@@ -77,34 +77,21 @@ class CEOInboxMonitor:
     def get_pending_escalations(self) -> List[Path]:
         """Get list of pending escalation files."""
         escalations = []
-        # Support two file naming patterns:
-        # - CEO escalations from Orchestrator (L2 → L3): ceo_escalation_*.md, orchestrator_esc_*.md
-        # - Old Watcher escalations (L1 → direct): watcher_esc_*.md (legacy, will be deprecated)
-        # Note: New Watcher escalations now go to .coordination/escalations/ for Orchestrator to process
-        ceo_patterns = ["ceo_escalation_*.md", "orchestrator_*.md"]
-        legacy_watch_patterns = ["watcher_esc_*.md", "escalation_*.md", "watcher_esc_*"]
+        # Support all escalation patterns from L2 forwarding or L1 direct:
+        # - CEO escalations from Orchestrator (L2 → L3): ceo_escalation_*.md, orchestrator_*.md
+        # - Watcher/Sentinel escalations (L1 → L3): watcher_esc_*.md, sentinel_esc_*.md (forwarded by L2)
+        ceo_patterns = ["ceo_escalation", "orchestrator", "watcher_esc", "sentinel_esc"]
 
-        for file in CEO_INBOX_DIR.glob("*"):
-            # Skip archive directory
-            if file.parent == CEO_ARCHIVE_DIR:
-                continue
-            if file.suffix == ".md":
-                # Only process CEO escalations, not Watcher ones
-                filename = file.name.lower()
-                is_ceo_escalation = any(
-                    pattern.replace("*", "") in filename for pattern in ceo_patterns
-                )
-                is_legacy_watcher = any(
-                    pattern.replace("*", "") in filename
-                    for pattern in legacy_watch_patterns
-                )
+        inbox_path = CEO_INBOX_DIR / "inbox"
+        if not inbox_path.exists():
+            return escalations
 
-                if is_ceo_escalation or (
-                    is_legacy_watcher and "watcher_esc" not in filename
-                ):
-                    # Avoid duplicates
-                    if file not in escalations:
-                        escalations.append(file)
+        for file in inbox_path.glob("*.md"):
+            filename = file.name.lower()
+            # Accept any escalation file
+            if any(pattern in filename for pattern in ceo_patterns):
+                if file not in escalations:
+                    escalations.append(file)
         return sorted(escalations)
 
     def process_escalation(self, file_path: Path) -> Dict[str, Any]:
@@ -335,12 +322,17 @@ You have received an escalation that requires your attention:
             """)
             degraded_golden = cursor.fetchone()["count"]
 
-            # 5. Check unresolved alerts
-            cursor.execute("""
-                SELECT COUNT(*) as count FROM alerts 
-                WHERE resolved = 0 AND created_at > datetime('now', '-24 hours')
-            """)
-            unresolved_alerts = cursor.fetchone()["count"]
+            # 5. Check unresolved alerts (if table exists)
+            unresolved_alerts = 0
+            try:
+                cursor.execute("""
+                    SELECT COUNT(*) as count FROM alerts 
+                    WHERE resolved = 0 AND created_at > datetime('now', '-24 hours')
+                """)
+                unresolved_alerts = cursor.fetchone()["count"]
+            except Exception:
+                # Alerts table may not exist
+                pass
 
             # 6. Golden rule violations
             cursor.execute("""

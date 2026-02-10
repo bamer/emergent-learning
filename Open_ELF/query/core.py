@@ -18,6 +18,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
+# Unified ELF logging (required for all ELF modules)
+try:
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("core")
+except ImportError:
+    import logging
+
+    _LOGGER = logging.getLogger("core")
+
 # Base path resolver
 try:
     from query.config_loader import get_base_path
@@ -31,8 +41,14 @@ try:
         get_manager,
         initialize_database,
         initialize_database_sync,
-        Learning, Heuristic, Experiment, CeoReview, Decision, Violation, Invariant,
-        BuildingQuery
+        Learning,
+        Heuristic,
+        Experiment,
+        CeoReview,
+        Decision,
+        Violation,
+        Invariant,
+        BuildingQuery,
     )
 except ImportError:
     from models import (
@@ -40,34 +56,64 @@ except ImportError:
         get_manager,
         initialize_database,
         initialize_database_sync,
-        Learning, Heuristic, Experiment, CeoReview, Decision, Violation, Invariant,
-        BuildingQuery
+        Learning,
+        Heuristic,
+        Experiment,
+        CeoReview,
+        Decision,
+        Violation,
+        Invariant,
+        BuildingQuery,
     )
 
 # Import exceptions
 try:
     from query.exceptions import (
-        QuerySystemError, ValidationError, DatabaseError,
-        TimeoutError, ConfigurationError
+        QuerySystemError,
+        ValidationError,
+        DatabaseError,
+        TimeoutError,
+        ConfigurationError,
     )
 except ImportError:
     from exceptions import (
-        QuerySystemError, ValidationError, DatabaseError,
-        TimeoutError, ConfigurationError
+        QuerySystemError,
+        ValidationError,
+        DatabaseError,
+        TimeoutError,
+        ConfigurationError,
     )
 
 # Import validators
 try:
     from query.validators import (
-        validate_domain, validate_limit, validate_tags, validate_query,
-        MAX_DOMAIN_LENGTH, MAX_QUERY_LENGTH, MAX_TAG_COUNT, MAX_TAG_LENGTH,
-        MIN_LIMIT, MAX_LIMIT, DEFAULT_TIMEOUT, MAX_TOKENS
+        validate_domain,
+        validate_limit,
+        validate_tags,
+        validate_query,
+        MAX_DOMAIN_LENGTH,
+        MAX_QUERY_LENGTH,
+        MAX_TAG_COUNT,
+        MAX_TAG_LENGTH,
+        MIN_LIMIT,
+        MAX_LIMIT,
+        DEFAULT_TIMEOUT,
+        MAX_TOKENS,
     )
 except ImportError:
     from validators import (
-        validate_domain, validate_limit, validate_tags, validate_query,
-        MAX_DOMAIN_LENGTH, MAX_QUERY_LENGTH, MAX_TAG_COUNT, MAX_TAG_LENGTH,
-        MIN_LIMIT, MAX_LIMIT, DEFAULT_TIMEOUT, MAX_TOKENS
+        validate_domain,
+        validate_limit,
+        validate_tags,
+        validate_query,
+        MAX_DOMAIN_LENGTH,
+        MAX_QUERY_LENGTH,
+        MAX_TAG_COUNT,
+        MAX_TAG_LENGTH,
+        MIN_LIMIT,
+        MAX_LIMIT,
+        DEFAULT_TIMEOUT,
+        MAX_TOKENS,
     )
 
 # Import query mixins
@@ -122,7 +168,7 @@ class QuerySystem(
     SpikeQueryMixin,
     StatisticsQueryMixin,
     ContextBuilderMixin,
-    BaseQueryMixin
+    BaseQueryMixin,
 ):
     """
     Main QuerySystem class - orchestrates all query operations (async).
@@ -153,9 +199,14 @@ class QuerySystem(
     DEFAULT_TIMEOUT = DEFAULT_TIMEOUT
     MAX_TOKENS = MAX_TOKENS
 
-    def __init__(self, base_path: Optional[Path] = None, debug: bool = False,
-                 session_id: Optional[str] = None, agent_id: Optional[str] = None,
-                 current_location: Optional[str] = None):
+    def __init__(
+        self,
+        base_path: Optional[Path] = None,
+        debug: bool = False,
+        session_id: Optional[str] = None,
+        agent_id: Optional[str] = None,
+        current_location: Optional[str] = None,
+    ):
         """
         Initialize the query system (internal use).
 
@@ -169,8 +220,8 @@ class QuerySystem(
             current_location: Current working directory for location-aware filtering
         """
         self.debug = debug
-        self.session_id = session_id or os.environ.get('CLAUDE_SESSION_ID')
-        self.agent_id = agent_id or os.environ.get('CLAUDE_AGENT_ID')
+        self.session_id = session_id or os.environ.get("CLAUDE_SESSION_ID")
+        self.agent_id = agent_id or os.environ.get("CLAUDE_AGENT_ID")
         self.current_location = current_location or os.getcwd()
 
         if base_path is None:
@@ -183,9 +234,14 @@ class QuerySystem(
         self.golden_rules_path = self.memory_path / "golden-rules.md"
 
     @classmethod
-    async def create(cls, base_path: Optional[str] = None, debug: bool = False,
-                     session_id: Optional[str] = None, agent_id: Optional[str] = None,
-                     current_location: Optional[str] = None) -> 'QuerySystem':
+    async def create(
+        cls,
+        base_path: Optional[str] = None,
+        debug: bool = False,
+        session_id: Optional[str] = None,
+        agent_id: Optional[str] = None,
+        current_location: Optional[str] = None,
+    ) -> "QuerySystem":
         """
         Async factory method to create a QuerySystem instance.
 
@@ -226,13 +282,10 @@ class QuerySystem(
         # Initialize database tables
         await instance._init_database()
 
-        instance._log_debug(f"QuerySystem initialized with base_path: {instance.base_path}")
+        log_debug(
+            "core", f"QuerySystem initialized with base_path: {instance.base_path}"
+        )
         return instance
-
-    def _log_debug(self, message: str):
-        """Log debug message if debug mode is enabled."""
-        if self.debug:
-            print(f"[DEBUG] {message}", file=sys.stderr)
 
     def _get_current_time_ms(self) -> int:
         """Get current time in milliseconds since epoch."""
@@ -248,7 +301,7 @@ class QuerySystem(
         results_returned: int = 0,
         tokens_approximated: Optional[int] = None,
         duration_ms: Optional[int] = None,
-        status: str = 'success',
+        status: str = "success",
         error_message: Optional[str] = None,
         error_code: Optional[str] = None,
         golden_rules_returned: int = 0,
@@ -257,7 +310,7 @@ class QuerySystem(
         experiments_count: int = 0,
         ceo_reviews_count: int = 0,
         query_summary: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Log a query to the building_queries table (async).
@@ -288,12 +341,15 @@ class QuerySystem(
                         experiments_count=experiments_count,
                         ceo_reviews_count=ceo_reviews_count,
                         query_summary=query_summary,
-                        completed_at=datetime.now(timezone.utc).replace(tzinfo=None)
+                        completed_at=datetime.now(timezone.utc).replace(tzinfo=None),
                     )
-            self._log_debug(f"Logged query: {query_type} (status={status}, duration={duration_ms}ms)")
+            log_debug(
+                "core",
+                f"Logged query: {query_type} (status={status}, duration={duration_ms}ms)",
+            )
         except Exception as e:
             # Non-blocking: log the error but don't raise
-            self._log_debug(f"Failed to log query to building_queries: {e}")
+            log_debug("core", f"Failed to log query to building_queries: {e}")
 
     # ========== VALIDATION METHODS ==========
 
@@ -336,51 +392,71 @@ class QuerySystem(
                 for model in core_models:
                     await model.create_table(safe=True)
 
-        self._log_debug("Database tables created/verified via peewee-aio")
+        log_debug("core", "Database tables created/verified via peewee-aio")
 
         # Run schema migrations to ensure all columns/tables are up to date
         try:
             migrator = SchemaMigrator(str(self.db_path))
             migration_result = await migrator.migrate()
-            if migration_result['total_applied'] > 0:
-                self._log_debug(
-                    f"Applied {migration_result['total_applied']} schema migrations"
+            if migration_result["total_applied"] > 0:
+                log_debug(
+                    "core",
+                    f"Applied {migration_result['total_applied']} schema migrations",
                 )
-            if migration_result.get('migrations_failed'):
-                self._log_debug(
-                    f"Warning: {len(migration_result['migrations_failed'])} migrations failed"
+            if migration_result.get("migrations_failed"):
+                log_debug(
+                    "core",
+                    f"Warning: {len(migration_result['migrations_failed'])} migrations failed",
                 )
         except Exception as e:
-            self._log_debug(f"Warning: Schema migration error: {e}")
+            log_debug("core", f"Warning: Schema migration error: {e}")
 
         # SECURITY: Set secure file permissions on database file (only on creation)
         if db_just_created:
             try:
                 import stat
+
                 os.chmod(str(self.db_path), stat.S_IRUSR | stat.S_IWUSR)
 
                 # On Windows, also restrict ACLs to current user only
-                if sys.platform == 'win32':
+                if sys.platform == "win32":
                     try:
                         import subprocess
+
                         username = os.environ.get("USERNAME", "")
-                        if username and re.match(r'^[a-zA-Z0-9_\-\.]+$', username):
+                        if username and re.match(r"^[a-zA-Z0-9_\-\.]+$", username):
                             CREATE_NO_WINDOW = 0x08000000
                             subprocess.run(
-                                ['icacls', str(self.db_path), '/inheritance:r',
-                                 '/grant:r', f'{username}:F'],
-                                check=False, capture_output=True,
-                                creationflags=CREATE_NO_WINDOW
+                                [
+                                    "icacls",
+                                    str(self.db_path),
+                                    "/inheritance:r",
+                                    "/grant:r",
+                                    f"{username}:F",
+                                ],
+                                check=False,
+                                capture_output=True,
+                                creationflags=CREATE_NO_WINDOW,
                             )
-                            self._log_debug(f"Set Windows ACLs for {self.db_path}")
+                            log_debug("core", f"Set Windows ACLs for {self.db_path}")
                         else:
-                            self._log_debug("Skipping icacls: invalid or missing USERNAME")
+                            log_debug(
+                                "core", "Skipping icacls: invalid or missing USERNAME"
+                            )
                     except Exception as win_err:
-                        self._log_debug(f"Warning: Could not set Windows ACLs: {win_err}")
+                        log_debug(
+                            "core", f"Warning: Could not set Windows ACLs: {win_err}"
+                        )
 
-                self._log_debug(f"Set secure permissions (0600) on database file: {self.db_path}")
+                log_debug(
+                    "core",
+                    f"Set secure permissions (0600) on database file: {self.db_path}",
+                )
             except Exception as e:
-                self._log_debug(f"Warning: Could not set secure permissions on database: {e}")
+                log_debug(
+                    "core",
+                    f"Warning: Could not set secure permissions on database: {e}",
+                )
 
     async def validate_database(self) -> Dict[str, Any]:
         """
@@ -389,12 +465,7 @@ class QuerySystem(
         Returns:
             Dictionary with validation results
         """
-        results = {
-            'valid': True,
-            'errors': [],
-            'warnings': [],
-            'checks': {}
-        }
+        results = {"valid": True, "errors": [], "warnings": [], "checks": {}}
 
         try:
             m = get_manager()
@@ -402,26 +473,31 @@ class QuerySystem(
                 async with m.connection():
                     # Note: PRAGMA commands in aiosqlite need raw execution
                     # For now, mark basic checks as passed since tables were created
-                    results['checks']['integrity'] = 'ok'
-                    results['checks']['tables'] = [
-                        'learnings', 'heuristics', 'experiments', 'ceo_reviews',
-                        'decisions', 'violations', 'invariants'
+                    results["checks"]["integrity"] = "ok"
+                    results["checks"]["tables"] = [
+                        "learnings",
+                        "heuristics",
+                        "experiments",
+                        "ceo_reviews",
+                        "decisions",
+                        "violations",
+                        "invariants",
                     ]
 
                     # Get table row counts using async iteration
                     model_map = {
-                        'learnings': Learning,
-                        'heuristics': Heuristic,
-                        'experiments': Experiment,
-                        'ceo_reviews': CeoReview
+                        "learnings": Learning,
+                        "heuristics": Heuristic,
+                        "experiments": Experiment,
+                        "ceo_reviews": CeoReview,
                     }
                     for table, model in model_map.items():
                         count = await model.select().aio_count()
-                        results['checks'][f'{table}_count'] = count
+                        results["checks"][f"{table}_count"] = count
 
         except Exception as e:
-            results['valid'] = False
-            results['errors'].append(f"Validation failed: {str(e)}")
+            results["valid"] = False
+            results["errors"].append(f"Validation failed: {str(e)}")
 
         return results
 
@@ -432,9 +508,9 @@ class QuerySystem(
             if m:
                 # Manager cleanup if needed
                 pass
-        except Exception:
-            pass
-        self._log_debug("QuerySystem cleanup complete")
+        except Exception as e:
+            log_debug("core", f"QuerySystem cleanup failed: {e}")
+        log_debug("core", "QuerySystem cleanup complete")
 
     def __del__(self):
         """Ensure cleanup on deletion."""

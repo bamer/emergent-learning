@@ -22,27 +22,42 @@ from pathlib import Path
 from typing import List, Dict, Optional, Tuple, Any
 import re
 
+# Unified ELF logging (required for all ELF modules)
+try:
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("session_integration")
+except ImportError:
+    import logging
+
+    _LOGGER = logging.getLogger("session_integration")
+
 # Windows-compatible file locking
 try:
     import msvcrt
+
     WINDOWS = True
 except ImportError:
     import fcntl
+
     WINDOWS = False
 
 # Paths
 # Paths
 try:
     from .config_loader import get_base_path
+
     EMERGENT_LEARNING_PATH = get_base_path()
 except ImportError:
     # Fallback if run directly and relative import fails
     try:
         from src.query.config_loader import get_base_path
+
         EMERGENT_LEARNING_PATH = get_base_path()
     except ImportError:
         try:
             from elf_paths import get_base_path
+
             EMERGENT_LEARNING_PATH = get_base_path()
         except ImportError:
             EMERGENT_LEARNING_PATH = Path.home() / ".opencode" / "emergent-learning"
@@ -70,11 +85,6 @@ class SessionIntegration:
         self.debug = debug
         self._ensure_directories()
 
-    def _log_debug(self, message: str):
-        """Log debug message if debug mode is enabled."""
-        if self.debug:
-            print(f"[SESSION_DEBUG] {message}", file=sys.stderr)
-
     def _ensure_directories(self):
         """Ensure required directories exist."""
         for path in [SESSIONS_PATH, LOGS_PATH, PROPOSALS_PATH, PENDING_PROPOSALS_PATH]:
@@ -90,12 +100,12 @@ class SessionIntegration:
             try:
                 # Create/open lock file
                 if WINDOWS:
-                    handle = open(PROCESSED_MARKER_LOCK, 'w')
+                    handle = open(PROCESSED_MARKER_LOCK, "w")
                     # Lock 1024 bytes for better protection against race conditions
                     msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1024)
                     return handle
                 else:
-                    handle = open(PROCESSED_MARKER_LOCK, 'w')
+                    handle = open(PROCESSED_MARKER_LOCK, "w")
                     fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                     return handle
             except (IOError, OSError):
@@ -145,14 +155,12 @@ class SessionIntegration:
 
         # Write to temp file in same directory (ensures same filesystem)
         temp_fd, temp_path = tempfile.mkstemp(
-            dir=SESSIONS_PATH,
-            prefix='.processed_',
-            suffix='.tmp'
+            dir=SESSIONS_PATH, prefix=".processed_", suffix=".tmp"
         )
 
         try:
             # Write JSON to temp file
-            with os.fdopen(temp_fd, 'w', encoding='utf-8') as f:
+            with os.fdopen(temp_fd, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
 
             # Atomic replace (works on both Unix and Windows)
@@ -170,8 +178,8 @@ class SessionIntegration:
         if not PROCESSED_MARKER.exists():
             return []
         try:
-            data = json.loads(PROCESSED_MARKER.read_text(encoding='utf-8'))
-            return data.get('processed_files', [])
+            data = json.loads(PROCESSED_MARKER.read_text(encoding="utf-8"))
+            return data.get("processed_files", [])
         except (json.JSONDecodeError, IOError):
             return []
 
@@ -190,14 +198,18 @@ class SessionIntegration:
                 if not log_file.name.startswith(today):
                     unprocessed.append(log_file)
 
-        self._log_debug(f"Found {len(unprocessed)} unprocessed log files")
+        log_debug(
+            "session_integration", f"Found {len(unprocessed)} unprocessed log files"
+        )
         return sorted(unprocessed)
 
     def mark_as_processed(self, log_files: List[Path]):
         """Mark log files as processed (thread-safe with file locking)."""
         lock = self._get_marker_lock()
         if lock is None:
-            raise TimeoutError("Could not acquire processed marker lock after 10 seconds")
+            raise TimeoutError(
+                "Could not acquire processed marker lock after 10 seconds"
+            )
 
         try:
             # Read current state inside lock
@@ -210,13 +222,15 @@ class SessionIntegration:
 
             # Prepare data
             data = {
-                'processed_files': processed,
-                'last_processed': datetime.now().isoformat()
+                "processed_files": processed,
+                "last_processed": datetime.now().isoformat(),
             }
 
             # Atomic write
             self._write_marker_atomic(data)
-            self._log_debug(f"Marked {len(log_files)} files as processed")
+            log_debug(
+                "session_integration", f"Marked {len(log_files)} files as processed"
+            )
         finally:
             self._release_marker_lock(lock)
 
@@ -230,10 +244,18 @@ class SessionIntegration:
         Returns:
             True if extractor was triggered, False otherwise
         """
-        extractor_script = EMERGENT_LEARNING_PATH / "agents" / "learning-extractor" / "run_extractor.py"
+        extractor_script = (
+            EMERGENT_LEARNING_PATH
+            / "agents"
+            / "learning-extractor"
+            / "run_extractor.py"
+        )
 
         if not extractor_script.exists():
-            self._log_debug(f"Learning extractor not found at {extractor_script}")
+            log_debug(
+                "session_integration",
+                f"Learning extractor not found at {extractor_script}",
+            )
             return False
 
         try:
@@ -242,13 +264,13 @@ class SessionIntegration:
             cmd = [sys.executable, str(extractor_script)] + log_paths
 
             # Use subprocess.Popen for non-blocking execution
-            if sys.platform == 'win32':
+            if sys.platform == "win32":
                 # Windows: use CREATE_NEW_PROCESS_GROUP
                 subprocess.Popen(
                     cmd,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
-                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
                 )
             else:
                 # Unix: use nohup-style
@@ -256,17 +278,24 @@ class SessionIntegration:
                     cmd,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
-                    start_new_session=True
+                    start_new_session=True,
                 )
 
-            self._log_debug(f"Triggered learning extractor for {len(log_files)} files")
+            log_debug(
+                "session_integration",
+                f"Triggered learning extractor for {len(log_files)} files",
+            )
             return True
 
         except Exception as e:
-            self._log_debug(f"Failed to trigger learning extractor: {e}")
+            log_debug(
+                "session_integration", f"Failed to trigger learning extractor: {e}"
+            )
             return False
 
-    def get_session_context(self, days: int = 1, max_entries: int = 10) -> Optional[str]:
+    def get_session_context(
+        self, days: int = 1, max_entries: int = 10
+    ) -> Optional[str]:
         """
         Get context from recent session logs.
 
@@ -287,7 +316,7 @@ class SessionIntegration:
         for log_file in sorted(LOGS_PATH.glob("*.jsonl"), reverse=True):
             # Parse date from filename (YYYY-MM-DD_session.jsonl)
             try:
-                date_str = log_file.stem.split('_')[0]
+                date_str = log_file.stem.split("_")[0]
                 file_date = datetime.strptime(date_str, "%Y-%m-%d")
                 if file_date < cutoff:
                     continue
@@ -296,7 +325,7 @@ class SessionIntegration:
 
             # Read entries from file
             try:
-                with open(log_file, 'r', encoding='utf-8') as f:
+                with open(log_file, "r", encoding="utf-8") as f:
                     for line in f:
                         try:
                             entry = json.loads(line.strip())
@@ -310,32 +339,37 @@ class SessionIntegration:
             return None
 
         # Sort by timestamp and take most recent
-        entries.sort(key=lambda x: x.get('ts', ''), reverse=True)
+        entries.sort(key=lambda x: x.get("ts", ""), reverse=True)
         entries = entries[:max_entries]
 
         # Format output
         lines = ["## Recent Session Activity\n"]
 
         # Group by outcome for summary
-        outcomes = {'success': 0, 'failure': 0, 'unknown': 0}
+        outcomes = {"success": 0, "failure": 0, "unknown": 0}
         tools_used = set()
 
         for entry in entries:
-            outcome = entry.get('outcome', 'unknown')
+            outcome = entry.get("outcome", "unknown")
             outcomes[outcome] = outcomes.get(outcome, 0) + 1
-            tools_used.add(entry.get('tool', 'unknown'))
+            tools_used.add(entry.get("tool", "unknown"))
 
             # Format entry
-            ts = entry.get('ts', '')[:16]  # Trim to minute precision
-            tool = entry.get('tool', 'unknown')
-            input_summary = entry.get('input_summary', '')[:80]
-            outcome_marker = {'success': '+', 'failure': '!', 'unknown': '?'}.get(outcome, '?')
+            ts = entry.get("ts", "")[:16]  # Trim to minute precision
+            tool = entry.get("tool", "unknown")
+            input_summary = entry.get("input_summary", "")[:80]
+            outcome_marker = {"success": "+", "failure": "!", "unknown": "?"}.get(
+                outcome, "?"
+            )
 
             lines.append(f"[{ts}] [{outcome_marker}] {tool}: {input_summary}")
 
         # Add summary
         lines.insert(1, f"Tools: {', '.join(sorted(tools_used))}")
-        lines.insert(2, f"Outcomes: {outcomes['success']} success, {outcomes['failure']} failure, {outcomes['unknown']} unknown\n")
+        lines.insert(
+            2,
+            f"Outcomes: {outcomes['success']} success, {outcomes['failure']} failure, {outcomes['unknown']} unknown\n",
+        )
 
         return "\n".join(lines)
 
@@ -353,7 +387,7 @@ class SessionIntegration:
 
         for proposal_file in PENDING_PROPOSALS_PATH.glob("*.md"):
             try:
-                content = proposal_file.read_text(encoding='utf-8')
+                content = proposal_file.read_text(encoding="utf-8")
                 proposal = self._parse_proposal(content, proposal_file.name)
                 if proposal:
                     proposals.append(proposal)
@@ -361,44 +395,44 @@ class SessionIntegration:
                 continue
 
         # Sort by confidence (highest first)
-        proposals.sort(key=lambda x: x.get('confidence', 0), reverse=True)
+        proposals.sort(key=lambda x: x.get("confidence", 0), reverse=True)
         return proposals
 
     def _parse_proposal(self, content: str, filename: str) -> Optional[Dict]:
         """Parse a proposal markdown file into a dictionary."""
-        proposal = {'filename': filename}
+        proposal = {"filename": filename}
 
         # Extract title
-        title_match = re.search(r'^# Proposal: (.+)$', content, re.MULTILINE)
+        title_match = re.search(r"^# Proposal: (.+)$", content, re.MULTILINE)
         if title_match:
-            proposal['title'] = title_match.group(1).strip()
+            proposal["title"] = title_match.group(1).strip()
         else:
-            proposal['title'] = filename
+            proposal["title"] = filename
 
         # Extract type
-        type_match = re.search(r'\*\*Type:\*\* (.+)$', content, re.MULTILINE)
+        type_match = re.search(r"\*\*Type:\*\* (.+)$", content, re.MULTILINE)
         if type_match:
-            proposal['type'] = type_match.group(1).strip()
+            proposal["type"] = type_match.group(1).strip()
 
         # Extract confidence
-        conf_match = re.search(r'\*\*Confidence:\*\* ([\d.]+)', content)
+        conf_match = re.search(r"\*\*Confidence:\*\* ([\d.]+)", content)
         if conf_match:
             try:
-                proposal['confidence'] = float(conf_match.group(1))
+                proposal["confidence"] = float(conf_match.group(1))
             except ValueError:
-                proposal['confidence'] = 0.5
+                proposal["confidence"] = 0.5
 
         # Extract domain
-        domain_match = re.search(r'\*\*Domain:\*\* (.+)$', content, re.MULTILINE)
+        domain_match = re.search(r"\*\*Domain:\*\* (.+)$", content, re.MULTILINE)
         if domain_match:
-            proposal['domain'] = domain_match.group(1).strip()
+            proposal["domain"] = domain_match.group(1).strip()
 
         # Extract summary
-        summary_match = re.search(r'## Summary\n(.+?)(?=\n##|\Z)', content, re.DOTALL)
+        summary_match = re.search(r"## Summary\n(.+?)(?=\n##|\Z)", content, re.DOTALL)
         if summary_match:
-            proposal['summary'] = summary_match.group(1).strip()[:200]
+            proposal["summary"] = summary_match.group(1).strip()[:200]
 
-        return proposal if 'title' in proposal else None
+        return proposal if "title" in proposal else None
 
     def format_proposals_for_checkin(self, proposals: List[Dict]) -> str:
         """Format proposals for check-in display."""
@@ -409,12 +443,12 @@ class SessionIntegration:
         lines.append(f"_{len(proposals)} proposal(s) awaiting review_\n")
 
         for p in proposals[:5]:  # Max 5 in check-in
-            conf = p.get('confidence', 0)
-            conf_bar = '*' * int(conf * 5)  # Visual confidence indicator
+            conf = p.get("confidence", 0)
+            conf_bar = "*" * int(conf * 5)  # Visual confidence indicator
 
             lines.append(f"- **{p['title']}** [{p.get('type', 'unknown')}]")
             lines.append(f"  Confidence: {conf:.1%} {conf_bar}")
-            if p.get('summary'):
+            if p.get("summary"):
                 lines.append(f"  {p['summary'][:100]}...")
             lines.append("")
 
@@ -438,14 +472,20 @@ class SessionIntegration:
         unprocessed = self.get_unprocessed_logs()
         if unprocessed:
             context_parts.append(f"\n## Session Logs Pending Analysis")
-            context_parts.append(f"_{len(unprocessed)} session log(s) from previous sessions await CEO analysis_\n")
+            context_parts.append(
+                f"_{len(unprocessed)} session log(s) from previous sessions await CEO analysis_\n"
+            )
 
             # Trigger extractor in background
             if self.trigger_learning_extractor(unprocessed):
-                context_parts.append("*CEO Learning Extractor launched in background...*\n")
+                context_parts.append(
+                    "*CEO Learning Extractor launched in background...*\n"
+                )
                 extractor_triggered = True
             else:
-                context_parts.append("*Learning extractor not available - logs will be processed next time*\n")
+                context_parts.append(
+                    "*Learning extractor not available - logs will be processed next time*\n"
+                )
 
         # Get session context from recent logs
         session_context = self.get_session_context(days=1, max_entries=10)
@@ -463,7 +503,7 @@ class SessionIntegration:
 def extend_query_system_build_context():
     """
     Hook to extend QuerySystem.build_context() with session context.
-    
+
     Import and call from QuerySystem.build_context():
         from query.session_integration import SessionIntegration
         session_int = SessionIntegration(debug=self.debug)

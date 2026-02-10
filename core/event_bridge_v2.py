@@ -33,17 +33,21 @@ if str(ELF_DIR) not in sys.path:
 OPENCODE_SERVER = "http://localhost:4096"
 LOGS_DIR = ELF_DIR / "logs"
 DB_PATH = ELF_DIR / "memory" / "index.db"
+COORDINATION_DIR = ELF_DIR / ".coordination"
+EVENT_BRIDGE_HEARTBEAT = COORDINATION_DIR / "event-bridge-heartbeat.json"
 EVENT_BRIDGE_PORT = 9998
 
 # Setup logging
+import logging
+
 try:
     from Open_ELF.utils.elf_logging import get_logger
 
-    logger = get_logger("event_bridge")
+    logger = get_logger("event_bridge", level=logging.DEBUG)
 except ImportError:
     import logging
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger("event_bridge")
 
 
@@ -72,6 +76,10 @@ class EventBridge:
 
         # Stats
         self.event_stats: Dict[str, int] = {}
+
+        # HTTP session for connection pooling (reuse connections, better performance)
+        self.http_session = requests.Session()
+        self.http_session.headers.update({"User-Agent": "EventBridge-v2 ELF"})
 
         # Import LearningProcessor
         self.learning_processor = None
@@ -109,7 +117,7 @@ class EventBridge:
                 cursor = conn.cursor()
                 cursor.execute(
                     """
-                    INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context, created_at)
+                    INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context, timestamp)
                     VALUES (?, ?, 1, ?, ?, ?)
                 """,
                     (
@@ -126,6 +134,38 @@ class EventBridge:
             finally:
                 conn.close()
 
+        # Update heartbeat periodically (every 30 events to avoid excessive writes)
+        if self.event_count % 30 == 0:
+            self._write_heartbeat()
+
+    def _write_heartbeat(self):
+        """Write heartbeat for monitoring."""
+        try:
+            # Get top event types
+            top_events = sorted(
+                self.event_stats.items(), key=lambda x: x[1], reverse=True
+            )[:5]
+
+            heartbeat = {
+                "started_at": self.started_at.isoformat() if self.started_at else None,
+                "last_event_time": self.last_event_time,
+                "events_processed": self.event_count,
+                "running": self.running,
+                "status_server_running": True,  # We assume it's running if we can write heartbeat
+                "health": "healthy" if self.running else "degraded",
+                "event_stats": {
+                    "total_types": len(self.event_stats),
+                    "top_events": dict(top_events),
+                    "last_updated": datetime.now().isoformat(),
+                },
+            }
+            # Ensure coordination directory exists
+            COORDINATION_DIR.mkdir(parents=True, exist_ok=True)
+            EVENT_BRIDGE_HEARTBEAT.write_text(json.dumps(heartbeat), encoding="utf-8")
+        except Exception as e:
+            logger.warning(f"Failed to write heartbeat: {e}")
+            # Note: Don't fail completely, but log the error for visibility
+
     def start(self) -> bool:
         """Start the EventBridge."""
         logger.info("=" * 70)
@@ -134,7 +174,7 @@ class EventBridge:
 
         # Check OpenCode connection
         try:
-            response = requests.get(f"{OPENCODE_SERVER}/", timeout=5)
+            response = self.http_session.get(f"{OPENCODE_SERVER}/", timeout=5)
             if response.status_code != 200:
                 logger.error("❌ OpenCode server not accessible")
                 return False
@@ -161,7 +201,26 @@ class EventBridge:
         self._start_status_server()
         logger.info(f"✅ Status server on port {EVENT_BRIDGE_PORT}")
 
+        # Write initial heartbeat
+        self._write_heartbeat()
+        logger.info("✅ Initial heartbeat written")
+
         return True
+
+    def stop(self):
+        """Stop the EventBridge and clean up resources."""
+        logger.info("🛑 Stopping EventBridge...")
+        self.running = False
+
+        # Write final heartbeat
+        self._write_heartbeat()
+
+        # Close HTTP session (releases connections)
+        if hasattr(self, "http_session"):
+            self.http_session.close()
+            logger.info("✅ HTTP session closed")
+
+        logger.info("✅ EventBridge stopped")
 
     def _listen_events(self):
         """Listen to OpenCode SSE stream."""
@@ -169,7 +228,7 @@ class EventBridge:
 
         while self.running:
             try:
-                response = requests.get(
+                response = self.http_session.get(
                     f"{OPENCODE_SERVER}/event",
                     stream=True,
                     headers={
@@ -196,7 +255,7 @@ class EventBridge:
                         line_str = line.decode("utf-8")
                         self._process_sse_line(line_str)
 
-            except requests.exceptions.ChunkedEncodingError:
+            except self.http_session.exceptions.ChunkedEncodingError:
                 logger.info("⚠️ SSE stream disconnected, reconnecting...")
                 time.sleep(2)
             except Exception as e:
@@ -261,6 +320,11 @@ class EventBridge:
             session_id = props.get("session_id", "")
 
             logger.info(f"🔧 Processing tool event: {tool_name}")
+            logger.debug(f"🔍 Event structure: {event}")
+            logger.debug(f"🔍 tool_input type: {type(tool_input)}, value: {tool_input}")
+            logger.debug(
+                f"🔍 tool_output type: {type(tool_output)}, value: {tool_output}"
+            )
 
             # Create ToolEvent
             tool_event = self.ToolEvent(
@@ -293,7 +357,14 @@ class EventBridge:
         # Check for tool_use or tool part types
         if part_type in ["tool_use", "tool"]:
             tool_name = part.get("tool", "unknown")
-            tool_input = part.get("input", {})
+            # Fix: Get tool_input from state.input, not directly from part
+            tool_input = part.get("state", {}).get("input", {})
+
+            # DEBUG: Log the actual part structure
+            logger.debug(f"🔍 Tool part structure: {part}")
+            logger.debug(
+                f"🔍 Extracted tool_name: {tool_name}, tool_input: {tool_input}"
+            )
 
             logger.info(f"🔧 Tool detected in message: {tool_name}")
 
@@ -319,7 +390,9 @@ class EventBridge:
         while self.running:
             try:
                 # Get all sessions
-                response = requests.get(f"{OPENCODE_SERVER}/session", timeout=10)
+                response = self.http_session.get(
+                    f"{OPENCODE_SERVER}/session", timeout=10
+                )
                 if response.status_code != 200:
                     time.sleep(5)
                     continue
@@ -337,7 +410,7 @@ class EventBridge:
                         self.seen_messages[session_id] = set()
 
                     # Get messages for this session
-                    msg_response = requests.get(
+                    msg_response = self.http_session.get(
                         f"{OPENCODE_SERVER}/session/{session_id}/message", timeout=10
                     )
 
@@ -360,7 +433,15 @@ class EventBridge:
                             part_type = part.get("type")
                             if part_type in ["tool_use", "tool"]:
                                 tool_name = part.get("tool", "unknown")
-                                tool_input = part.get("input", {})
+                                # Fix: Get tool_input from state.input, not directly from part
+                                tool_input = part.get("state", {}).get("input", {})
+
+                                # DEBUG: Log the actual part structure
+                                logger.debug(f"🔍 Polling tool part structure: {part}")
+                                logger.debug(
+                                    f"🔍 Extracted tool_name: {tool_name}, tool_input: {tool_input}"
+                                )
+
                                 total_tools_found += 1
 
                                 logger.info(f"🔧 Tool found via polling: {tool_name}")
@@ -465,20 +546,22 @@ def main():
                     time.sleep(1)
             except KeyboardInterrupt:
                 logger.info("\n👋 Shutting down EventBridge...")
-                bridge.running = False
+                bridge.stop()
     else:
         # Show status
         try:
-            response = requests.get(
+            response = bridge.http_session.get(
                 f"http://localhost:{EVENT_BRIDGE_PORT}/status", timeout=2
             )
             if response.status_code == 200:
                 status = response.json()
                 print(json.dumps(status, indent=2))
             else:
-                print("❌ EventBridge not running")
+                logger.error("EventBridge not running")
         except Exception as e:
-            print(f"❌ EventBridge not running or not accessible: {e}")
+            logger.error(
+                f"EventBridge not running or not accessible: {e}", exc_info=True
+            )
 
 
 if __name__ == "__main__":

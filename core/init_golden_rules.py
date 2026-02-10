@@ -14,83 +14,102 @@ ELF_DIR = SCRIPT_DIR.parent
 DB_PATH = ELF_DIR / "memory" / "index.db"
 MARKDOWN_FILE = ELF_DIR / "memory" / "golden-rules.md"
 
+# Setup logging
+try:
+    from Open_ELF.utils.elf_logging import get_logger
+
+    logger = get_logger("init_golden_rules")
+except ImportError:
+    import logging
+
+    logger = logging.getLogger("init_golden_rules")
+
 
 def extract_golden_rules():
     """Extract golden rules from markdown file."""
     if not MARKDOWN_FILE.exists():
-        print(f"❌ Fichier non trouvé: {MARKDOWN_FILE}")
+        logger.error(f"Fichier non trouvé: {MARKDOWN_FILE}")
         return []
-    
+
     content = MARKDOWN_FILE.read_text()
-    
+
     # Match rules like "## 1. Rule Title"
     rules = []
-    for match in re.finditer(r'^##\s+\d+\.\s+(.+)$', content, re.MULTILINE):
+    for match in re.finditer(r"^##\s+\d+\.\s+(.+)$", content, re.MULTILINE):
         title = match.group(1).strip()
         if title and title != "How Rules Become Golden":
             rules.append(title)
-    
+
     return rules
 
 
 def init_golden_rules():
     """Initialize golden rules in database."""
     if not DB_PATH.exists():
-        print(f"❌ Base de données non trouvée: {DB_PATH}")
+        logger.error(f"Base de données non trouvée: {DB_PATH}")
         return False
-    
+
     rules = extract_golden_rules()
     if not rules:
-        print("⚠️ Aucune règle trouvée dans le fichier markdown")
+        logger.warning("Aucune règle trouvée dans le fichier markdown")
         return False
-    
-    print(f"📖 {len(rules)} règles trouvées dans golden-rules.md")
-    
+
+    logger.info(f"{len(rules)} règles trouvées dans golden-rules.md")
+
     conn = sqlite3.connect(str(DB_PATH))
     cursor = conn.cursor()
-    
+
     timestamp = "2026-02-10T00:00:00"
     inserted = 0
     updated = 0
-    
+
     for rule_text in rules:
         # Check if rule already exists
         cursor.execute(
-            "SELECT id, is_golden FROM heuristics WHERE rule = ?",
-            (rule_text,)
+            "SELECT id, is_golden FROM heuristics WHERE rule = ?", (rule_text,)
         )
         existing = cursor.fetchone()
-        
+
         if existing:
             # Update to golden if not already
             if not existing[1]:
                 cursor.execute(
                     "UPDATE heuristics SET is_golden = 1, updated_at = ? WHERE id = ?",
-                    (timestamp, existing[0])
+                    (timestamp, existing[0]),
                 )
                 updated += 1
-                print(f"  🔄 Mise à jour: {rule_text[:50]}...")
+                logger.debug(f"Mise à jour: {rule_text[:50]}...")
         else:
             # Insert new golden rule
             cursor.execute(
-                """INSERT INTO heuristics 
-                    (domain, rule, explanation, confidence, is_golden, source_type, 
+                """INSERT INTO heuristics
+                    (domain, rule, explanation, confidence, is_golden, source_type,
                      times_validated, times_violated, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                ("general", rule_text, "Golden rule from golden-rules.md", 
-                 0.95, 1, "golden", 10, 0, timestamp, timestamp)
+                (
+                    "general",
+                    rule_text,
+                    "Golden rule from golden-rules.md",
+                    0.95,
+                    1,
+                    "golden",
+                    10,
+                    0,
+                    timestamp,
+                    timestamp,
+                ),
             )
             inserted += 1
-            print(f"  ➕ Insertion: {rule_text[:50]}...")
-    
+            logger.debug(f"Insertion: {rule_text[:50]}...")
+
     conn.commit()
     conn.close()
-    
-    print(f"\n✅ Terminé: {inserted} nouvelles, {updated} mises à jour")
+
+    logger.info(f"Terminé: {inserted} nouvelles, {updated} mises à jour")
     return True
 
 
 if __name__ == "__main__":
-    print("🚀 Initialisation des Golden Rules\n")
+    logger.info("Initialisation des Golden Rules")
     success = init_golden_rules()
     sys.exit(0 if success else 1)

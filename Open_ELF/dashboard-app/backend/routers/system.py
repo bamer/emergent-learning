@@ -289,7 +289,7 @@ def get_orchestrator_status() -> ServiceStatus:
         last_heartbeat=orchestrator_data.get("last_check"),
         health=health,
         metadata={
-            "services": orchestator_data.get("services", {}),
+            "services": orchestrator_data.get("services", {}),
             "missions_count": orchestrator_data.get("missions_count", 0),
         },
     )

@@ -199,15 +199,46 @@ class UnifiedOrchestrator:
             )
             self.processed_escalations.add(str(escalation_file))
 
-            escalation_archive_dir = ESCALATION_DIR / "archive"
-            escalation_archive_dir.mkdir(parents=True, exist_ok=True)
-            archive_path = escalation_archive_dir / filename
-            await self._archive_escalation(escalation_file, archive_path)
+            # 🔥 NEW: Forward to CEO inbox for L3 processing (not archive)
+            await self._forward_to_ceo_inbox(escalation_file, content, severity)
 
             logger.info(f"✅ Watcher escalation processed: {filename}")
 
         except Exception as e:
             logger.error(f"❌ Failed to process escalation {filename}: {e}")
+
+    async def _forward_to_ceo_inbox(self, escalation_file: Path, content: str, severity: str):
+        """Forward escalation from Orchestrator to CEO inbox for L3 processing."""
+        try:
+            ceo_inbox = CEO_INBOX_DIR / "inbox"
+            ceo_inbox.mkdir(parents=True, exist_ok=True)
+            
+            # Create CEO escalation with same filename (CEO monitor will pick it up)
+            ceo_escalation_path = ceo_inbox / escalation_file.name
+            
+            # Add header indicating it's from Orchestrator
+            ceo_content = f"""# CEO Escalation (from Orchestrator)
+**Severity**: {severity}
+**Forwarded At**: {datetime.now().isoformat()}
+**Source File**: {escalation_file.name}
+
+---
+
+{content}
+"""
+            
+            # Write to CEO inbox
+            await asyncio.to_thread(ceo_escalation_path.write_text, ceo_content)
+            logger.info(f"✅ Escalation forwarded to CEO inbox: {escalation_file.name}")
+            
+            # Archive the original from .coordination/escalations
+            escalation_archive_dir = ESCALATION_DIR / "archive"
+            escalation_archive_dir.mkdir(parents=True, exist_ok=True)
+            archive_path = escalation_archive_dir / escalation_file.name
+            await self._archive_escalation(escalation_file, archive_path)
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to forward escalation to CEO: {e}")
 
     def _log_to_watcher_log(
         self, escalation_file: Path, action_taken: str, assessment: Dict[str, Any]

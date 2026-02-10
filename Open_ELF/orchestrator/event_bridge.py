@@ -810,6 +810,173 @@ class EventBridge:
                     "start_time": time.time(),
                 }
 
+    def _extract_and_record_learnings(self, tool_name: str, tool_output: Dict[str, Any], success: bool):
+        """Extract learnings directly from tool output and record to database."""
+        try:
+            # Import learning utilities
+            import sqlite3
+            import re
+            
+            db_path = ELF_DIR / "memory" / "index.db"
+            if not db_path.exists():
+                logger.debug("Learning database not available")
+                return
+            
+            # Get output content
+            output_content = ""
+            if isinstance(tool_output, dict):
+                output_content = tool_output.get("content", "")
+                if isinstance(output_content, list):
+                    output_content = "\n".join(
+                        item.get("text", "") for item in output_content if isinstance(item, dict)
+                    )
+            elif isinstance(tool_output, str):
+                output_content = tool_output
+            
+            if not output_content or success is False:
+                return
+            
+            # Extract sentences with heuristic indicators
+            heuristic_indicators = [
+                "should", "always", "never", "must", "don't", "avoid", "prefer",
+                "recommend", "best practice", "rule of thumb", "lesson", "insight",
+                "key takeaway", "critical to", "important to", "never forget", "remember to"
+            ]
+            
+            sentences = re.split(r"[.!?]", output_content)
+            learnings = []
+            
+            for sentence in sentences:
+                sentence = sentence.strip()
+                if not sentence or len(sentence) < 10:
+                    continue
+                
+                # Check if sentence contains learning indicators
+                if any(indicator in sentence.lower() for indicator in heuristic_indicators):
+                    clean_sentence = re.sub(r"^[^a-zA-Z]*", "", sentence).strip()
+                    clean_sentence = re.sub(r"\s+", " ", clean_sentence)
+                    
+                    if clean_sentence:
+                        learnings.append({
+                            "domain": tool_name.lower(),
+                            "rule": clean_sentence,
+                            "confidence": 0.7,
+                        })
+            
+            if not learnings:
+                return
+            
+            # Record to database
+            conn = sqlite3.connect(db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            
+            try:
+                for learning in learnings:
+                    # Check if this heuristic already exists
+                    cursor.execute(
+                        "SELECT id, confidence FROM heuristics WHERE domain = ? AND rule = ?",
+                        (learning["domain"], learning["rule"]),
+                    )
+                    existing = cursor.fetchone()
+                    
+                    if existing:
+                        # Update existing: increment validation count and boost confidence
+                        cursor.execute(
+                            """
+                            UPDATE heuristics 
+                            SET times_validated = times_validated + 1,
+                                confidence = MIN(1.0, confidence + 0.05),
+                                updated_at = CURRENT_TIMESTAMP
+                            WHERE id = ?
+                            """,
+                            (existing["id"],),
+                        )
+                    else:
+                        # Insert new heuristic
+                        cursor.execute(
+                            """
+                            INSERT INTO heuristics 
+                            (domain, rule, explanation, confidence, source_type, project_path, times_validated, times_violated, is_golden, created_at, updated_at)
+                            VALUES (?, ?, 'Auto-extracted by EventBridge', ?, 'auto', ?, 1, 0, 0, ?, ?)
+                            """,
+                            (
+                                learning["domain"],
+                                learning["rule"],
+                                learning["confidence"],
+                                "/home/bamer/.opencode",
+                                datetime.now().isoformat(),
+                                datetime.now().isoformat(),
+                            ),
+                        )
+                
+                conn.commit()
+                logger.info(f"✅ EventBridge recorded {len(learnings)} learnings from {tool_name}")
+            except Exception as e:
+                logger.error(f"Failed to record learnings: {e}")
+                conn.rollback()
+            finally:
+                conn.close()
+        
+        except Exception as e:
+            logger.debug(f"Learning extraction error (non-fatal): {e}")
+
+    def _extract_and_record_trails(self, tool_name: str, tool_output: Dict[str, Any]):
+        """Extract file paths and record trails directly."""
+        try:
+            import sqlite3
+            import re
+            
+            db_path = ELF_DIR / "memory" / "index.db"
+            if not db_path.exists():
+                return
+            
+            # Extract file paths from output
+            output_content = ""
+            if isinstance(tool_output, dict):
+                output_content = tool_output.get("content", "")
+            elif isinstance(tool_output, str):
+                output_content = tool_output
+            
+            # Simple path extraction (file paths with extensions)
+            file_pattern = r"(?:/[\w\-./]+|[\w\-./]+\.(?:py|js|ts|json|md|yaml|yml|sh|go|rs))"
+            paths = re.findall(file_pattern, output_content)
+            
+            if not paths:
+                return
+            
+            # Record trails
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            
+            try:
+                for path in paths:
+                    cursor.execute(
+                        """
+                        INSERT INTO trails (location, location_type, scent, strength, agent_id, message, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            path,
+                            "file",
+                            "read" if tool_name in ("Read", "Grep", "Glob") else "write",
+                            0.5 if tool_name in ("Read", "Grep", "Glob") else 0.9,
+                            "event-bridge",
+                            f"{tool_name} operation",
+                            datetime.now().isoformat(),
+                        ),
+                    )
+                
+                conn.commit()
+                logger.info(f"✅ EventBridge recorded {len(paths)} trails from {tool_name}")
+            except Exception as e:
+                logger.error(f"Failed to record trails: {e}")
+            finally:
+                conn.close()
+        
+        except Exception as e:
+            logger.debug(f"Trail extraction error (non-fatal): {e}")
+
     def _handle_tool_event(self, event: Dict[str, Any]):
         """Gère un event d'outil (équivalent à PostToolUse)."""
         props = event.get("properties", {})
@@ -860,6 +1027,11 @@ class EventBridge:
             post_tool_data["tools_used"] = session_data["tools_used"]
 
         self.hook_manager.run_hook("PostToolUse", post_tool_data)
+
+        # 🔥 NEW: Extract learnings and trails directly (integrated learning loop)
+        if success:
+            self._extract_and_record_learnings(tool_name, tool_output, success)
+            self._extract_and_record_trails(tool_name, tool_output)
 
         # Si échec, déclencher aussi le learning-loop pour enregistrer l'échec
         if not success:

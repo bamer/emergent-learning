@@ -6,7 +6,7 @@ task descriptions and heuristics. Provides fallback to OpenAI or keyword matchin
 
 Usage:
     from semantic_search import SemanticSearcher
-    
+
     searcher = await SemanticSearcher.create()
     results = await searcher.find_relevant_heuristics(
         task="Refactor authentication module",
@@ -22,15 +22,27 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 import numpy as np
 
+# Unified ELF logging (required for all ELF modules)
+try:
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("semantic_search")
+except ImportError:
+    import logging
+
+    _LOGGER = logging.getLogger("semantic_search")
+
 # Try to import embedding libraries
 try:
     from query.ollama_embedder import OllamaEmbedder, ollama_available
+
     OLLAMA_AVAILABLE = True
 except ImportError:
     OLLAMA_AVAILABLE = False
 
 try:
     import openai
+
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
@@ -45,56 +57,58 @@ except ImportError:
 class SemanticSearcher:
     """
     Semantic search for heuristics using embeddings.
-    
+
     Supports multiple embedding backends:
     - Ollama (nomic-embed-text, local, 768-dimensional)
     - OpenAI embeddings (if API key available)
     - Simple keyword fallback (if no embeddings available)
-    
+
     Embeddings are cached to avoid recomputation.
     """
-    
+
     # Default model
-    DEFAULT_MODEL = 'nomic-embed-text'
-    
+    DEFAULT_MODEL = "nomic-embed-text"
+
     # Embedding cache directory and version (for breaking changes)
-    CACHE_DIR = '.embedding_cache'
+    CACHE_DIR = ".embedding_cache"
     CACHE_VERSION = 2
-    
-    def __init__(self, base_path: Optional[Path] = None, model_name: Optional[str] = None):
+
+    def __init__(
+        self, base_path: Optional[Path] = None, model_name: Optional[str] = None
+    ):
         """
         Initialize semantic searcher (use create() for async init).
-        
+
         Args:
             base_path: Base path for cache storage
             model_name: Embedding model name (defaults to DEFAULT_MODEL)
         """
-        self.base_path = base_path or Path.home() / '.opencode' / 'emergent-learning'
+        self.base_path = base_path or Path.home() / ".opencode" / "emergent-learning"
         self.model_name = model_name or self.DEFAULT_MODEL
         self.embedder = None
         self.embedding_dim = 768  # Default for nomic-embed-text
         self._use_openai = False
-        
+
         # Cache setup
         self.cache_path = self.base_path / self.CACHE_DIR
         self.cache_path.mkdir(parents=True, exist_ok=True)
         self._cache: Dict[str, np.ndarray] = {}
-    
+
     @classmethod
     async def create(
         cls,
         base_path: Optional[Path] = None,
         model_name: Optional[str] = None,
-        prefer_openai: bool = False
-    ) -> 'SemanticSearcher':
+        prefer_openai: bool = False,
+    ) -> "SemanticSearcher":
         """
         Async factory to create and initialize SemanticSearcher.
-        
+
         Args:
             base_path: Base path for cache storage
             model_name: Embedding model name
             prefer_openai: Whether to prefer OpenAI over local models
-            
+
         Returns:
             Initialized SemanticSearcher instance
         """
@@ -102,14 +116,14 @@ class SemanticSearcher:
         await searcher._initialize_model(prefer_openai)
         await searcher._load_heuristic_embeddings()
         return searcher
-    
+
     async def _initialize_model(self, prefer_openai: bool = False):
         """Initialize the embedding model."""
         # Check for OpenAI API key if preferred
-        if prefer_openai and OPENAI_AVAILABLE and os.environ.get('OPENAI_API_KEY'):
+        if prefer_openai and OPENAI_AVAILABLE and os.environ.get("OPENAI_API_KEY"):
             self._use_openai = True
             return
-        
+
         # Try Ollama first (primary backend)
         if OLLAMA_AVAILABLE and ollama_available():
             try:
@@ -118,65 +132,70 @@ class SemanticSearcher:
                 return
             except Exception as e:
                 print(f"Warning: Failed to initialize Ollama embedder: {e}")
-        
+
         # Fallback: use OpenAI if available
-        if OPENAI_AVAILABLE and os.environ.get('OPENAI_API_KEY'):
+        if OPENAI_AVAILABLE and os.environ.get("OPENAI_API_KEY"):
             self._use_openai = True
             return
-        
+
         # Final fallback: no embeddings, will use keyword matching
         print("Warning: No embedding backend available. Using keyword fallback.")
-    
+
     async def _load_heuristic_embeddings(self):
         """Load cached heuristic embeddings from disk."""
-        cache_file = self.cache_path / f'heuristic_embeddings_v{self.CACHE_VERSION}.json'
+        cache_file = (
+            self.cache_path / f"heuristic_embeddings_v{self.CACHE_VERSION}.json"
+        )
         if cache_file.exists():
             try:
-                with open(cache_file, 'r') as f:
+                with open(cache_file, "r") as f:
                     data = json.load(f)
                     for key, vec in data.items():
                         self._cache[key] = np.array(vec)
             except Exception as e:
                 print(f"Warning: Failed to load embedding cache: {e}")
-    
+
     async def _save_heuristic_embeddings(self):
         """Save heuristic embeddings to disk cache."""
-        cache_file = self.cache_path / f'heuristic_embeddings_v{self.CACHE_VERSION}.json'
+        cache_file = (
+            self.cache_path / f"heuristic_embeddings_v{self.CACHE_VERSION}.json"
+        )
         try:
             data = {k: v.tolist() for k, v in self._cache.items()}
-            with open(cache_file, 'w') as f:
+            with open(cache_file, "w") as f:
                 json.dump(data, f)
         except Exception as e:
             print(f"Warning: Failed to save embedding cache: {e}")
-    
+
     def _get_cache_key(self, text: str) -> str:
         """Generate cache key for text."""
         return hashlib.md5(text.encode()).hexdigest()
-    
+
     async def _embed_via_daemon(self, text: str) -> Optional[np.ndarray]:
         """Generate embedding via semantic daemon HTTP API."""
         try:
             import aiohttp
+
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     "http://localhost:5001/embed",
                     json={"text": text},
-                    timeout=aiohttp.ClientTimeout(total=30)
+                    timeout=aiohttp.ClientTimeout(total=30),
                 ) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         return np.array(data["embedding"])
-        except Exception:
-            pass
+        except Exception as e:
+            log_debug("semantic_search", f"Daemon embedding failed: {e}")
         return None
 
     async def embed(self, text: str) -> np.ndarray:
         """
         Generate embedding for text.
-        
+
         Args:
             text: Text to embed
-            
+
         Returns:
             Embedding vector as numpy array
         """
@@ -200,17 +219,17 @@ class SemanticSearcher:
 
         self._cache[cache_key] = embedding
         return embedding
-    
+
     async def _embed_openai(self, text: str) -> np.ndarray:
         """Generate embedding using OpenAI API."""
         import openai
+
         client = openai.AsyncOpenAI()
         response = await client.embeddings.create(
-            model="text-embedding-3-small",
-            input=text
+            model="text-embedding-3-small", input=text
         )
         return np.array(response.data[0].embedding)
-    
+
     def _keyword_fallback(self, text: str) -> np.ndarray:
         """
         Simple keyword-based fallback when no embeddings available.
@@ -228,7 +247,7 @@ class SemanticSearcher:
         if norm > 0:
             vector = vector / norm
         return vector
-    
+
     def cosine_similarity(self, vec1: np.ndarray, vec2: np.ndarray) -> float:
         """Calculate cosine similarity between two vectors."""
         dot = np.dot(vec1, vec2)
@@ -237,13 +256,18 @@ class SemanticSearcher:
         if norm1 == 0 or norm2 == 0:
             return 0.0
         return dot / (norm1 * norm2)
-    
-    async def search_via_daemon(self, query: str, top_k: int = 5,
-                               source_type: Optional[str] = None,
-                               min_similarity: float = 0.0) -> List[Dict[str, Any]]:
+
+    async def search_via_daemon(
+        self,
+        query: str,
+        top_k: int = 5,
+        source_type: Optional[str] = None,
+        min_similarity: float = 0.0,
+    ) -> List[Dict[str, Any]]:
         """Search stored embeddings via the semantic daemon API."""
         try:
             import aiohttp
+
             payload = {"query": query, "top_k": top_k, "min_similarity": min_similarity}
             if source_type:
                 payload["source_type"] = source_type
@@ -251,13 +275,13 @@ class SemanticSearcher:
                 async with session.post(
                     "http://localhost:5001/search",
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=30)
+                    timeout=aiohttp.ClientTimeout(total=30),
                 ) as resp:
                     if resp.status == 200:
                         data = await resp.json()
                         return data.get("results", [])
-        except Exception:
-            pass
+        except Exception as e:
+            log_debug("semantic_search", f"Daemon search failed: {e}")
         return []
 
     async def find_relevant_heuristics(
@@ -265,80 +289,80 @@ class SemanticSearcher:
         task: str,
         threshold: float = 0.75,
         limit: int = 5,
-        domain: Optional[str] = None
+        domain: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Find heuristics semantically relevant to the task.
-        
+
         Args:
             task: Task description to match against
             threshold: Minimum similarity score (0.0-1.0)
             limit: Maximum number of results
             domain: Optional domain to filter by first
-            
+
         Returns:
             List of heuristics with similarity scores, sorted by relevance
         """
         # Get task embedding
         task_embedding = await self.embed(task)
-        
+
         # Query heuristics from database
         m = get_manager()
         heuristics = []
-        
+
         async with m:
             async with m.connection():
                 query = Heuristic.select()
-                
+
                 # Filter by domain if specified
                 if domain:
                     query = query.where(Heuristic.domain == domain)
-                
+
                 # Get all heuristics (or domain-filtered)
                 async for h in query:
                     heuristics.append(h.__data__.copy())
-        
+
         # Calculate similarity scores
         scored_heuristics = []
         for h in heuristics:
             # Create rich text for embedding
             heuristic_text = f"{h['rule']}"
-            if h.get('explanation'):
+            if h.get("explanation"):
                 heuristic_text += f" {h['explanation']}"
-            if h.get('domain'):
+            if h.get("domain"):
                 heuristic_text += f" Domain: {h['domain']}"
-            
+
             # Get embedding
             h_embedding = await self.embed(heuristic_text)
-            
+
             # Calculate similarity
             similarity = self.cosine_similarity(task_embedding, h_embedding)
-            
+
             # Boost score based on confidence and validation
-            confidence_boost = h.get('confidence', 0.5) * 0.1
-            validation_boost = min(h.get('times_validated', 0) * 0.01, 0.1)
+            confidence_boost = h.get("confidence", 0.5) * 0.1
+            validation_boost = min(h.get("times_validated", 0) * 0.01, 0.1)
             final_score = similarity + confidence_boost + validation_boost
-            
+
             if final_score >= threshold:
-                h['_similarity'] = similarity
-                h['_final_score'] = final_score
+                h["_similarity"] = similarity
+                h["_final_score"] = final_score
                 scored_heuristics.append(h)
-        
+
         # Sort by final score and limit
-        scored_heuristics.sort(key=lambda x: x['_final_score'], reverse=True)
+        scored_heuristics.sort(key=lambda x: x["_final_score"], reverse=True)
         return scored_heuristics[:limit]
-    
+
     async def compute_all_heuristic_embeddings(self) -> int:
         """
         Pre-compute and cache embeddings for all heuristics.
         Call this after adding new heuristics to update the cache.
-        
+
         Returns:
             Number of heuristics processed
         """
         m = get_manager()
         count = 0
-        
+
         async with m:
             async with m.connection():
                 async for h in Heuristic.select():
@@ -348,15 +372,15 @@ class SemanticSearcher:
                         heuristic_text += f" {h.explanation}"
                     if h.domain:
                         heuristic_text += f" Domain: {h.domain}"
-                    
+
                     # Generate and cache embedding
                     await self.embed(heuristic_text)
                     count += 1
-        
+
         # Save cache to disk
         await self._save_heuristic_embeddings()
         return count
-    
+
     async def cleanup(self):
         """Clean up resources and save cache."""
         await self._save_heuristic_embeddings()
@@ -368,11 +392,59 @@ def extract_keywords(text: str) -> List[str]:
     # Simple keyword extraction
     words = text.lower().split()
     # Filter common stop words
-    stop_words = {'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been',
-                  'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
-                  'would', 'could', 'should', 'may', 'might', 'must', 'shall',
-                  'can', 'need', 'dare', 'ought', 'used', 'to', 'of', 'in',
-                  'for', 'on', 'with', 'at', 'by', 'from', 'as', 'into',
-                  'through', 'during', 'before', 'after', 'above', 'below',
-                  'between', 'under', 'and', 'but', 'or', 'yet', 'so'}
+    stop_words = {
+        "the",
+        "a",
+        "an",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "do",
+        "does",
+        "did",
+        "will",
+        "would",
+        "could",
+        "should",
+        "may",
+        "might",
+        "must",
+        "shall",
+        "can",
+        "need",
+        "dare",
+        "ought",
+        "used",
+        "to",
+        "of",
+        "in",
+        "for",
+        "on",
+        "with",
+        "at",
+        "by",
+        "from",
+        "as",
+        "into",
+        "through",
+        "during",
+        "before",
+        "after",
+        "above",
+        "below",
+        "between",
+        "under",
+        "and",
+        "but",
+        "or",
+        "yet",
+        "so",
+    }
     return [w for w in words if w not in stop_words and len(w) > 2]

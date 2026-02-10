@@ -21,6 +21,16 @@ from typing import List, Optional, Dict, Any
 import numpy as np
 from pathlib import Path
 
+# Unified ELF logging (required for all ELF modules)
+try:
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("ollama_embedder")
+except ImportError:
+    import logging
+
+    _LOGGER = logging.getLogger("ollama_embedder")
+
 # Default embedding model
 DEFAULT_MODEL = "nomic-embed-text"
 # Default embedding dimension
@@ -39,7 +49,8 @@ def ollama_available() -> bool:
         result = sock.connect_ex(("localhost", 11434))
         sock.close()
         return result == 0
-    except Exception:
+    except Exception as e:
+        log_debug("ollama_embedder", f"Ollama availability check failed: {e}")
         return False
 
 
@@ -180,8 +191,8 @@ class OllamaEmbedder:
                 # We can't use await in __del__, so we'll use a sync approach
                 loop = asyncio.new_event_loop()
                 loop.run_until_complete(self._session.close())
-        except Exception:
-            pass
+        except Exception as e:
+            log_debug("ollama_embedder", f"Cleanup on destruction failed: {e}")
 
 
 # Test function for module

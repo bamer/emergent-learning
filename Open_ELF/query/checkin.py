@@ -22,6 +22,16 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 import subprocess
 
+# Unified ELF logging (required for all ELF modules)
+try:
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("checkin")
+except ImportError:
+    import logging
+
+    _LOGGER = logging.getLogger("checkin")
+
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
@@ -318,9 +328,11 @@ class CheckinOrchestrator:
 
         except subprocess.TimeoutExpired:
             print("[!] Warning: Context loading timed out")
+            log_debug("checkin", "Context loading timed out")
             return {"raw_output": ""}
-        except Exception:
-            print("[!] Warning: Error loading context")
+        except Exception as e:
+            print(f"[!] Warning: Error loading context: {e}")
+            log_debug("checkin", f"Context loading failed: {e}")
             return {"raw_output": ""}
 
     def display_golden_rules(self, context: Dict[str, Any]):

@@ -16,19 +16,27 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
+# Unified ELF logging (required for all ELF modules)
+try:
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("frontmatter")
+except ImportError:
+    import logging
+
+    _LOGGER = logging.getLogger("frontmatter")
+
 # Try to import yaml
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
 
 
 # Frontmatter delimiter
-FRONTMATTER_PATTERN = re.compile(
-    r'^---\s*\n(.*?)\n---\s*\n',
-    re.DOTALL
-)
+FRONTMATTER_PATTERN = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 
 
 def parse_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
@@ -48,7 +56,7 @@ def parse_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
         return {}, content
 
     frontmatter_text = match.group(1)
-    remaining_content = content[match.end():]
+    remaining_content = content[match.end() :]
 
     if YAML_AVAILABLE:
         try:
@@ -67,31 +75,33 @@ def _basic_frontmatter_parse(text: str) -> Dict[str, Any]:
     """Basic fallback parser for frontmatter without PyYAML."""
     result = {}
 
-    for line in text.split('\n'):
+    for line in text.split("\n"):
         line = line.strip()
-        if not line or line.startswith('#'):
+        if not line or line.startswith("#"):
             continue
 
-        if ':' in line:
-            key, value = line.split(':', 1)
+        if ":" in line:
+            key, value = line.split(":", 1)
             key = key.strip()
             value = value.strip()
 
             # Try to parse value types
-            if value.lower() == 'true':
+            if value.lower() == "true":
                 value = True
-            elif value.lower() == 'false':
+            elif value.lower() == "false":
                 value = False
             elif value.isdigit():
                 value = int(value)
-            elif value.replace('.', '').isdigit():
+            elif value.replace(".", "").isdigit():
                 try:
                     value = float(value)
                 except ValueError:
                     pass
-            elif value.startswith('[') and value.endswith(']'):
+            elif value.startswith("[") and value.endswith("]"):
                 # Basic list parsing
-                value = [v.strip().strip('"\'') for v in value[1:-1].split(',') if v.strip()]
+                value = [
+                    v.strip().strip("\"'") for v in value[1:-1].split(",") if v.strip()
+                ]
             elif value.startswith('"') and value.endswith('"'):
                 value = value[1:-1]
             elif value.startswith("'") and value.endswith("'"):
@@ -125,10 +135,10 @@ def format_frontmatter(data: Dict[str, Any]) -> str:
             if isinstance(value, bool):
                 value = str(value).lower()
             elif isinstance(value, list):
-                value = '[' + ', '.join(str(v) for v in value) + ']'
+                value = "[" + ", ".join(str(v) for v in value) + "]"
             lines.append(f"{key}: {value}")
         lines.append("---\n")
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
 
 def add_frontmatter(content: str, data: Dict[str, Any]) -> str:
@@ -189,11 +199,13 @@ def read_file_with_frontmatter(path: Path) -> Tuple[Dict[str, Any], str]:
     if not path.exists():
         return {}, ""
 
-    content = path.read_text(encoding='utf-8')
+    content = path.read_text(encoding="utf-8")
     return parse_frontmatter(content)
 
 
-def write_file_with_frontmatter(path: Path, frontmatter: Dict[str, Any], content: str) -> None:
+def write_file_with_frontmatter(
+    path: Path, frontmatter: Dict[str, Any], content: str
+) -> None:
     """
     Write a file with frontmatter.
 
@@ -203,7 +215,7 @@ def write_file_with_frontmatter(path: Path, frontmatter: Dict[str, Any], content
         content: Content (without frontmatter)
     """
     full_content = format_frontmatter(frontmatter) + content
-    path.write_text(full_content, encoding='utf-8')
+    path.write_text(full_content, encoding="utf-8")
 
 
 def update_file_frontmatter(path: Path, updates: Dict[str, Any]) -> bool:
@@ -221,73 +233,74 @@ def update_file_frontmatter(path: Path, updates: Dict[str, Any]) -> bool:
         return False
 
     try:
-        content = path.read_text(encoding='utf-8')
+        content = path.read_text(encoding="utf-8")
         updated = update_frontmatter(content, updates)
-        path.write_text(updated, encoding='utf-8')
+        path.write_text(updated, encoding="utf-8")
         return True
-    except Exception:
+    except Exception as e:
+        log_debug("frontmatter", f"Failed to update frontmatter for {path}: {e}")
         return False
 
 
 # === Standard frontmatter templates ===
 
+
 def create_learning_frontmatter(
-    status: str = 'active',
+    status: str = "active",
     confidence: float = 0.5,
-    domain: str = 'general',
+    domain: str = "general",
     tags: list = None,
-    related: list = None
+    related: list = None,
 ) -> Dict[str, Any]:
     """Create standard frontmatter for a learning."""
     return {
-        'status': status,
-        'confidence': confidence,
-        'domain': domain,
-        'tags': tags or [],
-        'related': related or [],
-        'created': datetime.now().strftime('%Y-%m-%d'),
-        'updated': datetime.now().strftime('%Y-%m-%d'),
+        "status": status,
+        "confidence": confidence,
+        "domain": domain,
+        "tags": tags or [],
+        "related": related or [],
+        "created": datetime.now().strftime("%Y-%m-%d"),
+        "updated": datetime.now().strftime("%Y-%m-%d"),
     }
 
 
 def create_decision_frontmatter(
-    status: str = 'pending',
-    priority: str = 'medium',
+    status: str = "pending",
+    priority: str = "medium",
     domain: str = None,
-    assignee: str = None
+    assignee: str = None,
 ) -> Dict[str, Any]:
     """Create standard frontmatter for a CEO decision."""
     data = {
-        'status': status,
-        'priority': priority,
-        'created': datetime.now().strftime('%Y-%m-%d'),
+        "status": status,
+        "priority": priority,
+        "created": datetime.now().strftime("%Y-%m-%d"),
     }
     if domain:
-        data['domain'] = domain
+        data["domain"] = domain
     if assignee:
-        data['assignee'] = assignee
+        data["assignee"] = assignee
     return data
 
 
 def create_session_frontmatter(
-    status: str = 'in_progress',
-    checkpoint: str = None,
-    task: str = None
+    status: str = "in_progress", checkpoint: str = None, task: str = None
 ) -> Dict[str, Any]:
     """Create standard frontmatter for a session file."""
     data = {
-        'status': status,
-        'started': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
-        'updated': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+        "status": status,
+        "started": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+        "updated": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
     }
     if checkpoint:
-        data['checkpoint'] = checkpoint
+        data["checkpoint"] = checkpoint
     if task:
-        data['task'] = task
+        data["task"] = task
     return data
 
 
 # === Query helpers ===
+
 
 def find_files_by_status(directory: Path, status: str) -> list:
     """
@@ -302,12 +315,13 @@ def find_files_by_status(directory: Path, status: str) -> list:
     """
     matches = []
 
-    for path in directory.glob('**/*.md'):
+    for path in directory.glob("**/*.md"):
         try:
             frontmatter, _ = read_file_with_frontmatter(path)
-            if frontmatter.get('status') == status:
+            if frontmatter.get("status") == status:
                 matches.append(path)
-        except Exception:
+        except Exception as e:
+            log_debug("frontmatter", f"Error checking frontmatter for {path}: {e}")
             continue
 
     return matches
@@ -326,7 +340,7 @@ def find_files_by_frontmatter(directory: Path, **criteria) -> list:
     """
     matches = []
 
-    for path in directory.glob('**/*.md'):
+    for path in directory.glob("**/*.md"):
         try:
             frontmatter, _ = read_file_with_frontmatter(path)
             if all(frontmatter.get(k) == v for k, v in criteria.items()):
@@ -338,7 +352,7 @@ def find_files_by_frontmatter(directory: Path, **criteria) -> list:
 
 
 # CLI for testing
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Test parsing
     test_content = """---
 status: active
@@ -360,10 +374,12 @@ This is the content.
     print(f"\nContent preview: {content[:50]}...")
 
     # Test update
-    updated = update_frontmatter(test_content, {'status': 'reviewed', 'reviewer': 'opencode'})
+    updated = update_frontmatter(
+        test_content, {"status": "reviewed", "reviewer": "opencode"}
+    )
     new_fm, _ = parse_frontmatter(updated)
     print(f"\nAfter update: {new_fm}")
 
     # Test formatting
     print("\n=== Format Test ===")
-    print(format_frontmatter({'status': 'new', 'tags': ['a', 'b']}))
+    print(format_frontmatter({"status": "new", "tags": ["a", "b"]}))

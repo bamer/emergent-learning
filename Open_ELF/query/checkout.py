@@ -18,9 +18,19 @@ from pathlib import Path
 from datetime import datetime
 import hashlib
 
-if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+# Unified ELF logging (required for all ELF modules)
+try:
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("checkout")
+except ImportError:
+    import logging
+
+    _LOGGER = logging.getLogger("checkout")
+
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 
 class CheckoutOrchestrator:
@@ -44,11 +54,11 @@ class CheckoutOrchestrator:
         self.session_notes_file = Path.home() / ".checkout_notes"
         self.timestamp = datetime.now()
         self.session_data = {
-            'domains': [],
-            'files_touched': [],
-            'commits_made': 0,
-            'heuristics_recorded': 0,
-            'session_id': self._generate_session_id()
+            "domains": [],
+            "files_touched": [],
+            "commits_made": 0,
+            "heuristics_recorded": 0,
+            "session_id": self._generate_session_id(),
         }
 
     def _generate_session_id(self) -> str:
@@ -63,9 +73,10 @@ class CheckoutOrchestrator:
             if str(src_dir) not in sys.path:
                 sys.path.insert(0, str(src_dir))
             from elf_paths import get_base_path
+
             return get_base_path()
         except ImportError:
-            return Path.home() / '.opencode' / 'emergent-learning'
+            return Path.home() / ".opencode" / "emergent-learning"
 
     def display_banner(self):
         print(self.BANNER)
@@ -74,61 +85,70 @@ class CheckoutOrchestrator:
         """Auto-detect session activity from git and file system."""
         try:
             result = subprocess.run(
-                ['git', 'diff', '--name-only', 'HEAD~5', 'HEAD'],
-                capture_output=True, text=True, timeout=10, cwd=str(self.elf_home)
+                ["git", "diff", "--name-only", "HEAD~5", "HEAD"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                cwd=str(self.elf_home),
             )
             if result.returncode == 0:
-                files = [f for f in result.stdout.strip().split('\n') if f]
-                self.session_data['files_touched'] = files[:20]
+                files = [f for f in result.stdout.strip().split("\n") if f]
+                self.session_data["files_touched"] = files[:20]
 
                 domains = set()
                 for f in files:
-                    if 'dashboard' in f:
-                        domains.add('dashboard')
-                    if 'query' in f:
-                        domains.add('infrastructure')
-                    if '.tsx' in f or '.jsx' in f:
-                        domains.add('frontend')
-                    if '.py' in f:
-                        domains.add('backend')
-                self.session_data['domains'] = list(domains)
+                    if "dashboard" in f:
+                        domains.add("dashboard")
+                    if "query" in f:
+                        domains.add("infrastructure")
+                    if ".tsx" in f or ".jsx" in f:
+                        domains.add("frontend")
+                    if ".py" in f:
+                        domains.add("backend")
+                self.session_data["domains"] = list(domains)
 
             result = subprocess.run(
-                ['git', 'rev-list', '--count', 'HEAD~5..HEAD'],
-                capture_output=True, text=True, timeout=10, cwd=str(self.elf_home)
+                ["git", "rev-list", "--count", "HEAD~5..HEAD"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                cwd=str(self.elf_home),
             )
             if result.returncode == 0:
-                self.session_data['commits_made'] = int(result.stdout.strip() or 0)
+                self.session_data["commits_made"] = int(result.stdout.strip() or 0)
 
-        except Exception:
-            pass
+        except Exception as e:
+            log_debug("checkout", f"Failed to gather session metadata: {e}")
 
     def record_session_to_database(self) -> bool:
         """Record session metadata to database."""
         try:
             with sqlite3.connect(str(self.db_path)) as conn:
                 cursor = conn.cursor()
-                
+
                 # Record session as a decision/activity record
-                domains_str = ','.join(self.session_data['domains']) or 'general'
-                files_str = ','.join(self.session_data['files_touched'][:10])
-                
-                cursor.execute("""
+                domains_str = ",".join(self.session_data["domains"]) or "general"
+                files_str = ",".join(self.session_data["files_touched"][:10])
+
+                cursor.execute(
+                    """
                     INSERT INTO decisions (
                         title, context, decision, rationale, 
                         files_touched, domain, status, created_at
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    f"Session {self.session_data['session_id'][:8]}",
-                    f"Automated session checkout",
-                    f"Recorded session activity",
-                    f"Commits: {self.session_data['commits_made']}, Files: {len(self.session_data['files_touched'])}",
-                    files_str,
-                    domains_str,
-                    'accepted',
-                    self.timestamp.isoformat()
-                ))
-                
+                """,
+                    (
+                        f"Session {self.session_data['session_id'][:8]}",
+                        f"Automated session checkout",
+                        f"Recorded session activity",
+                        f"Commits: {self.session_data['commits_made']}, Files: {len(self.session_data['files_touched'])}",
+                        files_str,
+                        domains_str,
+                        "accepted",
+                        self.timestamp.isoformat(),
+                    ),
+                )
+
                 conn.commit()
                 return True
         except Exception as e:
@@ -145,26 +165,29 @@ class CheckoutOrchestrator:
                     WHERE created_at > datetime('now', '-4 hours')
                 """)
                 return cursor.fetchone()[0]
-        except Exception:
+        except Exception as e:
+            log_debug("checkout", f"Failed to count recent heuristics: {e}")
             return 0
 
     def save_session_notes(self) -> bool:
         """Save session summary for next session."""
         try:
             notes = {
-                'session_id': self.session_data['session_id'],
-                'timestamp': self.timestamp.isoformat(),
-                'domains': self.session_data['domains'],
-                'commits': self.session_data['commits_made'],
-                'files_touched': len(self.session_data['files_touched']),
-                'heuristics_recorded': self.session_data['heuristics_recorded'],
-                'domains_worked': ', '.join(self.session_data['domains']) if self.session_data['domains'] else 'general'
+                "session_id": self.session_data["session_id"],
+                "timestamp": self.timestamp.isoformat(),
+                "domains": self.session_data["domains"],
+                "commits": self.session_data["commits_made"],
+                "files_touched": len(self.session_data["files_touched"]),
+                "heuristics_recorded": self.session_data["heuristics_recorded"],
+                "domains_worked": ", ".join(self.session_data["domains"])
+                if self.session_data["domains"]
+                else "general",
             }
-            
+
             # Append to session notes file
-            with open(self.session_notes_file, 'a') as f:
-                f.write(json.dumps(notes) + '\n')
-            
+            with open(self.session_notes_file, "a") as f:
+                f.write(json.dumps(notes) + "\n")
+
             return True
         except Exception as e:
             print(f"   [WARN] Could not save session notes: {e}")
@@ -175,21 +198,21 @@ class CheckoutOrchestrator:
         try:
             # Create/update heuristics directory metadata
             self.heuristics_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Index current heuristics
-            heuristic_files = list(self.heuristics_dir.glob('*.md'))
-            
-            index_file = self.heuristics_dir / '_index.json'
+            heuristic_files = list(self.heuristics_dir.glob("*.md"))
+
+            index_file = self.heuristics_dir / "_index.json"
             index_data = {
-                'updated_at': self.timestamp.isoformat(),
-                'total_heuristics': len(heuristic_files),
-                'domains': list(set(f.stem.lower() for f in heuristic_files)),
-                'last_session_id': self.session_data['session_id']
+                "updated_at": self.timestamp.isoformat(),
+                "total_heuristics": len(heuristic_files),
+                "domains": list(set(f.stem.lower() for f in heuristic_files)),
+                "last_session_id": self.session_data["session_id"],
             }
-            
-            with open(index_file, 'w') as f:
+
+            with open(index_file, "w") as f:
                 json.dump(index_data, f, indent=2)
-            
+
             return True
         except Exception as e:
             print(f"   [WARN] Could not update semantic memory: {e}")
@@ -199,13 +222,13 @@ class CheckoutOrchestrator:
         """Display automated session summary."""
         print("[*] Session Summary (auto-detected)")
 
-        if self.session_data['domains']:
+        if self.session_data["domains"]:
             print(f"   Domains: {', '.join(self.session_data['domains'])}")
 
-        if self.session_data['commits_made']:
+        if self.session_data["commits_made"]:
             print(f"   Commits: {self.session_data['commits_made']}")
 
-        files = self.session_data['files_touched']
+        files = self.session_data["files_touched"]
         if files:
             print(f"   Files modified: {len(files)}")
             for f in files[:5]:
@@ -214,7 +237,7 @@ class CheckoutOrchestrator:
                 print(f"     ... and {len(files) - 5} more")
 
         heuristics = self.count_recent_heuristics()
-        self.session_data['heuristics_recorded'] = heuristics
+        self.session_data["heuristics_recorded"] = heuristics
         if heuristics:
             print(f"   Heuristics recorded: {heuristics}")
 
@@ -223,28 +246,28 @@ class CheckoutOrchestrator:
     def run(self):
         """Execute automated checkout - analyze, record, and save."""
         self.display_banner()
-        
+
         # Step 1: Analyze session activity
         self.analyze_session()
-        
+
         # Step 2: Record session to database
         print("[*] Recording session metadata...")
         if self.record_session_to_database():
             print("   [OK] Session recorded to database")
-        
+
         # Step 3: Save session notes for next session
         print("[*] Saving session notes...")
         if self.save_session_notes():
             print("   [OK] Session notes saved")
-        
+
         # Step 4: Update semantic memory indices
         print("[*] Updating semantic memory...")
         if self.update_semantic_memory_index():
             print("   [OK] Semantic memory updated")
-        
+
         # Step 5: Display summary
         self.display_summary()
-        
+
         print("[OK] Checkout complete - all learnings recorded!")
 
 
@@ -258,5 +281,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

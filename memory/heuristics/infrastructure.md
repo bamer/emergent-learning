@@ -74,3 +74,14 @@ Always fetch health metrics from live API endpoints, not local state or internal
 
 ---
 
+## H-145: Always use the unified ELF logger (Open_ELF.utils.elf_logging) for ALL logging. NEVER use print() or exotic loggers. The unified logger provides: centralized file logging, database event logging, crash policy enforcement, and consistent formatting across all agents.
+
+**Confidence**: 1.0
+**Source**: observation
+**Project**: `/home/bamer/.opencode/emergent-learning`
+**Created**: 2026-02-10
+
+Using print() or exotic loggers defeats the purpose of a unified logging system. The ELF unified logger ensures all logs go to the same location, have consistent formatting, and can be tracked in the database. Print statements bypass this and make debugging and monitoring difficult.
+
+---
+

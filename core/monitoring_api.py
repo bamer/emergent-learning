@@ -129,7 +129,8 @@ class MonitoringAPI:
             if result:
                 return float(result["count"])
             return 0.0
-        except:
+        except Exception as e:
+            logger.debug(f"Failed to calculate events per minute: {e}")
             return 0.0
 
     def _get_recent_events(self, conn: sqlite3.Connection, limit: int = 10) -> list:
@@ -190,7 +191,7 @@ class MonitoringAPI:
             stats["learnings"] = cursor.fetchone()["count"]
 
         except Exception as e:
-            print(f"Error getting learning stats: {e}")
+            logger.error(f"Error getting learning stats: {e}", exc_info=True)
 
         return stats
 

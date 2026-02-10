@@ -8,11 +8,18 @@ import sys
 from datetime import datetime, timezone
 from typing import Optional
 
-# Import models with fallback
+# Unified ELF logging (required for all ELF modules)
 try:
-    from query.models import BuildingQuery, get_manager
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("queries")
+    _log_debug_func = log_debug
 except ImportError:
-    from models import BuildingQuery, get_manager
+    import logging
+
+    _LOGGER = logging.getLogger("queries")
+    # Fallback if Open_ELF not available
+    _log_debug_func = None
 
 
 class BaseQueryMixin:
@@ -26,10 +33,20 @@ class BaseQueryMixin:
     - self.db_path: Path
     """
 
+    # Subclasses can override this to specify their module name for logging
+    _debug_module = "query"
+
     def _log_debug(self, message: str):
-        """Log debug message if debug mode is enabled."""
-        if self.debug:
-            print(f"[DEBUG] {message}", file=sys.stderr)
+        """
+        Debug logging method used by query mixins.
+
+        Only logs if self.debug is True.
+
+        Args:
+            message: Log message
+        """
+        if self.debug and _log_debug_func:
+            _log_debug_func(self._debug_module, message)
 
     def _get_current_time_ms(self) -> int:
         """Get current time in milliseconds since epoch."""
@@ -45,7 +62,7 @@ class BaseQueryMixin:
         results_returned: int = 0,
         tokens_approximated: Optional[int] = None,
         duration_ms: Optional[int] = None,
-        status: str = 'success',
+        status: str = "success",
         error_message: Optional[str] = None,
         error_code: Optional[str] = None,
         golden_rules_returned: int = 0,
@@ -54,7 +71,7 @@ class BaseQueryMixin:
         experiments_count: int = 0,
         ceo_reviews_count: int = 0,
         query_summary: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ):
         """
         Log a query to the building_queries table (async).
@@ -85,8 +102,11 @@ class BaseQueryMixin:
                         experiments_count=experiments_count,
                         ceo_reviews_count=ceo_reviews_count,
                         query_summary=query_summary,
-                        completed_at=datetime.now(timezone.utc).replace(tzinfo=None)
+                        completed_at=datetime.now(timezone.utc).replace(tzinfo=None),
                     )
-            self._log_debug(f"Logged query: {query_type} (status={status}, duration={duration_ms}ms)")
+            log_debug(
+                "queries",
+                f"Logged query: {query_type} (status={status}, duration={duration_ms}ms)",
+            )
         except Exception as e:
-            self._log_debug(f"Failed to log query to building_queries: {e}")
+            log_debug("queries", f"Failed to log query to building_queries: {e}")

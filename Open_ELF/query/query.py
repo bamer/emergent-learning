@@ -116,6 +116,19 @@ def _ensure_venv_python():
 if __name__ == "__main__":
     _ensure_venv_python()
 
+# Add emergent-learning to sys.path so imports work from anywhere
+# This fixes the "name 'log_debug' is not defined' error when calling from outside projects
+# Do this BEFORE any imports that depend on Open_ELF
+from pathlib import Path
+
+script_dir = Path(__file__).resolve().parent
+base_path = script_dir.parent.parent  # emergent-learning directory
+query_dir = script_dir  # query directory
+
+# Always add to sys.path, whether running as script or imported
+if str(base_path) not in sys.path:
+    sys.path.insert(0, str(base_path))
+
 # Handle both module import and script execution
 try:
     # When imported as module: from query import QuerySystem
@@ -142,15 +155,16 @@ try:
     from .cli import main
 except ImportError:
     # When run as script: python query.py --context
-    from core import QuerySystem
-    from exceptions import (
+    # Must use full module path (query.core) since emergent-learning is in sys.path
+    from query.core import QuerySystem
+    from query.exceptions import (
         QuerySystemError,
         ValidationError,
         DatabaseError,
         TimeoutError,
         ConfigurationError,
     )
-    from validators import (
+    from query.validators import (
         MAX_DOMAIN_LENGTH,
         MAX_QUERY_LENGTH,
         MAX_TAG_COUNT,
@@ -160,9 +174,9 @@ except ImportError:
         DEFAULT_TIMEOUT,
         MAX_TOKENS,
     )
-    from formatters import format_output, generate_accountability_banner
-    from setup import ensure_hooks_installed, ensure_full_setup
-    from cli import main
+    from query.formatters import format_output, generate_accountability_banner
+    from query.setup import ensure_hooks_installed, ensure_full_setup
+    from query.cli import main
 
 __all__ = [
     # Core

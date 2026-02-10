@@ -135,29 +135,16 @@ python core/event_bridge_v2.py start
 
 All AI interactions go through AgentManager with persistent sessions per agent.
 
-## Deprecated Components (Archived)
+## Legacy Components (Permanently Deleted)
 
-The following components have been archived to `archived_components/20260209/`:
+The following legacy components have been **permanently removed** from the codebase (2026-02-10):
 
-### Monitoring (Merged)
-- ❌ `Open_ELF/watcher/elf_watcher.py` → Use `core/watcher.py`
-- ❌ `agents/sentinel_monitor.py` → Merged into `core/watcher.py`
+### Learning (All consolidated into `core/learning_processor.py`)
+- ❌ `hooks/post_tool_use/post_tool_learning.py` - **DELETED**
+- ❌ `hooks/post_tool_use/record_pheromone.py` - **DELETED**
+- ❌ `archived_components/` directory - **DELETED** (entire archive removed)
 
-### Event Handling (Consolidated)
-- ❌ `Open_ELF/orchestrator/event_bridge.py` → Use `core/event_bridge_v2.py`
-
-### Learning (Centralized)
-- ❌ `hooks/learning-loop/post_tool_learning.py` → Use `core/learning_processor.py`
-- ❌ `hooks/learning-loop/record_pheromone.py` → Use `core/learning_processor.py`
-- ❌ `hooks/learning-loop/pre_tool_learning.py` → Use `core/learning_processor.py`
-
-### Workflow (Integrated)
-- ❌ `conductor/conductor.py` → Trails moved to `core/learning_processor.py`
-
-To archive these files, run:
-```bash
-bash ARCHIVE_DEPRECATED_FILES.sh
-```
+All learning operations, pheromone trails, and workflow trails are now handled by the centralized `LearningProcessor` in `core/learning_processor.py`.
 
 ## Data Flow
 
@@ -197,27 +184,15 @@ emergent-learning/
 │
 ├── Open_ELF/
 │   ├── agents/
-│   │   ├── agent_manager.py                # AI gateway (unchanged)
-│   │   └── ceo_inbox_monitor.py            # Level 3 support
-│   ├── orchestrator/
-│   │   └── unified_orchestrator.py         # Level 2 Agent
-│   └── watcher/
-│       └── (empty - moved to core/)
+│   │   └── OPC_ELF_System_Agents/
+│   │       ├── watcher.md                      # Agent definition
+│   │       ├── sentinel.md                     # Agent definition
+│   │       ├── ceo.md                          # Level 3 Agent definition
+│   │       └── ...
 │
-├── agents/
-│   └── OPC_ELF_System_Agents/
-│       ├── watcher.md                      # Agent definition
-│       ├── sentinel.md                     # Agent definition
-│       ├── ceo.md                          # Level 3 Agent definition
-│       └── ...
-│
-├── archived_components/                    # Deprecated files
-│   └── 20260209/
-│       ├── MANIFEST.md
-│       └── (old files archived here)
-│
-├── REFACTORING_SUMMARY.md                  # Detailed refactoring info
-└── ARCHIVE_DEPRECATED_FILES.sh             # Archive script
+│ ├── REFACTORING_SUMMARY.md                  # Detailed refactoring info
+│ ├── CODE_CLEANUP_SUMMARY_20260210.md         # Legacy cleanup & fixes
+│ └── CHANGELOG.md                             # Version history
 ```
 
 ## Quick Start

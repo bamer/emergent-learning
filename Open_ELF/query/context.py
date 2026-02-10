@@ -10,6 +10,16 @@ from typing import Dict, List, Any, Optional
 
 from peewee import fn
 
+# Unified ELF logging (required for all ELF modules)
+try:
+    from Open_ELF.utils.elf_logging import get_logger, log_debug
+
+    _LOGGER = get_logger("context")
+except ImportError:
+    import logging
+
+    _LOGGER = logging.getLogger("context")
+
 try:
     from query.models import Heuristic, Learning, get_manager
     from query.utils import AsyncTimeoutHandler
@@ -90,27 +100,36 @@ except ImportError:
     def detect_project_context(path):
         """Stub when project context is unavailable."""
         return None
+
     class ProjectContext:
         """Stub when project context is unavailable."""
+
         def has_project_context(self):
             return False
+
         @property
         def project_name(self):
             return ""
+
         @property
         def elf_root(self):
             return ""
+
         @property
         def domains(self):
             return []
+
         @property
         def inheritance_chain(self):
             return []
+
         def get_context_md_content(self):
             return None
+
     def format_project_status(ctx):
         """Stub when project context is unavailable."""
         return ""
+
 
 # Multi-model detection (optional)
 MODEL_DETECTION_AVAILABLE = False
@@ -138,18 +157,23 @@ except ImportError:
     # Define stub class to avoid "possibly unbound" errors
     class SemanticSearcher:
         """Stub when semantic search is unavailable."""
+
         @classmethod
         async def create(cls, base_path: str):
             return cls()
+
         async def find_relevant_heuristics(self, **kwargs):
             return []
+
         async def cleanup(self):
             pass
+
 
 # aiosqlite (optional - for project-specific database access)
 AIOSQLITE_AVAILABLE = False
 try:
     import aiosqlite
+
     AIOSQLITE_AVAILABLE = True
 except ImportError:
     aiosqlite = None  # type: ignore[assignment]
@@ -198,7 +222,7 @@ class ContextBuilderMixin:
     db_path: str  # Inherited from QueryEngine/QueryContext
     base_path: str  # Inherited from QueryEngine/QueryContext
     current_location: Optional[str]  # Inherited from QueryEngine/QueryContext
-    
+
     # Default constants (can be overridden by inheriting class)
     DEFAULT_TIMEOUT: int = 30
     MAX_TOKENS: int = 50000
@@ -210,6 +234,7 @@ class ContextBuilderMixin:
         """Validate query string."""
         if not query or not query.strip():
             from exceptions import ValidationError
+
             raise ValidationError("Query cannot be empty")
         return query.strip()
 
@@ -217,6 +242,7 @@ class ContextBuilderMixin:
         """Validate domain string."""
         if not domain or not domain.strip():
             from exceptions import ValidationError
+
             raise ValidationError("Domain cannot be empty")
         return domain.strip().lower()
 
@@ -234,18 +260,14 @@ class ContextBuilderMixin:
         """Validate and constrain limit value."""
         if not isinstance(limit, int) or limit < 1:
             return 10
-        return min(limit, self.MAX_LIMIT if hasattr(self, 'MAX_LIMIT') else 100)
+        return min(limit, self.MAX_LIMIT if hasattr(self, "MAX_LIMIT") else 100)
 
     # ========== HELPER METHODS ==========
-
-    def _log_debug(self, message: str):
-        """Log debug message if debug mode is enabled."""
-        if getattr(self, 'debug', False):
-            print(f"[DEBUG] {message}", file=sys.stderr)
 
     def _get_current_time_ms(self) -> int:
         """Get current time in milliseconds since epoch."""
         from datetime import datetime
+
         return int(datetime.now().timestamp() * 1000)
 
     async def _log_query(self, **kwargs):
@@ -325,8 +347,9 @@ class ContextBuilderMixin:
             # Get depth-aware limits
             limits = get_depth_limits(depth)
 
-            self._log_debug(
-                f"Building context (domain={domain}, tags={tags}, max_tokens={max_tokens}, depth={depth})"
+            log_debug(
+                "context",
+                f"Building context (domain={domain}, tags={tags}, max_tokens={max_tokens}, depth={depth})",
             )
             async with AsyncTimeoutHandler(timeout):
                 context_parts = []
@@ -348,8 +371,9 @@ class ContextBuilderMixin:
                         )
                         project_ctx = detect_project_context(start_path)
                         if project_ctx and project_ctx.has_project_context():
-                            self._log_debug(
-                                f"Detected project: {project_ctx.project_name} at {project_ctx.elf_root}"
+                            log_debug(
+                                "context",
+                                f"Detected project: {project_ctx.project_name} at {project_ctx.elf_root}",
                             )
 
                             # Add project header
@@ -366,14 +390,18 @@ class ContextBuilderMixin:
                                 # Use project domains if no explicit domain provided
                                 if not domain and project_ctx.domains:
                                     domain = project_ctx.domains[0]
-                                    self._log_debug(f"Using project domain: {domain}")
+                                    log_debug(
+                                        "context", f"Using project domain: {domain}"
+                                    )
 
                             # Safely handle inheritance_chain - it may be empty list or Never type
                             inheritance_chain = project_ctx.inheritance_chain
-                            if inheritance_chain and hasattr(inheritance_chain, '__iter__') and not isinstance(inheritance_chain, str):
-                                parents = [
-                                    p.name for p in inheritance_chain
-                                ]
+                            if (
+                                inheritance_chain
+                                and hasattr(inheritance_chain, "__iter__")
+                                and not isinstance(inheritance_chain, str)
+                            ):
+                                parents = [p.name for p in inheritance_chain]
                                 context_parts.append(
                                     f"**Inherits from:** {' -> '.join(parents)}\n"
                                 )
@@ -394,9 +422,9 @@ class ContextBuilderMixin:
 
                             context_parts.append("---\n\n")
                         else:
-                            self._log_debug("No .elf/ found - global-only mode")
+                            log_debug("context", "No .elf/ found - global-only mode")
                     except Exception as e:
-                        self._log_debug(f"Project context detection failed: {e}")
+                        log_debug("context", f"Project context detection failed: {e}")
 
                 # Tier 1: Golden Rules
                 # For minimal depth, only load configured always_load_categories
@@ -432,7 +460,7 @@ class ContextBuilderMixin:
                     if hasattr(self, "current_location") and self.current_location:
                         location_info = f"**Location:** `{self.current_location}`\n\n"
                         building_header += location_info
-                    
+
                     # Add semantic memory availability notice
                     semantic_notice = """## 📚 Semantic Memory Available
 
@@ -475,9 +503,15 @@ class ContextBuilderMixin:
 """
                     # Add minimal semantic search to minimal mode
                     semantic_results = None
-                    if SEMANTIC_SEARCH_AVAILABLE and task != "Agent task context generation":
+                    if (
+                        SEMANTIC_SEARCH_AVAILABLE
+                        and task != "Agent task context generation"
+                    ):
                         try:
-                            self._log_debug("Running minimal semantic search on task description")
+                            log_debug(
+                                "context",
+                                "Running minimal semantic search on task description",
+                            )
                             searcher = await SemanticSearcher.create(
                                 base_path=self.base_path
                             )
@@ -486,30 +520,43 @@ class ContextBuilderMixin:
                                 task=task,
                                 threshold=0.5,  # Lower threshold for broader coverage in minimal mode
                                 limit=3,  # Only top 3 in minimal mode
-                                domain=domain
+                                domain=domain,
                             )
                             try:
                                 await searcher.cleanup()
-                            except Exception:
-                                pass
-                            
+                            except Exception as e:
+                                log_debug(
+                                    "context", f"Semantic search cleanup failed: {e}"
+                                )
+
                             if semantic_results:
-                                context_parts.append("\n## 🧠 Semantic Memory Match (Top Results)\n\n")
+                                context_parts.append(
+                                    "\n## 🧠 Semantic Memory Match (Top Results)\n\n"
+                                )
                                 for h in semantic_results[:3]:
                                     score = h.get("_final_score", 0)
-                                    rule = h['rule'][:70] + "..." if len(h['rule']) > 70 else h['rule']
-                                    entry = f"- **{rule}** ({score*100:.0f}% match)\n"
+                                    rule = (
+                                        h["rule"][:70] + "..."
+                                        if len(h["rule"]) > 70
+                                        else h["rule"]
+                                    )
+                                    entry = f"- **{rule}** ({score * 100:.0f}% match)\n"
                                     context_parts.append(entry)
                                 context_parts.append("\n")
                         except Exception as e:
-                            self._log_debug(f"Minimal semantic search failed (non-critical): {e}")
-                    
+                            log_debug(
+                                "context",
+                                f"Minimal semantic search failed (non-critical): {e}",
+                            )
+
                     context_parts.insert(
-                        0, f"{building_header}{semantic_notice}# Task Context\n\n{task}\n\n---\n\n"
+                        0,
+                        f"{building_header}{semantic_notice}# Task Context\n\n{task}\n\n---\n\n",
                     )
                     result = "".join(context_parts)
-                    self._log_debug(
-                        f"Built minimal context with ~{len(result) // 4} tokens"
+                    log_debug(
+                        "context",
+                        f"Built minimal context with ~{len(result) // 4} tokens",
                     )
                     return result
 
@@ -540,7 +587,9 @@ class ContextBuilderMixin:
                 semantic_results = None
                 if SEMANTIC_SEARCH_AVAILABLE and approx_tokens < max_chars * 0.5:
                     try:
-                        self._log_debug("Running semantic search on task description")
+                        log_debug(
+                            "context", "Running semantic search on task description"
+                        )
                         searcher = await SemanticSearcher.create(
                             base_path=self.base_path
                         )
@@ -549,27 +598,35 @@ class ContextBuilderMixin:
                             task=task,
                             threshold=0.6,  # Lower threshold for broader coverage
                             limit=limits.get("heuristics", 5),
-                            domain=domain
+                            domain=domain,
                         )
                         try:
                             await searcher.cleanup()
-                        except Exception:
-                            pass  # Cleanup errors are non-critical
-                        
+                        except Exception as e:
+                            log_debug("context", f"Semantic search cleanup failed: {e}")
+
                         if semantic_results:
-                            context_parts.append("## Semantically Relevant Heuristics\n\n")
+                            context_parts.append(
+                                "## Semantically Relevant Heuristics\n\n"
+                            )
                             for h in semantic_results:
                                 score = h.get("_final_score", 0)
-                                entry = f"- **{h['rule']}** (semantic match: {score*100:.0f}%, confidence: {h['confidence']:.2f})\n"
+                                entry = f"- **{h['rule']}** (semantic match: {score * 100:.0f}%, confidence: {h['confidence']:.2f})\n"
                                 if h.get("explanation"):
-                                    expl = h["explanation"][:100] + "..." if len(h["explanation"]) > 100 else h["explanation"]
+                                    expl = (
+                                        h["explanation"][:100] + "..."
+                                        if len(h["explanation"]) > 100
+                                        else h["explanation"]
+                                    )
                                     entry += f"  {expl}\n"
                                 entry += "\n"
                                 context_parts.append(entry)
                                 approx_tokens += len(entry) // 4
                             context_parts.append("\n")
                     except Exception as e:
-                        self._log_debug(f"Semantic search failed (non-critical): {e}")
+                        log_debug(
+                            "context", f"Semantic search failed (non-critical): {e}"
+                        )
 
                 if domain:
                     context_parts.append(f"## Domain: {domain}\n\n")
@@ -699,7 +756,9 @@ class ContextBuilderMixin:
                                         approx_tokens += len(entry) // 4
                                     learnings_count += len(project_learnings)
                     except Exception as e:
-                        self._log_debug(f"Failed to load project-specific content: {e}")
+                        log_debug(
+                            "context", f"Failed to load project-specific content: {e}"
+                        )
 
                 else:
                     # No domain specified - show recent heuristics across all domains
@@ -789,8 +848,9 @@ class ContextBuilderMixin:
                                     learnings_count += len(recent_learnings)
 
                     except Exception as e:
-                        self._log_debug(
-                            f"Failed to fetch recent heuristics/learnings: {e}"
+                        log_debug(
+                            "context",
+                            f"Failed to fetch recent heuristics/learnings: {e}",
                         )
 
                 if tags:
@@ -872,7 +932,7 @@ class ContextBuilderMixin:
                             context_parts.append("\n" + postmortems_output)
                             approx_tokens += len(postmortems_output) // 4
                     except Exception as e:
-                        self._log_debug(f"Failed to fetch plans/postmortems: {e}")
+                        log_debug("context", f"Failed to fetch plans/postmortems: {e}")
 
                 # Add invariants (what must always be true)
                 invariants = await self.get_invariants(
@@ -1062,14 +1122,17 @@ class ContextBuilderMixin:
                 # Session integration - load cross-session context
                 try:
                     from query.session_integration import SessionIntegration
-                    session_int = SessionIntegration(debug=getattr(self, 'debug', False))
+
+                    session_int = SessionIntegration(
+                        debug=getattr(self, "debug", False)
+                    )
                     session_context, _ = session_int.build_session_checkin_context()
                     if session_context:
                         context_parts.append(session_context)
                 except ImportError:
-                    pass
-                except Exception:
-                    pass
+                    log_debug("context", "SessionIntegration module not available")
+                except Exception as e:
+                    log_debug("context", f"Session integration failed: {e}")
 
                 # Task context with building header (show depth level)
                 depth_label = f" ({depth})" if depth != "standard" else ""
@@ -1088,18 +1151,19 @@ class ContextBuilderMixin:
                         detected_models = detect_installed_models()
                         model_info = format_models_for_context(detected_models)
                         building_header += model_info
-                        self._log_debug(
-                            f"Model detection successful, {len(model_info)} chars"
+                        log_debug(
+                            "context",
+                            f"Model detection successful, {len(model_info)} chars",
                         )
                     except Exception as e:
-                        self._log_debug(f"Model detection failed: {e}")
+                        log_debug("context", f"Model detection failed: {e}")
 
                 context_parts.insert(
                     0, f"{building_header}# Task Context\n\n{task}\n\n---\n\n"
                 )
 
             result = "".join(context_parts)
-            self._log_debug(f"Built context with ~{len(result) // 4} tokens")
+            log_debug("context", f"Built context with ~{len(result) // 4} tokens")
             return result
 
         except TimeoutError as e:
@@ -1215,11 +1279,11 @@ class ContextBuilderMixin:
                     # Query count (simple increment)
                     observer.record_metric("query_count", 1, domain=domain)
 
-            self._log_debug("Recorded system metrics to meta_observer")
+            log_debug("context", "Recorded system metrics to meta_observer")
 
         except Exception as e:
             # Non-blocking: log the error but don't raise
-            self._log_debug(f"Failed to record system metrics: {e}")
+            log_debug("context", f"Failed to record system metrics: {e}")
 
     def _check_system_alerts(self) -> list:
         """
@@ -1235,7 +1299,7 @@ class ContextBuilderMixin:
             observer = MetaObserver(db_path=self.db_path)
             return observer.check_alerts()
         except Exception as e:
-            self._log_debug(f"Failed to check system alerts: {e}")
+            log_debug("context", f"Failed to check system alerts: {e}")
             return []
 
     # ========== SPIKE REPORT QUERIES ==========
@@ -1246,7 +1310,7 @@ class ContextBuilderMixin:
         tags: Optional[List[str]] = None,
         search: Optional[str] = None,
         limit: int = 10,
-        timeout: Optional[int] = None
+        timeout: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get spike reports (research/investigation knowledge) (async).
@@ -1265,12 +1329,15 @@ class ContextBuilderMixin:
             List of spike report dictionaries ordered by usefulness and recency
         """
         timeout = timeout or self.DEFAULT_TIMEOUT
-        self._log_debug(f"Querying spike reports (domain={domain}, tags={tags}, limit={limit})")
+        log_debug(
+            "context",
+            f"Querying spike reports (domain={domain}, tags={tags}, limit={limit})",
+        )
 
         start_time = self._get_current_time_ms()
         error_msg = None
         error_code = None
-        query_status = 'success'
+        query_status = "success"
         results = None
 
         try:
@@ -1282,13 +1349,14 @@ class ContextBuilderMixin:
                     async with m:
                         async with m.connection():
                             from models import SpikeReport
-                            
+
                             query = SpikeReport.select()
 
                             if domain:
                                 domain = self._validate_domain(domain)
                                 query = query.where(
-                                    (SpikeReport.domain == domain) | (SpikeReport.domain.is_null())
+                                    (SpikeReport.domain == domain)
+                                    | (SpikeReport.domain.is_null())
                                 )
 
                             if tags:
@@ -1297,63 +1365,72 @@ class ContextBuilderMixin:
                                 tag_condition = None
                                 for tag in tags:
                                     condition = SpikeReport.tags.contains(tag)
-                                    tag_condition = condition if tag_condition is None else (tag_condition | condition)
+                                    tag_condition = (
+                                        condition
+                                        if tag_condition is None
+                                        else (tag_condition | condition)
+                                    )
                                 if tag_condition:
                                     query = query.where(tag_condition)
 
                             if search:
                                 query = query.where(
-                                    (SpikeReport.title.contains(search)) |
-                                    (SpikeReport.topic.contains(search)) |
-                                    (SpikeReport.question.contains(search)) |
-                                    (SpikeReport.findings.contains(search))
+                                    (SpikeReport.title.contains(search))
+                                    | (SpikeReport.topic.contains(search))
+                                    | (SpikeReport.question.contains(search))
+                                    | (SpikeReport.findings.contains(search))
                                 )
 
                             query = query.order_by(
                                 SpikeReport.usefulness_score.desc(),
-                                SpikeReport.created_at.desc()
+                                SpikeReport.created_at.desc(),
                             ).limit(limit)
 
                             results = []
                             async for sr in query:
-                                results.append({
-                                    'id': sr.id,
-                                    'title': sr.title,
-                                    'topic': sr.topic,
-                                    'question': sr.question,
-                                    'findings': sr.findings,
-                                    'gotchas': sr.gotchas,
-                                    'resources': sr.resources,
-                                    'time_invested_minutes': sr.time_invested_minutes,
-                                    'domain': sr.domain,
-                                    'tags': sr.tags,
-                                    'usefulness_score': sr.usefulness_score,
-                                    'access_count': sr.access_count,
-                                    'created_at': sr.created_at,
-                                    'updated_at': sr.updated_at
-                                })
+                                results.append(
+                                    {
+                                        "id": sr.id,
+                                        "title": sr.title,
+                                        "topic": sr.topic,
+                                        "question": sr.question,
+                                        "findings": sr.findings,
+                                        "gotchas": sr.gotchas,
+                                        "resources": sr.resources,
+                                        "time_invested_minutes": sr.time_invested_minutes,
+                                        "domain": sr.domain,
+                                        "tags": sr.tags,
+                                        "usefulness_score": sr.usefulness_score,
+                                        "access_count": sr.access_count,
+                                        "created_at": sr.created_at,
+                                        "updated_at": sr.updated_at,
+                                    }
+                                )
                 except Exception as e:
                     # Table might not exist yet
-                    if 'no such table' in str(e).lower():
-                        self._log_debug("spike_reports table does not exist yet - returning empty list")
+                    if "no such table" in str(e).lower():
+                        log_debug(
+                            "context",
+                            "spike_reports table does not exist yet - returning empty list",
+                        )
                         return []
                     raise
 
-            self._log_debug(f"Found {len(results)} spike reports")
+            log_debug("context", f"Found {len(results)} spike reports")
             return results
 
         except Exception as e:
-            query_status = 'error'
+            query_status = "error"
             error_msg = str(e)
-            error_code = 'QS000'
-            self._log_debug(f"Error querying spike reports: {e}")
+            error_code = "QS000"
+            log_debug("context", f"Error querying spike reports: {e}")
             return []
         finally:
             duration_ms = self._get_current_time_ms() - start_time
             spike_count = len(results) if results else 0
 
             await self._log_query(
-                query_type='get_spike_reports',
+                query_type="get_spike_reports",
                 domain=domain,
                 limit_requested=limit,
                 results_returned=spike_count,
@@ -1361,7 +1438,7 @@ class ContextBuilderMixin:
                 status=query_status,
                 error_message=error_msg,
                 error_code=error_code,
-                query_summary=f"Spike reports query"
+                query_summary=f"Spike reports query",
             )
 
     # ========== GOLDEN RULES AND HEURISTIC QUERIES ==========
@@ -1369,7 +1446,7 @@ class ContextBuilderMixin:
     async def get_golden_rules(self, categories: Optional[List[str]] = None) -> str:
         """
         Get golden rules from database (preferred) with fallback to file.
-        
+
         Fetches is_golden=True heuristics from database, which are the authoritative
         source of golden rules. Falls back to golden-rules.md if database is empty.
 
@@ -1381,7 +1458,7 @@ class ContextBuilderMixin:
         """
         import aiofiles
         import time
-        
+
         # First try to fetch from database (authoritative source)
         try:
             m = get_manager()
@@ -1393,7 +1470,7 @@ class ContextBuilderMixin:
                         .where(Heuristic.is_golden == True)
                         .order_by(Heuristic.created_at.asc())
                     )
-                    
+
                     golden_rules = []
                     all_golden = []
                     async for h in golden_query:
@@ -1407,17 +1484,19 @@ class ContextBuilderMixin:
                             domain_lower = h.domain.lower()
                             if any(cat in domain_lower for cat in categories_lower):
                                 golden_rules.append(h)
-                    
+
                     # If filtering returned no results, return all golden rules
                     if not golden_rules and categories:
                         golden_rules = all_golden
-                    
+
                     # Format golden rules for display
                     if golden_rules:
                         lines = ["# Golden Rules\n"]
-                        lines.append("These are proven principles with high confidence. They are ALWAYS loaded into context.\n")
+                        lines.append(
+                            "These are proven principles with high confidence. They are ALWAYS loaded into context.\n"
+                        )
                         lines.append("\n---\n")
-                        
+
                         for idx, rule in enumerate(golden_rules, 1):
                             lines.append(f"\n## {idx}. {rule.rule}\n")
                             if rule.explanation:
@@ -1428,34 +1507,39 @@ class ContextBuilderMixin:
                                 lines.append(f" | **Category:** {rule.domain}")
                             lines.append("\n")
                             lines.append("\n---\n")
-                        
+
                         return "".join(lines)
         except Exception as e:
-            self._log_debug(f"Failed to fetch golden rules from database: {e}")
+            log_debug("context", f"Failed to fetch golden rules from database: {e}")
 
         # Fallback to golden-rules.md file
         golden_rules_path = Path(self.base_path) / "memory" / "golden-rules.md"
-        
+
         if not golden_rules_path.exists():
             return "# Golden Rules\n\nNo golden rules have been established yet."
 
         cache_key = str(golden_rules_path)
         now = time.time()
-        
+
         # Simple caching
-        if hasattr(self, '_golden_rules_cache') and cache_key in self._golden_rules_cache:
-            cached_time = getattr(self, '_golden_rules_cache_time', {}).get(cache_key, 0)
+        if (
+            hasattr(self, "_golden_rules_cache")
+            and cache_key in self._golden_rules_cache
+        ):
+            cached_time = getattr(self, "_golden_rules_cache_time", {}).get(
+                cache_key, 0
+            )
             if now - cached_time < 300:  # 5 minute cache
                 content = self._golden_rules_cache[cache_key]
                 if not categories:
                     return content
 
         try:
-            async with aiofiles.open(golden_rules_path, 'r', encoding='utf-8') as f:
+            async with aiofiles.open(golden_rules_path, "r", encoding="utf-8") as f:
                 content = await f.read()
 
             # Cache the content
-            if not hasattr(self, '_golden_rules_cache'):
+            if not hasattr(self, "_golden_rules_cache"):
                 self._golden_rules_cache = {}
                 self._golden_rules_cache_time = {}
             self._golden_rules_cache[cache_key] = content
@@ -1466,8 +1550,9 @@ class ContextBuilderMixin:
 
             # Filter by category
             import re
+
             categories_lower = [c.lower() for c in categories]
-            lines = content.split('\n')
+            lines = content.split("\n")
             result_lines = []
             in_rule = False
             current_rule_lines = []
@@ -1475,7 +1560,7 @@ class ContextBuilderMixin:
             header_ended = False
 
             for line in lines:
-                if re.match(r'^## \d+\.', line):
+                if re.match(r"^## \d+\.", line):
                     if in_rule and include_current:
                         result_lines.extend(current_rule_lines)
                     in_rule = True
@@ -1484,8 +1569,8 @@ class ContextBuilderMixin:
                     header_ended = True
                 elif in_rule:
                     current_rule_lines.append(line)
-                    if line.startswith('**Category:**'):
-                        category_match = re.search(r'\*\*Category:\*\*\s*(.+)', line)
+                    if line.startswith("**Category:**"):
+                        category_match = re.search(r"\*\*Category:\*\*\s*(.+)", line)
                         if category_match:
                             rule_category = category_match.group(1).strip().lower()
                             if rule_category in categories_lower:
@@ -1497,7 +1582,7 @@ class ContextBuilderMixin:
                 result_lines.extend(current_rule_lines)
 
             # If filtering returned nothing, return the full content
-            filtered_result = '\n'.join(result_lines).strip()
+            filtered_result = "\n".join(result_lines).strip()
             if not filtered_result:
                 return content
             return filtered_result
@@ -1505,7 +1590,9 @@ class ContextBuilderMixin:
         except Exception as e:
             return f"# Error Reading Golden Rules\n\nError: {str(e)}"
 
-    async def query_by_domain(self, domain: str, limit: int = 10, timeout: Optional[int] = None) -> Dict[str, Any]:
+    async def query_by_domain(
+        self, domain: str, limit: int = 10, timeout: Optional[int] = None
+    ) -> Dict[str, Any]:
         """
         Get heuristics and learnings for a specific domain (async).
 
@@ -1518,40 +1605,44 @@ class ContextBuilderMixin:
             Dictionary containing heuristics and learnings for the domain
         """
         timeout = timeout or self.DEFAULT_TIMEOUT
-        
+
         async with AsyncTimeoutHandler(timeout):
             m = get_manager()
             async with m:
                 async with m.connection():
-                    heuristics_query = (Heuristic
-                        .select()
+                    heuristics_query = (
+                        Heuristic.select()
                         .where(Heuristic.domain == domain)
-                        .order_by(Heuristic.confidence.desc(), Heuristic.times_validated.desc())
-                        .limit(limit))
+                        .order_by(
+                            Heuristic.confidence.desc(),
+                            Heuristic.times_validated.desc(),
+                        )
+                        .limit(limit)
+                    )
                     heuristics = []
                     async for h in heuristics_query:
                         heuristics.append(h.__data__.copy())
 
-                    learnings_query = (Learning
-                        .select()
+                    learnings_query = (
+                        Learning.select()
                         .where(Learning.domain == domain)
                         .order_by(Learning.created_at.desc())
-                        .limit(limit))
+                        .limit(limit)
+                    )
                     learnings = []
                     async for l in learnings_query:
                         learnings.append(l.__data__.copy())
 
         return {
-            'domain': domain,
-            'heuristics': heuristics,
-            'learnings': learnings,
-            'count': {
-                'heuristics': len(heuristics),
-                'learnings': len(learnings)
-            }
+            "domain": domain,
+            "heuristics": heuristics,
+            "learnings": learnings,
+            "count": {"heuristics": len(heuristics), "learnings": len(learnings)},
         }
 
-    async def query_by_tags(self, tags: List[str], limit: int = 10, timeout: Optional[int] = None) -> List[Dict[str, Any]]:
+    async def query_by_tags(
+        self, tags: List[str], limit: int = 10, timeout: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """
         Get learnings matching specified tags (async).
 
@@ -1564,7 +1655,7 @@ class ContextBuilderMixin:
             List of learnings matching any of the tags
         """
         timeout = timeout or self.DEFAULT_TIMEOUT
-        
+
         async with AsyncTimeoutHandler(timeout):
             m = get_manager()
             async with m:
@@ -1573,20 +1664,27 @@ class ContextBuilderMixin:
                     tag_condition = None
                     for tag in tags:
                         condition = Learning.tags.contains(tag)
-                        tag_condition = condition if tag_condition is None else (tag_condition | condition)
-                    
-                    query = (Learning
-                        .select()
+                        tag_condition = (
+                            condition
+                            if tag_condition is None
+                            else (tag_condition | condition)
+                        )
+
+                    query = (
+                        Learning.select()
                         .where(tag_condition)
                         .order_by(Learning.created_at.desc())
-                        .limit(limit))
+                        .limit(limit)
+                    )
                     results = []
                     async for l in query:
                         results.append(l.__data__.copy())
 
         return results
 
-    def _calculate_relevance_score(self, entry: Dict[str, Any], task: str, domain: Optional[str] = None) -> float:
+    def _calculate_relevance_score(
+        self, entry: Dict[str, Any], task: str, domain: Optional[str] = None
+    ) -> float:
         """
         Calculate a simple relevance score based on keyword matching.
 
@@ -1599,34 +1697,39 @@ class ContextBuilderMixin:
             Relevance score (0.0 - 1.0)
         """
         task_words = set(task.lower().split())
-        
+
         # Get text to score
-        if 'rule' in entry:
+        if "rule" in entry:
             text = f"{entry['rule']} {entry.get('explanation', '')}".lower()
-        elif 'title' in entry:
+        elif "title" in entry:
             text = f"{entry['title']} {entry.get('summary', '')} {entry.get('content', '')}".lower()
         else:
             return 0.0
-        
+
         entry_words = set(text.split())
         overlap = len(task_words & entry_words)
-        
+
         # Normalize by task word count
         if len(task_words) > 0:
             score = overlap / len(task_words)
         else:
             score = 0.0
-            
+
         # Boost for domain match
-        if domain and entry.get('domain') == domain:
+        if domain and entry.get("domain") == domain:
             score = min(score * 1.5, 1.0)
-            
+
         return score
 
     # ========== LEARNING QUERIES ==========
 
-    async def query_recent(self, type_filter: Optional[str] = None, limit: int = 10,
-                    timeout: Optional[int] = None, days: int = 2) -> List[Dict[str, Any]]:
+    async def query_recent(
+        self,
+        type_filter: Optional[str] = None,
+        limit: int = 10,
+        timeout: Optional[int] = None,
+        days: int = 2,
+    ) -> List[Dict[str, Any]]:
         """
         Get recent learnings, optionally filtered by type (async).
 
@@ -1640,9 +1743,11 @@ class ContextBuilderMixin:
             List of recent learnings
         """
         timeout = timeout or self.DEFAULT_TIMEOUT
-        
+
         async with AsyncTimeoutHandler(timeout):
-            cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+            cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
+                days=days
+            )
 
             m = get_manager()
             async with m:
@@ -1650,8 +1755,8 @@ class ContextBuilderMixin:
                     query = Learning.select()
                     if type_filter:
                         query = query.where(
-                            (Learning.type == type_filter) &
-                            (Learning.created_at >= cutoff)
+                            (Learning.type == type_filter)
+                            & (Learning.created_at >= cutoff)
                         )
                     else:
                         query = query.where(Learning.created_at >= cutoff)
@@ -1663,8 +1768,9 @@ class ContextBuilderMixin:
 
         return results
 
-    async def find_similar_failures(self, task_description: str, limit: int = 5,
-                             timeout: Optional[int] = None) -> List[Dict[str, Any]]:
+    async def find_similar_failures(
+        self, task_description: str, limit: int = 5, timeout: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """
         Find failures similar to a task description using keyword matching (async).
 
@@ -1677,16 +1783,17 @@ class ContextBuilderMixin:
             List of similar failure records with relevance scores
         """
         timeout = timeout or self.DEFAULT_TIMEOUT
-        
+
         async with AsyncTimeoutHandler(timeout):
             m = get_manager()
             async with m:
                 async with m.connection():
-                    query = (Learning
-                        .select()
-                        .where(Learning.type == 'failure')
+                    query = (
+                        Learning.select()
+                        .where(Learning.type == "failure")
                         .order_by(Learning.created_at.desc())
-                        .limit(100))
+                        .limit(100)
+                    )
 
                     failures = []
                     async for f in query:
@@ -1697,19 +1804,21 @@ class ContextBuilderMixin:
         scored = []
 
         for failure in failures:
-            title = (failure.title or '').lower()
-            summary = (failure.summary or '').lower()
+            title = (failure.title or "").lower()
+            summary = (failure.summary or "").lower()
             content_words = set(title.split() + summary.split())
 
             overlap = len(task_words & content_words)
             if overlap > 0:
-                scored.append({
-                    'learning': failure.__data__.copy(),
-                    'relevance_score': overlap / max(len(task_words), 1),
-                    'matching_words': overlap
-                })
+                scored.append(
+                    {
+                        "learning": failure.__data__.copy(),
+                        "relevance_score": overlap / max(len(task_words), 1),
+                        "matching_words": overlap,
+                    }
+                )
 
-        scored.sort(key=lambda x: x['relevance_score'], reverse=True)
+        scored.sort(key=lambda x: x["relevance_score"], reverse=True)
         return scored[:limit]
 
     # ========== DECISION QUERIES ==========
@@ -1717,9 +1826,9 @@ class ContextBuilderMixin:
     async def get_decisions(
         self,
         domain: Optional[str] = None,
-        status: str = 'accepted',
+        status: str = "accepted",
         limit: int = 10,
-        timeout: Optional[int] = None
+        timeout: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get architecture decisions (ADRs), optionally filtered by domain (async).
@@ -1734,17 +1843,19 @@ class ContextBuilderMixin:
             List of decision dictionaries
         """
         timeout = timeout or self.DEFAULT_TIMEOUT
-        
+
         async with AsyncTimeoutHandler(timeout):
             m = get_manager()
             async with m:
                 async with m.connection():
                     from models import Decision
-                    
+
                     query = Decision.select().where(Decision.status == status)
 
                     if domain:
-                        query = query.where((Decision.domain == domain) | (Decision.domain.is_null()))
+                        query = query.where(
+                            (Decision.domain == domain) | (Decision.domain.is_null())
+                        )
 
                     query = query.order_by(Decision.created_at.desc()).limit(limit)
                     results = []
@@ -1758,11 +1869,11 @@ class ContextBuilderMixin:
     async def get_invariants(
         self,
         domain: Optional[str] = None,
-        status: str = 'active',
+        status: str = "active",
         scope: Optional[str] = None,
         severity: Optional[str] = None,
         limit: int = 10,
-        timeout: Optional[int] = None
+        timeout: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get invariants, optionally filtered by domain, status, scope, or severity (async).
@@ -1779,11 +1890,11 @@ class ContextBuilderMixin:
             List of invariant dictionaries
         """
         timeout = timeout or self.DEFAULT_TIMEOUT
-        
+
         async with AsyncTimeoutHandler(timeout):
             try:
                 from models import Invariant
-                
+
                 m = get_manager()
                 async with m:
                     async with m.connection():
@@ -1794,7 +1905,8 @@ class ContextBuilderMixin:
 
                         if domain:
                             query = query.where(
-                                (Invariant.domain == domain) | (Invariant.domain.is_null())
+                                (Invariant.domain == domain)
+                                | (Invariant.domain.is_null())
                             )
 
                         if scope:
@@ -1807,18 +1919,20 @@ class ContextBuilderMixin:
 
                         results = []
                         async for inv in query:
-                            results.append({
-                                'id': inv.id,
-                                'statement': inv.statement,
-                                'rationale': inv.rationale,
-                                'domain': inv.domain,
-                                'scope': inv.scope,
-                                'severity': inv.severity,
-                                'status': inv.status,
-                                'created_at': inv.created_at
-                            })
+                            results.append(
+                                {
+                                    "id": inv.id,
+                                    "statement": inv.statement,
+                                    "rationale": inv.rationale,
+                                    "domain": inv.domain,
+                                    "scope": inv.scope,
+                                    "severity": inv.severity,
+                                    "status": inv.status,
+                                    "created_at": inv.created_at,
+                                }
+                            )
             except Exception as e:
-                if 'no such table' in str(e).lower():
+                if "no such table" in str(e).lower():
                     return []
                 raise
 
@@ -1829,10 +1943,10 @@ class ContextBuilderMixin:
     async def get_assumptions(
         self,
         domain: Optional[str] = None,
-        status: str = 'active',
+        status: str = "active",
         min_confidence: float = 0.0,
         limit: int = 10,
-        timeout: Optional[int] = None
+        timeout: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get assumptions, optionally filtered by domain and status (async).
@@ -1848,48 +1962,48 @@ class ContextBuilderMixin:
             List of assumption dictionaries
         """
         timeout = timeout or self.DEFAULT_TIMEOUT
-        
+
         async with AsyncTimeoutHandler(timeout):
             try:
                 from models import Assumption
-                
+
                 m = get_manager()
                 async with m:
                     async with m.connection():
-                        query = (Assumption
-                            .select()
-                            .where(
-                                (Assumption.status == status) &
-                                (Assumption.confidence >= min_confidence)
-                            ))
+                        query = Assumption.select().where(
+                            (Assumption.status == status)
+                            & (Assumption.confidence >= min_confidence)
+                        )
 
                         if domain:
                             query = query.where(
-                                (Assumption.domain == domain) | (Assumption.domain.is_null())
+                                (Assumption.domain == domain)
+                                | (Assumption.domain.is_null())
                             )
 
                         query = query.order_by(
-                            Assumption.confidence.desc(),
-                            Assumption.created_at.desc()
+                            Assumption.confidence.desc(), Assumption.created_at.desc()
                         ).limit(limit)
 
                         results = []
                         async for a in query:
-                            results.append({
-                                'id': a.id,
-                                'assumption': a.assumption,
-                                'context': a.context,
-                                'source': a.source,
-                                'confidence': a.confidence,
-                                'status': a.status,
-                                'domain': a.domain,
-                                'verified_count': a.verified_count,
-                                'challenged_count': a.challenged_count,
-                                'last_verified_at': a.last_verified_at,
-                                'created_at': a.created_at
-                            })
+                            results.append(
+                                {
+                                    "id": a.id,
+                                    "assumption": a.assumption,
+                                    "context": a.context,
+                                    "source": a.source,
+                                    "confidence": a.confidence,
+                                    "status": a.status,
+                                    "domain": a.domain,
+                                    "verified_count": a.verified_count,
+                                    "challenged_count": a.challenged_count,
+                                    "last_verified_at": a.last_verified_at,
+                                    "created_at": a.created_at,
+                                }
+                            )
             except Exception as e:
-                if 'no such table' in str(e).lower():
+                if "no such table" in str(e).lower():
                     return []
                 raise
 
@@ -1899,7 +2013,7 @@ class ContextBuilderMixin:
         self,
         domain: Optional[str] = None,
         limit: int = 10,
-        timeout: Optional[int] = None
+        timeout: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get challenged or invalidated assumptions as warnings (async).
@@ -1913,44 +2027,47 @@ class ContextBuilderMixin:
             List of challenged/invalidated assumption dictionaries
         """
         timeout = timeout or self.DEFAULT_TIMEOUT
-        
+
         async with AsyncTimeoutHandler(timeout):
             try:
                 from models import Assumption
-                
+
                 m = get_manager()
                 async with m:
                     async with m.connection():
-                        query = (Assumption
-                            .select()
-                            .where(Assumption.status.in_(['challenged', 'invalidated'])))
+                        query = Assumption.select().where(
+                            Assumption.status.in_(["challenged", "invalidated"])
+                        )
 
                         if domain:
                             query = query.where(
-                                (Assumption.domain == domain) | (Assumption.domain.is_null())
+                                (Assumption.domain == domain)
+                                | (Assumption.domain.is_null())
                             )
 
                         query = query.order_by(
                             Assumption.challenged_count.desc(),
-                            Assumption.created_at.desc()
+                            Assumption.created_at.desc(),
                         ).limit(limit)
 
                         results = []
                         async for a in query:
-                            results.append({
-                                'id': a.id,
-                                'assumption': a.assumption,
-                                'context': a.context,
-                                'source': a.source,
-                                'confidence': a.confidence,
-                                'status': a.status,
-                                'domain': a.domain,
-                                'verified_count': a.verified_count,
-                                'challenged_count': a.challenged_count,
-                                'created_at': a.created_at
-                            })
+                            results.append(
+                                {
+                                    "id": a.id,
+                                    "assumption": a.assumption,
+                                    "context": a.context,
+                                    "source": a.source,
+                                    "confidence": a.confidence,
+                                    "status": a.status,
+                                    "domain": a.domain,
+                                    "verified_count": a.verified_count,
+                                    "challenged_count": a.challenged_count,
+                                    "created_at": a.created_at,
+                                }
+                            )
             except Exception as e:
-                if 'no such table' in str(e).lower():
+                if "no such table" in str(e).lower():
                     return []
                 raise
 
@@ -1958,7 +2075,9 @@ class ContextBuilderMixin:
 
     # ========== EXPERIMENT AND CEO REVIEW QUERIES ==========
 
-    async def get_active_experiments(self, timeout: Optional[int] = None) -> List[Dict[str, Any]]:
+    async def get_active_experiments(
+        self, timeout: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """
         List all active experiments (async).
 
@@ -1969,29 +2088,32 @@ class ContextBuilderMixin:
             List of active experiments
         """
         timeout = timeout or self.DEFAULT_TIMEOUT
-        
+
         async with AsyncTimeoutHandler(timeout):
             try:
                 from models import Experiment
-                
+
                 m = get_manager()
                 async with m:
                     async with m.connection():
-                        query = (Experiment
-                            .select()
-                            .where(Experiment.status == 'active')
-                            .order_by(Experiment.created_at.desc()))
+                        query = (
+                            Experiment.select()
+                            .where(Experiment.status == "active")
+                            .order_by(Experiment.created_at.desc())
+                        )
                         results = []
                         async for e in query:
                             results.append(e.__data__.copy())
             except Exception as e:
-                if 'no such table' in str(e).lower():
+                if "no such table" in str(e).lower():
                     return []
                 raise
 
         return results
 
-    async def get_pending_ceo_reviews(self, timeout: Optional[int] = None) -> List[Dict[str, Any]]:
+    async def get_pending_ceo_reviews(
+        self, timeout: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """
         List all pending CEO reviews (async).
 
@@ -2002,23 +2124,24 @@ class ContextBuilderMixin:
             List of pending CEO reviews
         """
         timeout = timeout or self.DEFAULT_TIMEOUT
-        
+
         async with AsyncTimeoutHandler(timeout):
             try:
                 from models import CeoReview
-                
+
                 m = get_manager()
                 async with m:
                     async with m.connection():
-                        query = (CeoReview
-                            .select()
-                            .where(CeoReview.status == 'pending')
-                            .order_by(CeoReview.created_at.desc()))
+                        query = (
+                            CeoReview.select()
+                            .where(CeoReview.status == "pending")
+                            .order_by(CeoReview.created_at.desc())
+                        )
                         results = []
                         async for r in query:
                             results.append(r.__data__.copy())
             except Exception as e:
-                if 'no such table' in str(e).lower():
+                if "no such table" in str(e).lower():
                     return []
                 raise
 
