@@ -110,7 +110,8 @@ class Watcher:
         try:
             response = requests.get(url, timeout=timeout)
             return response.status_code == 200
-        except:
+        except Exception as e:
+            logger.debug(f"Health check failed for {url}: {e}")
             return False
 
     def check_process_running(self, pattern: str) -> bool:
@@ -120,7 +121,8 @@ class Watcher:
                 ["pgrep", "-f", pattern], capture_output=True, text=True
             )
             return result.returncode == 0
-        except:
+        except Exception as e:
+            logger.debug(f"Process check failed for {pattern}: {e}")
             return False
 
     def collect_metrics(self) -> Dict[str, Any]:
