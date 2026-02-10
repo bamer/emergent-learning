@@ -25,12 +25,14 @@ Usage:
 """
 
 import logging
+import logging.handlers
 import sys
 import os
 import sqlite3
 import json
+import time
 from pathlib import Path
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional, List
 
 # Central log directory - ALL logs go here
@@ -44,8 +46,37 @@ DB_PATH = ELF_BASE / "memory" / "index.db"
 # Crash log file for critical errors
 CRASH_LOG = LOGS_DIR / "CRASH.log"
 
+# Log rotation settings
+MAX_LOG_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
+MAX_LOG_AGE_DAYS = 7
+MAX_BACKUP_COUNT = 5  # Keep 5 backup files per logger
+
 # Track if we've already crashed (to avoid infinite crash loops)
 _has_crashed = False
+
+
+def cleanup_old_logs():
+    """
+    Clean up log files older than MAX_LOG_AGE_DAYS.
+    Called automatically when creating a logger.
+    """
+    try:
+        cutoff_time = time.time() - (MAX_LOG_AGE_DAYS * 24 * 60 * 60)
+        deleted_count = 0
+        
+        if LOGS_DIR.exists():
+            for log_file in LOGS_DIR.glob("*.log*"):
+                try:
+                    if log_file.stat().st_mtime < cutoff_time:
+                        log_file.unlink()
+                        deleted_count += 1
+                except Exception:
+                    pass  # Ignore permission errors, etc.
+        
+        if deleted_count > 0:
+            print(f"[LOG_CLEANUP] Removed {deleted_count} log files older than {MAX_LOG_AGE_DAYS} days")
+    except Exception as e:
+        print(f"[LOG_CLEANUP_ERROR] {e}", file=sys.stderr)
 
 
 # =============================================================================
@@ -122,9 +153,22 @@ def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
-    # File handler - all logs go to central directory
+    # Clean up old logs periodically (only for the first logger created)
+    if not hasattr(cleanup_old_logs, '_last_cleanup'):
+        cleanup_old_logs._last_cleanup = 0
+    
+    current_time = time.time()
+    if current_time - cleanup_old_logs._last_cleanup > 3600:  # Cleanup once per hour
+        cleanup_old_logs()
+        cleanup_old_logs._last_cleanup = current_time
+    
+    # Rotating file handler - rotates when log exceeds 10MB, keeps 5 backups
     log_file = LOGS_DIR / f"{name}.log"
-    file_handler = logging.FileHandler(log_file)
+    file_handler = logging.handlers.RotatingFileHandler(
+        log_file,
+        maxBytes=MAX_LOG_SIZE_BYTES,
+        backupCount=MAX_BACKUP_COUNT
+    )
     file_handler.setFormatter(formatter)
     file_handler.setLevel(level)
 

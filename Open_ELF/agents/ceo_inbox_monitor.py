@@ -99,53 +99,43 @@ class CEOInboxMonitor:
         logger.info(f"📬 Processing escalation: {file_path.name}")
 
         try:
-            # Read escalation file
+            # Read escalation file for reference only (not passed to AI)
             content = file_path.read_text()
             logger.debug(f"Escalation content:\n{content[:500]}...")
 
-            # Extract escalation details
+            # Extract escalation details for logging only
             escalation_data = self._parse_escalation(content)
 
             # If AgentManager available, process with CEO agent
             if self.agent_manager:
-                logger.info("🤖 Invoking CEO agent for escalation processing...")
+                logger.info("🤖 Invoking CEO agent for autonomous escalation processing...")
 
-                prompt = f"""You are the CEO agent for the ELF system.
+                # Give instructions to the AI Agent instead of passing full escalation content
+                # The CEO Agent will do its own analysis
+                prompt = f"""Analyze the system state and take all appropriate actions based on your mission, your position and the level of severity if needed.
 
-You have received an escalation that requires your attention:
+{datetime.now().strftime("%d/%m/%Y %H:%M")}
 
-## Escalation Details:
-- From: {escalation_data.get("from_role", "Unknown")}
-- Level: {escalation_data.get("level", "Unknown")}
-- Rule: {escalation_data.get("rule_name", "Unknown")}
-- Time: {escalation_data.get("timestamp", "Unknown")}
+You are the CEO Agent (Level 3) - the final autonomous level before human-in-the-loop.
 
-## Full Escalation Content:
-{content}
+INSTRUCTIONS:
+1. Review pending escalations in the CEO inbox and analyze their severity:
+   - Check for critical system failures (database corruption, service outages)
+   - Review strategic issues (golden rule violations, degraded heuristics)
+   - Assess unresolved alerts and patterns from Level 1 (Watcher) and Level 2 (Orchestrator)
+2. Make strategic decisions and take autonomous actions within your competence:
+   - Approve/reject database rebuilds or major system changes
+   - Promote heuristics to golden rules based on confidence metrics
+   - Authorize service restarts or configuration changes
+   - Set system-wide policies and priorities
+3. If issues are beyond your authority or require human judgment:
+   - Flag for human review with clear context and recommendations
+   - Do NOT proceed without human approval for irreversible actions
+4. Document all decisions and actions taken.
 
-## Your Task:
-1. Analyze this escalation
-2. Make a decision or provide guidance
-3. Output your decision in the following format:
+Remember: You are the LAST autonomous level. Escalate to human when uncertain or when stakes are high.
 
-### CEO Decision
-
-**Status**: [APPROVED/REJECTED/DEFERRED/PENDING]
-
-**Decision Summary**:
-[Brief summary of your decision]
-
-**Rationale**:
-[Explanation of your reasoning]
-
-**Actions Required**:
-- [ ] Action 1
-- [ ] Action 2
-
-**Priority**: [P0/P1/P2/P3]
-
-**Follow-up Required**: [YES/NO]
-"""
+Be decisive but cautious. Focus on strategic decisions - leave operational fixes to lower levels."""
 
                 result = self.agent_manager.ask_agent("ceo", prompt)
 

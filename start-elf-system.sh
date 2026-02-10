@@ -342,7 +342,7 @@ start_event_bridge() {
 
 # Démarrer le Sentinel v3.0 (refactored - merged Sentinel + Sentinel)
 start_sentinel() {
-    log "👁️ Démarrage du Sentinel v3.0 (Level 1 Agent - merged Sentinel + Sentinel)..."
+    log "👁️ Démarrage du Sentinel  (Level 1 Agent )..."
     
     local sentinel_script="${SCRIPT_DIR}/core/sentinel.py"
     
@@ -528,10 +528,10 @@ start_frontend() {
     
     # Attendre que le frontend soit prêt
     if wait_for_service "http://localhost:3001" "Dashboard Frontend" 60; then
-        log_success "✅ Dashboard Frontend démarré (PID: ${FRONTEND_PID})"
+        log_success "✅ Dashboard  démarré (PID: ${FRONTEND_PID})"
         return 0
     else
-        log_warning "⚠️ Dashboard Frontend démarré mais non prêt (PID: ${FRONTEND_PID})"
+        log_warning "⚠️ Dashboard  démarré mais non prêt (PID: ${FRONTEND_PID})"
         return 0  # Continuer même si non prêt
     fi
 }
@@ -636,7 +636,7 @@ test_mode() {
     start_backend || return 1
     start_event_bridge || return 1
     start_orchestrator || return 1  # Unified Orchestrator
-    start_sentinel || return 1               # Sentinel v3.0 (already includes Sentinel)
+    start_sentinel || return 1               # Sentinel 
     start_learning_capture || return 0 # Ne pas bloquer si échec
     start_ceo_monitor || return 0    # CEO Inbox Monitor
     

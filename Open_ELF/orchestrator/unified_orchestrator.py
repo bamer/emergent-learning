@@ -308,25 +308,210 @@ class UnifiedOrchestrator:
                 service_health = await self._check_services_health_async()
                 learnings_count = self._count_recent_learnings()
                 heuristics_count = self._count_recent_heuristics()
+                
+                # Check database integrity
+                db_integrity = await self._check_database_integrity()
 
                 self._log_autonomous_checks(
                     {
                         "service_health": service_health,
                         "learnings_count": learnings_count,
                         "heuristics_count": heuristics_count,
+                        "database_integrity": db_integrity,
                         "time_since_last_check_hours": 0.25,
                     }
                 )
 
                 logger.info(
                     f"✅ Autonomous checks completed: "
-                    f"services={sum(1 for s in service_health.values() if s)}/3"
+                    f"services={sum(1 for s in service_health.values() if s)}/3, "
+                    f"db_integrity={'✓' if db_integrity.get('valid') else '✗'}"
                 )
 
             except Exception as e:
                 logger.error(f"❌ Error in autonomous system checks: {e}")
 
             await asyncio.sleep(900)
+
+    async def _check_database_integrity(self) -> Dict[str, Any]:
+        """Check database integrity and auto-fix if needed.
+        
+        Returns:
+            Dict with integrity status and any actions taken
+        """
+        result = {
+            "valid": True,
+            "errors": [],
+            "action_taken": None,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        try:
+            # Import migrations module
+            import importlib.util
+            import sys
+            
+            migrations_path = ELF_DIR / "query" / "migrations.py"
+            if not migrations_path.exists():
+                logger.warning("⚠️  Migrations module not found, skipping DB integrity check")
+                return result
+            
+            spec = importlib.util.spec_from_file_location("migrations", str(migrations_path))
+            migrations = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(migrations)
+            
+            # Get database path
+            db_path = migrations.get_db_path()
+            
+            if not db_path.exists():
+                logger.info("ℹ️  Database doesn't exist yet, skipping integrity check")
+                return result
+            
+            # Check integrity
+            import sqlite3
+            conn = sqlite3.connect(str(db_path))
+            try:
+                is_valid, errors = migrations.check_integrity(conn)
+                result["valid"] = is_valid
+                result["errors"] = errors
+                
+                if not is_valid:
+                    logger.warning(f"⚠️  Database integrity issues detected: {len(errors)} errors")
+                    for error in errors[:3]:  # Log first 3 errors
+                        logger.warning(f"   - {error[:100]}...")
+                    
+                    # Try to fix with REINDEX first
+                    logger.info("🔧 Attempting to fix with REINDEX...")
+                    try:
+                        cursor = conn.cursor()
+                        cursor.execute("REINDEX")
+                        conn.commit()
+                        
+                        # Check again
+                        is_valid_after, errors_after = migrations.check_integrity(conn)
+                        if is_valid_after:
+                            logger.info("✅ Database integrity fixed with REINDEX")
+                            result["action_taken"] = "REINDEX fixed"
+                            result["valid"] = True
+                            result["errors"] = []
+                        else:
+                            # REINDEX didn't work, need full rebuild
+                            logger.error("❌ REINDEX failed to fix integrity issues")
+                            logger.error("⚠️  Database requires full rebuild - scheduling rebuild")
+                            
+                            # Schedule rebuild for next cycle (don't do it synchronously)
+                            result["action_taken"] = "rebuild_required"
+                            result["valid"] = False
+                            
+                            # Log to database if available
+                            if DATABASE_LOGGING_AVAILABLE:
+                                log_orchestrator_db(
+                                    event_type="database_integrity_failure",
+                                    source="unified_orchestrator",
+                                    summary=f"Database integrity check failed with {len(errors)} errors",
+                                    data={
+                                        "errors": errors,
+                                        "db_path": str(db_path),
+                                        "rebuild_required": True
+                                    },
+                                    status="critical"
+                                )
+                            
+                            # Create escalation for critical DB issues
+                            await self._escalate_database_corruption(errors)
+                            
+                    except Exception as fix_error:
+                        logger.error(f"❌ Error attempting to fix database: {fix_error}")
+                        result["action_taken"] = f"fix_failed: {str(fix_error)}"
+                        result["valid"] = False
+                else:
+                    logger.debug("✓ Database integrity check passed")
+                    
+            finally:
+                conn.close()
+                
+        except Exception as e:
+            logger.error(f"❌ Error checking database integrity: {e}")
+            result["valid"] = False
+            result["errors"] = [str(e)]
+            result["action_taken"] = "check_failed"
+        
+        return result
+
+    async def _escalate_database_corruption(self, errors: List[str]):
+        """Escalate database corruption to CEO inbox.
+        
+        Args:
+            errors: List of integrity check errors
+        """
+        try:
+            ceo_inbox = CEO_INBOX_DIR / "inbox"
+            ceo_inbox.mkdir(parents=True, exist_ok=True)
+            
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            escalation_path = ceo_inbox / f"orchestrator_db_corruption_{timestamp}.md"
+            
+            error_details = "\n".join([f"- {err[:200]}" for err in errors[:5]])
+            
+            content = f"""# 🔴 CRITICAL: Database Corruption Detected
+
+**Source**: UnifiedOrchestrator (Level 2)  
+**Severity**: critical  
+**Detected At**: {datetime.now().isoformat()}  
+**Component**: SQLite Database Integrity
+
+## Summary
+
+Database integrity check failed with {len(errors)} error(s). Automatic REINDEX did not resolve the issue.
+
+## Errors Detected
+
+{error_details}
+
+## Auto-Remediation Attempted
+
+1. ✅ Integrity check performed
+2. ✅ REINDEX executed
+3. ❌ REINDEX failed to resolve corruption
+4. ⏳ Full rebuild required
+
+## Recommended Actions
+
+### Immediate (CEO Decision Required)
+
+1. **Schedule Maintenance Window** - Database rebuild requires brief downtime
+2. **Approve Database Rebuild** - Run `python3 scripts/rebuild_corrupted_db.py`
+3. **Verify Data After Rebuild** - Check critical tables for data integrity
+
+### Scripts Available
+
+```bash
+# Rebuild database (creates backup automatically)
+cd {ELF_DIR}
+python3 scripts/rebuild_corrupted_db.py
+
+# Verify integrity after rebuild
+python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = conn.cursor(); cursor.execute('PRAGMA integrity_check'); print('Integrity:', cursor.fetchall()); conn.close()"
+```
+
+## Impact Assessment
+
+- **Data at Risk**: Learnings, heuristics, events, escalations
+- **Services Affected**: Query system, EventBridge logging, Learning Capture
+- **Auto-Recovery**: Not possible without CEO approval
+- **Downtime Required**: ~2-5 minutes for rebuild
+
+---
+
+**Orchestrator Instructions**: CEO approval required for database rebuild. Do not proceed without explicit authorization.
+"""
+            
+            # Write escalation file
+            await asyncio.to_thread(escalation_path.write_text, content)
+            logger.error(f"🔴 Database corruption escalated to CEO: {escalation_path.name}")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to escalate database corruption: {e}")
 
     def _count_recent_learnings(self) -> int:
         """Count learnings in last hour."""
@@ -810,30 +995,31 @@ class UnifiedOrchestrator:
             return
 
         try:
-            # Gather current system state
-            system_state = {
-                "services_health": self._services_health,
-                "last_health_check": self._last_health_check.isoformat()
-                if self._last_health_check
-                else None,
-                "events_processed": self.bridge.status.get("events_processed", 0),
-                "uptime_seconds": (datetime.now() - self.started_at).total_seconds()
-                if self.started_at
-                else 0,
-                "cycle_count": self.cycle_count,
-                "timestamp": datetime.now().isoformat(),
-            }
-
             # Call unified-orchestrator agent via AgentManager
+            # The AI Agent now receives the DB integrity check and decides what to do
+            
             result = self.agent_manager.ask_agent(
                 "unified-orchestrator",
-                f"Check the current for any defect and take apropriate actions:\n\n{self._format_state_for_ai(system_state)}",
+                f"""Analyze the system state and take all appropriate actions based on your mission, your position and the level of severity if needed.
+
+{datetime.now().strftime("%d/%m/%Y %H:%M")}
+
+INSTRUCTIONS:
+1. Check for any other system defects or issues : database integrity, events processed, service health, sentinel up and running, CEO up and running, eventBridge, learning processor, Semantic Embeding, Learning Capture, Heuristique persisted, trails pheromone, trails tails,uptime_seconds,...
+2. Attempt to fix any issue in your level of severity competence, mission and position. 
+3. If you attempt to fix the issues have fail, you have to escalate to CEO.
+4. Recommend specific actions to take if needed.
+
+   Be concise but thorough.""",
             )
 
             if result.get("success"):
                 logger.info(
-                    f"✅ AI analysis completed: {result.get('response', '')[:100]}..."
+                    f"✅ AI Agent analysis completed: {result.get('response', '')[:100]}..."
                 )
+                
+            
+                
             else:
                 logger.error(
                     f"❌ AI analysis failed: {result.get('error', 'Unknown error')}"
@@ -845,11 +1031,18 @@ class UnifiedOrchestrator:
     def _format_state_for_ai(self, state: Dict) -> str:
         """Format system state for AI analysis."""
         services = state.get("services_health", {})
+        db_integrity = state.get("database_integrity", {})
+        
+        db_status = "✅ Valid"
+        if not db_integrity.get('valid'):
+            db_status = f"❌ Corrupted ({len(db_integrity.get('errors', []))} errors)"
+        
         return f"""
 System Health Summary:
 - EventBridge: {"✅ Running" if services.get("event_bridge") else "❌ Down"}
 - Watcher: {"✅ Running" if services.get("sentinel") else "❌ Down"}
 - Learning Capture: {"✅ Running" if services.get("learning_capture") else "❌ Down"}
+- Database Integrity: {db_status}
 - Events Processed: {state.get("events_processed", 0)}
 - Uptime: {state.get("uptime_seconds", 0):.0f} seconds
 - Cycle Count: {state.get("cycle_count", 0)}

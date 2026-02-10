@@ -788,16 +788,23 @@ class AgentManager:
 
                 # Check if there's a system message indicating completion
                 for msg in messages:
-                    if (
-                        msg.get("role") == "system"
-                        and "error" in msg.get("content", "").lower()
-                    ):
-                        return {
-                            "success": True,
-                            "session": session_data,
-                            "status": "error",
-                            "error": msg.get("content"),
-                        }
+                    if msg.get("role") == "system":
+                        content = msg.get("content", "")
+                        # Handle both string and dict content types
+                        if isinstance(content, dict):
+                            content_str = str(content)
+                        else:
+                            content_str = (
+                                content if isinstance(content, str) else str(content)
+                            )
+
+                        if "error" in content_str.lower():
+                            return {
+                                "success": True,
+                                "session": session_data,
+                                "status": "error",
+                                "error": msg.get("content"),
+                            }
 
                 # Check if last message is from assistant (AI response)
                 if messages:
