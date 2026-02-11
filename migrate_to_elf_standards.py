@@ -293,11 +293,11 @@ class ELFMigrator:
         """Validate sentinel system compliance"""
         sentinel_loop = self.elf_base / "sentinel" / "sentinel_loop.py"
         if not sentinel_loop.exists():
-            print("⚠️  Watcher system not found (optional component)")
-            return True  # Watcher is optional
+            print("⚠️  Sentinel system not found (optional component)")
+            return True  # Sentinel is optional
 
-        # Note: Watcher compliance will be improved in Phase 3
-        print("⚠️  Watcher partially compliant (Phase 3 migration needed)")
+        # Note: Sentinel compliance will be improved in Phase 3
+        print("⚠️  Sentinel partially compliant (Phase 3 migration needed)")
         return True
 
     def validate_all(self) -> Dict[str, bool]:

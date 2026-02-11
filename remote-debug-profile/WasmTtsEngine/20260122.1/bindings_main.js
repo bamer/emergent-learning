@@ -902,7 +902,7 @@ var dependenciesFulfilled = null;
 
 var runDependencyTracking = {};
 
-var runDependencyWatcher = null;
+var runDependencySentinel = null;
 
 var removeRunDependency = id => {
   runDependencies--;
@@ -911,9 +911,9 @@ var removeRunDependency = id => {
   assert(runDependencyTracking[id]);
   delete runDependencyTracking[id];
   if (runDependencies == 0) {
-    if (runDependencyWatcher !== null) {
-      clearInterval(runDependencyWatcher);
-      runDependencyWatcher = null;
+    if (runDependencySentinel !== null) {
+      clearInterval(runDependencySentinel);
+      runDependencySentinel = null;
     }
     if (dependenciesFulfilled) {
       var callback = dependenciesFulfilled;
@@ -929,12 +929,12 @@ var addRunDependency = id => {
   assert(id, "addRunDependency requires an ID");
   assert(!runDependencyTracking[id]);
   runDependencyTracking[id] = 1;
-  if (runDependencyWatcher === null && globalThis.setInterval) {
+  if (runDependencySentinel === null && globalThis.setInterval) {
     // Check for missing dependencies every few seconds
-    runDependencyWatcher = setInterval(() => {
+    runDependencySentinel = setInterval(() => {
       if (ABORT) {
-        clearInterval(runDependencyWatcher);
-        runDependencyWatcher = null;
+        clearInterval(runDependencySentinel);
+        runDependencySentinel = null;
         return;
       }
       var shown = false;
@@ -951,7 +951,7 @@ var addRunDependency = id => {
     }, 1e4);
     // Prevent this timer from keeping the runtime alive if nothing
     // else is.
-    runDependencyWatcher.unref?.();
+    runDependencySentinel.unref?.();
   }
 };
 

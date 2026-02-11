@@ -27,7 +27,7 @@ All services autonomously recovered without manual intervention:
 - ✅ Dashboard backend: Running
 - ✅ Learning capture: Running
 - ✅ Event bridge: Running
-- ✅ Watcher: Running
+- ✅ Sentinel: Running
 
 ### 3. System Health Verified
 - **Disk usage:** 82% (improved from ~92%)

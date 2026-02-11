@@ -7,7 +7,7 @@ Script de démarrage du système de surveillance des logs
 """
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-WATCHER_SCRIPT="$SCRIPT_DIR/log_sentinel.py"
+SENTINEL_SCRIPT="$SCRIPT_DIR/log_sentinel.py"
 PID_FILE="/tmp/log_sentinel.pid"
 LOG_FILE="/home/bamer/.opencode/emergent-learning/logs/sentinel_daemon.log"
 
@@ -40,7 +40,7 @@ start_sentinel() {
     log_message "🚀 Démarrage du sentinel de logs..."
     
     # Démarre le sentinel en arrière-plan
-    nohup python3 "$WATCHER_SCRIPT" > /dev/null 2>&1 &
+    nohup python3 "$SENTINEL_SCRIPT" > /dev/null 2>&1 &
     local sentinel_pid=$!
     
     # Sauvegarde le PID
@@ -49,7 +49,7 @@ start_sentinel() {
     # Vérifie que le processus a bien démarré
     sleep 2
     if kill -0 "$sentinel_pid" 2>/dev/null; then
-        log_message "✅ Watcher démarré avec succès (PID: $sentinel_pid)"
+        log_message "✅ Sentinel démarré avec succès (PID: $sentinel_pid)"
         return 0
     else
         log_message "❌ Échec du démarrage du sentinel"
@@ -85,7 +85,7 @@ stop_sentinel() {
     fi
     
     rm -f "$PID_FILE"
-    log_message "✅ Watcher arrêté"
+    log_message "✅ Sentinel arrêté"
     return 0
 }
 
@@ -101,7 +101,7 @@ restart_sentinel() {
 status_sentinel() {
     if is_running; then
         local pid=$(cat "$PID_FILE")
-        log_message "✅ Watcher en cours d'exécution (PID: $pid)"
+        log_message "✅ Sentinel en cours d'exécution (PID: $pid)"
         
         # Affiche les infos détaillées du processus
         if command -v ps >/dev/null 2>&1; then
@@ -113,11 +113,11 @@ status_sentinel() {
         # Affiche le statut depuis le script
         echo ""
         echo "=== Statut du sentinel ==="
-        python3 "$WATCHER_SCRIPT" status
+        python3 "$SENTINEL_SCRIPT" status
         
         return 0
     else
-        log_message "❌ Watcher non en cours d'exécution"
+        log_message "❌ Sentinel non en cours d'exécution"
         return 1
     fi
 }
@@ -133,7 +133,7 @@ logs_sentinel() {
     
     echo ""
     echo "=== Statut actuel ==="
-    python3 "$WATCHER_SCRIPT" status
+    python3 "$SENTINEL_SCRIPT" status
 }
 
 # Installation du démarrage automatique
@@ -177,7 +177,7 @@ show_help() {
     echo "  help      - Affiche cette aide"
     echo ""
     echo "Fichiers:"
-    echo "  Script: $WATCHER_SCRIPT"
+    echo "  Script: $SENTINEL_SCRIPT"
     echo "  PID file: $PID_FILE"
     echo "  Log file: $LOG_FILE"
 }

@@ -5,7 +5,7 @@ ELF Real-Time Monitoring API
 Provides real-time monitoring for the new ELF architecture:
 - EventBridge v2 status and statistics
 - LearningProcessor metrics (heuristics, trails, pheromones)
-- Agent hierarchy status (Watcher → Orchestrator → CEO)
+- Agent hierarchy status (Sentinel → Orchestrator → CEO)
 - System health overview
 
 Usage:
@@ -50,7 +50,7 @@ COMPONENTS = {
         "name": "Learning Processor",
         "status": "running",
     },
-    "sentinel": {"port": None, "name": "Watcher (Level 1)", "status": "running"},
+    "sentinel": {"port": None, "name": "Sentinel (Level 1)", "status": "running"},
     "orchestrator": {
         "port": None,
         "name": "Orchestrator (Level 2)",
@@ -259,7 +259,7 @@ class MonitoringAPI:
                         ],
                     },
                     "agents": {
-                        "sentinel": {"name": "Watcher (Level 1)", "status": "running"},
+                        "sentinel": {"name": "Sentinel (Level 1)", "status": "running"},
                         "orchestrator": {
                             "name": "Orchestrator (Level 2)",
                             "status": "running",

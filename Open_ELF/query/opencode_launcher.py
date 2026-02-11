@@ -147,7 +147,7 @@ class OpenCodeLauncher:
         print("\n[OpenCode] Launching agents...")
 
         agents = [
-            ("Watcher", "src/sentinel/launcher.py"),
+            ("Sentinel", "src/sentinel/launcher.py"),
             ("Orchestrator", "src/orchestrator.py"),
             ("CEO Advisor", "agents/dashboard_sentinel_ceo.py"),
         ]
@@ -192,7 +192,7 @@ class OpenCodeLauncher:
         print("[OpenCode] 🟢 OPENCODE SYSTEM READY")
         print("=" * 50)
         print("\nServices running in background:")
-        print("  • Watcher - monitoring experiments")
+        print("  • Sentinel - monitoring experiments")
         print("  • Orchestrator - agent coordination")
         print("  • CEO Advisor - business intelligence")
         print("\nYou can now use the system normally.")

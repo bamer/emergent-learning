@@ -378,14 +378,14 @@ echo "=== Test Complete ==="
 
 ## Raccourcis Utiles
 
-## Tuer tout processus watcher existant avant de lancer (force restart)
+## Tuer tout processus sentinel existant avant de lancer (force restart)
 
-pkill -f "watcher/launcher.py" 2>/dev/null || true
+pkill -f "sentinel/launcher.py" 2>/dev/null || true
 sleep 1  # Attendre que les processus se terminent
 Résultat
 Maintenant, quand vous lancez :
 
-- ./start-elf-system.sh all → Le watcher sera tué et relancé
+- ./start-elf-system.sh all → Le sentinel sera tué et relancé
 - ./start-elf-system.sh test → Même chose pour test rapide
 - ./start-elf-system.sh restart → Relance complète
 

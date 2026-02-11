@@ -67,7 +67,7 @@ The orchestrator listens to multiple event sources:
 - **OpenCode SSE Stream**: Tools, errors, messages, sessions
 - **CEO Inbox Directory**: Manual escalations and decisions
 - **System Health Monitoring**: Database and infrastructure status
-- **Watcher Events**: System monitoring alerts
+- **Sentinel Events**: System monitoring alerts
 - **Mission Requests**: Assigned tasks for execution
 
 Example event processing:
@@ -179,7 +179,7 @@ Result: 40% logging performance improvement
 Learning: [LEARNED:performance] Asynchronous logging reduces overhead
 ```
 
-### 4. Watcher System Alert
+### 4. Sentinel System Alert
 ```
 Event: High CPU usage detected (WARNING)
 Action:

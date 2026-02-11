@@ -43,7 +43,7 @@ The Unified OpenCode Orchestrator replaces the separate Event Bridge and traditi
 2. **System Errors**: Recovery attempts or CEO notification
 3. **System Health**: Monitoring and maintenance triggers
 4. **CEO Escalations**: Database recording and autonomous resolution attempts
-5. **Watcher Alerts**: Monitoring system notifications
+5. **Sentinel Alerts**: Monitoring system notifications
 6. **Missions**: Traditional orchestrator mission processing
 
 ## Intelligence Features

@@ -87,18 +87,18 @@
 - `query/models.py` - rule loading logic
 - `agents/dashboard_sentinel*.py` - rule initialization
 
-#### Issue #3: Watcher Auto-Spawn Not Working
+#### Issue #3: Sentinel Auto-Spawn Not Working
 **Status**: Code ready but not triggered automatically  
 **Impact**: Background monitoring not starting
 
 **Fix Required**:
-1. Watcher requires hook system to be active
+1. Sentinel requires hook system to be active
 2. Must be spawned from main OpenCode session
-3. Currently: `watcher/run_with_bigpickle.py` exists but not auto-triggered
+3. Currently: `sentinel/run_with_bigpickle.py` exists but not auto-triggered
 
 **Workaround**: Run manually
 ```bash
-python3 ~/.opencode/emergent-learning/watcher/run_with_bigpickle.py
+python3 ~/.opencode/emergent-learning/sentinel/run_with_bigpickle.py
 ```
 
 #### Issue #4: Session Lifecycle Hooks Not Triggering
@@ -191,7 +191,7 @@ python3 ~/.opencode/emergent-learning/query/checkout.py --final
 
 ### Medium-term (Before full deployment)
 - [ ] Ensure session lifecycle hooks fire reliably
-- [ ] Implement watcher auto-spawn mechanism
+- [ ] Implement sentinel auto-spawn mechanism
 - [ ] Complete swarm agent coordination
 - [ ] Enable pheromone trail hotspot analysis
 
@@ -243,7 +243,7 @@ python3 ~/.opencode/emergent-learning/query/checkout.py --final
 - Dashboard backend - database paths
 - Hook documentation - path updates
 - Query system - all modules updated
-- Watcher system - big-pickle model confirmed
+- Sentinel system - big-pickle model confirmed
 - Shell scripts - path corrections
 
 **Config Files Verified:**
@@ -271,10 +271,10 @@ python3 ~/.opencode/emergent-learning/query/checkout.py --final
 → Check markdown file: `cat memory/golden-rules.md`
 → Restart dashboard backend
 
-**"Watcher not running"**
-→ Test manually: `python3 watcher/run_with_bigpickle.py`
+**"Sentinel not running"**
+→ Test manually: `python3 sentinel/run_with_bigpickle.py`
 → Check model: `opencode --print --model opencode/big-pickle "test"`
-→ Verify logs: `tail ~/.opencode/emergent-learning/logs/watcher.log`
+→ Verify logs: `tail ~/.opencode/emergent-learning/logs/sentinel.log`
 
 ---
 
@@ -287,7 +287,7 @@ You'll know migration is successful when:
 - ✅ Golden rules display in dashboard
 - ✅ Database queries show heuristics with confidence > 0.5
 - ✅ Session records appear in database
-- ✅ Watcher log shows periodic health checks
+- ✅ Sentinel log shows periodic health checks
 - ✅ All validation checks pass
 
 ---

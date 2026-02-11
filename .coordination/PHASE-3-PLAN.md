@@ -14,7 +14,7 @@ Current State:
 
 - ✅ event_chronicle table exists with events
 - ✅ /api/chronicle endpoints ready
-- ✅ Watcher writes events automatically
+- ✅ Sentinel writes events automatically
 - ❌ Dashboard doesn't display them yet
 
 Goal: Show unified event stream (sentinel + learning events) on dashboard
@@ -28,13 +28,13 @@ Goal: Show unified event stream (sentinel + learning events) on dashboard
 Display events in chronological order:
 
 ```
-[🔍 WATCHER]  2026-01-28 10:30:45  nominal
+[🔍 SENTINEL]  2026-01-28 10:30:45  nominal
    Agents checked: 3 | Issues: none
 
 [📚 LEARNING]  2026-01-28 10:30:20  healthy
    Task: analyze_patterns | New heuristic: api-design
 
-[🔍 WATCHER]  2026-01-28 10:30:15  warning
+[🔍 SENTINEL]  2026-01-28 10:30:15  warning
    Agent stale: worker-1 | Restarted
 
 [📚 LEARNING]  2026-01-28 10:29:50  critical
@@ -45,7 +45,7 @@ Display events in chronological order:
 
 ```
 Last 24h:
-- Watcher cycles: 2,880 (every 30s)
+- Sentinel cycles: 2,880 (every 30s)
 - Learnings recorded: 24
 - Issues detected: 3
 - Failures: 1
@@ -427,7 +427,7 @@ function EventRow({ event }: { event: Event }) {
 ### Expected Events
 
 ```
-Watcher cycles: every 30 seconds
+Sentinel cycles: every 30 seconds
 Learning events: when tasks complete
 Stats: aggregated counts
 ```

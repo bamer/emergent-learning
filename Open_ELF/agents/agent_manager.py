@@ -605,7 +605,7 @@ class AgentManager:
     # Méthodes de convenance pour les agents principaux
 
     def sentinel(self, request: str, context: Optional[Dict] = None) -> Dict[str, Any]:
-        """Interroge l'agent Watcher"""
+        """Interroge l'agent Sentinel"""
         return self.ask_agent("sentinel", request, context)
 
     def sentinel(self, request: str, context: Optional[Dict] = None) -> Dict[str, Any]:

@@ -143,12 +143,12 @@ def stop(self):
     logger.info("✅ EventBridge stopped")
 ```
 
-**Watcher (`core/sentinel.py`):**
+**Sentinel (`core/sentinel.py`):**
 ```python
 # Added to __init__:
 self.http_session = requests.Session()
 self.http_session.headers.update({
-    'User-Agent': 'ELF-Watcher-v3'
+    'User-Agent': 'ELF-Sentinel-v3'
 })
 
 # Updated check_service_health():
@@ -182,7 +182,7 @@ response = self.http_session.get(url, timeout=timeout)
 ✅ EventBridge imports and instantiates successfully
 HTTP session type: <class 'requests.sessions.Session'>
 
-✅ Watcher imports and instantiates successfully
+✅ Sentinel imports and instantiates successfully
 HTTP session type: <class 'requests.sessions.Session'>
 
 ✅ LearningProcessor imports and instantiates successfully

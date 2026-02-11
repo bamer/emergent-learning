@@ -38,7 +38,7 @@ GLOBAL_SIZE_THRESHOLD_MB = 5  # Rotation si TOUT le répertoire dépasse cette t
 GLOBAL_FILE_COUNT_THRESHOLD = 15  # Rotation si plus de 15 fichiers actifs
 
 
-class LogWatcher:
+class LogSentinel:
     def __init__(self):
         self.log_dir = LOG_DIR
         self.config_file = Path(WATCH_CONFIG)
@@ -322,7 +322,7 @@ def signal_handler(signum, frame):
 def main():
     """Point d'entrée principal"""
     global sentinel
-    sentinel = LogWatcher()
+    sentinel = LogSentinel()
 
     # Gestion des signaux pour arrêt propre
     signal.signal(signal.SIGINT, signal_handler)

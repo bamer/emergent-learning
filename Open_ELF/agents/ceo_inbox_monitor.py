@@ -79,7 +79,7 @@ class CEOInboxMonitor:
         escalations = []
         # Support all escalation patterns from L2 forwarding or L1 direct:
         # - CEO escalations from Orchestrator (L2 → L3): ceo_escalation_*.md, orchestrator_*.md
-        # - Watcher/Sentinel escalations (L1 → L3): sentinel_esc_*.md, sentinel_esc_*.md (forwarded by L2)
+        # - Sentinel/Sentinel escalations (L1 → L3): sentinel_esc_*.md, sentinel_esc_*.md (forwarded by L2)
         ceo_patterns = ["ceo_escalation", "orchestrator", "sentinel_esc", "sentinel_esc"]
 
         inbox_path = CEO_INBOX_DIR / "inbox"
@@ -122,7 +122,7 @@ INSTRUCTIONS:
 1. Review pending escalations in the CEO inbox and analyze their severity:
    - Check for critical system failures (database corruption, service outages)
    - Review strategic issues (golden rule violations, degraded heuristics)
-   - Assess unresolved alerts and patterns from Level 1 (Watcher) and Level 2 (Orchestrator)
+   - Assess unresolved alerts and patterns from Level 1 (Sentinel) and Level 2 (Orchestrator)
 2. Make strategic decisions and take autonomous actions within your competence:
    - Approve/reject database rebuilds or major system changes
    - Promote heuristics to golden rules based on confidence metrics

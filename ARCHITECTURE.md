@@ -15,7 +15,7 @@ The system has been refactored from an over-engineered 8+ component architecture
 │                    AGENT HIERARCHY                           │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  Level 1: Watcher (core/sentinel.py)                         │
+│  Level 1: Sentinel (core/sentinel.py)                         │
 │  ├── Health Monitoring                                      │
 │  ├── Pattern Detection                                      │
 │  ├── AI Analysis (every 5 minutes)                          │
@@ -36,9 +36,9 @@ The system has been refactored from an over-engineered 8+ component architecture
 
 ## Component Overview
 
-### Level 1: Watcher (`core/sentinel.py`)
+### Level 1: Sentinel (`core/sentinel.py`)
 
-**Status**: ✅ **ACTIVE** (Replaces old Watcher + Sentinel)
+**Status**: ✅ **ACTIVE** (Replaces old Sentinel + Sentinel)
 
 **Responsibilities**:
 - Service health monitoring (OpenCode, Dashboard, EventBridge, Learning Capture)
@@ -54,9 +54,9 @@ The system has been refactored from an over-engineered 8+ component architecture
 
 **Usage**:
 ```python
-from core.sentinel import Watcher
+from core.sentinel import Sentinel
 
-sentinel = Watcher()
+sentinel = Sentinel()
 sentinel.run_continuous()
 ```
 
@@ -151,7 +151,7 @@ All learning operations, pheromone trails, and workflow trails are now handled b
 ```
 OpenCode SSE → EventBridge v2 → LearningProcessor → Database
                                       ↓
-                                 Watcher (metrics)
+                                 Sentinel (metrics)
                                       ↓
                                Orchestrator (actions)
                                       ↓
@@ -161,7 +161,7 @@ OpenCode SSE → EventBridge v2 → LearningProcessor → Database
 ## Escalation Flow
 
 ```
-Watcher (L1) detects issue
+Sentinel (L1) detects issue
     ↓
 Creates escalation file for Orchestrator
     ↓
@@ -210,7 +210,7 @@ python -m py_compile core/sentinel.py core/learning_processor.py core/event_brid
 
 ## Configuration
 
-### Watcher Intervals
+### Sentinel Intervals
 Edit `core/sentinel.py`:
 - `BASIC_INTERVAL = 60` - Health check interval (seconds)
 - `AI_INTERVAL = 300` - AI analysis interval (seconds)
@@ -229,13 +229,13 @@ All data stored in `memory/index.db` with preserved tables:
 
 If you have code using old components:
 
-**Old Watcher**:
+**Old Sentinel**:
 ```python
 # OLD (deprecated)
-from Open_ELF.sentinel.elf_sentinel import ElfWatcher
+from Open_ELF.sentinel.elf_sentinel import ElfSentinel
 
 # NEW
-from core.sentinel import Watcher
+from core.sentinel import Sentinel
 ```
 
 **Old Hooks**:
@@ -260,7 +260,7 @@ python core/event_bridge_v2.py start
 
 ## Troubleshooting
 
-### Watcher not starting
+### Sentinel not starting
 ```bash
 # Check if old processes are running
 pkill -f "elf_sentinel.py"
@@ -283,7 +283,7 @@ Check `logs/` directory for detailed error messages.
 ## Summary
 
 - **Code Reduction**: 72% (~5,300 → ~1,500 lines)
-- **Components**: 8+ → 4 (Watcher, Orchestrator, LearningProcessor, EventBridge)
+- **Components**: 8+ → 4 (Sentinel, Orchestrator, LearningProcessor, EventBridge)
 - **Hierarchy**: Clear L1 → L2 → L3 escalation path
 - **Functionality**: 100% preserved (all trails, heuristics, monitoring)
 - **Maintainability**: Much improved with single-responsibility components

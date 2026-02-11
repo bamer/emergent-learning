@@ -186,7 +186,7 @@ async def audit_log(event: str, user: str, resource: str, action: str):
 | `/api/v1/sentinel/status` | ❌ | ❌ | ❌ | ❌ | 🚨 Critical |
 | `/api/v1/system/health` | ❌ | ❌ | ❌ | ❌ | 🚨 Critical |
 | `/api/v1/monitoring/*` | ❌ | ❌ | ❌ | ❌ | 🚨 Critical |
-| `/api/v1/watcher/*` | ❌ | ❌ | ❌ | ❌ | 🚨 Critical |
+| `/api/v1/sentinel/*` | ❌ | ❌ | ❌ | ❌ | 🚨 Critical |
 | `/api/v1/orchestrator/*` | ❌ | ❌ | ❌ | ❌ | 🚨 Critical |
 
 ## Risk Assessment

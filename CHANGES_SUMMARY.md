@@ -1,10 +1,10 @@
 # ELF System Changes Summary
 
-## 1. Watcher → Sentinel Rename (Completed)
+## 1. Sentinel → Sentinel Rename (Completed)
 
 ### Files Modified:
 - `Open_ELF/dashboard-app/frontend/src/components/MonitoringPanel.tsx`
-  - Changed import from `WatcherMonitorPanel` to `SentinelMonitorPanel`
+  - Changed import from `SentinelMonitorPanel` to `SentinelMonitorPanel`
   - Updated component usage in JSX
 
 - `Open_ELF/dashboard-app/frontend/src/components/monitoring/index.ts`
@@ -13,21 +13,21 @@
 
 - `Open_ELF/dashboard-app/frontend/src/components/index.ts`
   - Updated monitoring exports to use `SentinelMonitorPanel`
-  - Removed `WatcherStatusPanel` export
+  - Removed `SentinelStatusPanel` export
 
 - `Open_ELF/dashboard-app/frontend/src/components/monitoring/AgentHierarchyPanel.tsx`
-  - Changed `AGENT_CONFIG` key from `"watcher"` to `"sentinel"`
-  - Updated agent name from `"Watcher (Level 1)"` to `"Sentinel (Level 1)"`
+  - Changed `AGENT_CONFIG` key from `"sentinel"` to `"sentinel"`
+  - Updated agent name from `"Sentinel (Level 1)"` to `"Sentinel (Level 1)"`
   - Updated escalation flow text
 
 - `Open_ELF/core/central_orchestrator.py`
-  - Added `sentinel_analysis` request type with legacy `watcher_analysis` support
-  - Renamed `_triage_watcher_escalation` to `_triage_sentinel_escalation`
-  - Updated all function references from watcher to sentinel
+  - Added `sentinel_analysis` request type with legacy `sentinel_analysis` support
+  - Renamed `_triage_sentinel_escalation` to `_triage_sentinel_escalation`
+  - Updated all function references from sentinel to sentinel
 
 ### Removed:
-- Old Watcher component files (confirmed not imported elsewhere)
-- "(L1 Agent - Watcher + Sentinel (Merged))" header from model cards
+- Old Sentinel component files (confirmed not imported elsewhere)
+- "(L1 Agent - Sentinel + Sentinel (Merged))" header from model cards
 
 ## 2. Log Rotation & Cleanup (Completed)
 
@@ -65,14 +65,14 @@
 ## 3. Remaining Items
 
 ### Old Log Files:
-The following old watcher.log files exist but will be cleaned up automatically after 7 days:
-- `/home/bamer/.opencode/emergent-learning/logs/watcher.log` (150KB)
-- `/home/bamer/.opencode/emergent-learning/Open_ELF/logs/watcher.log` (372KB)
+The following old sentinel.log files exist but will be cleaned up automatically after 7 days:
+- `/home/bamer/.opencode/emergent-learning/logs/sentinel.log` (150KB)
+- `/home/bamer/.opencode/emergent-learning/Open_ELF/logs/sentinel.log` (372KB)
 
 Large logs like `event_bridge.log` (830MB) will now be properly rotated.
 
 ## Status
 ✅ All tasks completed successfully
-- Watcher renamed to Sentinel across codebase
+- Sentinel renamed to Sentinel across codebase
 - Dashboard model cards cleaned up (no duplicate headers)
 - Log rotation and cleanup implemented and tested

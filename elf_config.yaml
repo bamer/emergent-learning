@@ -37,7 +37,7 @@ elf_config:
     retention_days: 90
     format: "jsonl"
   
-  # Watcher System
+  # Sentinel System
   sentinel:
     enabled: true
     interval: 30

@@ -1,14 +1,14 @@
-# ELF Watcher - Hybrid Monitoring System
+# ELF Sentinel - Hybrid Monitoring System
 
 ## Overview
 
-The ELF Watcher is a modern continuous monitoring system that implements a hybrid approach combining frequent basic system checks with periodic deep AI analysis. This replaces the original tiered sentinel pattern with a more efficient and practical implementation.
+The ELF Sentinel is a modern continuous monitoring system that implements a hybrid approach combining frequent basic system checks with periodic deep AI analysis. This replaces the original tiered sentinel pattern with a more efficient and practical implementation.
 
 ## New Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    ELF_WATCHER.PY                           │
+│                    ELF_SENTINEL.PY                           │
 │  Hybrid monitoring with intelligent scheduling              │
 │  - Basic checks: Every 60 seconds (system health)          │
 │  - AI analysis: Every 300 seconds (5 minutes)              │
@@ -79,7 +79,7 @@ The hybrid approach solves the problem of balancing continuous monitoring effici
 
 ## Quick Start
 
-### 1. Start Watcher
+### 1. Start Sentinel
 
 ```bash
 # From ELF directory
@@ -114,7 +114,7 @@ tail -f .coordination/sentinel-log.md
 pgrep -f "elf_sentinel.py"
 ```
 
-### 4. Stop Watcher
+### 4. Stop Sentinel
 
 ```bash
 # Graceful shutdown via stop file
@@ -165,7 +165,7 @@ Logs are written to `.coordination/sentinel-log.md` in Markdown format:
 ### Monitoring Output
 Console output shows current status:
 ```
-🔍 ELF Watcher - 00:00:00
+🔍 ELF Sentinel - 00:00:00
 ============================================================
 🟢 Statut: HEALTHY
 🎯 Event Bridge: 🟢 Intégré

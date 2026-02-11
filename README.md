@@ -74,7 +74,7 @@ Animated avatar overlay that appears on your desktop. Celebrates task completion
 | **Local Dashboard** | Visual monitoring at http://localhost:3001 (no API tokens used) |
 | **Session History** | Browse all Opencode sessions in dashboard - search, filter by project/date, expand to see full conversations |
 | **Cross-Session Continuity** | Pick up where you left off - search what you asked in previous sessions. Lightweight retrieval (~500 tokens), or ~20k for heavy users reviewing full day |
-| **Async Watcher** | Background OpenCode agents monitor your work, escalate to deep analysis only when needed. Tiered system reduces costs by 90%+ |
+| **Async Sentinel** | Background OpenCode agents monitor your work, escalate to deep analysis only when needed. Tiered system reduces costs by 90%+ |
 
 ### Hotspots
 ![Hotspots](docs/assets/Hotspots.png)
@@ -115,7 +115,7 @@ Browse your Opencode session history visually in the dashboard's **Sessions** ta
 
 No tokens consumed - reads directly from `~/.opencode/projects/` JSONL files.
 
-### Async Watcher
+### Async Sentinel
 
 The ELF system uses multiple autonomous monitoring agents with tiered analysis:
 
@@ -125,7 +125,7 @@ The ELF system uses multiple autonomous monitoring agents with tiered analysis:
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │   Watcher   │  │  Sentinel   │  │  Unified Orchestrator   │  │
+│  │   Sentinel   │  │  Sentinel   │  │  Unified Orchestrator   │  │
 │  │ (60s cycle) │  │ (30s cycle) │  │     (10s cycle)         │  │
 │  │ AI: 10 min  │  │ AI: 5 min   │  │    AI: 15 min           │  │
 │  └──────┬──────┘  └──────┬──────┘  └───────────┬─────────────┘  │

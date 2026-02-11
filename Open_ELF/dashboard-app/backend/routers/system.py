@@ -2,7 +2,7 @@
 System Services Router - Dashboard API Integration
 
 This router provides endpoints for:
-- Checking system service health (Watcher, Sentinel, EventBridge, Learning Capture)
+- Checking system service health (Sentinel, Sentinel, EventBridge, Learning Capture)
 - Service status monitoring (running/stopped, PID, uptime)
 - Control of system services (start/stop/restart)
 - System-wide metrics
@@ -184,7 +184,7 @@ def calculate_health(running: bool, last_heartbeat: Optional[str]) -> str:
 
 
 def get_sentinel_status() -> ServiceStatus:
-    """Get Watcher monitoring status."""
+    """Get Sentinel monitoring status."""
     proc_info = check_process_by_name("sentinel")
 
     # Try to get heartbeat from sentinel-log

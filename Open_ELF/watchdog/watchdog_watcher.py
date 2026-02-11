@@ -1,7 +1,7 @@
 """
-ELF Watcher Watchdog
+ELF Sentinel Watchdog
 
-A lightweight watchdog service that monitors the Watcher agent's log file
+A lightweight watchdog service that monitors the Sentinel agent's log file
 and restarts it if no updates are detected for 15 minutes.
 """
 
@@ -31,20 +31,20 @@ except ImportError:
     logger = logging.getLogger("watchdog_sentinel")
 
 # Configuration
-WATCHER_LOG_PATH = ELF_DIR / "logs" / "elf_sentinel.log"
-WATCHER_SCRIPT_PATH = ELF_DIR / "Open_ELF" / "sentinel" / "elf_sentinel.py"
+SENTINEL_LOG_PATH = ELF_DIR / "logs" / "elf_sentinel.log"
+SENTINEL_SCRIPT_PATH = ELF_DIR / "Open_ELF" / "sentinel" / "elf_sentinel.py"
 MONITOR_INTERVAL = 30  # Check every 30 seconds
-WATCHER_TIMEOUT = 900  # 15 minutes (900 seconds) timeout
+SENTINEL_TIMEOUT = 900  # 15 minutes (900 seconds) timeout
 
 
 def get_last_log_timestamp():
-    """Get the timestamp of the last log entry in Watcher log."""
+    """Get the timestamp of the last log entry in Sentinel log."""
     try:
-        if not WATCHER_LOG_PATH.exists():
-            logger.warning(f"Watcher log file not found: {WATCHER_LOG_PATH}")
+        if not SENTINEL_LOG_PATH.exists():
+            logger.warning(f"Sentinel log file not found: {SENTINEL_LOG_PATH}")
             return None
 
-        with open(WATCHER_LOG_PATH, "r", encoding="utf-8") as f:
+        with open(SENTINEL_LOG_PATH, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         # Look for the last log line
@@ -58,50 +58,50 @@ def get_last_log_timestamp():
                         return datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
                     except ValueError:
                         continue
-        logger.warning("No valid log entries found in Watcher log")
+        logger.warning("No valid log entries found in Sentinel log")
         return None
     except Exception as e:
-        logger.error(f"Error reading Watcher log: {e}")
+        logger.error(f"Error reading Sentinel log: {e}")
         return None
 
 
 def is_sentinel_running():
-    """Check if Watcher process is running."""
+    """Check if Sentinel process is running."""
     try:
         result = subprocess.run(
-            ["pgrep", "-f", str(WATCHER_SCRIPT_PATH)], capture_output=True, text=True
+            ["pgrep", "-f", str(SENTINEL_SCRIPT_PATH)], capture_output=True, text=True
         )
         return result.returncode == 0
     except Exception as e:
-        logger.error(f"Error checking Watcher process: {e}")
+        logger.error(f"Error checking Sentinel process: {e}")
         return False
 
 
 def start_sentinel():
-    """Start the Watcher agent."""
+    """Start the Sentinel agent."""
     try:
-        # Kill any existing Watcher process first
-        subprocess.run(["pkill", "-f", str(WATCHER_SCRIPT_PATH)], capture_output=True)
+        # Kill any existing Sentinel process first
+        subprocess.run(["pkill", "-f", str(SENTINEL_SCRIPT_PATH)], capture_output=True)
 
-        # Start new Watcher process
+        # Start new Sentinel process
         process = subprocess.Popen(
-            [sys.executable, str(WATCHER_SCRIPT_PATH)],
+            [sys.executable, str(SENTINEL_SCRIPT_PATH)],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
 
-        logger.info(f"Started Watcher with PID: {process.pid}")
+        logger.info(f"Started Sentinel with PID: {process.pid}")
         return True
     except Exception as e:
-        logger.error(f"Failed to start Watcher: {e}")
+        logger.error(f"Failed to start Sentinel: {e}")
         return False
 
 
 def monitor_sentinel():
     """Main watchdog monitoring loop."""
-    logger.info("🚀 ELF Watcher Watchdog started")
-    logger.info(f"Monitoring: {WATCHER_LOG_PATH}")
-    logger.info(f"Timeout: {WATCHER_TIMEOUT} seconds ({WATCHER_TIMEOUT / 60} minutes)")
+    logger.info("🚀 ELF Sentinel Watchdog started")
+    logger.info(f"Monitoring: {SENTINEL_LOG_PATH}")
+    logger.info(f"Timeout: {SENTINEL_TIMEOUT} seconds ({SENTINEL_TIMEOUT / 60} minutes)")
 
     last_known_good_time = None
     last_log_timestamp = None
@@ -120,28 +120,28 @@ def monitor_sentinel():
             else:
                 logger.debug("No valid log entries found")
 
-            # Check if we need to restart Watcher
+            # Check if we need to restart Sentinel
             if last_known_good_time:
                 time_since_last_log = (now - last_known_good_time).total_seconds()
 
-                if time_since_last_log > WATCHER_TIMEOUT:
+                if time_since_last_log > SENTINEL_TIMEOUT:
                     logger.warning(
-                        f"⚠️  Watcher has been unresponsive for {time_since_last_log:.0f} seconds (> {WATCHER_TIMEOUT}s)"
+                        f"⚠️  Sentinel has been unresponsive for {time_since_last_log:.0f} seconds (> {SENTINEL_TIMEOUT}s)"
                     )
 
-                    # Check if Watcher is still running
+                    # Check if Sentinel is still running
                     if is_sentinel_running():
-                        logger.info("Restarting Watcher process...")
+                        logger.info("Restarting Sentinel process...")
 
                         # Kill existing process
                         subprocess.run(
-                            ["pkill", "-f", str(WATCHER_SCRIPT_PATH)],
+                            ["pkill", "-f", str(SENTINEL_SCRIPT_PATH)],
                             capture_output=True,
                         )
 
                         # Start new process
                         if start_sentinel():
-                            logger.info("✅ Watcher restarted successfully")
+                            logger.info("✅ Sentinel restarted successfully")
 
                             # Log the restart to database if available
                             try:
@@ -150,7 +150,7 @@ def monitor_sentinel():
                                 log_event(
                                     event_type="watchdog_restart",
                                     source="watchdog_sentinel",
-                                    summary="Watcher restarted due to timeout",
+                                    summary="Sentinel restarted due to timeout",
                                     data={
                                         "time_since_last_log": time_since_last_log,
                                         "last_log_time": last_known_good_time.isoformat(),
@@ -159,13 +159,13 @@ def monitor_sentinel():
                             except ImportError:
                                 pass
                         else:
-                            logger.error("❌ Failed to restart Watcher")
+                            logger.error("❌ Failed to restart Sentinel")
                     else:
-                        logger.info("Watcher not running, starting...")
+                        logger.info("Sentinel not running, starting...")
                         if start_sentinel():
-                            logger.info("✅ Watcher started successfully")
+                            logger.info("✅ Sentinel started successfully")
                         else:
-                            logger.error("❌ Failed to start Watcher")
+                            logger.error("❌ Failed to start Sentinel")
 
             # Monitor every 30 seconds
             time.sleep(MONITOR_INTERVAL)

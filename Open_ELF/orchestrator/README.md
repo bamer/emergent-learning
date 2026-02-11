@@ -23,7 +23,7 @@ The ELF (Emergent Learning Framework) uses a unified architecture with three mai
 ┌─────────────────────────────────────────────────────────┐
 │              UnifiedOrchestrator                        │
 │  - Receives events via register_listener()              │
-│  - Manages services (Learning Capture, Watcher)         │
+│  - Manages services (Learning Capture, Sentinel)         │
 │  - Autoservices failed services                         │
 │  - Escalates critical issues                            │
 └────────────────────────┬────────────────────────────────┘
@@ -76,12 +76,12 @@ The ELF (Emergent Learning Framework) uses a unified architecture with three mai
 - Monitors service health every 10 ticks (100 seconds)
 - Auto-restarts failed services:
   - **Learning Capture** - Monitors database for new events
-  - **Watcher** - Monitors filesystem for changes
+  - **Sentinel** - Monitors filesystem for changes
 - Escalates critical issues
 
 **Service Recovery:**
 - ✅ Learning Capture: Kills existing, starts new via `background-learning-capture.py`
-- ✅ Watcher: Kills existing, starts new via `sentinel/launcher.py`
+- ✅ Sentinel: Kills existing, starts new via `sentinel/launcher.py`
 - 🔴 EventBridge: Critical - cannot auto-recover (human intervention needed)
 
 **Usage:**
@@ -175,7 +175,7 @@ python -m uvicorn backend.main:app --host 0.0.0.0 --port 8888
 
 **Restart:** UnifiedOrchestrator auto-restarts if down
 
-### Watcher
+### Sentinel
 
 **Purpose:** Monitors filesystem for changes
 

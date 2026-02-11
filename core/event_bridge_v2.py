@@ -104,7 +104,7 @@ class EventBridge:
             logger.error(f"Failed to get database connection: {e}", exc_info=True)
             return None
 
-    def _log_event(self, event_type: str, details: str = "", data: Dict = None):
+    def _log_event(self, event_type: str, details: str = "", data: Optional[Dict] = None):
         """Log event to database."""
         self.event_count += 1
         self.last_event_time = datetime.now().isoformat()
@@ -175,7 +175,7 @@ class EventBridge:
         # Check OpenCode connection using /global/health
         try:
             response = self.http_session.get(
-                f"{OPENCODE_SERVER}/global/health", timeout=5
+                f"{OPENCODE_SERVER}/global/health", timeout=30
             )
             if response.status_code != 200:
                 logger.error("❌ OpenCode server not accessible")
@@ -197,13 +197,13 @@ class EventBridge:
         logger.info("👂 SSE listener started on /global/event")
 
         # Start session polling as backup (for tools not captured via SSE)
-        polling_thread = threading.Thread(target=self._poll_sessions, daemon=True)
-        polling_thread.start()
-        logger.info("🔄 Session polling started (backup)")
+        # polling_thread = threading.Thread(target=self._poll_sessions, daemon=True)
+        # polling_thread.start()
+        # logger.info("🔄 Session polling started (backup)")
 
         # Start status server
-        self._start_status_server()
-        logger.info(f"✅ Status server on port {EVENT_BRIDGE_PORT}")
+        # self._start_status_server()
+        # logger.info(f"✅ Status server on port {EVENT_BRIDGE_PORT}")
 
         # Write initial heartbeat
         self._write_heartbeat()
@@ -246,7 +246,7 @@ class EventBridge:
                     logger.error(
                         f"Failed to connect to event stream: {response.status_code}"
                     )
-                    time.sleep(5)
+                    time.sleep(20)
                     continue
 
                 logger.info("✅ Connected to SSE stream")
@@ -259,7 +259,7 @@ class EventBridge:
                         line_str = line.decode("utf-8")
                         self._process_sse_line(line_str)
 
-            except self.http_session.exceptions.ChunkedEncodingError:
+            except requests.exceptions.ChunkedEncodingError:
                 logger.info("⚠️ SSE stream disconnected, reconnecting...")
                 time.sleep(2)
             except Exception as e:

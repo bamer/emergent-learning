@@ -221,12 +221,12 @@ The Emergent Learning Framework (ELF) demonstrates a **mature, multi-layered doc
 2. Document hook execution order and timing
 3. Add performance considerations for hooks
 
-#### src/watcher/ Documentation
+#### src/sentinel/ Documentation
 
 **File:** `README.md` (361 lines)
 
 **Strengths:**
-- Comprehensive tiered watcher pattern explanation
+- Comprehensive tiered sentinel pattern explanation
 - Clear architecture diagram
 - Cost analysis with concrete examples
 - Troubleshooting section with solutions
@@ -240,7 +240,7 @@ The Emergent Learning Framework (ELF) demonstrates a **mature, multi-layered doc
 
 **Recommendations:**
 1. Add visual dashboard/monitoring examples
-2. Create "Custom Watcher Checks" tutorial
+2. Create "Custom Sentinel Checks" tutorial
 3. Document integration with Prometheus/Grafana
 
 #### apps/dashboard/ Documentation
@@ -1000,7 +1000,7 @@ Common issues and solutions.
 - C:\Users\Evede\.opencode\emergent-learning\src\query\query.py
 - C:\Users\Evede\.opencode\emergent-learning\src\query\core.py
 - C:\Users\Evede\.opencode\emergent-learning\src\hooks\learning-loop\README.md
-- C:\Users\Evede\.opencode\emergent-learning\src\watcher\README.md
+- C:\Users\Evede\.opencode\emergent-learning\src\sentinel\README.md
 - C:\Users\Evede\.opencode\emergent-learning\apps\dashboard\README.md
 - C:\Users\Evede\.opencode\emergent-learning\src\conductor\conductor.py
 - C:\Users\Evede\.opencode\emergent-learning\memory\golden-rules.md

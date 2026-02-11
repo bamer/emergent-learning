@@ -26,7 +26,7 @@ class ELFStateDetector:
 
         # Processus ELF typiques à surveiller
         self.elf_processes = [
-            "python.*launcher.py",  # Watcher
+            "python.*launcher.py",  # Sentinel
             "python.*event-bridge",  # Event bridge
             "npm.*dev",  # Dashboard
             "uvicorn.*backend",  # API backend

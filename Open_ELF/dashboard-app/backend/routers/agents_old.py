@@ -534,7 +534,7 @@ async def list_available_agents():
         },
         {
             "type": "sentinel",
-            "name": "Watcher",
+            "name": "Sentinel",
             "description": "Vérifications périodiques et interventions",
             "icon": "👁️",
             "auto_start": True,

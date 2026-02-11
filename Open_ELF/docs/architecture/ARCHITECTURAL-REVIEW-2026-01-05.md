@@ -36,7 +36,7 @@ emergent-learning/
 │   ├── conductor/         # Workflow orchestration
 │   ├── hooks/             # Event handlers (tightly coupled)
 │   ├── skills/            # Reusable capabilities
-│   └── watcher/           # Background monitoring
+│   └── sentinel/           # Background monitoring
 │
 ├── apps/                  # Application layer
 │   └── dashboard/         # Web UI + FastAPI backend

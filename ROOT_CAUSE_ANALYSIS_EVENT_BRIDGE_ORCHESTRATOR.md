@@ -461,7 +461,7 @@ grep -iE "(error|exception|traceback)" logs/20260210.log | head -50
 - Orchestrator (dégradation)
 - Dashboard Backend (DOWN)
 - Learning Capture (bloqué)
-- Watcher (escalations fréquentes)
+- Sentinel (escalations fréquentes)
 
 ---
 

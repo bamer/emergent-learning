@@ -80,7 +80,7 @@ This converter:
 | Heuristics Confidence | ✅ Schema ready | Test with patterns |
 | Golden Rules | 🚨 Not synced | Run `query/repair_database.py` |
 | Session Continuity | 🚨 Lifecycle hooks | Manual: `query/checkout.py` |
-| Async Watcher | 🚨 Not spawning | Run: `sentinel/run_with_bigpickle.py` |
+| Async Sentinel | 🚨 Not spawning | Run: `sentinel/run_with_bigpickle.py` |
 | Swarm Agents | 🚨 Incomplete | Pending implementation |
 | Pheromone Trails | 🚨 Not recording | Enable post-tool hook |
 
@@ -167,7 +167,7 @@ pkill -f "python3.*dashboard"
 - [x] Golden rules → shown in dashboard
 - [x] Heuristics → queryable from database
 - [x] Sessions → recorded across continuity
-- [x] Watcher → running health checks
+- [x] Sentinel → running health checks
 - [x] Pheromone → tracking file access
 
 ---

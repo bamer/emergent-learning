@@ -1,4 +1,4 @@
-# big-pickle Watcher Implementation Report - Hybrid Approach
+# big-pickle Sentinel Implementation Report - Hybrid Approach
 
 **Implementation**: Modern Hybrid Monitoring System
 **Model**: opencode/big-pickle (local, zero-cost)

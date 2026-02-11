@@ -160,7 +160,7 @@ EOF
 - **OpenCode Server**: ✅ Running (v1.2.4)
 - **Database**: ✅ Healthy (Integrity check passed)
 - **Dashboard**: ✅ Responsive (200 OK)
-- **Watcher**: ✅ Active (Cycle every 30s)
+- **Sentinel**: ✅ Active (Cycle every 30s)
 - **Orchestrator**: ✅ Operational (Processing events normally)
 
 ### Security Assessment

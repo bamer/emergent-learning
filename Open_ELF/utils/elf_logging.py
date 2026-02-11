@@ -304,12 +304,12 @@ def verify_logging() -> bool:
 
 # Common event types
 EVENT_TYPES = {
-    # Watcher events
-    "file_change": "Watcher detected a file change",
-    "file_creation": "Watcher detected a new file",
-    "file_deletion": "Watcher detected a deleted file",
-    "sentinel_status": "Watcher status update",
-    "sentinel_check": "Watcher performed check",
+    # Sentinel events
+    "file_change": "Sentinel detected a file change",
+    "file_creation": "Sentinel detected a new file",
+    "file_deletion": "Sentinel detected a deleted file",
+    "sentinel_status": "Sentinel status update",
+    "sentinel_check": "Sentinel performed check",
     # Orchestrator events
     "agent_question": "Agent received a question",
     "agent_response": "Agent generated a response",
@@ -390,7 +390,7 @@ def log_sentinel_check(
     Log a sentinel check event.
 
     Args:
-        tier: Watcher tier (1 or 2)
+        tier: Sentinel tier (1 or 2)
         status: Check status (success, error, warning)
         summary: Human-readable summary
         details: Optional details about the check
@@ -591,7 +591,7 @@ if __name__ == "__main__":
         summary="Test sentinel check",
         details={"test": "sentinel"},
     )
-    print(f"✅ Watcher event logged with ID: {sentinel_event_id}")
+    print(f"✅ Sentinel event logged with ID: {sentinel_event_id}")
 
     # Test orchestrator event logging
     orch_event_id = log_orchestrator_event(

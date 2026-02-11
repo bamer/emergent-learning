@@ -17,45 +17,45 @@
 00017| 2026-02-09 14:29:27 | STATUS: healthy | NOTES: All systems operational (basic verification)...
 00018| 
 00019| 2026-02-10 10:15:00 | STATUS: corrective | NOTES: Performed database schema upgrade (added description, outcome, timestamp, context columns) to support learning extractor. Re-ran extractor on manual_2026-02-10_session.jsonl; successfully stored 1 learning record. recent_learnings count remains 0 but extraction pipeline verified.
-00020| 2026-02-10 12:58:53 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: False | Learning: False | Learnings: 0 | Heuristics: 23
-2026-02-10 13:13:53 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 24
-2026-02-10 13:28:53 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 24
-2026-02-10 13:30:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: False | Learning: False | Learnings: 0 | Heuristics: 24
-2026-02-10 13:45:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 24
-2026-02-10 14:00:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 24
-2026-02-10 14:15:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 24
-2026-02-10 14:30:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 24
-2026-02-10 14:45:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 24
-2026-02-10 15:00:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 24
-2026-02-10 15:18:43 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: False | Learning: False | Learnings: 0 | Heuristics: 24
-2026-02-10 15:33:43 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 24
-2026-02-10 15:48:43 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 24
-2026-02-10 16:03:44 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 24
-2026-02-10 16:18:44 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 36
-2026-02-10 16:33:44 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: False | Learnings: 0 | Heuristics: 36
-2026-02-10 16:48:46 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: False | Learnings: 0 | Heuristics: 39
-2026-02-10 17:03:47 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: False | Learnings: 0 | Heuristics: 43
-2026-02-10 18:29:29 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: False | Learning: False | Learnings: 0 | Heuristics: 48
-2026-02-10 18:44:30 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 48
-2026-02-10 18:59:30 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 19:13:56 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: False | Learning: False | Learnings: 0 | Heuristics: 49
-2026-02-10 19:28:56 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 19:43:56 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 19:58:01 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 20:12:49 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: False | Learning: False | Learnings: 0 | Heuristics: 49
-2026-02-10 20:27:49 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 20:42:49 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 20:57:49 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 21:03:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: False | Learning: False | Learnings: 0 | Heuristics: 49
-2026-02-10 21:18:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 21:33:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 21:48:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 22:03:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 22:18:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 22:33:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 22:48:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 22:59:40 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 23:01:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
+00020| 2026-02-10 12:58:53 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: False | Learning: False | Learnings: 0 | Heuristics: 23
+2026-02-10 13:13:53 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 24
+2026-02-10 13:28:53 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 24
+2026-02-10 13:30:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: False | Learning: False | Learnings: 0 | Heuristics: 24
+2026-02-10 13:45:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 24
+2026-02-10 14:00:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 24
+2026-02-10 14:15:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 24
+2026-02-10 14:30:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 24
+2026-02-10 14:45:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 24
+2026-02-10 15:00:41 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 24
+2026-02-10 15:18:43 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: False | Learning: False | Learnings: 0 | Heuristics: 24
+2026-02-10 15:33:43 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 24
+2026-02-10 15:48:43 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 24
+2026-02-10 16:03:44 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 24
+2026-02-10 16:18:44 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 36
+2026-02-10 16:33:44 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: False | Learnings: 0 | Heuristics: 36
+2026-02-10 16:48:46 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: False | Learnings: 0 | Heuristics: 39
+2026-02-10 17:03:47 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: False | Learnings: 0 | Heuristics: 43
+2026-02-10 18:29:29 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: False | Learning: False | Learnings: 0 | Heuristics: 48
+2026-02-10 18:44:30 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 48
+2026-02-10 18:59:30 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 19:13:56 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: False | Learning: False | Learnings: 0 | Heuristics: 49
+2026-02-10 19:28:56 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 19:43:56 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 19:58:01 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 20:12:49 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: False | Learning: False | Learnings: 0 | Heuristics: 49
+2026-02-10 20:27:49 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 20:42:49 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 20:57:49 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 21:03:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: False | Learning: False | Learnings: 0 | Heuristics: 49
+2026-02-10 21:18:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 21:33:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 21:48:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 22:03:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 22:18:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 22:33:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 22:48:12 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 22:59:40 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 23:01:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
 2026-02-10 23:01:52 | STATUS: processed | NOTES: Processed escalation sentinel_esc_20260210_183351.md | Action: Processed (severity: critical)
 2026-02-10 23:01:52 | STATUS: processed | NOTES: Processed escalation sentinel_esc_20260210_223557.md | Action: Processed (severity: critical)
 2026-02-10 23:01:52 | STATUS: processed | NOTES: Processed escalation sentinel_esc_20260210_215703.md | Action: Processed (severity: critical)
@@ -126,9 +126,9 @@
 2026-02-10 23:01:59 | STATUS: processed | NOTES: Processed escalation sentinel_esc_20260210_192934.md | Action: Processed (severity: critical)
 2026-02-10 23:01:59 | STATUS: processed | NOTES: Processed escalation sentinel_esc_20260210_202246.md | Action: Processed (severity: critical)
 2026-02-10 23:01:59 | STATUS: processed | NOTES: Processed escalation sentinel_esc_20260210_221333.md | Action: Processed (severity: critical)
-2026-02-10 23:16:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 23:31:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 49
-2026-02-10 23:46:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 50
-2026-02-11 00:01:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 50
-2026-02-11 00:16:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: True | Learning: True | Learnings: 0 | Heuristics: 50
-2026-02-11 00:31:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Watcher: False | Learning: True | Learnings: 0 | Heuristics: 50
+2026-02-10 23:16:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 23:31:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 49
+2026-02-10 23:46:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 50
+2026-02-11 00:01:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 50
+2026-02-11 00:16:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: True | Learning: True | Learnings: 0 | Heuristics: 50
+2026-02-11 00:31:32 | STATUS: autonomous-check | NOTES: L2 check | EventBridge: True | Sentinel: False | Learning: True | Learnings: 0 | Heuristics: 50

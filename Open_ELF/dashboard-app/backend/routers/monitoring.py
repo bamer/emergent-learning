@@ -5,7 +5,7 @@ Provides endpoints for:
 - Sentinel monitoring status and cycles
 - Event chronicle querying
 - System health metrics
-- Watcher status and control
+- Sentinel status and control
 """
 
 import json
@@ -473,7 +473,7 @@ async def get_orchestrator_status():
     except:
         pass
 
-    # Check Watcher
+    # Check Sentinel
     try:
         result = subprocess.run(
             ["pgrep", "-f", "sentinel/elf_sentinel.py"], capture_output=True, text=True
@@ -794,11 +794,11 @@ def calculate_health_metrics(history: List[Dict]) -> Dict:
 
 
 # ==============================================================================
-# Watcher Endpoints
+# Sentinel Endpoints
 # ==============================================================================
 
 
-class WatcherControlRequest(BaseModel):
+class SentinelControlRequest(BaseModel):
     action: str  # 'start', 'stop', 'restart'
 
 
@@ -811,7 +811,7 @@ async def get_sentinel_status():
         cursor = conn.cursor()
 
         # Get recent sentinel activity from event_chronicle
-        # Watcher creates events with event_type LIKE '%sentinel%' (e.g., 'file.sentinel.updated')
+        # Sentinel creates events with event_type LIKE '%sentinel%' (e.g., 'file.sentinel.updated')
         cursor.execute(
             """
             SELECT timestamp, event_type, source, data, summary, status
@@ -874,7 +874,7 @@ async def get_sentinel_status():
             except Exception as log_err:
                 _log_error(f"Error reading sentinel.log: {log_err}")
         else:
-            _log_debug(f"Watcher log file not found: {watchdog_log_path}")
+            _log_debug(f"Sentinel log file not found: {watchdog_log_path}")
 
         # Check if sentinel process is actually running
         result = subprocess.run(
@@ -940,7 +940,7 @@ async def get_sentinel_status():
             "total_checks": total_cycles,
             "escalations_count": critical_count,
             "current_status": current_status,
-            "analysis_summary": f"Watcher {'active' if is_running else 'inactive'}. Total checks: {total_checks_all}. {critical_count} critical, {warning_count} warnings in last hour.",
+            "analysis_summary": f"Sentinel {'active' if is_running else 'inactive'}. Total checks: {total_checks_all}. {critical_count} critical, {warning_count} warnings in last hour.",
         }
 
         config = {
@@ -972,7 +972,7 @@ async def get_sentinel_status():
                 "total_checks": 0,
                 "escalations_count": 0,
                 "current_status": "healthy",
-                "analysis_summary": "Watcher status unavailable",
+                "analysis_summary": "Sentinel status unavailable",
             },
             "recent_logs": [],
             "config": {
@@ -986,14 +986,14 @@ async def get_sentinel_status():
 
 
 @router.post("/sentinel/control")
-async def control_sentinel(request: WatcherControlRequest):
+async def control_sentinel(request: SentinelControlRequest):
     """Control sentinel (start/stop/restart)."""
     try:
         # Log the control action
-        _log_info(f"Watcher control action: {request.action}")
+        _log_info(f"Sentinel control action: {request.action}")
 
         ELF_DIR = Path.home() / ".opencode" / "emergent-learning"
-        WATCHER_DIR = ELF_DIR / "sentinel"
+        SENTINEL_DIR = ELF_DIR / "sentinel"
         START_SCRIPT = Path.home() / ".opencode" / "scripts" / "start-sentinel.sh"
         STOP_FILE = ELF_DIR / ".coordination" / "sentinel-stop"
         PID_FILE = Path("/tmp") / "elf-sentinel.pid"
@@ -1011,11 +1011,11 @@ async def control_sentinel(request: WatcherControlRequest):
                 text=True,
             )
             if result.returncode == 0:
-                _log_info("Watcher already running")
+                _log_info("Sentinel already running")
                 return {
                     "status": "ok",
                     "action": "start",
-                    "message": "Watcher is already running",
+                    "message": "Sentinel is already running",
                     "pid": result.stdout.strip(),
                 }
 
@@ -1036,21 +1036,21 @@ async def control_sentinel(request: WatcherControlRequest):
                     text=True,
                 )
                 _log_info(
-                    "Watcher start check: running"
+                    "Sentinel start check: running"
                     if check.returncode == 0
-                    else "Watcher start check: not running"
+                    else "Sentinel start check: not running"
                 )
                 return {
                     "status": "ok",
                     "action": "start",
-                    "message": "Watcher started successfully"
+                    "message": "Sentinel started successfully"
                     if check.returncode == 0
-                    else "Watcher start requested (not yet running)",
+                    else "Sentinel start requested (not yet running)",
                 }
             else:
-                _log_error("Watcher start script not found")
+                _log_error("Sentinel start script not found")
                 raise HTTPException(
-                    status_code=500, detail="Watcher start script not found"
+                    status_code=500, detail="Sentinel start script not found"
                 )
 
         elif request.action == "stop":
@@ -1064,12 +1064,12 @@ async def control_sentinel(request: WatcherControlRequest):
                 capture_output=True,
                 text=True,
             )
-            _log_info("Watcher stop signal sent")
+            _log_info("Sentinel stop signal sent")
 
             return {
                 "status": "ok",
                 "action": "stop",
-                "message": "Watcher stop signal sent",
+                "message": "Sentinel stop signal sent",
             }
 
         elif request.action == "restart":
@@ -1099,12 +1099,12 @@ async def control_sentinel(request: WatcherControlRequest):
                 return {
                     "status": "ok",
                     "action": "restart",
-                    "message": "Watcher restarted successfully",
+                    "message": "Sentinel restarted successfully",
                 }
             else:
-                _log_error("Watcher start script not found")
+                _log_error("Sentinel start script not found")
                 raise HTTPException(
-                    status_code=500, detail="Watcher start script not found"
+                    status_code=500, detail="Sentinel start script not found"
                 )
 
         else:
@@ -1414,9 +1414,9 @@ async def get_escalations(
         # Event types that represent escalations
         escalation_event_types = [
             "sentinel_cycle",  # Sentinel monitoring cycles with status
-            "sentinel_escalation",  # Watcher escalations
-            "file.sentinel.updated",  # Watcher file monitoring events
-            "sentinel_check",  # Watcher check events
+            "sentinel_escalation",  # Sentinel escalations
+            "file.sentinel.updated",  # Sentinel file monitoring events
+            "sentinel_check",  # Sentinel check events
             "ceo_alert",  # CEO alerts
             "critical_event",  # General critical events
             "agent_escalation",  # Generic agent escalation
@@ -1565,7 +1565,7 @@ def format_escalation_message(row, data: Dict) -> str:
     if "sentinel" in event_type:
         return f"{severity_emoji} Sentinel: {summary}"
     elif "sentinel" in event_type:
-        return f"{severity_emoji} Watcher: {summary}"
+        return f"{severity_emoji} Sentinel: {summary}"
     elif "ceo" in event_type:
         return f"{severity_emoji} CEO: {summary}"
     else:
@@ -1951,15 +1951,15 @@ async def get_coordinator_summary():
 @router.get("/ai-analysis/schedule")
 async def get_ai_analysis_schedule():
     """
-    Get AI analysis status and schedule for Watcher.
+    Get AI analysis status and schedule for Sentinel.
 
     Shows last analysis timestamp, next scheduled analysis, and configured intervals.
 
-    NOTE: Sentinel has been merged into Watcher (see ARCHITECTURE.md v0.5.3).
-    Only Watcher is tracked separately.
+    NOTE: Sentinel has been merged into Sentinel (see ARCHITECTURE.md v0.5.3).
+    Only Sentinel is tracked separately.
 
     Configuration (post-merge):
-    - Watcher: AI analysis every 300s (5min), basic checks every 60s
+    - Sentinel: AI analysis every 300s (5min), basic checks every 60s
     - Orchestrator: AI analysis every 900s (15min), basic checks every 10s
     """
     try:
@@ -1971,7 +1971,7 @@ async def get_ai_analysis_schedule():
             "sentinel": {
                 "analysis_interval": 300,  # 5 minutes (post-merge)
                 "basic_check_interval": 60,  # 1 minute
-                "note": "Replaces old Watcher + Sentinel (merged)",
+                "note": "Replaces old Sentinel + Sentinel (merged)",
             },
             "orchestrator": {
                 "analysis_interval": 900,  # 15 minutes
@@ -2056,7 +2056,7 @@ async def get_ai_analysis_schedule():
             "status": "ok",
             "agents": agent_data,
             "last_updated": datetime.now().isoformat(),
-            "note": "Sentinel merged into Watcher - now a single system (ARCHITECTURE.md)",
+            "note": "Sentinel merged into Sentinel - now a single system (ARCHITECTURE.md)",
         }
 
     except Exception as e:
@@ -2068,7 +2068,7 @@ async def get_ai_analysis_schedule():
 async def get_ai_analysis_metrics(hours: int = Query(24, ge=1, le=168)):
     """Get AI analysis metrics over time period.
 
-    NOTE: Sentinel was merged into Watcher - only tracking Watcher and Orchestrator separately.
+    NOTE: Sentinel was merged into Sentinel - only tracking Sentinel and Orchestrator separately.
     """
     try:
         conn = get_db_connection()
@@ -2158,7 +2158,7 @@ async def get_ai_analysis_metrics(hours: int = Query(24, ge=1, le=168)):
             "metrics": metrics,
             "period_hours": hours,
             "last_updated": datetime.now().isoformat(),
-            "note": "Sentinel merged into Watcher - metrics reflect combined system",
+            "note": "Sentinel merged into Sentinel - metrics reflect combined system",
         }
 
     except Exception as e:

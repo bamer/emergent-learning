@@ -20,7 +20,7 @@ Système d'orchestration unifié pour tous les agents ELF avec OpenCode.
 
 ✅ **4. Coordination complète**
 - **Sentinel**: Surveillance continue
-- **Watcher**: Vérifications périodiques
+- **Sentinel**: Vérifications périodiques
 - **4 agents spécialisés**: Researcher, Architect, Skeptic, Creative
 - **CEO**: Décisions exécutives
 - **Système d'escalade**: Intégré avec politique stricte
@@ -51,7 +51,7 @@ Système d'orchestration unifié pour tous les agents ELF avec OpenCode.
         │                     │                     │
         ▼                     ▼                     ▼
 ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│   Sentinel   │    │   Watcher    │    │  4 Agents    │
+│   Sentinel   │    │   Sentinel    │    │  4 Agents    │
 │  (Continue)  │    │ (Périodique) │    │  (On-demand) │
 └──────────────┘    └──────────────┘    └──────────────┘
         │                     │                     │

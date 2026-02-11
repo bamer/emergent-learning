@@ -108,7 +108,7 @@ python agents/unified_orchestrator.py status
     │                   │
     ▼                   ▼
 ┌─────────┐      ┌──────────┐
-│Sentinel │      │ Watcher  │
+│Sentinel │      │ Sentinel  │
 │(Auto)   │      │ (Auto)   │
 └─────────┘      └──────────┘
     │                   │
@@ -148,7 +148,7 @@ Tous les logs sont dans `/home/bamer/.opencode/emergent-learning/logs/`:
 
 - `unified_orchestrator.log` - Orchestrateur principal
 - `sentinel.log` - Surveillance continue
-- `watcher.log` - Vérifications périodiques
+- `sentinel.log` - Vérifications périodiques
 - `<agent>.log` - Logs spécifiques par agent
 - `CRASH.log` - Erreurs critiques
 - `escalation.log` - Escalades
@@ -179,8 +179,8 @@ Les agents suivants doivent être migrés pour utiliser le nouveau système:
 - [ ] `agents/orchestrator.py` (ancien)
 - [ ] `agents/sentinel_startup.py`
 - [ ] `agents/sentinel_with_learning.py`
-- [ ] `src/watcher/watcher_loop.py`
-- [ ] `watcher/watcher_loop.py`
+- [ ] `src/sentinel/sentinel_loop.py`
+- [ ] `sentinel/sentinel_loop.py`
 
 ## Checklist de migration
 

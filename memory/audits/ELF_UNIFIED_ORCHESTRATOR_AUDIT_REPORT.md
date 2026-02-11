@@ -34,7 +34,7 @@ This audit evaluates all monitoring components in the ELF Dashboard to determine
 - **Integration**: ✅ **INTEGRATED** with Unified Orchestrator
 - **Status**: Real-time data from database
 
-### 2. Watcher Status Endpoint
+### 2. Sentinel Status Endpoint
 - **File**: `backend/routers/monitoring.py`
 - **Endpoint**: `GET /api/v1/sentinel/status`
 - **Data Source**: `pgrep -f "sentinel/launcher.py"` (Process check)
@@ -111,8 +111,8 @@ This audit evaluates all monitoring components in the ELF Dashboard to determine
   - 36 pattern_detected events
 - **Status**: ✅ WORKING - Shows real events from production database
 
-#### 3. WatcherStatusPanel
-- **File**: `monitoring/WatcherStatusPanel.tsx`
+#### 3. SentinelStatusPanel
+- **File**: `monitoring/SentinelStatusPanel.tsx`
 - **API Endpoint**: `/api/v1/sentinel/status`
 - **Data Source**: Process check (pgrep for sentinel/launcher.py)
 - **Integration**: ✅ **FULLY INTEGRATED** - Checks actual process
@@ -173,8 +173,8 @@ This audit evaluates all monitoring components in the ELF Dashboard to determine
 
 ### ⚠️ SIMULATED/MOCK DATA COMPONENTS
 
-#### 1. WatcherEventHistory
-- **File**: `monitoring/WatcherEventHistory.tsx`
+#### 1. SentinelEventHistory
+- **File**: `monitoring/SentinelEventHistory.tsx`
 - **API Endpoint**: `/api/v1/monitoring/sentinel/events`
 - **Data Source**: ❌ **SIMULATED** - This endpoint returns mock data
 - **Integration**: ⚠️ NOT INTEGRATED with Unified Orchestrator
@@ -198,13 +198,13 @@ This audit evaluates all monitoring components in the ELF Dashboard to determine
 |-----------|----------------|-------------|-------------|---------|
 | SentinelMonitorPanel | `/sentinel/status` | SQL (event_chronicle) | ✅ Unified Orchestrator | ✅ Working |
 | EventChronicleViewer | `/chronicle/stats`, `/chronicle/events` | SQL (event_chronicle) | ✅ Unified Orchestrator | ✅ Working |
-| WatcherStatusPanel | `/sentinel/status` | Process check (pgrep) | ✅ Real Process | ✅ Working |
+| SentinelStatusPanel | `/sentinel/status` | Process check (pgrep) | ✅ Real Process | ✅ Working |
 | OrchestratorStatusPanel | `/orchestrator/status` | Unified Orchestrator API | ✅ Unified Orchestrator | ✅ Working |
 | CeoStatusPanel | `/ceo-inbox`, `/agents/status` | File system + Agent system | ✅ real CEO data | ✅ Working |
 | EventBridgeStatusPanel | `/event-bridge/status` | Unified Orchestrator API | ✅ Unified Orchestrator | ✅ Working |
 | OllamaStatus | `/monitoring/ollama/status` | Ollama API | ✅ Ollama API | ✅ Working |
 | SystemHealthPanel | `/health/status` | Health metrics | ✅ Real Health | ✅ Working |
-| **WatcherEventHistory** | `/monitoring/sentinel/events` | Mock/Generated | ❌ Not Integrated | ❌ Mock Data |
+| **SentinelEventHistory** | `/monitoring/sentinel/events` | Mock/Generated | ❌ Not Integrated | ❌ Mock Data |
 | **OrchestratorEventHistory** | `/monitoring/orchestrator/events` | Mock/Limited | ⚠️ Partial | ❌ Mock Data |
 
 ---
@@ -265,9 +265,9 @@ This audit evaluates all monitoring components in the ELF Dashboard to determine
 ## Recommendations
 
 ### High Priority
-1. **Implement Real Watcher Event History**
+1. **Implement Real Sentinel Event History**
    - Create endpoint to log sentinel events to event_chronicle
-   - Replace mock data in WatcherEventHistory component
+   - Replace mock data in SentinelEventHistory component
 
 2. **Implement Real Orchestrator Event History**
    - Ensure all orchestrator events are logged to database
@@ -296,7 +296,7 @@ The Unified Orchestrator system is **73% fully integrated** with the monitoring 
 **Components Working Correctly:**
 - ✅ Sentinel (447 cycles in database)
 - ✅ Event Chronicle (588 events)
-- ✅ Watcher (Real process monitoring)
+- ✅ Sentinel (Real process monitoring)
 - ✅ Orchestrator (Connected to port 9999)
 - ✅ CEO (Real inbox data)
 - ✅ Event Bridge (Part of unified orchestrator)
@@ -304,7 +304,7 @@ The Unified Orchestrator system is **73% fully integrated** with the monitoring 
 - ✅ System Health (Real metrics)
 
 **Components Need Improvement:**
-- ❌ Watcher Event History (Needs real logging to database)
+- ❌ Sentinel Event History (Needs real logging to database)
 - ❌ Orchestrator Event History (Needs complete logging to database)
 
 The system is production-ready for monitoring the Unified Orchestrator, with room for improvement in event history components.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Async Log Watcher - Real-time log surveillance with automatic rotation
+Async Log Sentinel - Real-time log surveillance with automatic rotation
 Monitors file sizes and triggers rotation when thresholds are exceeded
 """
 
@@ -41,7 +41,7 @@ GLOBAL_SIZE_THRESHOLD_MB = 5  # Rotation if ENTIRE directory exceeds this size
 GLOBAL_FILE_COUNT_THRESHOLD = 15  # Rotation if more than 15 active files
 
 
-class AsyncLogWatcher:
+class AsyncLogSentinel:
     """Async log sentinel with improved I/O performance."""
 
     def __init__(self):
@@ -338,7 +338,7 @@ class AsyncLogWatcher:
 
 async def main():
     """Main entry point"""
-    sentinel = AsyncLogWatcher()
+    sentinel = AsyncLogSentinel()
 
     def signal_handler(signum, frame):
         print(f"\n[Watch] Received signal {signum}")

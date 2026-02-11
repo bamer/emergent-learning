@@ -15,7 +15,7 @@ The Unified Orchestrator detected an issue with the **Learning Capture service**
 ```
 Health Summary Provided:
 - EventBridge: ✅ Running
-- Watcher: ❌ Down (INCORRECT)
+- Sentinel: ❌ Down (INCORRECT)
 - Learning Capture: ❌ Down
 - Events Processed: 0 (INCORRECT)
 - Uptime: 891 seconds (INCORRECT)
@@ -31,7 +31,7 @@ Real Status:
   - Events Processed: 3,085
   - Last Event: 22:51:36Z (active)
 
-- Watcher: ✅ Running (PID 1496791)
+- Sentinel: ✅ Running (PID 1496791)
   - Started: 2026-02-09T22:32:00Z
   - Status: Active and monitoring
 
@@ -70,9 +70,9 @@ The `background-learning-capture.py` process (PID 1496844 from earlier check) wa
    - The provided health summary referenced a different system state
    - EventBridge uptime was reported as 891s but actual was ~5,843s
    - Events processed showed 0 but actual was 3,085+
-   - Watcher showed as "Down" when it was actually running
+   - Sentinel showed as "Down" when it was actually running
 
-2. **Watchers Escalation Files** (Resolved during cleanup)
+2. **Sentinels Escalation Files** (Resolved during cleanup)
    - 56 `sentinel_esc_*.md` files found in CEO inbox
    - These were artifacts from sentinel cycles (likely normal operation)
    - All archived to `archive/sentinel_escalations/`
@@ -86,7 +86,7 @@ The `background-learning-capture.py` process (PID 1496844 from earlier check) wa
 **Step 1: Investigated Process State**
 ```bash
 ✓ Confirmed background-learning-capture.py NOT running
-✓ Confirmed Watcher IS running despite health summary saying otherwise
+✓ Confirmed Sentinel IS running despite health summary saying otherwise
 ✓ Verified EventBridge operational with v2 version
 ✓ Checked for background-learning-capture script (exists at expected path)
 ```
@@ -103,7 +103,7 @@ The `background-learning-capture.py` process (PID 1496844 from earlier check) wa
 **Step 3: Verified System Health**
 ```bash
 ✓ EventBridge: Running, 3,085 events processed, active
-✓ Watcher: Running (monitors system)
+✓ Sentinel: Running (monitors system)
 ✓ Learning Capture: ✓ RESUMED (now running)
 ✓ Dashboard Sentinel: Running
 ✓ CEO Inbox: Clean (0 active escalations)
@@ -130,7 +130,7 @@ The `background-learning-capture.py` process (PID 1496844 from earlier check) wa
 │  ✅ Events Processed: 3,085                  │
 │  ✅ Last Event: 22:51:36Z                    │
 │  ✅ Uptime: 5,843 seconds (~97 min)          │
-│  ✅ Watcher Running (monitoring system)       │
+│  ✅ Sentinel Running (monitoring system)       │
 │  ✅ Learning Capture: ✓ RESUMED (PID 1507470) │
 │  ✅ Dashboard Sentinel Running                │
 │  ✅ CEO Inbox: 0 active escalations          │
@@ -148,7 +148,7 @@ The `background-learning-capture.py` process (PID 1496844 from earlier check) wa
 | Service | PID | Status | Started | Uptime | Notes |
 |---------|-----|--------|---------|--------|-------|
 | **EventBridge v2** | 1462253 | ✅ Running | 21:14:12Z | 97m | Active (3,085 events) |
-| **Watcher** | 1496791 | ✅ Running | 22:32:00Z | 20m | Monitoring |
+| **Sentinel** | 1496791 | ✅ Running | 22:32:00Z | 20m | Monitoring |
 | **Learning Capture** | 1507470 | ✅ Running | 22:51:00Z | <1m | ✓ RESUMED |
 | **Dashboard Sentinel** | 1480337 | ✅ Running | 21:56:00Z | ~56m | Monitoring |
 | **Learning Daemon** | 396863 | ✅ Running | Feb08 | 3 days | Supporting |

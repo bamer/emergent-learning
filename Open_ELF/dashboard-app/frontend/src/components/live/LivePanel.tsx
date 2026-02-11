@@ -20,7 +20,7 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
   const [trailConnected, setTrailConnected] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'agents' | 'tasks'>('agents')
-  const [watcherStatus, setWatcherStatus] = useState<{running: boolean; state?: string}>({running: false})
+  const [sentinelStatus, setSentinelStatus] = useState<{running: boolean; state?: string}>({running: false})
   const [showMissionModal, setShowMissionModal] = useState(false)
 
   const taskEventSourceRef = useRef<EventSource | null>(null)
@@ -183,45 +183,45 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
     }
   }, [apiBaseUrl])
 
-  const handleLaunchWatcher = useCallback(async () => {
+  const handleLaunchSentinel = useCallback(async () => {
     try {
-      const response = await fetch(`${apiBaseUrl}/api/v1/watcher/control`, {
+      const response = await fetch(`${apiBaseUrl}/api/v1/sentinel/control`, {
         method: 'POST',
       })
       if (response.ok) {
         const data = await response.json();
-        console.info('Watcher launched:', data.message || 'Started');
+        console.info('Sentinel launched:', data.message || 'Started');
         // Refresh status after launching
-        setTimeout(fetchWatcherStatus, 1000);
+        setTimeout(fetchSentinelStatus, 1000);
       }
     } catch (err) {
-      console.error('Failed to launch watcher:', err);
+      console.error('Failed to launch sentinel:', err);
     }
   }, [apiBaseUrl])
 
-  // Fetch watcher status
-  const fetchWatcherStatus = useCallback(async () => {
+  // Fetch sentinel status
+  const fetchSentinelStatus = useCallback(async () => {
     try {
-      const response = await fetch(`${apiBaseUrl}/api/v1/watcher/status`);
+      const response = await fetch(`${apiBaseUrl}/api/v1/sentinel/status`);
       if (response.ok) {
         const data = await response.json();
-        setWatcherStatus({
+        setSentinelStatus({
           running: data.status?.running || false,
           state: data.status?.state || 'unknown'
         });
       }
     } catch (err) {
-      console.debug('Failed to fetch watcher status:', err);
-      setWatcherStatus({running: false, state: 'unknown'});
+      console.debug('Failed to fetch sentinel status:', err);
+      setSentinelStatus({running: false, state: 'unknown'});
     }
   }, [apiBaseUrl]);
 
-  // Poll watcher status every 5 seconds
+  // Poll sentinel status every 5 seconds
   useEffect(() => {
-    fetchWatcherStatus();
-    const interval = setInterval(fetchWatcherStatus, 5000);
+    fetchSentinelStatus();
+    const interval = setInterval(fetchSentinelStatus, 5000);
     return () => clearInterval(interval);
-  }, [fetchWatcherStatus]);
+  }, [fetchSentinelStatus]);
   
   const isConnected = taskConnected && trailConnected
   
@@ -281,21 +281,21 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
           )}
         </div>
 
-        {/* Watcher status/button - visible in Tasks view */}
+        {/* Sentinel status/button - visible in Tasks view */}
         {viewMode === 'tasks' && (
-          watcherStatus.running ? (
+          sentinelStatus.running ? (
             <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-medium border border-emerald-500/20">
               <Activity className="w-3.5 h-3.5 animate-pulse" />
-              <span>Watcher {watcherStatus.state || 'Running'}</span>
+              <span>Sentinel {sentinelStatus.state || 'Running'}</span>
             </div>
           ) : (
             <button
-              onClick={handleLaunchWatcher}
+              onClick={handleLaunchSentinel}
               className="flex items-center gap-1.5 px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-medium transition-colors"
-              title="Launch Log Watcher"
+              title="Launch Log Sentinel"
             >
               <Play className="w-3.5 h-3.5" />
-              <span className="ml-1">Launch Watcher</span>
+              <span className="ml-1">Launch Sentinel</span>
             </button>
           )
         )}

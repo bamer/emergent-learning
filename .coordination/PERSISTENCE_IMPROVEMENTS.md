@@ -2,7 +2,7 @@
 
 ## Summary
 
-1. **WatcherEventHistory Import Error**: The file still exists but is no longer exported. The error is likely from browser cache. Fixed by removing exports from:
+1. **SentinelEventHistory Import Error**: The file still exists but is no longer exported. The error is likely from browser cache. Fixed by removing exports from:
    - `frontend/src/components/index.ts`
    - `frontend/src/components/monitoring/index.ts`
 
@@ -58,7 +58,7 @@
 ## Log Files
 
 - `.coordination/dashboard.log` - Backend API logs
-- `.coordination/sentinel-log.md` - Watcher agent logs
+- `.coordination/sentinel-log.md` - Sentinel agent logs
 - `.coordination/event-bridge-heartbeat.json` - Event bridge status
 - `event_chronicle/` - Immutable event logs (JSONL format)
 

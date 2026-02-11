@@ -1,4 +1,4 @@
-# Sentinel vs Watcher - Comparison & Recommendation
+# Sentinel vs Sentinel - Comparison & Recommendation
 
 **Status**: Analysis for Phase 2 Architecture Decision
 **Date**: 2026-01-28
@@ -7,7 +7,7 @@
 
 ## Quick Comparison
 
-| Aspect | Watcher (Standard ELF) | Sentinel (Created in Phase 2) |
+| Aspect | Sentinel (Standard ELF) | Sentinel (Created in Phase 2) |
 |--------|----------------------|-------------------------------|
 | **Purpose** | Multi-agent swarm monitoring | Dashboard health monitoring |
 | **Model** | Haiku (Tier 1) + CEO (Tier 2) | Haiku (always) |
@@ -21,12 +21,12 @@
 
 ---
 
-## Watcher - How It Works
+## Sentinel - How It Works
 
 ### Architecture
 
 ```markdown
-User Interaction → Hook → Spawns Watcher → Haiku (30s check)
+User Interaction → Hook → Spawns Sentinel → Haiku (30s check)
                                             ↓
                                       Issue? → Exit 1 → CEO (deep analysis)
                                             ↓
@@ -35,7 +35,7 @@ User Interaction → Hook → Spawns Watcher → Haiku (30s check)
 
 ### Features
 
-✅ **Tier 1: Opencodeku Watcher Agent** (Fast, cheap)
+✅ **Tier 1: Opencodeku Sentinel Agent** (Fast, cheap)
 
 - Runs every 30 seconds
 - Checks coordination files (blackboard.json, agent status)
@@ -62,11 +62,11 @@ User Interaction → Hook → Spawns Watcher → Haiku (30s check)
 
 1. User interaction triggers hook reminder
 2. Main Claude spawns sentinel via `python sentinel/launcher.py`
-3. Watcher does one comprehensive pass
-4. Watcher analyzes blackboard.json (agent states)
-5. Watcher detects issues (stale agents, errors)
-6. Watcher either: fixes directly OR escalates to CEO
-7. Watcher logs findings and exits
+3. Sentinel does one comprehensive pass
+4. Sentinel analyzes blackboard.json (agent states)
+5. Sentinel detects issues (stale agents, errors)
+6. Sentinel either: fixes directly OR escalates to CEO
+7. Sentinel logs findings and exits
 8. Main Claude continues, next interaction spawns new sentinel
 
 ### What It Monitors
@@ -145,42 +145,42 @@ Sleep 30s → repeat
 
 ### 1. **Purpose**
 
-- **Watcher**: Monitors multi-agent swarm coordination
+- **Sentinel**: Monitors multi-agent swarm coordination
 - **Sentinel**: Monitors dashboard health & metrics
 
 ### 2. **Trigger Model**
 
-- **Watcher**: Event-driven (user interaction → spawn sentinel)
+- **Sentinel**: Event-driven (user interaction → spawn sentinel)
 - **Sentinel**: Continuous loop (runs 24/7 independently)
 
 ### 3. **Cost Model**
 
-- **Watcher**: Cost-optimized tiered ($3.88/day)
+- **Sentinel**: Cost-optimized tiered ($3.88/day)
 - **Sentinel**: Continuous full-cost ($2.88/day)
 
 ### 4. **Data Source**
 
-- **Watcher**: Coordination files (blackboard.json, agent states)
+- **Sentinel**: Coordination files (blackboard.json, agent states)
 - **Sentinel**: Database queries (SQLite metrics)
 
 ### 5. **Output Format**
 
-- **Watcher**: Exit codes, markdown logs, blackboard updates
+- **Sentinel**: Exit codes, markdown logs, blackboard updates
 - **Sentinel**: event_chronicle records, REST API
 
 ### 6. **Integration**
 
-- **Watcher**: Integrated with main Claude via hooks
+- **Sentinel**: Integrated with main Claude via hooks
 - **Sentinel**: Integrated with learning loop via event records
 
 ### 7. **API Support**
 
-- **Watcher**: None (file-based communication)
+- **Sentinel**: None (file-based communication)
 - **Sentinel**: Full REST API for dashboard access
 
 ---
 
-## Can Watcher Run with Your Current Model?
+## Can Sentinel Run with Your Current Model?
 
 ### Current Model Status
 
@@ -190,9 +190,9 @@ You have access to:
 - ✅ Claude CEO (likely)
 - ✅ Claude Orchestrator (main model)
 
-### Watcher Compatibility
+### Sentinel Compatibility
 
-**YES - Watcher will work perfectly with your current setup.**
+**YES - Sentinel will work perfectly with your current setup.**
 
 The sentinel uses:
 
@@ -213,7 +213,7 @@ Instead of choosing one, integrate them both:
 └─────────────────────────────────────────────────────┘
 
 ┌──────────────────┐              ┌──────────────────┐
-│   WATCHER        │              │   event_chronicle│
+│   SENTINEL        │              │   event_chronicle│
 │ (Multi-tier)     │              │   Dashboard      │
 │                  │              │                  │
 │ Monitors:        │              │ Records:         │
@@ -230,7 +230,7 @@ Instead of choosing one, integrate them both:
 
 ### Implementation Strategy
 
-**Keep Standard ELF Watcher** (No changes needed)
+**Keep Standard ELF Sentinel** (No changes needed)
 
 - Already in place and working
 - Monitors agent coordination
@@ -238,13 +238,13 @@ Instead of choosing one, integrate them both:
 
 **Add event_chronicle Recording** (Minimal changes)
 
-- Watcher logs its findings to event_chronicle
+- Sentinel logs its findings to event_chronicle
 - Creates unified event stream
 - Dashboard gets visibility into swarm state
 
 **Integration Points**:
 
-1. Watcher logs to event_chronicle when:
+1. Sentinel logs to event_chronicle when:
    - Detecting stale agents → `event_type: agent_stale`
    - Restarting agents → `event_type: agent_restart`
    - Escalating to CEO → `event_type: escalation_needed`
@@ -256,13 +256,13 @@ Instead of choosing one, integrate them both:
    - `event_type: learning_discovery`
 
 3. Dashboard shows unified timeline:
-   - Watcher events (blue)
+   - Sentinel events (blue)
    - Learning events (green)
    - System alerts (red)
 
 ---
 
-## Proposed Modification to Watcher
+## Proposed Modification to Sentinel
 
 ### Add to sentinel_loop.py
 
@@ -318,7 +318,7 @@ log_to_event_chronicle(
 
 ## Cost Analysis
 
-### Option A: Watcher Only (Current Standard)
+### Option A: Sentinel Only (Current Standard)
 
 ```
 Daily: 2,880 Haiku checks × $0.001 = $2.88
@@ -333,7 +333,7 @@ Daily: 2,880 Haiku checks × $0.001 = $2.88
       = $2.88/day
 ```
 
-### Option C: Hybrid (Watcher + event_chronicle)
+### Option C: Hybrid (Sentinel + event_chronicle)
 
 ```
 Same as Option A: $3.88/day
@@ -346,7 +346,7 @@ Same as Option A: $3.88/day
 
 ## Implementation Plan
 
-### Phase 2B: Integrate Watcher with event_chronicle
+### Phase 2B: Integrate Sentinel with event_chronicle
 
 **Files to Modify**:
 
@@ -363,7 +363,7 @@ Same as Option A: $3.88/day
 
 **New Files**:
 
-- `.coordination/WATCHER-EVENT-CHRONICLE-INTEGRATION.md`
+- `.coordination/SENTINEL-EVENT-CHRONICLE-INTEGRATION.md`
 
 **Time Estimate**: 1-2 hours
 
@@ -371,7 +371,7 @@ Same as Option A: $3.88/day
 
 ## Decision Matrix
 
-| Criteria | Watcher | Sentinel | Hybrid |
+| Criteria | Sentinel | Sentinel | Hybrid |
 |----------|---------|----------|--------|
 | **Standard ELF** | ✅✅✅ | ❌ | ✅✅✅ |
 | **Cost** | ✅✅ ($3.88) | ✅ ($2.88) | ✅✅ ($3.88) |
@@ -409,14 +409,14 @@ Same as Option A: $3.88/day
 
 ## Your Decision Points
 
-**A) Remove Sentinel, integrate with Watcher** (Recommended)
+**A) Remove Sentinel, integrate with Sentinel** (Recommended)
 
 - Use standard ELF approach
 - Better cost optimization
 - Full compatibility with existing system
 - Effort: ~2 hours to refactor
 
-**B) Keep both (Sentinel + Watcher)**
+**B) Keep both (Sentinel + Sentinel)**
 
 - Parallel monitoring systems
 - More expensive ($6.76/day)

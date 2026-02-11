@@ -127,7 +127,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **HTTP Connection Pooling** - Better performance with `requests.Session()`
   - Added `self.http_session = requests.Session()` in EventBridge `__init__`
-  - Added `self.http_session = requests.Session()` in Watcher `__init__`
+  - Added `self.http_session = requests.Session()` in Sentinel `__init__`
   - Replaced all `requests.get()` calls with `self.http_session.get()`
   - Added `stop()` method to EventBridge to properly close session
   - Benefits:
@@ -216,7 +216,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - **Complete Learning Workflow Refactoring** - Major architecture simplification
   - Created 3 new consolidated components replacing 8+ over-engineered files:
-    - `core/sentinel.py` (500 lines) - Level 1 Agent (merged Watcher + Sentinel)
+    - `core/sentinel.py` (500 lines) - Level 1 Agent (merged Sentinel + Sentinel)
     - `core/learning_processor.py` (700 lines) - All learning + trails centralized
     - `core/event_bridge_v2.py` (300 lines) - Simplified event routing
     - `core/__init__.py` - Core module initialization
@@ -224,15 +224,15 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **New Dashboard Agent Hierarchy Panel** - Visual 3-level monitoring architecture
   - `Open_ELF/dashboard-app/frontend/src/components/monitoring/AgentHierarchyPanel.tsx`
-  - Real-time status for each agent level (Watcher, Orchestrator, CEO)
+  - Real-time status for each agent level (Sentinel, Orchestrator, CEO)
   - Escalation flow visualization
   - Cycle counts, AI analyses, and escalation metrics per level
-  - Clear indicators showing merged Watcher + Sentinel functionality
+  - Clear indicators showing merged Sentinel + Sentinel functionality
 
 - **Archive Script for Deprecated Files** - Clean codebase management
   - `ARCHIVE_DEPRECATED_FILES.sh` - Script to archive old components
   - All deprecated files moved to `archived_components/20260209/`:
-    - `agents/sentinel_monitor.py` → archived (merged into Watcher)
+    - `agents/sentinel_monitor.py` → archived (merged into Sentinel)
     - `Open_ELF/sentinel/elf_sentinel.py` → archived (replaced by core/sentinel.py)
     - `Open_ELF/orchestrator/event_bridge.py` → archived (replaced by v2)
     - `hooks/learning-loop/*.py` → archived (consolidated into LearningProcessor)
@@ -242,9 +242,9 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - **Escalation Hierarchy Fixed** - Corrected agent-to-agent escalation flow
-  - **BEFORE (Incorrect)**: Watcher → Escalated directly to CEO
+  - **BEFORE (Incorrect)**: Sentinel → Escalated directly to CEO
   - **AFTER (Correct)**:
-    - Watcher (L1) → Escalates to Orchestrator (L2) on warning/critical
+    - Sentinel (L1) → Escalates to Orchestrator (L2) on warning/critical
     - Orchestrator (L2) → Escalates to CEO (L3) only on critical
     - CEO (L3) → Handles critical escalations with strategic decisions
   - Updated `core/sentinel.py` escalation logic with proper file format
@@ -253,14 +253,14 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Startup Script Updated** - Uses new refactored components
   - `start-elf-system.sh` updated:
     - Event Bridge: Now uses `core/event_bridge_v2.py` instead of old `orchestrator/event_bridge.py`
-    - Watcher: Now uses `core/sentinel.py` (merged Watcher + Sentinel)
-    - Logs show "Watcher v3.0 (Level 1 Agent)" with merged functionality
-    - Sentinel monitor disabled (merged into Watcher)
+    - Sentinel: Now uses `core/sentinel.py` (merged Sentinel + Sentinel)
+    - Logs show "Sentinel v3.0 (Level 1 Agent)" with merged functionality
+    - Sentinel monitor disabled (merged into Sentinel)
   - Fallback support for backward compatibility during transition
 
 - **Documentation Completely Updated** - Clear migration path for users
   - `ARCHITECTURE.md` - Complete rewrite with:
-    - New 3-level hierarchy diagram (Watcher → Orchestrator → CEO)
+    - New 3-level hierarchy diagram (Sentinel → Orchestrator → CEO)
     - Migration guide from old to new components
     - Troubleshooting section for common issues
     - Quick start guide with usage examples
@@ -277,7 +277,7 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 - **System Test Verification** - All new components compile and run correctly
   - `./start-elf-system.sh all` successfully starts all services
-  - Watcher v3.0 (Level 1 Agent) running with PID tracking
+  - Sentinel v3.0 (Level 1 Agent) running with PID tracking
   - Event Bridge v2.0 running and ready
   - Dashboard Frontend accessible at http://localhost:3001
   - Learning Capture Service active
@@ -290,13 +290,13 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Mission monitoring router created: 7 new endpoints for Mission Engine monitoring
   - System services router created: 4 new endpoints replacing outdated agent registry
   - Coordinator system monitoring added: 6 new endpoints for agents, messages, tasks
-  - AI analysis monitoring corrected: Now correctly tracks Watcher + Orchestrator (Sentinel merged)
+  - AI analysis monitoring corrected: Now correctly tracks Sentinel + Orchestrator (Sentinel merged)
   - Pheromone trails monitoring added: 2 new endpoints for hotspots and recent entries
 
-- **AI Analysis Configuration (Corrected)** - Sentinel merged into Watcher
-  - **Watcher** (merged system, replaces old Watcher + Sentinel): AI analysis every 300s (5min), basic checks every 60s
+- **AI Analysis Configuration (Corrected)** - Sentinel merged into Sentinel
+  - **Sentinel** (merged system, replaces old Sentinel + Sentinel): AI analysis every 300s (5min), basic checks every 60s
   - **Unified Orchestrator**: AI analysis every 900s (15min), basic checks every 10s
-  - **Removed**: Separate Sentinel monitoring (merged into Watcher)
+  - **Removed**: Separate Sentinel monitoring (merged into Sentinel)
   - Note: Old CHANGELOG v0.5.3 incorrectly listed separate Sentinel intervals (this is corrected)
 
 ### Added
@@ -315,21 +315,21 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - **CHANGELOG Inconsistency** - Corrected AI analysis intervals post-Sentinel merge
-  - Updated to reflect ARCHITECTURE.md accurate state: Sentinel merged into Watcher
+  - Updated to reflect ARCHITECTURE.md accurate state: Sentinel merged into Sentinel
   - Removed incorrect separate Sentinel schedule references
 
 ## [0.5.3] - 2026-02-08 (CORRECTED IN v0.5.4)
 
 ### ⚠️ IMPORTANT CORRECTION (Fixed in v0.5.4)
 The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
-- **AI Analysis Error**: Listed separate Sentinel intervals but Sentinel was already merged into Watcher in v0.5.3
-- **Correct Intervals**: Watcher (merged) = AI every 5min, basic every 60s | Orchestrator = AI every 15min, basic every 10s
-- **Original Incorrect Text**: Listed Watcher (10min), Sentinel (5min), Orchestrator (15min) as separate systems
+- **AI Analysis Error**: Listed separate Sentinel intervals but Sentinel was already merged into Sentinel in v0.5.3
+- **Correct Intervals**: Sentinel (merged) = AI every 5min, basic every 60s | Orchestrator = AI every 15min, basic every 10s
+- **Original Incorrect Text**: Listed Sentinel (10min), Sentinel (5min), Orchestrator (15min) as separate systems
 
 ### Added
 - **Tier-Based AI Analysis System** - Optimized AI usage with configurable timing intervals
-  - **Watcher** (merged system, now handles Watcher + Sentinel responsibilities): AI analysis every 5 minutes (CORRECTED from 10min), basic checks every 60s
-  - **Sentinel**: Merged into Watcher (no longer separate system)
+  - **Sentinel** (merged system, now handles Sentinel + Sentinel responsibilities): AI analysis every 5 minutes (CORRECTED from 10min), basic checks every 60s
+  - **Sentinel**: Merged into Sentinel (no longer separate system)
   - **Unified Orchestrator**: AI analysis every 15 minutes (basic checks every 10s)
   - Added `_analyze_with_ai()` method using AgentManager for deep analysis
   - Added `basic_analysis()` method for non-AI cycle checks
@@ -352,7 +352,7 @@ The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
 
 ### Changed
 - **System Startup Script** - Updated `start-elf-system.sh` to launch all services
-  - Added startup functions for: Unified Orchestrator, Watcher (now merged system), CEO Inbox Monitor
+  - Added startup functions for: Unified Orchestrator, Sentinel (now merged system), CEO Inbox Monitor
   - Fixed orchestrator to use `start` argument
   - All 4 services now start in correct order with proper dependencies
 
@@ -360,7 +360,7 @@ The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
   - Fixed wrong path: `src/query/query.py` → `query/query.py`
   - Fixed wrong port: UnifiedOrchestrator 9999 → process detection via pgrep
   - Fixed wrong port: Dashboard Frontend 5173 → 3001
-  - Added Watcher detection (now includes merged Sentinel functionality) in architecture status check
+  - Added Sentinel detection (now includes merged Sentinel functionality) in architecture status check
   - Updated to use OpenCode AgentManager instead of nvidia/qwen/qwen3-next-80b-a3b-instruct Task tool
 
 - **Configuration Updates** - Claude configuration files
@@ -410,7 +410,7 @@ The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
   - Frontend added fallback event config for unknown event types
   - Result: Timeline now correctly shows 100 events from 216,459 total database records
 
-- **WatcherStatusPanel React Rendering Error**: Fixed undefined component rendering causing crashes
+- **SentinelStatusPanel React Rendering Error**: Fixed undefined component rendering causing crashes
   - Changed from dynamic icon lookup to safe conditional rendering (lines 507-512)
   - Prevented React error: "Element type is invalid: expected a string but got: object"
 
@@ -421,9 +421,9 @@ The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
 - **Watch Health Endpoints**: Added two new health check endpoints for monitoring
   - `/api/v1/health/mission_bridge` - Returns mission bridge status, hooks_executed counter
   - `/api/v1/health/sentinel_monitor` - Returns sentinel monitor status, events_monitored counter
-  - Watcher now correctly shows "healthy" status for all 3 services
+  - Sentinel now correctly shows "healthy" status for all 3 services
 
-- **Watcher Log Messages**: Enhanced log summaries with analysis details
+- **Sentinel Log Messages**: Enhanced log summaries with analysis details
   - Changed from generic "Cycle X completed - Status: warning" to include specific analysis
   - Example: "Cycle 43 completed - healthy: Tous les systèmes opérationnels"
 
@@ -603,7 +603,7 @@ The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
 - **Python Script Installation** - Installer now copies all 21 Python scripts from tools/scripts/
   - Fixes pre-commit hook failures (check-invariants.py missing)
   - Ensures recording scripts (record-heuristic.py, etc.) are available
-- **Watcher Module Installation** - Tiered sentinel system now properly installed
+- **Sentinel Module Installation** - Tiered sentinel system now properly installed
   - src/sentinel/ copied to ~/.opencode/emergent-learning/sentinel/
   - start-sentinel.sh updated to use correct installed paths
   - Fixes "launcher.py not found" error when starting sentinel

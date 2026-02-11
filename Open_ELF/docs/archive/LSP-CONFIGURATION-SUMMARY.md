@@ -43,7 +43,7 @@ Your project now has Language Server Protocol (LSP) configured for both **Python
 LSP(operation="goToDefinition", filePath="src/query/query.py", line=10, character=5)
 LSP(operation="findReferences", filePath="src/conductor/conductor.py", line=50, character=10)
 LSP(operation="hover", filePath="src/query/context.py", line=25, character=15)
-LSP(operation="documentSymbol", filePath="src/watcher/watcher_loop.py", line=1, character=1)
+LSP(operation="documentSymbol", filePath="src/sentinel/sentinel_loop.py", line=1, character=1)
 ```
 
 ---
@@ -148,7 +148,7 @@ LSP(
 ```python
 LSP(
     operation="documentSymbol",
-    filePath="src/watcher/watcher_loop.py",
+    filePath="src/sentinel/sentinel_loop.py",
     line=1,
     character=1
 )

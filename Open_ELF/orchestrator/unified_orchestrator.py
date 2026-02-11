@@ -4,8 +4,8 @@ Unified Orchestrator - Service Management and Event Processing
 
 The Unified Orchestrator connects to EventBridge (port 9998) and:
 - Listens to events: tool, message, error, failure, service, health
-- Manages system services (Learning Capture, Watcher)
-- Autoservices on failure (restart Watcher, restart Learning Capture)
+- Manages system services (Learning Capture, Sentinel)
+- Autoservices on failure (restart Sentinel, restart Learning Capture)
 - Escalates critical issues
 
 Usage:
@@ -39,7 +39,7 @@ OPEN_ELF_DIR = ELF_DIR / "Open_ELF"
 LEARNING_CAPTURE_SCRIPT = ELF_DIR / "scripts/background-learning-capture.py"
 LEARNING_CAPTURE_LOG = OPEN_ELF_DIR / "logs/learning-capture.log"
 
-# Escalation configuration for Watcher → Orchestrator communication
+# Escalation configuration for Sentinel → Orchestrator communication
 ESCALATION_DIR = ELF_DIR / ".coordination" / "escalations"
 CEO_INBOX_DIR = ELF_DIR / "ceo-inbox"
 
@@ -97,9 +97,9 @@ class Event:
 
 
 class EscalationFileHandler(FileSystemEventHandler):
-    """File system handler for Watcher escalation files.
+    """File system handler for Sentinel escalation files.
 
-    Monitors .coordination/escalations/ directory for new escalation files from Watcher.
+    Monitors .coordination/escalations/ directory for new escalation files from Sentinel.
     """
 
     def __init__(self, orchestrator: "UnifiedOrchestrator"):
@@ -111,9 +111,25 @@ class EscalationFileHandler(FileSystemEventHandler):
             # Extract just filename for logging
             filename = Path(event.src_path).name
             logger.info(f"📬 New escalation file detected: {filename}")
-            # Schedule async processing
-            asyncio.create_task(
-                self.orchestrator.process_sentinel_escalation(event.src_path)
+            # Schedule async processing in event loop (thread-safe)
+            try:
+                loop = self.orchestrator._event_loop
+            except AttributeError:
+                # Fallback: try to get running event loop
+                try:
+                    loop = asyncio.get_event_loop()
+                    # Store reference for future use
+                    self.orchestrator._event_loop = loop
+                except RuntimeError:
+                    # No event loop running - skip processing
+                    logger.error(
+                        "❌ No event loop available, cannot process escalation"
+                    )
+                    return
+
+            # Schedule the coroutine in the event loop
+            asyncio.run_coroutine_threadsafe(
+                self.orchestrator.process_sentinel_escalation(event.src_path), loop
             )
 
 
@@ -123,7 +139,7 @@ class UnifiedOrchestrator:
     The orchestrator connects to running EventBridge and:
     1. Registers as a listener for events
     2. Processes events asyncronously
-    3. Manages service health (Learning Capture, Watcher)
+    3. Manages service health (Learning Capture, Sentinel)
     4. Autoservices failed services
     5. Escalates critical issues
     """
@@ -133,6 +149,7 @@ class UnifiedOrchestrator:
         self.events: List[Event] = []
         self.event_queue: asyncio.Queue = asyncio.Queue()
         self.bridge = None  # EventBridge instance (don't create, connect to existing)
+        self._event_loop = None  # Will be set in _start_async
 
         # Service tracking
         self.learning_capture_active = False
@@ -169,12 +186,12 @@ class UnifiedOrchestrator:
         self.last_autonomous_check = datetime.now()
 
     async def process_sentinel_escalation(self, filepath: str):
-        """Process a Watcher escalation file from L1 agent."""
+        """Process a Sentinel escalation file from L1 agent."""
         escalation_file = Path(filepath)
         filename = escalation_file.name
 
         try:
-            logger.info(f"📬 Processing Watcher escalation: {filename}")
+            logger.info(f"📬 Processing Sentinel escalation: {filename}")
 
             if str(escalation_file) in self.processed_escalations:
                 logger.debug(f"Already processed, skipping: {filename}")
@@ -202,20 +219,22 @@ class UnifiedOrchestrator:
             # 🔥 NEW: Forward to CEO inbox for L3 processing (not archive)
             await self._forward_to_ceo_inbox(escalation_file, content, severity)
 
-            logger.info(f"✅ Watcher escalation processed: {filename}")
+            logger.info(f"✅ Sentinel escalation processed: {filename}")
 
         except Exception as e:
             logger.error(f"❌ Failed to process escalation {filename}: {e}")
 
-    async def _forward_to_ceo_inbox(self, escalation_file: Path, content: str, severity: str):
+    async def _forward_to_ceo_inbox(
+        self, escalation_file: Path, content: str, severity: str
+    ):
         """Forward escalation from Orchestrator to CEO inbox for L3 processing."""
         try:
             ceo_inbox = CEO_INBOX_DIR / "inbox"
             ceo_inbox.mkdir(parents=True, exist_ok=True)
-            
+
             # Create CEO escalation with same filename (CEO monitor will pick it up)
             ceo_escalation_path = ceo_inbox / escalation_file.name
-            
+
             # Add header indicating it's from Orchestrator
             ceo_content = f"""# CEO Escalation (from Orchestrator)
 **Severity**: {severity}
@@ -226,17 +245,17 @@ class UnifiedOrchestrator:
 
 {content}
 """
-            
+
             # Write to CEO inbox
             await asyncio.to_thread(ceo_escalation_path.write_text, ceo_content)
             logger.info(f"✅ Escalation forwarded to CEO inbox: {escalation_file.name}")
-            
+
             # Archive the original from .coordination/escalations
             escalation_archive_dir = ESCALATION_DIR / "archive"
             escalation_archive_dir.mkdir(parents=True, exist_ok=True)
             archive_path = escalation_archive_dir / escalation_file.name
             await self._archive_escalation(escalation_file, archive_path)
-            
+
         except Exception as e:
             logger.error(f"❌ Failed to forward escalation to CEO: {e}")
 
@@ -308,7 +327,7 @@ class UnifiedOrchestrator:
                 service_health = await self._check_services_health_async()
                 learnings_count = self._count_recent_learnings()
                 heuristics_count = self._count_recent_heuristics()
-                
+
                 # Check database integrity
                 db_integrity = await self._check_database_integrity()
 
@@ -335,7 +354,7 @@ class UnifiedOrchestrator:
 
     async def _check_database_integrity(self) -> Dict[str, Any]:
         """Check database integrity and auto-fix if needed.
-        
+
         Returns:
             Dict with integrity status and any actions taken
         """
@@ -343,50 +362,57 @@ class UnifiedOrchestrator:
             "valid": True,
             "errors": [],
             "action_taken": None,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
-        
+
         try:
             # Import migrations module
             import importlib.util
             import sys
-            
+
             migrations_path = ELF_DIR / "query" / "migrations.py"
             if not migrations_path.exists():
-                logger.warning("⚠️  Migrations module not found, skipping DB integrity check")
+                logger.warning(
+                    "⚠️  Migrations module not found, skipping DB integrity check"
+                )
                 return result
-            
-            spec = importlib.util.spec_from_file_location("migrations", str(migrations_path))
+
+            spec = importlib.util.spec_from_file_location(
+                "migrations", str(migrations_path)
+            )
             migrations = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(migrations)
-            
+
             # Get database path
             db_path = migrations.get_db_path()
-            
+
             if not db_path.exists():
                 logger.info("ℹ️  Database doesn't exist yet, skipping integrity check")
                 return result
-            
+
             # Check integrity
             import sqlite3
+
             conn = sqlite3.connect(str(db_path))
             try:
                 is_valid, errors = migrations.check_integrity(conn)
                 result["valid"] = is_valid
                 result["errors"] = errors
-                
+
                 if not is_valid:
-                    logger.warning(f"⚠️  Database integrity issues detected: {len(errors)} errors")
+                    logger.warning(
+                        f"⚠️  Database integrity issues detected: {len(errors)} errors"
+                    )
                     for error in errors[:3]:  # Log first 3 errors
                         logger.warning(f"   - {error[:100]}...")
-                    
+
                     # Try to fix with REINDEX first
                     logger.info("🔧 Attempting to fix with REINDEX...")
                     try:
                         cursor = conn.cursor()
                         cursor.execute("REINDEX")
                         conn.commit()
-                        
+
                         # Check again
                         is_valid_after, errors_after = migrations.check_integrity(conn)
                         if is_valid_after:
@@ -397,12 +423,14 @@ class UnifiedOrchestrator:
                         else:
                             # REINDEX didn't work, need full rebuild
                             logger.error("❌ REINDEX failed to fix integrity issues")
-                            logger.error("⚠️  Database requires full rebuild - scheduling rebuild")
-                            
+                            logger.error(
+                                "⚠️  Database requires full rebuild - scheduling rebuild"
+                            )
+
                             # Schedule rebuild for next cycle (don't do it synchronously)
                             result["action_taken"] = "rebuild_required"
                             result["valid"] = False
-                            
+
                             # Log to database if available
                             if DATABASE_LOGGING_AVAILABLE:
                                 log_orchestrator_db(
@@ -412,47 +440,49 @@ class UnifiedOrchestrator:
                                     data={
                                         "errors": errors,
                                         "db_path": str(db_path),
-                                        "rebuild_required": True
+                                        "rebuild_required": True,
                                     },
-                                    status="critical"
+                                    status="critical",
                                 )
-                            
+
                             # Create escalation for critical DB issues
                             await self._escalate_database_corruption(errors)
-                            
+
                     except Exception as fix_error:
-                        logger.error(f"❌ Error attempting to fix database: {fix_error}")
+                        logger.error(
+                            f"❌ Error attempting to fix database: {fix_error}"
+                        )
                         result["action_taken"] = f"fix_failed: {str(fix_error)}"
                         result["valid"] = False
                 else:
                     logger.debug("✓ Database integrity check passed")
-                    
+
             finally:
                 conn.close()
-                
+
         except Exception as e:
             logger.error(f"❌ Error checking database integrity: {e}")
             result["valid"] = False
             result["errors"] = [str(e)]
             result["action_taken"] = "check_failed"
-        
+
         return result
 
     async def _escalate_database_corruption(self, errors: List[str]):
         """Escalate database corruption to CEO inbox.
-        
+
         Args:
             errors: List of integrity check errors
         """
         try:
             ceo_inbox = CEO_INBOX_DIR / "inbox"
             ceo_inbox.mkdir(parents=True, exist_ok=True)
-            
+
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             escalation_path = ceo_inbox / f"orchestrator_db_corruption_{timestamp}.md"
-            
+
             error_details = "\n".join([f"- {err[:200]}" for err in errors[:5]])
-            
+
             content = f"""# 🔴 CRITICAL: Database Corruption Detected
 
 **Source**: UnifiedOrchestrator (Level 2)  
@@ -505,11 +535,13 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
 
 **Orchestrator Instructions**: CEO approval required for database rebuild. Do not proceed without explicit authorization.
 """
-            
+
             # Write escalation file
             await asyncio.to_thread(escalation_path.write_text, content)
-            logger.error(f"🔴 Database corruption escalated to CEO: {escalation_path.name}")
-            
+            logger.error(
+                f"🔴 Database corruption escalated to CEO: {escalation_path.name}"
+            )
+
         except Exception as e:
             logger.error(f"❌ Failed to escalate database corruption: {e}")
 
@@ -551,7 +583,7 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
         """Log autonomous system checks to sentinel-log.md."""
         try:
             sentinel_log = ELF_DIR / ".coordination" / "sentinel-log.md"
-            log_entry = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | STATUS: autonomous-check | NOTES: L2 check | EventBridge: {checks['service_health'].get('event_bridge')} | Watcher: {checks['service_health'].get('sentinel')} | Learning: {checks['service_health'].get('learning_capture')} | Learnings: {checks['learnings_count']} | Heuristics: {checks['heuristics_count']}\n"
+            log_entry = f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | STATUS: autonomous-check | NOTES: L2 check | EventBridge: {checks['service_health'].get('event_bridge')} | Sentinel: {checks['service_health'].get('sentinel')} | Learning: {checks['service_health'].get('learning_capture')} | Learnings: {checks['learnings_count']} | Heuristics: {checks['heuristics_count']}\n"
             with open(sentinel_log, "a") as f:
                 f.write(log_entry)
         except Exception as e:
@@ -569,6 +601,8 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
 
         self.running = True
         self.started_at = datetime.now()
+        # Store reference to running event loop for escalation sentinel
+        self._event_loop = asyncio.get_running_loop()
 
         # 1. Connect to existing EventBridge
         if not self._connect_to_eventbridge():
@@ -816,10 +850,10 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
                 logger.info("🔄 Attempting to restart Learning Capture...")
                 self._restart_learning_capture()
 
-        # Watcher
+        # Sentinel
         elif "sentinel" in service_lower:
             if status.lower() in ["down", "inactive", "stopped", "failed"]:
-                logger.info("🔄 Attempting to restart Watcher...")
+                logger.info("🔄 Attempting to restart Sentinel...")
                 self._restart_sentinel()
 
         # Escalate critical issues
@@ -873,7 +907,7 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
             return False
 
     def _restart_sentinel(self) -> bool:
-        """Restart Watcher service.
+        """Restart Sentinel service.
 
         Returns:
             True if restarted successfully, False otherwise.
@@ -902,14 +936,14 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
                 text=True,
             )
             if check.returncode == 0:
-                logger.info("✅ Watcher restarted successfully")
+                logger.info("✅ Sentinel restarted successfully")
                 return True
 
-            logger.error("❌ Failed to restart Watcher")
+            logger.error("❌ Failed to restart Sentinel")
             return False
 
         except Exception as e:
-            logger.error(f"❌ Error restarting Watcher: {e}")
+            logger.error(f"❌ Error restarting Sentinel: {e}")
             return False
 
     def _escalate_critical(self, service: str, status: str, details: Dict):
@@ -952,7 +986,7 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
             logger.error(f'❌ Failed health_status["event_bridge"]')
             pass
 
-        # Watcher (pgrep)
+        # Sentinel (pgrep)
         try:
             result = subprocess.run(
                 ["pgrep", "-f", "core/sentinel.py"],
@@ -997,7 +1031,7 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
         try:
             # Call unified-orchestrator agent via AgentManager
             # The AI Agent now receives the DB integrity check and decides what to do
-            
+
             result = self.agent_manager.ask_agent(
                 "unified-orchestrator",
                 f"""Analyze the system state and take all appropriate actions based on your mission, your position and the level of severity if needed.
@@ -1017,9 +1051,7 @@ INSTRUCTIONS:
                 logger.info(
                     f"✅ AI Agent analysis completed: {result.get('response', '')[:100]}..."
                 )
-                
-            
-                
+
             else:
                 logger.error(
                     f"❌ AI analysis failed: {result.get('error', 'Unknown error')}"
@@ -1032,15 +1064,15 @@ INSTRUCTIONS:
         """Format system state for AI analysis."""
         services = state.get("services_health", {})
         db_integrity = state.get("database_integrity", {})
-        
+
         db_status = "✅ Valid"
-        if not db_integrity.get('valid'):
+        if not db_integrity.get("valid"):
             db_status = f"❌ Corrupted ({len(db_integrity.get('errors', []))} errors)"
-        
+
         return f"""
 System Health Summary:
 - EventBridge: {"✅ Running" if services.get("event_bridge") else "❌ Down"}
-- Watcher: {"✅ Running" if services.get("sentinel") else "❌ Down"}
+- Sentinel: {"✅ Running" if services.get("sentinel") else "❌ Down"}
 - Learning Capture: {"✅ Running" if services.get("learning_capture") else "❌ Down"}
 - Database Integrity: {db_status}
 - Events Processed: {state.get("events_processed", 0)}

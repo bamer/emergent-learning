@@ -40,7 +40,7 @@ Residual escalation_count=1 persisted after services recovered autonomously. Arc
 **Source**: observation
 **Created**: 2026-02-09
 
-Watcher counted 2 'escalations' that were actually resolved documents and notes from earlier in the day. Archiving to archive/ directory prevented false positives.
+Sentinel counted 2 'escalations' that were actually resolved documents and notes from earlier in the day. Archiving to archive/ directory prevented false positives.
 
 ---
 
@@ -50,7 +50,7 @@ Watcher counted 2 'escalations' that were actually resolved documents and notes 
 **Source**: observation
 **Created**: 2026-02-09
 
-Health summary consistently reported Watcher as down despite it running for 69+ minutes. Verified through direct process check each time.
+Health summary consistently reported Sentinel as down despite it running for 69+ minutes. Verified through direct process check each time.
 
 ---
 

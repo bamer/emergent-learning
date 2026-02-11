@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Start Watcher with big-pickle (OpenCode - zero cost)
+# Start Sentinel with big-pickle (OpenCode - zero cost)
 #
 # Replaces Claude Haiku tier with local big-pickle model
 # Keeps standard ELF sentinel structure and coordination

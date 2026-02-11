@@ -1,6 +1,6 @@
 ## 2026-02-02T05:59:36 HANDLER DECISION
 
-**Issue:** Watcher stuck in infinite loop reporting "critical" health status with failed escalations since Jan 30th
+**Issue:** Sentinel stuck in infinite loop reporting "critical" health status with failed escalations since Jan 30th
 
 **Analysis:**
 
@@ -21,7 +21,7 @@
 
 ## 2026-02-03T05:59:36 HANDLER DECISION
 
-**Issue:** Watcher stuck in infinite loop reporting "critical" health status with failed escalations
+**Issue:** Sentinel stuck in infinite loop reporting "critical" health status with failed escalations
 
 **Analysis:**
 

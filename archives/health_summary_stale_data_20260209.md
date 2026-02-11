@@ -16,7 +16,7 @@ The System Health Summary provided contains **stale/incorrect data** that does n
 
 | Metric | Health Summary | Actual Reality | Status |
 |--------|----------------|----------------|--------|
-| **Watcher** | ❌ Down | ✅ Running | ❌ INCORRECT |
+| **Sentinel** | ❌ Down | ✅ Running | ❌ INCORRECT |
 | **EventBridge** | ✅ Running | ✅ Running | ✅ Accurate |
 | **Learning Capture** | ✅ Running | ✅ Running | ✅ Accurate |
 | **Events Processed** | 0 | 3,423 | ❌ INCORRECT |
@@ -35,7 +35,7 @@ Core ELF Services Status:
 │  Events: 3,423 (active processing)            │
 │  Status: Healthy                              │
 │                                              │
-│  Watcher: ✅ Running (PID 1496791)           │
+│  Sentinel: ✅ Running (PID 1496791)           │
 │  Started: 22:32:00Z (51m ago)                │
 │  Process State: S (Sleeping - normal)         │
 │  Status: Monitoring                          │
@@ -62,7 +62,7 @@ Core ELF Services Status:
 
 The System Health Summary is consistently providing incorrect information:
 
-1. **Watcher Reported as "Down"**
+1. **Sentinel Reported as "Down"**
    - **Actual Process:** Running (PID 1496791, S state)
    - **Runtime:** 51 minutes (started 22:32:00Z)
    - **Reported:** Down
@@ -82,8 +82,8 @@ The System Health Summary is consistently providing incorrect information:
 ### Possible Causes
 
 1. **Health Check Querying Wrong Component**
-   - The health summary may be checking for the OLD Watcher process structure
-   - Current Watcher location: `/home/bamer/.opencode/emergent-learning/core/sentinel.py`
+   - The health summary may be checking for the OLD Sentinel process structure
+   - Current Sentinel location: `/home/bamer/.opencode/emergent-learning/core/sentinel.py`
    - Old location may have been: `/home/bamer/.opencode/emergent-learning/Open_ELF/sentinel/`
 
 2. **Stale Cached Data**
@@ -102,7 +102,7 @@ The System Health Summary is consistently providing incorrect information:
 
 **Direct Process Checks:**
 ```bash
-# Watcher process verification
+# Sentinel process verification
 $ ps aux | grep "1496791"
 bamer    1496791  0.0  0.1  49724 35228 ?        S    22:32   0:00 python3 /home/bamer/.opencode/emergent-learning/core/sentinel.py
 
@@ -124,7 +124,7 @@ $ curl -s http://localhost:9998/status
 | Component | Status | Evidence |
 |-----------|--------|----------|
 | **EventBridge** | ✅ Excellent | 3,423 events, active processing |
-| **Watcher** | ✅ Excellent | PID 1496791, running 51m |
+| **Sentinel** | ✅ Excellent | PID 1496791, running 51m |
 | **Learning Capture** | ✅ Excellent | PID 1507470, running 32m |
 | **Dashboard Sentinel** | ✅ Excellent | Running 71m |
 | **Disk** | ✅ Healthy | 83% usage |
@@ -150,7 +150,7 @@ $ curl -s http://localhost:9998/status
 - Dashboard API endpoint
 ```
 
-**2. Verify Watcher Path Configuration**
+**2. Verify Sentinel Path Configuration**
 ```bash
 # Check if health check has hardcoded old path
 # Current correct path: /home/bamer/.opencode/emergent-learning/core/sentinel.py
@@ -189,7 +189,7 @@ $ curl -s http://localhost:9998/status
 - Potential for missed alerts if summary is consistently wrong
 
 **Root Cause Hypothesis:**
-- Health summary checking for Watcher at old path
+- Health summary checking for Sentinel at old path
 - Or: Using cached/stale data without real-time verification
 - Or: Data source not updated after system restart/reconfiguration
 
@@ -205,11 +205,11 @@ $ curl -s http://localhost:9998/status
 **Mission Status:** ✅ **NO DEFECTS FOUND**
 
 **Summary:**
-- ✅ All ELF services operational (EventBridge, Watcher, Learning Capture)
+- ✅ All ELF services operational (EventBridge, Sentinel, Learning Capture)
 - ✅ System healthy and stable
 - ⚠️ Health Summary Report: Contains stale/incorrect data
 - ✅ No service failures, no errors, no issues
 
-**The "Watcher: Down" report is FALSE.** The Watcher process is running and has been for 51 minutes.
+**The "Sentinel: Down" report is FALSE.** The Sentinel process is running and has been for 51 minutes.
 
 **No corrective actions needed on services.** Action required: Investigate and health summary reporting mechanism to fix data synchronization issue.

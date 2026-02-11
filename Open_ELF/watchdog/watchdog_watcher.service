@@ -1,5 +1,5 @@
 [Unit]
-Description=ELF Watcher Watchdog
+Description=ELF Sentinel Watchdog
 After=network.target
 
 [Service]

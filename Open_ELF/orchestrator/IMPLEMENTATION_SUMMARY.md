@@ -84,7 +84,7 @@ We have successfully implemented a **Unified OpenCode Orchestrator** that replac
    - OpenCode SSE stream (tools, errors, messages)
    - CEO inbox directory (manual escalations)
    - Database health checks
-   - Watcher system events
+   - Sentinel system events
 
 2. **Event Processing**:
    - All events converted to standardized internal format
@@ -103,7 +103,7 @@ The decision engine categorizes events by type and severity:
 - **System Errors**: Attempt recovery or notify CEO
 - **Health Issues**: Initiate diagnostics or maintenance
 - **CEO Escalations**: Record in database and attempt autonomous resolution
-- **Watcher Alerts**: Take appropriate monitoring actions
+- **Sentinel Alerts**: Take appropriate monitoring actions
 
 ## Deployment Instructions
 

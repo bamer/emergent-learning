@@ -61,7 +61,7 @@ The Timeline tab displays a chronological stream of system events from the EL Ev
 **Data Source:** Queries `memory/index.db` event_chronicle table directly (9 columns: id, timestamp, event_type, source, source_id, status, summary, data, created_at)
 
 **Event Type Mapping:** Operational events are converted to timeline-friendly types:
-- `tool_poll`, `message.updated`, `watcher_check` → task_start
+- `tool_poll`, `message.updated`, `sentinel_check` → task_start
 - `agent_started`, `agent_stopped` → task_start/task_end
 - `heuristic_created` → heuristic_consulted
 - `session.idle`, `session.status` → task_end

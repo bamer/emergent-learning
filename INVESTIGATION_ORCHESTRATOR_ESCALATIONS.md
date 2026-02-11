@@ -2,19 +2,19 @@
 
 ## Summary
 
-**Issue**: Watcher (L1) escalates to Orchestrator (L2), but Orchestrator does not process these escalations or perform autonomous system checks.
+**Issue**: Sentinel (L1) escalates to Orchestrator (L2), but Orchestrator does not process these escalations or perform autonomous system checks.
 
 **Root Causes Identified**:
 
-### 1. Watcher Writes to Wrong Location
+### 1. Sentinel Writes to Wrong Location
 **File**: `core/sentinel.py` line 66
 ```python
 CEO_INBOX_DIR = ELF_DIR / "ceo-inbox"  # ❌ Wrong - should be coordination directory
 ```
 
-**Problem**: Watcher writes escalation files directly to CEO inbox (`ceo-inbox/sentinel_esc_*.md`) instead of to a coordination directory that Orchestrator monitors.
+**Problem**: Sentinel writes escalation files directly to CEO inbox (`ceo-inbox/sentinel_esc_*.md`) instead of to a coordination directory that Orchestrator monitors.
 
-**Expected**: Watcher → `.coordination/escalations/sentinel_esc_*.md` → Orchestrator monitors this directory
+**Expected**: Sentinel → `.coordination/escalations/sentinel_esc_*.md` → Orchestrator monitors this directory
 
 ---
 
@@ -23,12 +23,12 @@ CEO_INBOX_DIR = ELF_DIR / "ceo-inbox"  # ❌ Wrong - should be coordination dire
 
 **Missing Code**:
 - ✗ No file sentinel for escalation directory
-- ✗ No method to read/process Watcher escalation files
+- ✗ No method to read/process Sentinel escalation files
 - ✗ No autonomous system check logic
-- ✗ No method to act on "Orchestrator Instructions" from Watcher
+- ✗ No method to act on "Orchestrator Instructions" from Sentinel
 
 **Current Behavior**: 
-Orchestrator only processes events from EventBridge queue (tool, message, error, service, health events). It does not watch for or process Watcher escalation files.
+Orchestrator only processes events from EventBridge queue (tool, message, error, service, health events). It does not watch for or process Sentinel escalation files.
 
 ---
 
@@ -40,11 +40,11 @@ Orchestrator only processes events from EventBridge queue (tool, message, error,
 patterns = ["escalation_*.md", "sentinel_esc_*.md", "escalation-*.md"]
 ```
 
-This means Watcher escalations go directly to CEO (L3) without Orchestrator (L2) ever seeing or processing them.
+This means Sentinel escalations go directly to CEO (L3) without Orchestrator (L2) ever seeing or processing them.
 
 **Current (Broken) Flow**:
 ```
-Watcher (L1)
+Sentinel (L1)
   ↓
 Creates escalation in ceo-inbox/  ❌ Wrong location
   ↓
@@ -55,9 +55,9 @@ Processes directly  ❌ Bypasses Orchestrator
 
 **Expected (Correct) Flow**:
 ```
-Watcher (L1)
+Sentinel (L1)
   ↓
-Creates escalation in .coordination/escalations/  ✅ Watcher instruction files
+Creates escalation in .coordination/escalations/  ✅ Sentinel instruction files
   ↓
 Orchestrator (L2)
   ↓
@@ -73,15 +73,15 @@ If critical → CEO (L3)
 ### Escalation Files in Wrong Location
 ```bash
 $ ls -lh /home/bamer/.opencode/emergent-learning/ceo-inbox/sentinel_esc_*.md | wc -l
-9  # 9 Watcher escalations in CEO inbox (should be in coordination/)
+9  # 9 Sentinel escalations in CEO inbox (should be in coordination/)
 ```
 
-### Watcher Escalation File Structure
+### Sentinel Escalation File Structure
 File: `ceo-inbox/sentinel_esc_20260210_020623.md`
 ```markdown
 ## Orchestrator Instructions
 As the Level 2 agent, please:
-1. Review the Watcher's analysis above
+1. Review the Sentinel's analysis above
 2. Perform your own assessment using AgentManager
 3. Take appropriate autonomous actions
 4. If critical, escalate to CEO (Level 3)
@@ -97,7 +97,7 @@ $ grep -n "def.*escalat\|def.*sentinel.*process" Open_ELF/orchestrator/unified_o
 ```
 
 Only `_escalate_critical` exists (for internal service failures), but no method to:
-- Watch for Watcher escalation files
+- Watch for Sentinel escalation files
 - Read and parse them
 - Perform the "autonomous checks" requested
 - Document findings
@@ -134,11 +134,11 @@ class EscalationFileHandler(FileSystemEventHandler):
             await self.orchestrator.process_sentinel_escalation(event.src_path)
 ```
 
-2. **Process Watcher escalation method**:
+2. **Process Sentinel escalation method**:
 ```python
 async def process_sentinel_escalation(self, filepath: Path):
-    """Process a Watcher escalation file."""
-    logger.info(f"📬 Processing Watcher escalation: {filepath.name}")
+    """Process a Sentinel escalation file."""
+    logger.info(f"📬 Processing Sentinel escalation: {filepath.name}")
     
     # Read escalation
     content = await aiofs.open(filepath, mode='r').read()
@@ -148,7 +148,7 @@ async def process_sentinel_escalation(self, filepath: Path):
     # Document findings
     # If critical, create CEO escalation
     
-    logger.info(f"✅ Watcher escalation processed")
+    logger.info(f"✅ Sentinel escalation processed")
 ```
 
 3. **Schedule periodic autonomous checks**:
@@ -162,7 +162,7 @@ async def _run_periodic_checks(self):
 
 ---
 
-### Fix 2: Update Watcher Escalation Output Location
+### Fix 2: Update Sentinel Escalation Output Location
 
 **File**: `core/sentinel.py` line 66
 
@@ -180,7 +180,7 @@ ESCALATION_DIR = ELF_DIR / ".coordination" / "escalations"
 CEO_INBOX_DIR = ELF_DIR / "ceo-inbox"
 ```
 
-**In write_escalation method**: Use `ESCALATION_DIR` for regular Watcher escalations.
+**In write_escalation method**: Use `ESCALATION_DIR` for regular Sentinel escalations.
 
 ---
 
@@ -195,9 +195,9 @@ patterns = ["escalation_*.md", "sentinel_esc_*.md", "escalation-*.md"]
 
 **Change to**:
 ```python
-# Only process CEO escalations from Orchestrator (not Watcher)
+# Only process CEO escalations from Orchestrator (not Sentinel)
 patterns = ["ceo_escalation_*.md", "orchestrator_esc_*.md"]
-# Or: Exclude Watcher escalations explicitly
+# Or: Exclude Sentinel escalations explicitly
 excludes = ["sentinel_esc_*.md"]
 ```
 
@@ -205,7 +205,7 @@ excludes = ["sentinel_esc_*.md"]
 
 ## Expected Behavior After Fixes
 
-1. **Watcher creates escalation in correct location**:
+1. **Sentinel creates escalation in correct location**:
    ```
    .coordination/escalations/sentinel_esc_20260210_HHMMSS.md
    ```
@@ -226,18 +226,18 @@ excludes = ["sentinel_esc_*.md"]
 ## Impact Assessment
 
 ### Current State (Broken)
-- ✗ Watcher escalations not processed by Orchestrator
+- ✗ Sentinel escalations not processed by Orchestrator
 - ✗ Orchestrator performs no autonomous checks
-- ✗ CEO inbox flooded with Watcher escalations
+- ✗ CEO inbox flooded with Sentinel escalations
 - ✗ "Watch → Orchestrator → CEO" hierarchy not respected
 - ✗ L2 autonomous decision-making capability unused
 
 ### Target State (Fixed)
-- ✓ Watcher escalations processed by Orchestrator
+- ✓ Sentinel escalations processed by Orchestrator
 - ✓ Orchestrator performs autonomous system checks every 15 min
 - ✓ CEO only receives critical escalations from Orchestrator
 - ✓ L1 → L2 → L3 hierarchy properly enforced
-- ✓ System has multi-level intelligence (Watcher + Orchestrator + CEO)
+- ✓ System has multi-level intelligence (Sentinel + Orchestrator + CEO)
 
 ---
 
@@ -246,7 +246,7 @@ excludes = ["sentinel_esc_*.md"]
 **Severity**: 🔴 Critical (system architecture not functioning as designed)
 
 **User Impact**:
-- Watcher escalations pile up unprocessed
+- Sentinel escalations pile up unprocessed
 - No autonomous system checks at L2 level
 - CEO burdened with issues that could be handled autonomously
 - System lacks multi-level decision making
@@ -255,11 +255,11 @@ excludes = ["sentinel_esc_*.md"]
 
 ## Next Steps
 
-1. Implement Fix 2 first (update Watcher escalation path)
+1. Implement Fix 2 first (update Sentinel escalation path)
 2. Implement Fix 1 (add escalation processing to Orchestrator)
-3. Implement Fix 3 (filter Watcher escalations from CEO inbox monitor)
+3. Implement Fix 3 (filter Sentinel escalations from CEO inbox monitor)
 4. Test full escalation flow:
-   - Watcher creates escalation in `.coordination/escalations/`
+   - Sentinel creates escalation in `.coordination/escalations/`
    - Orchestrator detects and processes it
    - Orchestrator performs autonomous check
    - If critical, Orchestrator creates CEO escalation

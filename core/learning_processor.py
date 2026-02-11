@@ -5,7 +5,7 @@ Learning Processor - Centralized Learning & Trail Management
 Single entry point for ALL learning operations:
 - Pre-tool context injection and heuristic consultation
 - Post-tool outcome analysis and validation
-- Heuristic capture and promotion
+- Heuristic capture and promotion (3 mechanisms)
 - Pheromone trails (file access tracking)
 - Workflow trails with scents (discovery, blocker, hot, cold)
 - Hot spot analysis and trail decay
@@ -16,6 +16,13 @@ This replaces:
 - hooks/learning-loop/post_tool_learning.py
 - hooks/learning-loop/record_pheromone.py
 - conductor trail functionality
+
+Improvements in v2.0:
+- Shared pattern definitions from learning_patterns.py
+- Database error handling decorator
+- Refactored _extract_file_paths for better readability
+- Improved type hints throughout
+- Reduced code duplication
 """
 
 import json
@@ -26,6 +33,8 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
+from functools import wraps
+from contextlib import contextmanager
 
 # Setup logging
 try:
@@ -50,6 +59,90 @@ STATE_FILE = (
 )
 SEMANTIC_DAEMON_URL = "http://localhost:5001"
 
+# Import shared patterns
+try:
+    from learning_patterns import (
+        ERROR_PATTERN_HEURISTICS,
+        ANTI_PATTERN_HEURISTICS,
+        match_error_pattern,
+        match_anti_pattern,
+    )
+except ImportError:
+    # Fallback to local definitions if import fails
+    logger.warning("Could not import learning_patterns, using empty patterns")
+    _ERROR_PATTERNS = {}
+    _ANTI_PATTERNS = {}
+    match_error_pattern = lambda x: []
+    match_anti_pattern = lambda x: []
+
+
+# ============================================================================
+# DATABASE CONNECTION MANAGEMENT
+# ============================================================================
+
+
+@contextmanager
+def get_db_connection(db_path: Path, timeout: float = 5.0):
+    """
+    Context manager for database connections with automatic cleanup.
+
+    Usage:
+        with get_db_connection(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM table")
+            conn.commit()
+    """
+    conn = None
+    try:
+        if not db_path.exists():
+            yield None
+            return
+
+        conn = sqlite3.connect(str(db_path), timeout=timeout)
+        conn.row_factory = sqlite3.Row
+        yield conn
+    except Exception as e:
+        logger.error(f"Database connection error: {e}", exc_info=True)
+        if conn:
+            conn.rollback()
+        raise
+    finally:
+        if conn:
+            conn.close()
+
+
+def db_operation(default_return=None):
+    """
+    Decorator for database operations with automatic error handling.
+
+    Usage:
+        @db_operation(default_return=0)
+        def my_function(self, ...):
+            # Database operations here
+            return result
+    """
+
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            conn = self._get_db_connection()
+            if not conn:
+                return default_return
+
+            try:
+                return func(self, conn, *args, **kwargs)
+            except Exception as e:
+                logger.error(f"Error in {func.__name__}: {e}", exc_info=True)
+                conn.rollback()
+                return default_return
+            finally:
+                conn.close()
+
+        return wrapper
+
+    return decorator
+
+
 # Risky patterns for advisory verification
 RISKY_PATTERNS = {
     "code_execution": [
@@ -71,6 +164,9 @@ RISKY_PATTERNS = {
         (r"token\s*=\s*['\"][^'\"]+['\"]", "Hardcoded token detected"),
     ],
 }
+
+# Note: ERROR_PATTERN_HEURISTICS and ANTI_PATTERN_HEURISTICS are now
+# imported from learning_patterns.py to avoid duplication
 
 
 @dataclass
@@ -101,14 +197,21 @@ class LearningProcessor:
     """
 
     def __init__(self):
+        """Initialize LearningProcessor with session state."""
         self.db_path = DB_PATH
         self.elf_dir = ELF_DIR
         self.session_state = self._load_session_state()
 
     def _get_db_connection(self) -> Optional[sqlite3.Connection]:
-        """Get database connection."""
+        """
+        Get database connection with error handling.
+
+        Returns:
+            SQLite connection or None if database doesn't exist
+        """
         if not self.db_path.exists():
             return None
+
         try:
             conn = sqlite3.connect(str(self.db_path), timeout=5.0)
             conn.row_factory = sqlite3.Row
@@ -802,75 +905,116 @@ class LearningProcessor:
         return "discovery"  # Default
 
     def _extract_file_paths(self, tool_name: str, tool_input: Dict) -> List[str]:
-        """Extract file paths from tool input."""
+        """
+        Extract file paths from tool input.
+
+        Refactored for better readability and modularity.
+
+        Returns:
+            List of file paths extracted from tool input
+        """
         paths = set()
         tool_lower = tool_name.lower()
 
-        # DEBUG: Log the actual structure of tool_input
-        logger.debug(
-            f"🔍 _extract_file_paths: tool_name={tool_name}, tool_input type={type(tool_input)}, tool_input={tool_input}"
-        )
+        if not isinstance(tool_input, dict):
+            return list(paths)
 
-        if isinstance(tool_input, dict):
-            if tool_lower in ["read", "edit", "write"]:
-                path = tool_input.get("file_path") or tool_input.get("filePath", "")
-                # Also check for nested structure
-                if not path:
-                    nested_input = tool_input.get("input", {})
-                    if isinstance(nested_input, dict):
-                        path = nested_input.get("file_path") or nested_input.get(
-                            "filePath", ""
-                        )
-                        logger.debug(f"🔍 Found nested input, extracted path: {path}")
-                if path:
-                    paths.add(path)
-                    logger.debug(f"✅ Added path: {path}")
-            elif tool_lower == "grep":
-                path = tool_input.get("path", "")
-                if not path:
-                    nested_input = tool_input.get("input", {})
-                    if isinstance(nested_input, dict):
-                        path = nested_input.get("path", "")
-                        logger.debug(f"🔍 Found nested input, extracted path: {path}")
-                if path:
-                    paths.add(path)
-            elif tool_lower == "glob":
-                pattern = tool_input.get("pattern") or tool_input.get("path", "")
-                if not pattern:
-                    nested_input = tool_input.get("input", {})
-                    if isinstance(nested_input, dict):
-                        pattern = nested_input.get("pattern") or nested_input.get(
-                            "path", ""
-                        )
-                        logger.debug(
-                            f"🔍 Found nested input, extracted pattern: {pattern}"
-                        )
-                if pattern:
-                    paths.add(pattern)
-            elif tool_lower == "bash":
-                command = tool_input.get("command", "")
-                if not command:
-                    nested_input = tool_input.get("input", {})
-                    if isinstance(nested_input, dict):
-                        command = nested_input.get("command", "")
-                # Extract paths from common commands
-                patterns = [
-                    # Python modules and scripts
-                    r"/[a-zA-Z0-9_/]+\.py",
-                    r"[a-zA-Z0-9_/]+\.py",
-                    # Common file ops
-                    r"\b(?:cat|ls|find|grep|rm|touch|mv|cp|chmod|chown)\s+([^\s|;>]+)",
-                    # Direct paths
-                    r"(?:^|\s)(/[^\s|;>]+)",
-                ]
-                for pattern in patterns:
-                    for match in re.finditer(pattern, command):
-                        path = match.group(1) if match.lastindex else match.group(0)
-                        if path and not path.startswith("-"):
-                            paths.add(path)
+        # Extract based on tool type
+        if tool_lower in ("read", "edit", "write"):
+            paths.update(self._extract_from_read_edit_write(tool_input, tool_lower))
+        elif tool_lower == "grep":
+            paths.update(self._extract_from_grep(tool_input))
+        elif tool_lower == "glob":
+            paths.update(self._extract_from_glob(tool_input))
+        elif tool_lower == "bash":
+            paths.update(self._extract_from_bash(tool_input))
 
-        logger.debug(f"🔍 _extract_file_paths result: {list(paths)}")
+        logger.debug(f"[FILE_PATHS] Extracted {len(paths)} paths from {tool_name}")
         return list(paths)
+
+    def _get_nested_input(self, tool_input: Dict) -> Dict:
+        """Extract nested input dict from tool input."""
+        nested = tool_input.get("input", {})
+        return nested if isinstance(nested, dict) else {}
+
+    def _extract_from_read_edit_write(
+        self, tool_input: Dict, tool_lower: str
+    ) -> List[str]:
+        """Extract paths from Read/Edit/Write tools."""
+        paths = []
+
+        # Direct path fields
+        path = tool_input.get("file_path") or tool_input.get("filePath", "")
+
+        # Nested path fields
+        if not path:
+            nested = self._get_nested_input(tool_input)
+            path = nested.get("file_path") or nested.get("filePath", "")
+
+        if path:
+            paths.append(path)
+
+        return paths
+
+    def _extract_from_grep(self, tool_input: Dict) -> List[str]:
+        """Extract paths from Grep tool."""
+        paths = []
+
+        path = tool_input.get("path", "")
+        if not path:
+            nested = self._get_nested_input(tool_input)
+            path = nested.get("path", "")
+
+        if path:
+            paths.append(path)
+
+        return paths
+
+    def _extract_from_glob(self, tool_input: Dict) -> List[str]:
+        """Extract paths/patterns from Glob tool."""
+        paths = []
+
+        pattern = tool_input.get("pattern") or tool_input.get("path", "")
+        if not pattern:
+            nested = self._get_nested_input(tool_input)
+            pattern = nested.get("pattern") or nested.get("path", "")
+
+        if pattern:
+            paths.append(pattern)
+
+        return paths
+
+    def _extract_from_bash(self, tool_input: Dict) -> List[str]:
+        """
+        Extract paths from bash command.
+
+        Looks for Python files and paths after common shell commands.
+        """
+        paths = []
+
+        command = tool_input.get("command", "")
+        if not command:
+            nested = self._get_nested_input(tool_input)
+            command = nested.get("command", "")
+
+        # Extract paths from common command patterns
+        patterns = [
+            # Python modules and scripts
+            r"/[a-zA-Z0-9_/]+\.py",
+            r"[a-zA-Z0-9_/]+\.py",
+            # Common file ops
+            r"\b(?:cat|ls|find|grep|rm|touch|mv|cp|chmod|chown)\s+([^\s|;>]+)",
+            # Direct paths
+            r"(?:^|\s)(/[^\s|;>]+)",
+        ]
+
+        for pattern in patterns:
+            for match in re.finditer(pattern, command):
+                path = match.group(1) if match.lastindex else match.group(0)
+                if path and not path.startswith("-"):
+                    paths.append(path)
+
+        return paths
 
     # =========================================================================
     # ADVISORY VERIFICATION
@@ -991,8 +1135,92 @@ class LearningProcessor:
         explicit = self._extract_explicit_learnings(content)
         learnings.extend(explicit)
 
+        # NEW: Extract error context learnings (MECHANISM 2)
+        if outcome == "failure" or self._contains_error(content):
+            error_learnings = self._extract_error_context_learnings(
+                content, event.tool_name
+            )
+            learnings.extend(error_learnings)
+
+        # NEW: Extract anti-pattern learnings (MECHANISM 3)
+        anti_pattern_learnings = self._extract_anti_pattern_learnings(content)
+        learnings.extend(anti_pattern_learnings)
+
         if not learnings:
             return 0
+
+    def _contains_error(self, text: str) -> bool:
+        """Check if text contains error indicators."""
+        error_keywords = [
+            "error",
+            "exception",
+            "failed",
+            "traceback",
+            "blocker",
+            "permission denied",
+            "timeout",
+            "not found",
+        ]
+        text_lower = text.lower()
+        return any(keyword in text_lower for keyword in error_keywords)
+
+    def _extract_error_context_learnings(
+        self, content: str, tool_name: str
+    ) -> List[Dict]:
+        """
+        MECHANISM 2: Context-based detection - Extract learnings from error context.
+
+        When an error occurs, analyze the specific error type and suggest
+        a preventive heuristic.
+
+        Uses shared pattern matching from learning_patterns module.
+        """
+        learnings = []
+
+        # Use shared pattern matching function
+        matches = match_error_pattern(content)
+
+        for domain, pattern, heuristic_text in matches:
+            learning = {
+                "rule": heuristic_text,
+                "domain": domain,
+                "confidence": 0.75,  # Moderate confidence for error-based
+                "source": "error_context",
+            }
+
+            learnings.append(learning)
+            logger.info(f"[ERROR_PATTERN] Detected: {heuristic_text[:50]}...")
+
+        return learnings
+
+    def _extract_anti_pattern_learnings(self, content: str) -> List[Dict]:
+        """
+        MECHANISM 3: Pattern matching - Detect anti-patterns and suggest best practices.
+
+        Scans code for known anti-patterns and generates preventive heuristics.
+
+        Uses shared pattern matching from learning_patterns module.
+        """
+        learnings = []
+
+        # Use shared pattern matching function
+        matches = match_anti_pattern(content)
+
+        for domain, pattern, heuristic_text in matches:
+            learning = {
+                "rule": heuristic_text,
+                "domain": domain,
+                "confidence": 0.7,  # Moderate confidence for pattern-based
+                "source": "anti_pattern",
+            }
+
+            # Avoid duplicates
+            existing_rules = [l["rule"] for l in learnings]
+            if heuristic_text not in existing_rules:
+                learnings.append(learning)
+                logger.info(f"[ANTI_PATTERN] Detected: {heuristic_text[:50]}...")
+
+        return learnings
 
         # Record to database
         conn = self._get_db_connection()

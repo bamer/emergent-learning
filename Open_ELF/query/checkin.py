@@ -6,7 +6,7 @@ Steps (Updated for New Architecture):
 2. Verify hooks
 3. Load building context
 4. Display golden rules & heuristics
-5. Check and display architecture status (EventBridge, UnifiedOrchestrator, Watcher, Learning Capture)
+5. Check and display architecture status (EventBridge, UnifiedOrchestrator, Sentinel, Learning Capture)
 6. Prompt dashboard (Claude tracks per-session)
 7. Prompt model selection (Claude tracks per-session)
 8. Check CEO decisions
@@ -208,7 +208,7 @@ class CheckinOrchestrator:
         except:
             status["dashboard_frontend"] = "stopped"
 
-        # Check Watcher
+        # Check Sentinel
         try:
             result = subprocess.run(
                 ["pgrep", "-f", "sentinel/launcher.py"], capture_output=True, text=True
@@ -270,7 +270,7 @@ class CheckinOrchestrator:
             ("Sentinel Monitor", status["sentinel"]),
             ("Dashboard Backend", status["dashboard_backend"]),
             ("Dashboard Frontend", status["dashboard_frontend"]),
-            ("Watcher", status["sentinel"]),
+            ("Sentinel", status["sentinel"]),
             ("Learning Capture", status["learning_capture"]),
         ]
 

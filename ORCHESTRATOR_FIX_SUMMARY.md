@@ -9,15 +9,15 @@
 - Removed garbage domains from heuristics table
 - Background learning capture restarted successfully
 
-### 2. Watcher Status Dashboard Fix (COMPLETED)
+### 2. Sentinel Status Dashboard Fix (COMPLETED)
 - Fixed total checks query (was showing 119, now shows 2,780)
-- Fixed Watcher process detection (wrong path)
+- Fixed Sentinel process detection (wrong path)
 - Backend restarted successfully
 
-### 3. Watcher Escalation Path Fix (COMPLETED)
-- Watcher now writes escalations to `.coordination/escalations/` instead of `ceo-inbox/`
-- CEO inbox monitor filters out Watcher escalations (respects L1→L2→L3 hierarchy)
-- Watcher restarted successfully
+### 3. Sentinel Escalation Path Fix (COMPLETED)
+- Sentinel now writes escalations to `.coordination/escalations/` instead of `ceo-inbox/`
+- CEO inbox monitor filters out Sentinel escalations (respects L1→L2→L3 hierarchy)
+- Sentinel restarted successfully
 
 ### 4. Orchestrator Escalation Enhancement (PARTIAL - SYNTAX ERRORS FIXED)
 Successfully fixed all syntax errors in enhanced orchestrator:
@@ -56,7 +56,7 @@ Add the new features to the working backup file manually:
 2. **Add `EscalationFileHandler` class** (after `Event` class, before `UnifiedOrchestrator`):
    ```python
    class EscalationFileHandler(FileSystemEventHandler):
-       """File system handler for Watcher escalation files."""
+       """File system handler for Sentinel escalation files."""
        def __init__(self, orchestrator: "UnifiedOrchestrator"):
            self.orchestrator = orchestrator
 
@@ -145,7 +145,7 @@ This requires understanding Python AST and indentation handling.
 ## Services Running
 
 ```
-✓ Watcher (L1) - PID 345248
+✓ Sentinel (L1) - PID 345248
 ✓ CEO Inbox Monitor (L3) - PID 307213 (with filtering)
 ✓ Event Bridge - Port 9998 listening
 ✓ Dashboard Backend - Port 8000 serving
@@ -166,21 +166,21 @@ CEO escalations pending: 0
 ## Key Decisions Made
 
 1. **Historical data**: All existing `project_path=NULL` entries remain global
-2. **Escalation flow**: Watcher → Orchestrator (.coordination/escalations/) → CEO (ceo-inbox/)
-3. **CEO filtering**: CEO inbox monitor now filters Watcher escalations
+2. **Escalation flow**: Sentinel → Orchestrator (.coordination/escalations/) → CEO (ceo-inbox/)
+3. **CEO filtering**: CEO inbox monitor now filters Sentinel escalations
 
 ## Summary
 
 We successfully:
 1. Fixed data quality issue (100% project_path tracking)
-2. Fixed Watcher total checks display
-3. Fixed Watcher escalation path
+2. Fixed Sentinel total checks display
+3. Fixed Sentinel escalation path
 4. Fixed all syntax errors in enhanced orchestrator
 
 Next step: Manually add the escalation processing logic to the working orchestrator (recommended) or use automated AST manipulation to fix the broken file.
 
 The enhancement adds:
-- File watching for Watcher escalations
+- File watching for Sentinel escalations
 - Autonomous system checks (every 15 minutes)
 - AgentManager integration for analysis
 - L2 → L3 escalation path with database logging

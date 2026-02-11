@@ -1,5 +1,5 @@
 """
-Event Watcher for TalkinHead
+Event Sentinel for TalkinHead
 
 Polls for hook events from Claude Code hooks via a JSON event file.
 Uses timestamp-based deduplication to only process new events.
@@ -11,7 +11,7 @@ from pathlib import Path
 from PyQt5.QtCore import QObject, QTimer, pyqtSignal
 
 
-class EventWatcher(QObject):
+class EventSentinel(QObject):
     """
     Watches for events written by Claude Code hooks.
 
@@ -25,7 +25,7 @@ class EventWatcher(QObject):
 
     def __init__(self, poll_interval_ms: int = 200, parent=None):
         """
-        Initialize the event watcher.
+        Initialize the event sentinel.
 
         Args:
             poll_interval_ms: Polling interval in milliseconds (default 200ms)
@@ -88,7 +88,7 @@ class EventWatcher(QObject):
 
     @property
     def is_running(self) -> bool:
-        """Check if the watcher is currently polling."""
+        """Check if the sentinel is currently polling."""
         return self._timer.isActive()
 
     @property
@@ -107,11 +107,11 @@ if __name__ == "__main__":
     def on_event(event_type: str, message: str):
         print(f"Event received: type={event_type}, message={message}")
 
-    watcher = EventWatcher()
-    watcher.event_triggered.connect(on_event)
-    watcher.start()
+    sentinel = EventSentinel()
+    sentinel.event_triggered.connect(on_event)
+    sentinel.start()
 
-    print(f"Watching: {watcher.events_file_path}")
+    print(f"Watching: {sentinel.events_file_path}")
     print("Press Ctrl+C to stop...")
 
     sys.exit(app.exec_())

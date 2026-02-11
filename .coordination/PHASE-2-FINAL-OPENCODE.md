@@ -12,7 +12,7 @@
 ### Original Problem
 
 - Sentinel created = duplicate system (overcomplicated)
-- Watcher uses Claude (costs money, you don't have)
+- Sentinel uses Claude (costs money, you don't have)
 - Learning loop events not tracked
 
 ### The Solution
@@ -31,7 +31,7 @@
 │         ELF Learning Loop - Final Standard          │
 └─────────────────────────────────────────────────────┘
 
-WATCHER (Standard ELF):
+SENTINEL (Standard ELF):
   sentinel_loop.py → generates prompts
            ↓
   run_with_bigpickle.py → sends to big-pickle
@@ -101,14 +101,14 @@ Repeats single pass every N seconds (Ctrl+C to stop)
 
 ## Events Recorded
 
-### Watcher Events → event_chronicle
+### Sentinel Events → event_chronicle
 
 ```json
 {
   "event_type": "sentinel_cycle",
   "source": "sentinel",
   "status": "nominal|warning|critical",
-  "summary": "Watcher analysis result",
+  "summary": "Sentinel analysis result",
   "data": {
     "agents_checked": N,
     "issues_found": "...",
@@ -146,13 +146,13 @@ This implementation follows standard ELF patterns:
 
 ### Before (With Claude)
 
-- Watcher: Haiku ~$0.001/check × 2,880/day = $2.88/day
-- Watcher: CEO ~$0.10/call × 10/day = $1.00/day
+- Sentinel: Haiku ~$0.001/check × 2,880/day = $2.88/day
+- Sentinel: CEO ~$0.10/call × 10/day = $1.00/day
 - **Total: $3.88/day**
 
 ### After (With big-pickle)
 
-- Watcher: big-pickle (local, free) × unlimited = $0.00/day
+- Sentinel: big-pickle (local, free) × unlimited = $0.00/day
 - Learning loop: existing = $0.00/day
 - **Total: $0.00/day**
 
@@ -299,7 +299,7 @@ Check event_chronicle exists:
 sqlite3 memory/index.db ".tables" | grep event_chronicle
 ```
 
-### Watcher won't start
+### Sentinel won't start
 
 Check Python path:
 

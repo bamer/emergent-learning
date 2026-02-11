@@ -53,7 +53,7 @@ Agents are loaded from `~/.opencode/agents/plugins/` with catalog at `~/.opencod
 1. **Initialize** (if needed):
    ```bash
    mkdir -p ~/.opencode/emergent-learning/.coordination
-   python ~/.opencode/emergent-learning/watcher/watcher_loop.py clear
+   python ~/.opencode/emergent-learning/sentinel/sentinel_loop.py clear
    ```
 
 2. **Analyze task** and recommend agents from pool:
@@ -128,14 +128,14 @@ Agents are loaded from `~/.opencode/agents/plugins/` with catalog at `~/.opencod
    - Tier 2 (Inherit/Orchestrator): most specialists
    - Tier 3 (Haiku): fast operational tasks
 
-6. **Spawn watcher** (optional but recommended):
+6. **Spawn sentinel** (optional but recommended):
    ```bash
-   python ~/.opencode/emergent-learning/watcher/watcher_loop.py prompt
+   python ~/.opencode/emergent-learning/sentinel/sentinel_loop.py prompt
    ```
 
    Then spawn with Task tool:
    ```
-   - description: "[WATCHER] Monitor swarm"
+   - description: "[SENTINEL] Monitor swarm"
    - subagent_type: "general-purpose"
    - model: "nvidia/qwen/qwen3-next-80b-a3b-instruct"
    - run_in_background: true
@@ -148,13 +148,13 @@ Agents are loaded from `~/.opencode/agents/plugins/` with catalog at `~/.opencod
 
 9. **Stop monitoring** when done:
    ```bash
-   python ~/.opencode/emergent-learning/watcher/watcher_loop.py stop
+   python ~/.opencode/emergent-learning/sentinel/sentinel_loop.py stop
    ```
 
 ### `/swarm show` (View State)
 
 ```bash
-python ~/.opencode/emergent-learning/watcher/watcher_loop.py status
+python ~/.opencode/emergent-learning/sentinel/sentinel_loop.py status
 ```
 
 Also check blackboard:
@@ -173,7 +173,7 @@ rm -rf ~/.opencode/emergent-learning/.coordination/*
 
 Stop monitoring:
 ```bash
-python ~/.opencode/emergent-learning/watcher/watcher_loop.py stop
+python ~/.opencode/emergent-learning/sentinel/sentinel_loop.py stop
 ```
 
 ---
@@ -210,5 +210,5 @@ Agents report in `## FINDINGS` section:
 
 - File-based IPC (no external services)
 - Windows compatible
-- Single-pass watchers (user-driven cycle)
+- Single-pass sentinels (user-driven cycle)
 - Max 5 iterations per swarm

@@ -24,14 +24,14 @@ Spawn and manage coordinated agents using the blackboard pattern.
 
 ## How Monitoring Works
 
-**Single-Pass Watcher Model:**
+**Single-Pass Sentinel Model:**
 1. You spawn work agents with `[SWARM]` tag
 2. Hook reminds main Claude if sentinel needed
 3. Main Claude spawns nvidia/qwen/qwen3-next-80b-a3b-instruct sentinel (single pass)
-4. Watcher analyzes state, fixes problems, logs, exits
+4. Sentinel analyzes state, fixes problems, logs, exits
 5. Next user message triggers next monitoring cycle
 
-Watchers do NOT self-perpetuate (cost control). The cycle is driven by user interaction.
+Sentinels do NOT self-perpetuate (cost control). The cycle is driven by user interaction.
 
 ---
 
@@ -85,7 +85,7 @@ Watchers do NOT self-perpetuate (cost control). The cycle is driven by user inte
 
    Then spawn with Task tool:
    ```
-   - description: "[WATCHER] Monitor swarm"
+   - description: "[SENTINEL] Monitor swarm"
    - subagent_type: "general-purpose"
    - model: "nvidia/qwen/qwen3-next-80b-a3b-instruct"
    - run_in_background: true

@@ -35,7 +35,7 @@ from PyQt5.QtCore import QTimer, Qt
 sys.path.insert(0, str(Path(__file__).parent))
 
 from ivy_overlay import IvyOverlay
-from event_watcher import EventWatcher
+from event_sentinel import EventSentinel
 
 
 # Lockfile for single-instance enforcement
@@ -92,10 +92,10 @@ class TalkinHeadApp:
 
         # Create components
         self.overlay = IvyOverlay()
-        self.watcher = EventWatcher()
+        self.sentinel = EventSentinel()
 
         # Connect signals - event_triggered emits (event_type, message), play_phrase takes phrase_name
-        self.watcher.event_triggered.connect(lambda event_type, message: self.overlay.play_phrase(event_type))
+        self.sentinel.event_triggered.connect(lambda event_type, message: self.overlay.play_phrase(event_type))
         self.overlay.quit_requested.connect(self._quit)
 
         # Parent process monitor disabled - causes false positives on Windows
@@ -236,7 +236,7 @@ class TalkinHeadApp:
             self._goodbye_pending = True
 
             # Stop accepting new events
-            self.watcher.stop()
+            self.sentinel.stop()
             if self.parent_monitor:
                 self.parent_monitor.stop()
 
@@ -253,8 +253,8 @@ class TalkinHeadApp:
         """Final cleanup and exit after goodbye phrase finishes."""
         print("Goodbye complete. Shutting down...")
 
-        # Stop the watcher (if not already stopped)
-        self.watcher.stop()
+        # Stop the sentinel (if not already stopped)
+        self.sentinel.stop()
 
         # Stop parent monitor (if not already stopped)
         if self.parent_monitor:
@@ -275,8 +275,8 @@ class TalkinHeadApp:
         # Show overlay
         self.overlay.show()
 
-        # Start event watcher
-        self.watcher.start()
+        # Start event sentinel
+        self.sentinel.start()
 
         if self.dashboard_pid:
             print(f"TalkinHead started (monitoring dashboard PID: {self.dashboard_pid})")

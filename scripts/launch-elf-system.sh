@@ -185,20 +185,20 @@ stop_opencode_server() {
 
 # Fonction pour démarrer le sentinel daemon
 start_sentinel_daemon() {
-    echo -e "${PURPLE}👁️ Démarrage du Watcher Daemon...${NC}"
+    echo -e "${PURPLE}👁️ Démarrage du Sentinel Daemon...${NC}"
     
     cd "$ELF_DIR"
     
     # Démarrer en arrière-plan
     $PYTHON_CMD sentinel/enhanced_sentinel.py --daemon --interval 30 &
-    WATCHER_PID=$!
+    SENTINEL_PID=$!
     
-    echo -e "${GREEN}✅ Watcher démarré (PID: $WATCHER_PID)${NC}"
+    echo -e "${GREEN}✅ Sentinel démarré (PID: $SENTINEL_PID)${NC}"
     echo -e "   📝 Logs: ${BLUE}$ELF_DIR/.coordination/sentinel-log.md${NC}"
     echo -e "   🛑 Contrôle: ${BLUE}touch $ELF_DIR/.coordination/sentinel-stop${NC}"
     
     # Sauvegarder le PID pour la gestion
-    echo $WATCHER_PID > "$ELF_DIR/.sentinel.pid"
+    echo $SENTINEL_PID > "$ELF_DIR/.sentinel.pid"
 }
 
 # Fonction pour effectuer une vérification de santé
@@ -257,7 +257,7 @@ show_usage() {
     echo ""
     echo "Composants:"
     echo "  🤖 ELF Orchestrator  - Coordination multi-agent"
-    echo "  👁️ ELF Watcher     - Cycles surveillance 30s"
+    echo "  👁️ ELF Sentinel     - Cycles surveillance 30s"
     echo "  🌐 OpenCode Server   - API spawn agents"
     echo "  📊 Dashboard        - Interface web"
     echo ""

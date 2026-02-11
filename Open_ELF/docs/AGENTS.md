@@ -33,7 +33,7 @@ response = manager.ask_agent("unified-orchestrator", "Analyze system health")
 
 **File**: `/home/bamer/.opencode/agents/OPC_ELF_System_Agents/unified-orchestrator.md`
 
-### 2. Watcher Agent
+### 2. Sentinel Agent
 
 **Role**: Continuous system monitoring and alerting
 

@@ -63,7 +63,7 @@ Should show: ✅ All checks passed!
 | **Auto-Learning** | Hooks not firing | Run `/elf_activate` |
 | **Golden Rules** | Not synced to DB | Run `python3 query/repair_database.py` |
 | **Session Continuity** | Lifecycle events missing | Manual: `python3 query/checkout.py --final` |
-| **Async Watcher** | Not auto-spawning | Test: `python3 sentinel/run_with_bigpickle.py` |
+| **Async Sentinel** | Not auto-spawning | Test: `python3 sentinel/run_with_bigpickle.py` |
 | **Swarm Agents** | Incomplete | See migration guide |
 | **Pheromone Trails** | Not recording | Need post-tool hook active |
 

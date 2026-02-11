@@ -288,10 +288,10 @@ class DecisionEngine:
             logger.error(f"🚨 Critical sentinel alert: {alert_type}")
             return await self.initiate_emergency_protocol(event)
         elif event.severity == "error":
-            logger.warning(f"⚠️ Watcher alert: {alert_type}")
+            logger.warning(f"⚠️ Sentinel alert: {alert_type}")
             return await self.restart_monitoring_services()
         else:
-            logger.info(f"🔍 Watcher observation: {alert_type}")
+            logger.info(f"🔍 Sentinel observation: {alert_type}")
             return "monitored"
 
     async def handle_generic_event(self, event: Event) -> str:

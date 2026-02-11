@@ -97,7 +97,7 @@ POST /api/v1/system/services/{service}/control - Control service
 **Services Monitored**:
 - `orchestrator` - Unified Orchestrator (port 9998)
 - `event_bridge` - EventBridge service
-- `sentinel` - Watcher monitoring agent
+- `sentinel` - Sentinel monitoring agent
 - `sentinel` - Sentinel monitoring agent
 - `learning_capture` - Learning Capture service
 - `ceo_monitor` - CEO Inbox Monitor
@@ -163,7 +163,7 @@ GET  /api/v1/monitoring/ai-analysis/metrics   - AI analysis metrics over time
 
 **Configuration (v0.5.3)**:
 ```python
-Watcher:     AI every 10min, basic checks every 60s
+Sentinel:     AI every 10min, basic checks every 60s
 Sentinel:     AI every 5min,  basic checks every 30s
 Orchestrator: AI every 15min, basic checks every 10s
 ```

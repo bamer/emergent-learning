@@ -4,7 +4,7 @@ ELF Dashboard Backend with Model Cards
 
 Real-time monitoring dashboard with detailed model cards for each agent:
 - EventBridge v2 (Level 0 - Infrastructure)
-- Watcher (Level 1 - Monitoring)
+- Sentinel (Level 1 - Monitoring)
 - Orchestrator (Level 2 - Service Management)
 - CEO (Level 3 - Strategic Decisions)
 
@@ -142,7 +142,7 @@ async def root():
         <div class="hierarchy-arrow">→</div>
         <div class="hierarchy-item">
             <span class="level">Level 1</span>
-            <span class="name">Watcher</span>
+            <span class="name">Sentinel</span>
         </div>
         <div class="hierarchy-arrow">→</div>
         <div class="hierarchy-item">
@@ -198,7 +198,7 @@ async def root():
             </div>
         </div>
         
-        <!-- Watcher Model Card -->
+        <!-- Sentinel Model Card -->
         <div class="model-card sentinel">
             <div class="model-header">
                 <div class="top">
@@ -206,7 +206,7 @@ async def root():
                     <span class="status"><span class="status-dot"></span>Active</span>
                 </div>
                 <span class="level-badge">Level 1 - Monitoring</span>
-                <h2>Watcher v3.0</h2>
+                <h2>Sentinel v3.0</h2>
                 <div class="description">Health checks, pattern detection, AI analysis (5min), escalates to Orchestrator</div>
             </div>
             <div class="model-stats">
@@ -235,7 +235,7 @@ async def root():
                 </div>
             </div>
             <div class="escalation-flow">
-                <span class="escalation-step"><span class="from">Watcher</span><span class="arrow">→</span><span class="to">Orchestrator</span> (warning/critical)</span>
+                <span class="escalation-step"><span class="from">Sentinel</span><span class="arrow">→</span><span class="to">Orchestrator</span> (warning/critical)</span>
             </div>
         </div>
         

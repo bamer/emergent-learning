@@ -136,7 +136,7 @@ SSE endpoint pour les mises à jour en temps réel des agents.
 |-------|-------------|------------|-----------|
 | orchestrator | Coordination centrale | ✅ | ❌ |
 | sentinel | Surveillance continue | ✅ | ❌ |
-| watcher | Vérifications périodiques | ✅ | ❌ |
+| sentinel | Vérifications périodiques | ✅ | ❌ |
 | researcher | Investigation | ❌ | ✅ |
 | architect | Conception | ❌ | ✅ |
 | skeptic | Analyse critique | ❌ | ✅ |

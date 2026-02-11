@@ -59,7 +59,7 @@ interface AgentsPanelProps {
 const AGENT_ICONS: Record<string, React.ComponentType<any>> = {
   orchestrator: Building,
   sentinel: Search,
-  watcher: Activity,
+  sentinel: Activity,
   researcher: FileSearch,
   architect: Lightbulb,
   skeptic: HelpCircle,
