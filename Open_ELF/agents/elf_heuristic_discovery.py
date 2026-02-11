@@ -1,5 +1,13 @@
 # ELF Heuristic Discovery and Management Protocol
 
+
+# =====================================================================
+# DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
+# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
+# =====================================================================
+
 """
 This module demonstrates how Dashboard Sentinel should use the ELF building
 to discover, validate, and promote heuristics automatically.

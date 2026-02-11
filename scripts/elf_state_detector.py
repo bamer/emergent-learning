@@ -36,7 +36,7 @@ class ELFStateDetector:
         # Fichiers de logs critiques
         self.critical_logs = [
             "sentinel.log",
-            "event-bridge.log",
+            "event_bridge.log",
             "backend.log",
             "orchestrator.log",
         ]

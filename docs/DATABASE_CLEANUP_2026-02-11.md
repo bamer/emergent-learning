@@ -65,12 +65,12 @@
 
 **Events Kept (Important/Informative):**
 - ✅ tool: 10,978 (tool executions - CRITICAL)
-- ✅ watcher_check: 3,397 (health checks - IMPORTANT)
+- ✅ sentinel_check: 3,397 (health checks - IMPORTANT)
 - ✅ sentinel_check: 457 (health checks - IMPORTANT)
 - ✅ sentinel_cycle: 633 (sentinel cycles - IMPORTANT)
 - ✅ mission_received: 631 (mission tracking - IMPORTANT)
 - ✅ file.edited: 105 (file changes - IMPORTANT)
-- ✅ file.watcher.updated: 127 (file watcher events - IMPORTANT)
+- ✅ file.sentinel.updated: 127 (file sentinel events - IMPORTANT)
 - ✅ permission.asked: 16 (permission requests - USER-FRIENDLY)
 - ✅ permission.replied: 8 (permission responses - USER-FRIENDLY)
 - ✅ command.executed: 9 (command executions - USER-FRIENDLY)
@@ -87,7 +87,7 @@
 
 ### Events That SHOULD Be Recorded (Keep)
 1. **Tool Execution** - All tool events (CRITICAL for learning)
-2. **Health Checks** - sentinel_check, watcher_check (CRITICAL for monitoring)
+2. **Health Checks** - sentinel_check, sentinel_check (CRITICAL for monitoring)
 3. **System Events** - server.heartbeat (CRITICAL for system health)
 4. **File Changes** - file.edited (IMPORTANT for tracking)
 5. **Permission Events** - permission.asked, permission.replied (USER-FRIENDLY)
@@ -127,7 +127,7 @@
 Implement event type filtering at source:
 ```python
 IMPORTANT_EVENT_TYPES = [
-    'tool', 'watcher_check', 'sentinel_check',
+    'tool', 'sentinel_check', 'sentinel_check',
     'file.edited', 'permission.asked', 'permission.replied',
     'command.executed', 'mission_received', 'mission_completed'
 ]

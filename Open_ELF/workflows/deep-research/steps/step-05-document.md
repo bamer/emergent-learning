@@ -54,6 +54,11 @@ python ~/.opencode/emergent-learning/scripts/record-heuristic.py \
   --confidence [0.0-1.0]
 ```
 
+If embeddings were missing after a migration or outage:
+```bash
+python ~/.opencode/emergent-learning/scripts/backfill-heuristic-embeddings.py
+```
+
 **If patterns were discovered:**
 - Document in appropriate `patterns/` subdirectory
 - Follow existing pattern template format

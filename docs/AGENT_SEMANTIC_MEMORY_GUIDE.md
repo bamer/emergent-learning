@@ -231,7 +231,7 @@ Agent makes decision/action?
 
 | Field | Type | Purpose | Examples |
 |-------|------|---------|----------|
-| `agent` | string | Agent name | `cea`, `sentinel`, `watcher` |
+| `agent` | string | Agent name | `cea`, `sentinel`, `sentinel` |
 | `priority` | string | Importance | `low`, `medium`, `high` |
 | `confidence` | float | Confidence 0-1 | `0.7`, `0.95`, `1.0` |
 | `timestamp` | string | ISO 8601 | `2026-02-11T22:30:00` |

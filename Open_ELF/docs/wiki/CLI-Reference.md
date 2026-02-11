@@ -95,6 +95,9 @@ Type `/search` followed by any question in plain English. Claude will search you
 # Record a heuristic
 ~/.opencode/emergent-learning/scripts/record-heuristic.sh
 
+# Backfill missing heuristic embeddings
+python ~/.opencode/emergent-learning/scripts/backfill-heuristic-embeddings.py
+
 # Start an experiment
 ~/.opencode/emergent-learning/scripts/start-experiment.sh
 ```

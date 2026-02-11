@@ -36,12 +36,13 @@ from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, Optional, List
 
 # Central log directory - ALL logs go here
-LOGS_DIR = Path("/home/bamer/.opencode/emergent-learning/logs")
-LOGS_DIR.mkdir(parents=True, exist_ok=True)
-
 # Database path
 ELF_BASE = Path.home() / ".opencode" / "emergent-learning"
 DB_PATH = ELF_BASE / "memory" / "index.db"
+
+# Log directory - MUST use /Open_ELF/logs/ (see GR-233)
+LOGS_DIR = ELF_BASE / "Open_ELF" / "logs"
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Crash log file for critical errors
 CRASH_LOG = LOGS_DIR / "CRASH.log"
@@ -63,7 +64,7 @@ def cleanup_old_logs():
     try:
         cutoff_time = time.time() - (MAX_LOG_AGE_DAYS * 24 * 60 * 60)
         deleted_count = 0
-        
+
         if LOGS_DIR.exists():
             for log_file in LOGS_DIR.glob("*.log*"):
                 try:
@@ -72,9 +73,11 @@ def cleanup_old_logs():
                         deleted_count += 1
                 except Exception:
                     pass  # Ignore permission errors, etc.
-        
+
         if deleted_count > 0:
-            print(f"[LOG_CLEANUP] Removed {deleted_count} log files older than {MAX_LOG_AGE_DAYS} days")
+            print(
+                f"[LOG_CLEANUP] Removed {deleted_count} log files older than {MAX_LOG_AGE_DAYS} days"
+            )
     except Exception as e:
         print(f"[LOG_CLEANUP_ERROR] {e}", file=sys.stderr)
 
@@ -147,27 +150,31 @@ def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:
 
     logger.setLevel(level)
 
-    # Formatter
+    # =====================================================================
+    # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
+    # FORMATTER WITH TIMESTAMPS IS MANDATORY FOR EVERY LOG LINE
+    # THIS IS MANDATORY: ALL LOGS MUST HAVE TIMESTAMPS
+    # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
+    # =====================================================================
+    # Formatter - MANDATORY with timestamps for EVERY line
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "%(asctime)s | %(name)s | %(levelname)-8s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     # Clean up old logs periodically (only for the first logger created)
-    if not hasattr(cleanup_old_logs, '_last_cleanup'):
+    if not hasattr(cleanup_old_logs, "_last_cleanup"):
         cleanup_old_logs._last_cleanup = 0
-    
+
     current_time = time.time()
     if current_time - cleanup_old_logs._last_cleanup > 3600:  # Cleanup once per hour
         cleanup_old_logs()
         cleanup_old_logs._last_cleanup = current_time
-    
+
     # Rotating file handler - rotates when log exceeds 10MB, keeps 5 backups
     log_file = LOGS_DIR / f"{name}.log"
     file_handler = logging.handlers.RotatingFileHandler(
-        log_file,
-        maxBytes=MAX_LOG_SIZE_BYTES,
-        backupCount=MAX_BACKUP_COUNT
+        log_file, maxBytes=MAX_LOG_SIZE_BYTES, backupCount=MAX_BACKUP_COUNT
     )
     file_handler.setFormatter(formatter)
     file_handler.setLevel(level)

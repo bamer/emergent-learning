@@ -24,6 +24,10 @@ ELF_DIR = Path.home() / ".opencode" / "emergent-learning"
 DB_PATH = ELF_DIR / "memory" / "index.db"
 LOG_FILE = ELF_DIR / ".coordination" / "learning-capture.log"
 
+# Ollama configuration
+OLLAMA_SERVER = "http://localhost:11434"
+EMBEDDING_MODEL = "nomic-embed-text"
+
 # OpenCode paths
 OPENCODE_DIR = Path.home() / ".local" / "share" / "opencode"
 OPENCODE_SESSIONS_DIR = OPENCODE_DIR / "storage" / "session"
@@ -123,6 +127,59 @@ def get_current_project_path() -> Path | None:
     except Exception:
         pass
     return None
+
+def generate_embedding(text: str):
+    """Generate embedding using Ollama nomic-embed-text model."""
+    try:
+        response = requests.post(
+            f"{OLLAMA_SERVER}/api/embeddings",
+            json={"model": EMBEDDING_MODEL, "prompt": text},
+            timeout=10,
+        )
+        if response.status_code == 200:
+            result = response.json()
+            return result.get("embedding")
+        logger.warning(f"Ollama embedding failed: HTTP {response.status_code}")
+    except Exception as e:
+        logger.warning(f"Failed to generate embedding: {e}")
+    return None
+
+def save_embedding(conn, heuristic_id, text, metadata=None) -> bool:
+    """Save heuristic embedding to the embeddings table."""
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id FROM embeddings WHERE source_type = ? AND source_id = ?",
+            ("heuristic", str(heuristic_id)),
+        )
+        if cursor.fetchone():
+            logger.debug(f"Embedding already exists for heuristic {heuristic_id}")
+            return True
+
+        embedding_vector = generate_embedding(text)
+        if not embedding_vector:
+            logger.warning(f"No embedding generated for heuristic {heuristic_id}")
+            return False
+
+        cursor.execute(
+            """
+            INSERT INTO embeddings
+            (source_id, source_type, text_content, embedding, metadata, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                str(heuristic_id),
+                "heuristic",
+                text,
+                json.dumps(embedding_vector),
+                json.dumps(metadata) if metadata else None,
+                datetime.now().isoformat(),
+            ),
+        )
+        return True
+    except Exception as e:
+        logger.warning(f"Error saving embedding: {e}")
+        return False
 
 
 def validate_domain(domain: str) -> str | None:
@@ -345,23 +402,17 @@ def record_heuristic(heuristic: dict) -> bool:
 
         heuristic_id = cursor.lastrowid
 
-        # Also create embedding via API (now async, won't block)
-        try:
-            embedding_text = f"{heuristic['domain']}: {heuristic['rule']}"
-            requests.post(
-                "http://localhost:8888/api/v1/persistence/heuristics",  # FIXED: Correct endpoint URL
-                json={
-                    "domain": heuristic["domain"],
-                    "rule": heuristic["rule"],
-                    "explanation": f"Auto-captured by background service on {heuristic['timestamp']}",
-                    "confidence": heuristic["confidence"],
-                    "source_type": "auto-capture",
-                },
-                timeout=10,  # API now responds quickly, embedding in background
-            )
-        except Exception as e:
-            logger.debug(f"Embedding API call (non-critical): {e}")
-            pass  # Non-critical, heuristic is already saved
+        embedding_text = f"{heuristic['domain']}: {heuristic['rule']}"
+        save_embedding(
+            conn,
+            heuristic_id,
+            embedding_text,
+            metadata={
+                "domain": heuristic["domain"],
+                "confidence": heuristic["confidence"],
+                "source_type": heuristic["source"],
+            },
+        )
 
         conn.commit()
         conn.close()

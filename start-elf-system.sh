@@ -40,7 +40,7 @@ set -euo pipefail
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ELF_DIR="${SCRIPT_DIR}/Open_ELF"
-OPENCODE_DIR="${HOME}/.openencode"
+OPENCODE_DIR="${HOME}/.opencode"
 LOGS_DIR="${ELF_DIR}/logs"
 
 # Create logs directory
@@ -327,21 +327,28 @@ start_backend() {
 start_event_bridge() {
     log "🌉 Démarrage de l'Event Bridge v2.0 (port 9998)..."
     
+    # Nettoyer les anciens processus et lockfiles
+    pkill -f "event_bridge" 2>/dev/null || true
+    rm -f "${LOGS_DIR}/.event_bridge.lock" 2>/dev/null || true
+    sleep 1
+    
     local event_bridge_script="${SCRIPT_DIR}/core/event_bridge_v2.py"
     
     # Vérifier que le script existe (nouveau emplacement)
     if [[ ! -f "${event_bridge_script}" ]]; then
         log_warning "⚠️ Script Event Bridge v2 introuvable: ${event_bridge_script}"
-            return 0
-
-        cd "${ELF_DIR}/orchestrator"
-        python3 "${event_bridge_script}" start >"${LOGS_DIR}/event-bridge.log" 2>&1 &
-    else
-        # Démarrer le nouveau Event Bridge v2
-        cd "${SCRIPT_DIR}"
-        python3 "${event_bridge_script}" start >"${LOGS_DIR}/event-bridge.log" 2>&1 &
+        # Essayer l'ancien emplacement
+        if [[ -f "${ELF_DIR}/orchestrator/event_bridge.py" ]]; then
+            event_bridge_script="${ELF_DIR}/orchestrator/event_bridge.py"
+        else
+            log_error "❌ Event Bridge script not found at either location"
+            return 1
+        fi
     fi
     
+    # Démarrer le Event Bridge
+    cd "$(dirname "${event_bridge_script}")"
+    python3 "$(basename "${event_bridge_script}")" start >"${LOGS_DIR}/event_bridge.log" 2>&1 &
     EVENT_BRIDGE_PID=$!
     cd - >/dev/null
     
@@ -364,11 +371,8 @@ start_sentinel() {
     # Vérifier que le script existe (nouveau emplacement)
     if [[ ! -f "${sentinel_script}" ]]; then
         log_warning "⚠️ Script sentinel v3.0 introuvable: ${sentinel_script}"
-
-        if [[ ! -f "${sentinel_script}" ]]; then
-            log_error"⚠️ Script sentinel v3.0 introuvable"
-            return 0
-        fi
+        log_error "⚠️ Sentinel v3.0 script not found, continuing without it"
+        return 0
     fi
     
     # Tuer tout processus sentinel existant avant de lancer (force restart)
@@ -486,12 +490,12 @@ start_orchestrator() {
     
     # Tuer tout processus existant avant de lancer
     log "🔄 Arrêt des anciennes instances de l'orchestrator..."
-    pkill -f "Open_ELF/orchestrator/unified_orchestrator.py" 2>/dev/null || true
+    pkill -f "unified_orchestrator.py" 2>/dev/null || true
     sleep 1
     
     # Démarrer l'orchestrator en arrière-plan
     cd "${ELF_DIR}/orchestrator"
-    python3 "${orchestrator_script}" start >"${LOGS_DIR}/orchestrator.log" 2>&1 &
+    python3 "$(basename "${orchestrator_script}")" start >"${LOGS_DIR}/orchestrator.log" 2>&1 &
     ORCHESTRATOR_PID=$!
     cd - >/dev/null
     

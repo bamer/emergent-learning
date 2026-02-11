@@ -168,6 +168,7 @@ The following components have been migrated to use the unified logging system:
 
 ### Utilities
 - ✅ `scripts/record-heuristic.py`
+- ✅ `scripts/backfill-heuristic-embeddings.py`
 - ✅ `timeline_dashboard/timeline_api.py`
 - ✅ `utils/event_logger.py`
 

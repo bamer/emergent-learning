@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+
+# =====================================================================
+# DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
+# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
+# =====================================================================
+
 """
 Record a heuristic in the Emergent Learning Framework
 
@@ -20,6 +28,9 @@ import sys
 import re
 from pathlib import Path
 from datetime import datetime
+import json
+
+import requests
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
@@ -37,17 +48,21 @@ logs_dir = base_dir / "logs"
 logs_dir.mkdir(exist_ok=True)
 
 log_file = logs_dir / f"{datetime.now().strftime('%Y%m%d')}.log"
-s] [%(levelname)s] [record-heuristic] %(message)s",
-    handlers=[
-        logging.FileHandler(log_file),
-        logging.StreamHandler(sys.stderr)
-    ]
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] [%(levelname)s] [record-heuristic] %(message)s",
+    handlers=[logging.FileHandler(log_file), logging.StreamHandler(sys.stderr)],
 )
 logger = logging.getLogger(__name__)
 
-# Database path
-db_path = base_dir / "memory" / "index.db"
-heuristics_dir = base_dir / "memory" / "heuristics"
+# Database path (use global ELF memory store)
+global_base_dir = Path.home() / ".opencode" / "emergent-learning"
+db_path = global_base_dir / "memory" / "index.db"
+heuristics_dir = global_base_dir / "memory" / "heuristics"
+
+# Ollama configuration
+OLLAMA_SERVER = "http://localhost:11434"
+EMBEDDING_MODEL = "nomic-embed-text"
 
 # Input constraints
 MAX_RULE_LENGTH = 500
@@ -106,6 +121,59 @@ def preflight_check():
     heuristics_dir.mkdir(parents=True, exist_ok=True)
     logger.info("Pre-flight checks passed")
 
+def generate_embedding(text: str):
+    """Generate embedding using Ollama nomic-embed-text model."""
+    try:
+        response = requests.post(
+            f"{OLLAMA_SERVER}/api/embeddings",
+            json={"model": EMBEDDING_MODEL, "prompt": text},
+            timeout=10,
+        )
+        if response.status_code == 200:
+            result = response.json()
+            return result.get("embedding")
+        logger.warning(f"Ollama embedding failed: HTTP {response.status_code}")
+    except Exception as e:
+        logger.warning(f"Failed to generate embedding: {e}")
+    return None
+
+def save_embedding(conn, heuristic_id, text, metadata=None) -> bool:
+    """Save heuristic embedding to the embeddings table."""
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id FROM embeddings WHERE source_type = ? AND source_id = ?",
+            ("heuristic", str(heuristic_id)),
+        )
+        if cursor.fetchone():
+            logger.info(f"Embedding already exists for heuristic {heuristic_id}")
+            return True
+
+        embedding_vector = generate_embedding(text)
+        if not embedding_vector:
+            logger.warning(f"No embedding generated for heuristic {heuristic_id}")
+            return False
+
+        cursor.execute(
+            """
+            INSERT INTO embeddings
+            (source_id, source_type, text_content, embedding, metadata, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                str(heuristic_id),
+                "heuristic",
+                text,
+                json.dumps(embedding_vector),
+                json.dumps(metadata) if metadata else None,
+                datetime.now().isoformat(),
+            ),
+        )
+        return True
+    except Exception as e:
+        logger.warning(f"Error saving embedding: {e}")
+        return False
+
 def record_heuristic(domain, rule, explanation, source_type, confidence):
     """Record heuristic to database and markdown file"""
     try:
@@ -114,18 +182,49 @@ def record_heuristic(domain, rule, explanation, source_type, confidence):
 
         now = datetime.now().isoformat()
 
-        cursor.execute("""
-            INSERT INTO heuristics
-            (domain, rule, explanation, source_type, confidence, times_validated, times_violated, is_golden, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, 0, 0, 0, ?, ?)
-            ON CONFLICT(domain, rule) DO UPDATE SET
-                times_validated = times_validated + 1,
-                confidence = MIN(1.0, confidence + 0.05),
-                explanation = COALESCE(excluded.explanation, explanation),
-                updated_at = excluded.updated_at
-        """, (domain, rule, explanation, source_type, confidence, now, now))
+        cursor.execute(
+            "SELECT id FROM heuristics WHERE domain = ? AND rule = ?",
+            (domain, rule),
+        )
+        existing = cursor.fetchone()
 
-        heuristic_id = cursor.lastrowid
+        if existing:
+            cursor.execute(
+                """
+                UPDATE heuristics
+                SET times_validated = times_validated + 1,
+                    confidence = MIN(1.0, confidence + 0.05),
+                    explanation = COALESCE(?, explanation),
+                    updated_at = ?
+                WHERE id = ?
+                """,
+                (explanation or None, now, existing[0]),
+            )
+        else:
+            cursor.execute(
+                """
+                INSERT INTO heuristics
+                (domain, rule, explanation, source_type, confidence, times_validated, times_violated, is_golden, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, 0, 0, 0, ?, ?)
+                """,
+                (domain, rule, explanation, source_type, confidence, now, now),
+            )
+
+        heuristic_id = existing[0] if existing else cursor.lastrowid
+
+        conn.commit()
+
+        embedding_text = f"{domain}: {rule}. {explanation}".strip()
+        save_embedding(
+            conn,
+            heuristic_id,
+            embedding_text,
+            metadata={
+                "domain": domain,
+                "confidence": confidence,
+                "source_type": source_type,
+            },
+        )
         conn.commit()
         conn.close()
 

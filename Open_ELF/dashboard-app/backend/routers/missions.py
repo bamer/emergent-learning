@@ -1,3 +1,11 @@
+
+# =====================================================================
+# DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
+# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
+# =====================================================================
+
 """
 Missions Router - Dashboard API Integration with Mission Engine
 

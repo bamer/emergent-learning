@@ -140,3 +140,17 @@ First restart at 22:06 after memory exhaustion. Second restart at 23:13 possibly
 
 ---
 
+## 🥇 GR-233: All log files MUST be written to the unified ELF log directory at /home/bamer/.opencode/emergent-learning/Open_ELF/logs/. No exceptions.
+
+**Confidence**: 1.0 (GOLDEN RULE)
+**Source**: observation
+**Project**: `/home/bamer/.opencode/emergent-learning`
+**Created**: 2026-02-12
+**Validations**: 0
+**Violations**: 0
+
+This ensures centralized log management for the emergent learning framework.
+
+
+---
+

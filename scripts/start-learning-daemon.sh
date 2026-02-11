@@ -1,11 +1,15 @@
 #!/bin/bash
+# DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # Start ELF Learning Daemon in background
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DAEMON_SCRIPT="$SCRIPT_DIR/learning-daemon.py"
-LOG_FILE="/tmp/elf-learning-daemon.log"
+ELF_DIR="${ELF_BASE_PATH:-$HOME/.opencode/emergent-learning}"
+LOGS_DIR="$ELF_DIR/Open_ELF/logs"
+mkdir -p "$LOGS_DIR"
+LOG_FILE="$LOGS_DIR/learning-daemon.log"
 
 # Check if daemon is already running
 if pgrep -f "learning-daemon.py" > /dev/null 2>&1; then

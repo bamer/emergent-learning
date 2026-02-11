@@ -30,11 +30,31 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from utils.database import get_db, get_global_db, get_project_db, get_project_context
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+# =====================================================================
+# DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
+# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
+# =====================================================================
+# Import centralized logger (UNIFIED ELF LOGGING SYSTEM)
+try:
+    from pathlib import Path
+    import sys as _sys
+    _elf_path = Path(__file__).resolve().parents[4]  # Go up to Open_ELF
+    if str(_elf_path) not in _sys.path:
+        _sys.path.insert(0, str(_elf_path))
+    from Open_ELF.utils.elf_logging import get_logger
+    logger = get_logger("run_migration")
+except ImportError:
+    # Fallback to standard logging if elf_logging unavailable
+    # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
+    # TIMESTAMPS ARE MANDATORY FOR EVERY LOG LINE
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(name)s | %(levelname)-8s | %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    logger = logging.getLogger(__name__)
 
 
 class MigrationRunner:

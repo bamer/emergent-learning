@@ -8,12 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Unified Logger Formatter**: Updated log format from `asctime - name - levelname - message` to `asctime | name | levelname | message` for better readability and parsing
+- **Event Bridge v2**: Removed noisy DEBUG log "Message part updated" that was spamming ~100 logs/second (completely useless noise)
+- **Open_ELF record-heuristic path**: Open_ELF CLI now writes to the global ELF memory database to keep heuristics and embeddings unified
 
 ### Added
+- **Mandatory Log Comments**: Added explicit "DO NOT REMOVE" enforcement comments in all logging configurations to ensure compliance with unified logger requirement
+- **Timestamp Validation**: Enhanced all formatters (main.py, run_migration.py, elf_logging.py) to guarantee timestamps on every log line
+- **Heuristic Embedding Backfill Script**: Added `scripts/backfill-heuristic-embeddings.py` to regenerate missing heuristic embeddings in the global memory database
 
 ### Removed
+- **Event Bridge v2**: Removed useless debug log `logger.debug(f"📝 Message part updated: {part_type} | Session: {session_id[:8]}...")` from `_handle_message_part_updated_event()` method
+- **Legacy Logging**: Removed non-compliant logging setup from dashboard backend (replaced with ELF unified logger)
 
 ### Fixed
+- **Missing Timestamps**: Fixed backend.log and all log files missing timestamps - now every line has `YYYY-MM-DD HH:MM:SS` prefix
+- **Logging Compliance**: Fixed 3 components (run_migration.py, openelf_logging.py, main.py) to use mandatory ELF unified logger
+- **Log File Spam**: Reduced event_bridge.log growth by ~100x by removing noisy message_part_updated debug statement
+- **Formatter Consistency**: Ensured all fallback loggers use identical timestamp format with datefmt parameter
+
+## [0.5.12] - 2026-02-12
+
+### Added
+- **Golden Rule (GR-233)**: All log files MUST be written to the unified ELF log directory at `/home/bamer/.opencode/emergent-learning/Open_ELF/logs/`. No exceptions. This ensures centralized log management for the emergent learning framework.
 
 ## [0.5.11] - 2026-02-11
 

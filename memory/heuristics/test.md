@@ -24,3 +24,14 @@ Test du système d'enregistrement automatique
 
 ---
 
+## H-240: Embedding smoke test
+
+**Confidence**: 0.5
+**Source**: test
+**Project**: `/home/bamer/.opencode`
+**Created**: 2026-02-12
+
+Verifies embedding generation runs on record-heuristic path
+
+---
+

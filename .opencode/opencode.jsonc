@@ -5,7 +5,7 @@
   "plugin": [
     
     "opencode-pty",
-    "opencode-antigravity-auth@1.4.6"
+    "opencode-antigravity-auth@1.5.1"
   ],
   "model": "model: llamacpp/nemotron-v3-coder",
   "default_agent": "unified-orchestrator",

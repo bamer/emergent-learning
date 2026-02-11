@@ -242,6 +242,7 @@ echo '{"tool_name":"Write","tool_input":{"file_path":"test.py"}}' | \
 - Verify thinking blocks are enabled in Opencode
 - Check that heuristics exist: `python -m query --stats`
 - Lower threshold: `ELF_SEMANTIC_THRESHOLD=0.5`
+- Backfill missing embeddings: `python ~/.opencode/emergent-learning/scripts/backfill-heuristic-embeddings.py`
 
 **Too many/few heuristics?**
 - Adjust `ELF_MAX_HEURISTICS` (default: 3)

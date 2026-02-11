@@ -25,3 +25,14 @@ Services restarted at 22:06, system memory recovered to 6.5GB free from 284MB cr
 
 ---
 
+## H-241: Sentinel escalation criteria
+
+**Confidence**: 0.8
+**Source**: observation
+**Project**: `/home/bamer/.opencode`
+**Created**: 2026-02-12
+
+Sentinel should only escalate to CEO when actual anomalies are detected, not for routine health checks. Routine checks should be logged but not escalated as 'critical' severity.
+
+---
+

@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+
+# =====================================================================
+# DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
+# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
+# =====================================================================
+
 """
 Unified Orchestrator - Service Management and Event Processing
 
@@ -50,24 +58,25 @@ logging.basicConfig(
 logger = logging.getLogger("UnifiedOrchestrator")
 
 # Event logging to database
-DATABASE_LOGGING_AVAILABLE = False
+_database_logging_available = False
 try:
     from Open_ELF.utils.elf_logging import log_event as log_orchestrator_db
 
-    DATABASE_LOGGING_AVAILABLE = True
+    _database_logging_available = True
     logger.info("✓ Database logging available")
 except ImportError:
     logger.warning("⚠ Database logging unavailable")
 
-# Watchdog for file watching WATCHDOG_AVAILABLE = False
+# Watchdog for file watching
+_watchdog_available = False
 try:
     from watchdog.observers import Observer
     from watchdog.events import FileSystemEventHandler
 
-    WATCHDOG_AVAILABLE = True
+    _watchdog_available = True
     logger.info("✓ Watchdog file watching available")
 except ImportError:
-    WATCHDOG_AVAILABLE = False
+    _watchdog_available = False
     logger.warning("⚠ Watchdog not available - escalation processing disabled")
 
 
@@ -148,7 +157,7 @@ class UnifiedOrchestrator:
         self.running = False
         self.events: List[Event] = []
         self.event_queue: asyncio.Queue = asyncio.Queue()
-        self.bridge = None  # EventBridge instance (don't create, connect to existing)
+        self.bridge = None  # No EventBridge instance - we poll database instead
         self._event_loop = None  # Will be set in _start_async
 
         # Service tracking
@@ -161,6 +170,9 @@ class UnifiedOrchestrator:
         self._service_alerts: Dict[str, int] = {}
         self._last_health_check: Optional[datetime] = None
         self.started_at: Optional[datetime] = None
+
+        # Event polling tracking
+        self.last_event_timestamp: Optional[str] = None  # For polling event_chronicle
 
         # AI Analysis timing (Tier-based like sentinel/sentinel)
         self.main_loop_interval = 10  # seconds (basic cycle)
@@ -432,7 +444,7 @@ class UnifiedOrchestrator:
                             result["valid"] = False
 
                             # Log to database if available
-                            if DATABASE_LOGGING_AVAILABLE:
+                            if _database_logging_available:
                                 log_orchestrator_db(
                                     event_type="database_integrity_failure",
                                     source="unified_orchestrator",
@@ -616,7 +628,7 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
         logger.info("⚙️  Event processor started")
 
         # 4. Start escalation file sentinel
-        if WATCHDOG_AVAILABLE:
+        if _watchdog_available:
             self.escalation_observer = Observer()
             event_handler = EscalationFileHandler(self)
             ESCALATION_DIR.mkdir(parents=True, exist_ok=True)
@@ -639,6 +651,12 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
             while self.running:
                 tick += 1
                 self.cycle_count += 1
+
+                # Poll event_chronicle for new events (every 2 ticks = 20 seconds)
+                if tick % 2 == 0:
+                    events = self._poll_events_from_database()
+                    if events > 0:
+                        logger.info(f"📊 Poll event_chronicle: {events} new events")
 
                 # Health check (every 10 ticks = 100 seconds)
                 if tick % 10 == 0:
@@ -677,53 +695,139 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
         logger.info("✅ Unified Orchestrator stopped")
 
     def _connect_to_eventbridge(self) -> bool:
-        """Connect to running EventBridge instance.
+        """Check if EventBridge is running.
+
+        UnifiedOrchestrator polls event_chronicle for events instead of connecting
+        via callbacks. No EventBridge instance is created.
 
         Returns:
-            True if successfully connected, False otherwise.
+            True if EventBridge is running, False otherwise.
         """
         try:
-            # Check EventBridge status
+            # Just check if EventBridge is running via HTTP API
             response = requests.get(f"{EVENT_BRIDGE_URL}/status", timeout=2)
             if response.status_code != 200:
                 logger.error(f"❌ EventBridge returned status {response.status_code}")
                 return False
 
-            logger.info(f"✅ Connected to EventBridge ({EVENT_BRIDGE_URL}/status)")
+            logger.info(f"✅ EventBridge is running ({EVENT_BRIDGE_URL}/status)")
+            logger.info("📊 UnifiedOrchestrator will poll event_chronicle for events")
 
-            # Create EventBridge instance (don't start, it's already running)
-            import importlib.util
-
-            spec = importlib.util.spec_from_file_location(
-                "event_bridge_module",
-                str(OPEN_ELF_DIR / "orchestrator/event_bridge.py"),
-            )
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-
-            self.bridge = module.EventBridge()
-            self.bridge.running = True
+            # No bridge instance created - we poll event_chronicle instead
             return True
 
         except Exception as e:
             logger.error(f"❌ Failed to connect to EventBridge: {e}")
             logger.error(
                 f"\nMake sure EventBridge is running:\n"
-                f"  cd {OPEN_ELF_DIR / 'orchestrator'}\n"
-                f"  python event_bridge.py start"
+                f"  cd {ELF_DIR / 'core'}\n"
+                f"  python event_bridge_v2.py start"
             )
             return False
 
     def _register_listeners(self):
-        """Register as EventBridge listener for relevant events."""
-        self.bridge.register_listener(
-            listener_id="unified_orchestrator",
-            callback=self._on_event_received_sync,
-            event_types=["tool", "message", "error", "failure", "service", "health"],
-        )
-        logger.info(
-            "✅ Registered for events: tool, message, error, failure, service, health"
-        )
+        """Register with global EventBridge v2 listener registry."""
+        logger.info("📡 Registering with EventBridge v2 global listeners")
+        try:
+            # Import the global listener functions from event_bridge_v2
+            from core.event_bridge_v2 import register_global_listener
+
+            # Register our callback directly with EventBridge v2
+            register_global_listener(
+                listener_id="unified_orchestrator",
+                callback=self._on_event_received_sync,
+                event_types=["tool", "message", "error", "failure", "service", "health"]
+            )
+            logger.info("✅ Registered for events via EventBridge v2 global listeners")
+        except Exception as e:
+            logger.error(f"❌ Failed to register listeners: {e}")
+
+    def _on_event_received_sync(self, event_data: Dict):
+
+    def _poll_events_from_database(self) -> int:
+        """Poll event_chronicle for new events.
+
+        Returns:
+            Number of new events processed.
+
+        Polling is safer than callbacks - no EventBridge instance created,
+        no duplicate logs from __init__, and orchestrator is independent.
+        """
+        import sqlite3
+
+        db_path = ELF_DIR / "memory" / "index.db"
+        if not db_path.exists():
+            return 0
+
+        conn = sqlite3.connect(str(db_path))
+        cursor = conn.cursor()
+
+        events_processed = 0
+
+        try:
+            cursor.execute(
+                """
+                SELECT id, timestamp, event_type, source, summary, data, status
+                FROM event_chronicle
+                WHERE created_at > COALESCE(?, datetime('1970-01-01'))
+                ORDER BY created_at ASC
+                LIMIT 100
+            """,
+                (self.last_event_timestamp,),
+            )
+
+            for row in cursor.fetchall():
+                event_id, timestamp, event_type, source, summary, data, status = row
+
+                try:
+                    data_dict = json.loads(data) if data else {}
+                except:
+                    data_dict = {}
+
+                event_data = {
+                    "type": event_type,
+                    "properties": data_dict,
+                    "severity": self._map_status_to_severity(status),
+                }
+
+                event = Event(
+                    id=str(event_id),
+                    type=event_type,
+                    severity=self._get_severity(event_data),
+                    source=source,
+                    data=data_dict,
+                    timestamp=datetime.now(),
+                )
+
+                try:
+                    loop = self._event_loop
+                    asyncio.run_coroutine_threadsafe(self.event_queue.put(event), loop)
+                    events_processed += 1
+                except Exception:
+                    pass
+
+            if events_processed > 0:
+                cursor.execute("SELECT MAX(created_at) FROM event_chronicle")
+                result = cursor.fetchone()
+                if result and result[0]:
+                    self.last_event_timestamp = result[0]
+
+        except Exception as e:
+            logger.debug(f"Error polling events: {e}")
+        finally:
+            conn.close()
+
+        return events_processed
+
+    def _map_status_to_severity(self, status: str) -> str:
+        """Map event_chronicle status to severity."""
+        if status == "success":
+            return "info"
+        elif status == "error" or status == "failure":
+            return "error"
+        elif status == "warning":
+            return "warning"
+        return "info"
 
     def _on_event_received_sync(self, event_data: Dict):
         """Callback for EventBridge events (runs in EventBridge thread).
@@ -921,7 +1025,7 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
 
             # Start new
             process = subprocess.Popen(
-                ["python3", str(BASE_DIR / "core" / "sentinel.py")],
+                ["python3", str(ELF_DIR / "core" / "sentinel.py")],
                 cwd=str(OPEN_ELF_DIR),
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -957,7 +1061,7 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
             details: Additional details
         """
         logger.error(f"🔴 CRITICAL: {service} is {status} - Escalating")
-        if DATABASE_LOGGING_AVAILABLE:
+        if _database_logging_available:
             log_orchestrator_db(
                 event_type="critical_alert",
                 source="unified_orchestrator",
@@ -1086,7 +1190,7 @@ System Health Summary:
         Args:
             event: Event to log
         """
-        if not DATABASE_LOGGING_AVAILABLE:
+        if not _database_logging_available:
             return
 
         try:

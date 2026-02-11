@@ -18,6 +18,9 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 import logging
+import json
+
+import requests
 
 # Setup logging
 script_dir = Path(__file__).parent
@@ -36,6 +39,15 @@ logger = logging.getLogger(__name__)
 # Database path
 db_path = base_dir / "memory" / "index.db"
 heuristics_dir = base_dir / "memory" / "heuristics"
+
+# Ollama configuration
+OLLAMA_SERVER = "http://localhost:11434"
+EMBEDDING_MODEL = "nomic-embed-text"
+
+# Event-driven consolidation settings
+CONSOLIDATION_THRESHOLD = 5  # Trigger consolidation after X new failures
+CONSOLIDATION_WINDOW_HOURS = 1  # Within this time window
+FAILURE_TRACKER_FILE = logs_dir / ".failure_tracker.json"
 
 # Input constraints
 MAX_RULE_LENGTH = 500
@@ -168,6 +180,90 @@ def sanitize_domain(domain):
     return domain
 
 
+def track_failure_and_maybe_consolidate(source_type: str) -> bool:
+    """
+    Track failures and trigger consolidation when threshold is reached.
+    Returns True if consolidation was triggered.
+    """
+    # Only track actual failures (not success/observation)
+    if source_type != 'failure':
+        return False
+    
+    try:
+        # Load or create tracker
+        tracker = {"failures": [], "last_consolidation": None}
+        if FAILURE_TRACKER_FILE.exists():
+            with open(FAILURE_TRACKER_FILE, 'r') as f:
+                tracker = json.load(f)
+        
+        # Add current failure
+        now = datetime.now().isoformat()
+        tracker["failures"].append({
+            "timestamp": now,
+            "source_type": source_type
+        })
+        
+        # Clean old failures outside window
+        cutoff = datetime.now().timestamp() - (CONSOLIDATION_WINDOW_HOURS * 3600)
+        tracker["failures"] = [
+            f for f in tracker["failures"]
+            if datetime.fromisoformat(f["timestamp"]).timestamp() > cutoff
+        ]
+        
+        # Check if threshold reached
+        failure_count = len(tracker["failures"])
+        should_consolidate = failure_count >= CONSOLIDATION_THRESHOLD
+        
+        # Also check time since last consolidation (avoid spam)
+        if should_consolidate and tracker.get("last_consolidation"):
+            last_consol_time = datetime.fromisoformat(tracker["last_consolidation"])
+            time_since = (datetime.now() - last_consol_time).total_seconds()
+            if time_since < 300:  # 5 minutes cooldown
+                should_consolidate = False
+        
+        if should_consolidate:
+            logger.info(f"🔄 Failure threshold reached ({failure_count} failures), triggering consolidation...")
+            
+            # Run consolidation script
+            try:
+                consolidation_script = script_dir / "consolidate_failures.py"
+                if consolidation_script.exists():
+                    result = subprocess.run(
+                        [sys.executable, str(consolidation_script), "--threshold", "2"],
+                        capture_output=True,
+                        text=True,
+                        timeout=60
+                    )
+                    
+                    if result.returncode == 0:
+                        logger.info("✅ Consolidation completed successfully")
+                        print("\n🧠 Auto-consolidation: Converted failure patterns to heuristics")
+                        
+                        # Reset tracker and mark consolidation time
+                        tracker["failures"] = []
+                        tracker["last_consolidation"] = now
+                        
+                        # Save tracker
+                        with open(FAILURE_TRACKER_FILE, 'w') as f:
+                            json.dump(tracker, f, indent=2)
+                        
+                        return True
+                    else:
+                        logger.warning(f"Consolidation script returned error: {result.stderr}")
+                        
+            except Exception as e:
+                logger.error(f"Failed to run consolidation: {e}")
+        
+        # Save tracker (even if no consolidation)
+        with open(FAILURE_TRACKER_FILE, 'w') as f:
+            json.dump(tracker, f, indent=2)
+            
+    except Exception as e:
+        logger.error(f"Error in failure tracking: {e}")
+    
+    return False
+
+
 def preflight_check():
     """Verify database and directory structure"""
     if not db_path.exists():
@@ -177,6 +273,59 @@ def preflight_check():
 
     heuristics_dir.mkdir(parents=True, exist_ok=True)
     logger.info("Pre-flight checks passed")
+
+def generate_embedding(text: str):
+    """Generate embedding using Ollama nomic-embed-text model."""
+    try:
+        response = requests.post(
+            f"{OLLAMA_SERVER}/api/embeddings",
+            json={"model": EMBEDDING_MODEL, "prompt": text},
+            timeout=10,
+        )
+        if response.status_code == 200:
+            result = response.json()
+            return result.get("embedding")
+        logger.warning(f"Ollama embedding failed: HTTP {response.status_code}")
+    except Exception as e:
+        logger.warning(f"Failed to generate embedding: {e}")
+    return None
+
+def save_embedding(conn, heuristic_id, text, metadata=None) -> bool:
+    """Save heuristic embedding to the embeddings table."""
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT id FROM embeddings WHERE source_type = ? AND source_id = ?",
+            ("heuristic", str(heuristic_id)),
+        )
+        if cursor.fetchone():
+            logger.info(f"Embedding already exists for heuristic {heuristic_id}")
+            return True
+
+        embedding_vector = generate_embedding(text)
+        if not embedding_vector:
+            logger.warning(f"No embedding generated for heuristic {heuristic_id}")
+            return False
+
+        cursor.execute(
+            """
+            INSERT INTO embeddings
+            (source_id, source_type, text_content, embedding, metadata, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                str(heuristic_id),
+                "heuristic",
+                text,
+                json.dumps(embedding_vector),
+                json.dumps(metadata) if metadata else None,
+                datetime.now().isoformat(),
+            ),
+        )
+        return True
+    except Exception as e:
+        logger.warning(f"Error saving embedding: {e}")
+        return False
 
 
 def record_heuristic(
@@ -215,7 +364,26 @@ def record_heuristic(
             ),
         )
 
-        heuristic_id = cursor.lastrowid
+        cursor.execute(
+            "SELECT id FROM heuristics WHERE domain = ? AND rule = ?",
+            (domain, rule),
+        )
+        row = cursor.fetchone()
+        heuristic_id = row[0] if row else cursor.lastrowid
+
+        conn.commit()
+
+        embedding_text = f"{domain}: {rule}. {explanation}".strip()
+        save_embedding(
+            conn,
+            heuristic_id,
+            embedding_text,
+            metadata={
+                "domain": domain,
+                "confidence": confidence,
+                "source_type": source_type,
+            },
+        )
         conn.commit()
         conn.close()
 

@@ -116,3 +116,33 @@ Use CanvasLayer with layer=100 (above everything) for full-screen flash effects.
 
 ---
 
+## H-237: Audio buses must be configured in Project Settings BEFORE implementing volume controls via AudioManager.set_volume()
+
+**Confidence**: 0.95
+**Source**: failure
+**Created**: 2026-02-12
+
+Godot's AudioServer.get_bus_index() returns -1 for non-existent buses, causing 'Index p_bus = -1 is out of bounds' error when calling set_bus_volume_db(). Must create Master, Music, SFX buses in default_bus_layout.tres or via Project Settings → Audio before implementing volume sliders.
+
+---
+
+## H-238: Prefix unused function parameters with underscore to suppress GDScript warnings
+
+**Confidence**: 0.9
+**Source**: success
+**Created**: 2026-02-12
+
+GDScript warns on declared but unused parameters. By prefixing with underscore (e.g., _action_name), the compiler recognizes the parameter as intentionally unused and suppresses the warning. This is idiomatic GDScript.
+
+---
+
+## H-239: Use ConfigFile with user:// path for cross-platform game settings persistence
+
+**Confidence**: 0.9
+**Source**: success
+**Created**: 2026-02-12
+
+ConfigFile provides built-in section-based configuration that automatically handles platform-specific save locations. Using user:// prefix ensures settings are saved in the user's data directory (AppData on Windows, ~/.local on Linux, ~/Library on macOS), surviving game updates and maintaining platform compatibility.
+
+---
+
