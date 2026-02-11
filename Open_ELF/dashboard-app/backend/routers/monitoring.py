@@ -391,12 +391,14 @@ async def get_event_bridge_status():
     last_event_time = None
     events_processed = 0
     uptime_seconds = None
+    heartbeat_running = False
 
     if EVENT_BRIDGE_HEARTBEAT.exists():
         try:
             payload = json.loads(EVENT_BRIDGE_HEARTBEAT.read_text(encoding="utf-8"))
             last_event_time = payload.get("last_event_time")
             events_processed = int(payload.get("events_processed", 0))
+            heartbeat_running = payload.get("running", False)
             started_at = payload.get("started_at") or payload.get("created_at")
             if started_at:
                 try:
@@ -415,14 +417,31 @@ async def get_event_bridge_status():
     except Exception:
         opencode_status = "error"
 
-    # Determine running status based on heartbeat freshness
+    # Determine running status based on heartbeat freshness OR process check
     running = False
-    if last_event_time:
+    if heartbeat_running:
+        # EventBridge self-reports as running in heartbeat
+        running = True
+    elif last_event_time:
+        # Fallback: check heartbeat freshness
         try:
             last_time = datetime.fromisoformat(last_event_time)
             running = (now - last_time).total_seconds() < 120
         except ValueError:
             running = False
+    
+    # Also check if process is running via pgrep (handles idle EventBridge)
+    if not running:
+        try:
+            result = subprocess.run(
+                ["pgrep", "-f", "event_bridge_v2.py"],
+                capture_output=True,
+                text=True,
+            )
+            if result.returncode == 0:
+                running = True
+        except Exception:
+            pass
 
     return {
         "running": running,

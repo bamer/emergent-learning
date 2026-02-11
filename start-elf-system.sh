@@ -612,8 +612,12 @@ show_status() {
         echo "❌ Dashboard Backend"
     fi
     
+    # Event Bridge - check PID ou fallback pgrep
     if is_running "${EVENT_BRIDGE_PID}"; then
         echo "✅ Event Bridge (PID: ${EVENT_BRIDGE_PID})"
+    elif pgrep -f "event_bridge_v2.py" >/dev/null 2>&1; then
+        EVENT_BRIDGE_PID=$(pgrep -f "event_bridge_v2.py" | head -1)
+        echo "✅ Event Bridge (PID: ${EVENT_BRIDGE_PID}) [détecté]"
     else
         echo "❌ Event Bridge"
     fi
@@ -632,8 +636,10 @@ show_status() {
         echo "❌ Sentinel"
     fi
     
-    if pgrep -f "Open_ELF/orchestrator/unified_orchestrator.py" >/dev/null 2>&1; then
-        echo "🧠 Unified Orchestrator (en cours)"
+    # Unified Orchestrator - check PID ou fallback pgrep
+    if pgrep -f "unified_orchestrator.py" >/dev/null 2>&1; then
+        ORCHESTRATOR_PID=$(pgrep -f "unified_orchestrator.py" | head -1)
+        echo "🧠 Unified Orchestrator (PID: ${ORCHESTRATOR_PID}) [détecté]"
     else
         echo "⚪ Unified Orchestrator (non actif)"
     fi

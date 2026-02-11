@@ -742,8 +742,6 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
         except Exception as e:
             logger.error(f"❌ Failed to register listeners: {e}")
 
-    def _on_event_received_sync(self, event_data: Dict):
-
     def _poll_events_from_database(self) -> int:
         """Poll event_chronicle for new events.
 

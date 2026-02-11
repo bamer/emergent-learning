@@ -279,9 +279,10 @@ class EventBridge:
         logger.info("👂 SSE listener started on /global/event")
 
         # Start session polling as backup (for tools not captured via SSE)
-        # polling_thread = threading.Thread(target=self._poll_sessions, daemon=True)
-        # polling_thread.start()
-        # logger.info("🔄 Session polling started (backup)")
+        # Use reasonable polling interval (10 seconds) to avoid overloading server
+        polling_thread = threading.Thread(target=self._poll_sessions, daemon=True)
+        polling_thread.start()
+        logger.info("🔄 Session polling started (backup, 10s interval)")
 
         # Start status server (health and status endpoints)
         self._start_status_server()
@@ -449,10 +450,6 @@ class EventBridge:
         part_type = part.get("type", "")
         session_id = props.get("session_id", "")
 
-        logger.debug(
-            f"📝 Message part updated: {part_type} | Session: {session_id[:8]}..."
-        )
-
         # Check for tool_use or tool part types
         if part_type in ["tool_use", "tool"]:
             tool_name = part.get("tool", "unknown")
@@ -562,8 +559,8 @@ class EventBridge:
                 if total_tools_found > 0:
                     logger.debug(f"📊 Poll: {total_tools_found} tools processed")
 
-                # Wait before next poll ( réduit à 2 secondes pour réactivité )
-                time.sleep(2)
+                # Wait before next poll (reasonable interval to avoid overloading server)
+                time.sleep(10)
 
             except Exception as e:
                 logger.error(f"❌ Error polling sessions: {e}")
