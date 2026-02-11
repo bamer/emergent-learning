@@ -4,13 +4,14 @@
 #
 # Démarrage de tous les services nécessaires pour ELF OpenCode:
 # 1. OpenCode Server (port 4096) - Optionnel si déjà démarré manuellement
-# 2. Dashboard Backend (port 8888) with NEW: CEO, Missions, System Services routers
-# 3. Event Bridge (port 9998)
-# 4. Dashboard Frontend (port 3001)
-# 5. Sentinel v3.0 (merged Sentinel + Sentinel - Level 1 Agent)
-# 6. Learning Capture Service (auto-extraction des heuristiques)
-# 7. Unified Orchestrator (central decision-making)
-# 8. CEO Inbox Monitor (autonomous escalation processing)
+# 2. Dashboard Backend (port 8888) - CEO, Missions, System Services routers
+# 3. Event Bridge (port 9998) - SSE event streaming
+# 4. Unified Orchestrator (port 9998) - Central decision-making
+# 5. Semantic Search Daemon (port 5001) - MANDATORY - Semantic search
+# 6. Sentinel v3.0 (Level 1 Agent - Monitoring + Pattern Detection)
+# 7. Dashboard Frontend (port 3001)
+# 8. Learning Capture Service - Auto-extraction des heuristiques
+# 9. CEO Inbox Monitor - Autonomous escalation processing
 #
 # Usage:
 #     ./start-elf-system.sh [mode]
@@ -20,6 +21,13 @@
 #     minimal   - Démarre seulement OpenCode + Backend
 #     test      - Mode test rapide
 #     no-opencode - Démarre tout sauf OpenCode (si vous le gérez manuellement)
+#
+# REFACTORED v0.5.5 (2026-02-11):
+# - Added Semantic Search Daemon (port 5001) - MANDATORY
+# - Implemented 3-mechanism auto-learning system (explicit, error-context, anti-pattern)
+# - Semantic daemon now uses unified ELF logging system
+# - Fixed FTS5 table corruption handling after crashes
+# - EventBridge port corrected (was 9999, actually 9998)
 #
 # REFACTORED v0.5.4 (2026-02-09):
 # - Sentinel merged into Sentinel v3.0 (removed start_sentinel function)
@@ -55,7 +63,7 @@ log_info() { echo -e "${CYAN}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $*"; }
 
 # Fonction d'aide
 show_help() {
-    echo -e "${CYAN}≡≡≡ ELF OpenCode System - Startup Script (v0.5.4) ≡≡≡${NC}"
+    echo -e "${CYAN}≡≡≡ ELF OpenCode System - Startup Script (v0.5.5) ≡≡≡${NC}"
     echo ""
     echo -e "${GREEN}USAGE:${NC}"
     echo "  $0 [MODE]"
@@ -70,12 +78,18 @@ show_help() {
     echo -e "${GREEN}SERVICES (Full Mode):${NC}"
     echo "  • OpenCode Server (port 4096)"
     echo "  • Dashboard Backend (port 8888) - with CEO, Missions, System Services routers"
-    echo "  • EventBridge (port 9999)"
+    echo "  • EventBridge (port 9998)"
     echo "  • Unified Orchestrator (port 9998)"
     echo "  • Sentinel v3.0 (Level 1 Agent - Monitoring + Pattern Detection + AI Analysis)"
-    echo "  • Dashboard Frontend (port 5173)"
+    echo "  • Semantic Search Daemon (port 5001) - MANDATORY"
+    echo "  • Dashboard Frontend (port 3001)"
     echo "  • Learning Capture Service"
     echo "  • CEO Inbox Monitor"
+    echo ""
+    echo -e "${GREEN}NEW IN v0.5.5:${NC}"
+    echo "  • Semantic Search Daemon integrated (unified logging)"
+    echo "  • 3-mechanism auto-learning system implemented"
+    echo "  • FTS5 corruption handling improved"
     echo ""
     echo -e "${GREEN}NEW IN v0.5.4:${NC}"
     echo "  • CEO Monitoring (/api/v1/ceo/* - 8 endpoints)"
@@ -157,12 +171,18 @@ cleanup() {
         sleep 1
         kill -9 "${CEO_MONITOR_PID}" 2>/dev/null || true
     fi
-    
+    if [[ -n "${SEMANTIC_DAEMON_PID:-}" ]]; then
+        kill "${SEMANTIC_DAEMON_PID}" 2>/dev/null || true
+        sleep 1
+        kill -9 "${SEMANTIC_DAEMON_PID}" 2>/dev/null || true
+    fi
+
     # Kill tous les processus liés à Open_ELF et dashboard
     pkill -f "opencode serve" 2>/dev/null || true
     pkill -f "uvicorn main:app" 2>/dev/null || true
     pkill -f "event_bridge.py" 2>/dev/null || true
     pkill -f "npm run dev" 2>/dev/null || true
+    pkill -f "semantic.daemon" 2>/dev/null || true
 
     pkill -f "background-learning-capture.py" 2>/dev/null || true
     pkill -f "Open_ELF/agents/ceo_inbox_monitor.py" 2>/dev/null || true
@@ -531,6 +551,34 @@ start_frontend() {
     fi
 }
 
+# Start Semantic Search Daemon
+start_semantic_daemon() {
+    log "🔍 Démarrage du Semantic Search Daemon..."
+
+    # Kill any existing semantic daemon
+    pkill -f "semantic.daemon" 2>/dev/null || true
+    sleep 1
+
+    # Start semantic daemon
+    cd "${SCRIPT_DIR}"
+    nohup python3 -m semantic.daemon > "${LOGS_DIR}/semantic-daemon.log" 2>&1 &
+    SEMANTIC_DAEMON_PID=$!
+    cd - >/dev/null
+
+    # Wait a few seconds
+    sleep 3
+
+    # Check if it's running
+    if is_running "${SEMANTIC_DAEMON_PID}"; then
+        log_success "✅ Semantic Search Daemon démarré (PID: ${SEMANTIC_DAEMON_PID})"
+        log_info   "   Port: 5001 - Semantic search activée"
+        return 0
+    else
+        log_warning "⚠️ Semantic Search Daemon non démarré"
+        return 0  # Continue even if not started
+    fi
+}
+
 # Afficher le statut des services
 show_status() {
     log "📊 Statut des services:"
@@ -599,7 +647,14 @@ show_status() {
     else
         echo "⚪ CEO Monitor (non actif)"
     fi
-    
+
+    if is_running "${SEMANTIC_DAEMON_PID}"; then
+        echo "✅ Semantic Daemon (PID: ${SEMANTIC_DAEMON_PID})"
+        echo "   Port: 5001 - Semantic search activée"
+    else
+        echo "⚪ Semantic Daemon (non actif)"
+    fi
+
     echo ""
     log "💡 Nouveaux endpoints de monitoring disponibles:"
     echo "   /api/v1/ceo/* - CEO inbox metrics, monitor status"
@@ -608,6 +663,9 @@ show_status() {
     echo "   /api/v1/monitoring/coordinator/* - Agent coordination"
     echo "   /api/v1/monitoring/ai-analysis/* - AI analysis tracking"
     echo "   /api/v1/monitoring/trails/* - Pheromone trails"
+    echo "   :5001/health - Semantic daemon health check"
+    echo "   :5001/stats - Semantic daemon statistics"
+    echo "   :5001/search - Semantic search API"
     echo "----------------------------------------"
 }
 
@@ -618,6 +676,7 @@ show_urls() {
     echo "🏠 Dashboard:     http://localhost:3001"
     echo "📡 Backend API:   http://localhost:8888"
     echo "🔌 Event Bridge: http://localhost:9998/status"
+    echo "🔍 Semantic:      http://localhost:5001/health"
     echo "🖥️ OpenCode:      http://localhost:4096"
     echo "----------------------------------------"
 }
@@ -631,13 +690,14 @@ test_mode() {
     start_backend || return 1
     start_event_bridge || return 1
     start_orchestrator || return 1  # Unified Orchestrator
-    start_sentinel || return 1               # Sentinel 
+    start_sentinel || return 1               # Sentinel
+    start_semantic_daemon || return 0  # Semantic Search Daemon (MANDATORY)
     start_learning_capture || return 0 # Ne pas bloquer si échec
     start_ceo_monitor || return 0    # CEO Inbox Monitor
-    
+
     show_status
     show_urls
-    
+
     log_success "✅ Mode test terminé"
     return 0
 }
@@ -660,20 +720,21 @@ minimal_mode() {
 # Mode complet
 all_mode() {
     log "🚀 Mode complet"
-    
+
     # Démarrer tous les services
     start_opencode_server || return 1
     start_backend || return 1
     start_event_bridge || return 1
     start_orchestrator || return 1    # Unified Orchestrator
     start_sentinel || return 1               # Sentinel v3.0 (merged Sentinel + Sentinel)
+    start_semantic_daemon || return 0    # Semantic Search Daemon
     start_frontend || return 1
     start_learning_capture || return 0 # Ne pas bloquer si échec
     start_ceo_monitor || return 0    # CEO Inbox Monitor
-    
+
     show_status
     show_urls
-    
+
     log_success "✅ Tous les services démarrés!"
     return 0
 }
@@ -696,13 +757,14 @@ no_opencode_mode() {
     start_event_bridge || return 1
     start_orchestrator || return 1 # Unified Orchestrator
     start_sentinel || return 1               # Sentinel v3.0 (merged Sentinel + Sentinel)
+    start_semantic_daemon || return 0  # Semantic Search Daemon
     start_frontend || return 1
     start_learning_capture || return 0 # Ne pas bloquer si échec
     start_ceo_monitor || return 0    # CEO Inbox Monitor
-    
+
     show_status
     show_urls
-    
+
     log_success "✅ Services démarrés (sans gestion d'OpenCode)!"
     return 0
 }

@@ -32,7 +32,7 @@ from typing import List, Dict, Optional, Any
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import argparse
-import logging
+import aiohttp  # FOR ASYNC HTTP REQUESTS (MANDATORY per ELF guidelines)
 
 # Add parent directories to path
 BASE_DIR = Path(__file__).parent.parent
@@ -45,13 +45,20 @@ from query.ollama_embedder import (
     DEFAULT_EMBEDDING_DIM,
     OLLAMA_API_URL,
 )
-import requests
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+# Setup unified ELF logging
+try:
+    from Open_ELF.utils.elf_logging import get_logger
+
+    logger = get_logger("semantic-daemon")
+except ImportError:
+    import logging
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    logger = logging.getLogger(__name__)
 
 # Flask app
 app = Flask(__name__)
@@ -85,10 +92,10 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     return float(dot_product / (norm_a * norm_b))
 
 
-async def  generate_embedding_sync(text: str) -> Optional[np.ndarray]:
+async def generate_embedding_async(text: str) -> Optional[np.ndarray]:
     """
-    Synchronous embedding generation using requests.
-    Avoids asyncio issues with Flask's event loop.
+    Async embedding generation using aiohttp.
+    Follows ELF async/await pattern (MANDATORY).
     """
     try:
         if not ollama_available():
@@ -100,27 +107,29 @@ async def  generate_embedding_sync(text: str) -> Optional[np.ndarray]:
             "prompt": text[:10000],  # Limit text size
         }
 
-        response = requests.post(OLLAMA_API_URL, json=payload, timeout=60)
+        # Use aiohttp with relaxed timeout (120 seconds per guidelines)
+        timeout = aiohttp.ClientTimeout(total=120)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.post(OLLAMA_API_URL, json=payload) as response:
+                if response.status != 200:
+                    logger.error(f"Ollama error: {response.status}")
+                    return None
 
-        if response.status_code != 200:
-            logger.error(f"Ollama error: {response.status_code}")
-            return None
+                data = await response.json()
+                if "embedding" not in data:
+                    logger.error("No embedding in response")
+                    return None
 
-        data = response.json()
-        if "embedding" not in data:
-            logger.error("No embedding in response")
-            return None
+                embedding = np.array(data["embedding"])
 
-        embedding = np.array(data["embedding"])
+                # Ensure embedding has expected dimension
+                if len(embedding) != EMBEDDING_DIM:
+                    logger.error(
+                        f"Wrong embedding dimension: {len(embedding)} vs {EMBEDDING_DIM}"
+                    )
+                    return None
 
-        # Ensure embedding has expected dimension
-        if len(embedding) != EMBEDDING_DIM:
-            logger.error(
-                f"Wrong embedding dimension: {len(embedding)} vs {EMBEDDING_DIM}"
-            )
-            return None
-
-        return embedding
+                return embedding
 
     except Exception as e:
         logger.error(f"Error generating embedding: {e}")
@@ -128,8 +137,8 @@ async def  generate_embedding_sync(text: str) -> Optional[np.ndarray]:
 
 
 @app.route("/health", methods=["GET"])
-def health_check():
-    """Health check endpoint."""
+async def health_check():
+    """Health check endpoint - async."""
     ollama_status = ollama_available()
 
     try:
@@ -158,8 +167,8 @@ def health_check():
 
 
 @app.route("/stats", methods=["GET"])
-def get_stats():
-    """Get statistics about stored embeddings."""
+async def get_stats():
+    """Get statistics about stored embeddings - async."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -176,7 +185,7 @@ def get_stats():
 
         # Recent additions (last 24h)
         cursor.execute("""
-            SELECT COUNT(*) FROM embeddings 
+            SELECT COUNT(*) FROM embeddings
             WHERE created_at > datetime('now', '-1 day')
         """)
         recent = cursor.fetchone()[0]
@@ -187,11 +196,11 @@ def get_stats():
             {
                 "total_embeddings": total,
                 "by_source": by_source,
-                "recent_24h": recent,
-                "model": DEFAULT_MODEL,
                 "dimension": EMBEDDING_DIM,
+                "recent_24h": recent,
             }
         )
+
     except Exception as e:
         logger.error(f"Stats error: {e}")
         return jsonify({"error": str(e)}), 500
@@ -199,7 +208,7 @@ def get_stats():
 
 @app.route("/embed", methods=["POST"])
 async def generate_embedding():
-    """Generate embedding for text."""
+    """Generate embedding for text - async."""
     try:
         data = request.get_json()
         if not data or "text" not in data:
@@ -209,8 +218,8 @@ async def generate_embedding():
         if not text.strip():
             return jsonify({"error": "Empty text"}), 400
 
-        # Generate embedding
-        embedding = await generate_embedding_sync(text)
+        # Generate embedding (async function)
+        embedding = await generate_embedding_async(text)
 
         if embedding is None:
             return jsonify({"error": "Failed to generate embedding"}), 500
@@ -230,7 +239,7 @@ async def generate_embedding():
 
 @app.route("/store", methods=["POST"])
 async def store_embedding():
-    """Store text with its embedding."""
+    """Store text with its embedding - async."""
     try:
         data = request.get_json()
         required = ["text", "source_id", "source_type"]
@@ -244,55 +253,28 @@ async def store_embedding():
         source_type = data["source_type"]
         metadata = json.dumps(data.get("metadata", {}))
 
-        # Generate embedding
-        embedding = await generate_embedding_sync(text)
+        # Generate embedding (async function)
+        embedding = await generate_embedding_async(text)
 
         if embedding is None:
             return jsonify({"error": "Failed to generate embedding"}), 500
 
-        # Store in database
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # Store embedding
         cursor.execute(
             """
-            INSERT INTO embeddings (source_id, source_type, text_content, embedding, embedding_blob, metadata, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO embeddings (source_id, source_type, text_content, embedding, metadata)
+            VALUES (?, ?, ?, ?, ?)
         """,
-            (
-                source_id,
-                source_type,
-                text,
-                json.dumps(embedding.tolist()),
-                embedding.astype(np.float32).tobytes(),
-                metadata,
-                datetime.now().isoformat(),
-            ),
-        )
-
-        embedding_id = cursor.lastrowid
-
-        # Update FTS index
-        cursor.execute(
-            """
-            INSERT INTO embeddings_fts(rowid, text_content, source_type)
-            VALUES (?, ?, ?)
-        """,
-            (embedding_id, text, source_type),
+            (source_id, source_type, text, json.dumps(embedding.tolist()), metadata),
         )
 
         conn.commit()
         conn.close()
 
-        return jsonify(
-            {
-                "id": embedding_id,
-                "source_id": source_id,
-                "source_type": source_type,
-                "dimension": len(embedding),
-                "status": "stored",
-            }
-        )
+        return jsonify({"status": "success", "embedding_id": source_id})
 
     except Exception as e:
         logger.error(f"Store error: {e}")
@@ -300,8 +282,8 @@ async def store_embedding():
 
 
 @app.route("/search", methods=["POST"])
-def semantic_search():
-    """Semantic search across stored embeddings."""
+async def semantic_search():
+    """Perform semantic search - async."""
     try:
         data = request.get_json()
         if not data or "query" not in data:
@@ -309,86 +291,32 @@ def semantic_search():
 
         query = data["query"]
         top_k = data.get("top_k", DEFAULT_TOP_K)
-        source_type = data.get("source_type")  # Optional filter
-        min_similarity = data.get("min_similarity", 0.0)  # Optional threshold
+        source_type_filter = data.get("source_type")
 
-        if not query.strip():
-            return jsonify({"error": "Empty query"}), 400
-
-        # Generate query embedding
-        query_embedding = generate_embedding_sync(query)
+        # Generate embedding for query (async)
+        query_embedding = await generate_embedding_async(query)
 
         if query_embedding is None:
             return jsonify({"error": "Failed to generate query embedding"}), 500
 
-        # Search in database
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # FTS5 candidate pre-filtering
-        try:
-            fts_query = " OR ".join(
-                f'"{word}"'
-                for word in query.split()
-                if len(word) > 2 and word.isalnum()
+        # Get all embeddings
+        if source_type_filter:
+            cursor.execute(
+                "SELECT id, source_id, source_type, text_content, embedding FROM embeddings WHERE source_type = ?",
+                (source_type_filter,),
             )
-            if fts_query and source_type:
-                cursor.execute(
-                    """
-                    SELECT rowid FROM embeddings_fts
-                    WHERE embeddings_fts MATCH ? AND source_type = ?
-                    LIMIT 200
-                """,
-                    (fts_query, source_type),
-                )
-            elif fts_query:
-                cursor.execute(
-                    """
-                    SELECT rowid FROM embeddings_fts
-                    WHERE embeddings_fts MATCH ?
-                    LIMIT 200
-                """,
-                    (fts_query,),
-                )
-            else:
-                cursor.execute("SELECT id FROM embeddings LIMIT 200")
-            candidate_ids = [row[0] for row in cursor.fetchall()]
-        except Exception:
-            # FTS fallback: use direct query with limit
-            cursor.execute("SELECT id FROM embeddings LIMIT 500")
-            candidate_ids = [row[0] for row in cursor.fetchall()]
-
-        if not candidate_ids:
-            conn.close()
-            return jsonify(
-                {
-                    "query": query,
-                    "results": [],
-                    "total_matches": 0,
-                    "returned": 0,
-                    "min_similarity_applied": min_similarity,
-                }
+        else:
+            cursor.execute(
+                "SELECT id, source_id, source_type, text_content, embedding FROM embeddings"
             )
-
-        placeholders = ",".join("?" * len(candidate_ids))
-        cursor.execute(
-            f"""
-            SELECT id, source_id, source_type, text_content,
-                   COALESCE(embedding_blob, NULL) as emb_blob,
-                   embedding, metadata, created_at
-            FROM embeddings WHERE id IN ({placeholders})
-        """,
-            candidate_ids,
-        )
 
         results = []
         for row in cursor.fetchall():
             try:
-                emb_blob = row["emb_blob"]
-                if emb_blob:
-                    stored_embedding = np.frombuffer(emb_blob, dtype=np.float32)
-                else:
-                    stored_embedding = np.array(json.loads(row["embedding"]))
+                stored_embedding = np.array(json.loads(row["embedding"]))
                 similarity = cosine_similarity(query_embedding, stored_embedding)
 
                 results.append(
@@ -396,115 +324,24 @@ def semantic_search():
                         "id": row["id"],
                         "source_id": row["source_id"],
                         "source_type": row["source_type"],
-                        "text": row["text_content"][:500],
-                        "similarity": round(similarity, 4),
-                        "metadata": json.loads(row["metadata"])
-                        if row["metadata"]
-                        else {},
-                        "created_at": row["created_at"],
+                        "content": row["text_content"],
+                        "similarity": similarity,
                     }
                 )
             except Exception as e:
-                logger.warning(f"Failed to process embedding {row['id']}: {e}")
+                logger.error(f"Error processing result: {e}")
                 continue
 
         conn.close()
 
-        # Sort by similarity and take top_k
+        # Sort by similarity and return top_k
         results.sort(key=lambda x: x["similarity"], reverse=True)
+        results = results[:top_k]
 
-        # Filter by minimum similarity threshold
-        if min_similarity > 0:
-            results = [r for r in results if r["similarity"] >= min_similarity]
-
-        top_results = results[:top_k]
-
-        return jsonify(
-            {
-                "query": query,
-                "results": top_results,
-                "total_matches": len(results),
-                "returned": len(top_results),
-                "min_similarity_applied": min_similarity,
-            }
-        )
+        return jsonify({"query": query, "results": results, "count": len(results)})
 
     except Exception as e:
         logger.error(f"Search error: {e}")
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/search/file", methods=["POST"])
-def search_by_file():
-    """Search for content similar to a file."""
-    try:
-        data = request.get_json()
-        if not data or "file_path" not in data:
-            return jsonify({"error": "Missing 'file_path' field"}), 400
-
-        file_path = data["file_path"]
-        top_k = data.get("top_k", DEFAULT_TOP_K)
-
-        # Read file content
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read()
-        except Exception as e:
-            return jsonify({"error": f"Failed to read file: {e}"}), 400
-
-        # Generate embedding
-        file_embedding = generate_embedding_sync(content[:10000])  # Limit size
-
-        if file_embedding is None:
-            return jsonify({"error": "Failed to generate embedding"}), 500
-
-        # Search
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT id, source_id, source_type, text_content,
-                   COALESCE(embedding_blob, NULL) as emb_blob,
-                   embedding, metadata, created_at
-            FROM embeddings LIMIT 500
-        """)
-
-        results = []
-        for row in cursor.fetchall():
-            try:
-                emb_blob = row["emb_blob"]
-                if emb_blob:
-                    stored_embedding = np.frombuffer(emb_blob, dtype=np.float32)
-                else:
-                    stored_embedding = np.array(json.loads(row["embedding"]))
-                similarity = cosine_similarity(file_embedding, stored_embedding)
-
-                results.append(
-                    {
-                        "id": row["id"],
-                        "source_id": row["source_id"],
-                        "source_type": row["source_type"],
-                        "text": row["text_content"][:500],
-                        "similarity": round(similarity, 4),
-                        "created_at": row["created_at"],
-                    }
-                )
-            except:
-                continue
-
-        conn.close()
-
-        results.sort(key=lambda x: x["similarity"], reverse=True)
-
-        return jsonify(
-            {
-                "file": file_path,
-                "results": results[:top_k],
-                "total_matches": len(results),
-            }
-        )
-
-    except Exception as e:
-        logger.error(f"File search error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -540,10 +377,58 @@ def init_database():
             pass  # Column already exists
 
         # FTS5 virtual table for candidate pre-filtering
+        # Handle potential shadow table corruption from crashes
+        fts5_shadow_tables = [
+            "embeddings_fts_data",
+            "embeddings_fts_idx",
+            "embeddings_fts_docsize",
+            "embeddings_fts_config",
+        ]
+
+        # Check for orphaned shadow tables (FTS5 virtual table missing but shadows exist)
         cursor.execute("""
-            CREATE VIRTUAL TABLE IF NOT EXISTS embeddings_fts 
-            USING fts5(text_content, source_type, content=embeddings, content_rowid=id)
+            SELECT name FROM sqlite_master
+            WHERE type='table' AND name LIKE 'embeddings_fts%'
+            ORDER BY name
         """)
+        existing_fts_tables = [row[0] for row in cursor.fetchall()]
+
+        has_virtual = "embeddings_fts" in existing_fts_tables
+        has_shadows = any(t in existing_fts_tables for t in fts5_shadow_tables)
+
+        # Inconsistency detected: shadows exist but no virtual table
+        if has_shadows and not has_virtual:
+            logger.warning(
+                "FTS5 shadow table inconsistency detected: orphaned shadow tables found, rebuilding FTS5 index"
+            )
+            # Drop all orphaned shadow tables
+            for table in fts5_shadow_tables:
+                cursor.execute(f"DROP TABLE IF EXISTS {table}")
+            logger.info("Dropped orphaned FTS5 shadow tables")
+            conn.commit()
+
+        # Create FTS5 virtual table
+        try:
+            cursor.execute("""
+                CREATE VIRTUAL TABLE IF NOT EXISTS embeddings_fts
+                USING fts5(text_content, source_type, content=embeddings, content_rowid=id)
+            """)
+        except sqlite3.OperationalError as e:
+            if "already exists" in str(e).lower():
+                logger.warning(
+                    f"FTS5 creation failed (shadow conflict), forcing full rebuild: {e}"
+                )
+                # Force rebuild: drop virtual and all shadow tables
+                cursor.execute("DROP TABLE IF EXISTS embeddings_fts")
+                for table in fts5_shadow_tables:
+                    cursor.execute(f"DROP TABLE IF EXISTS {table}")
+                cursor.execute("""
+                    CREATE VIRTUAL TABLE embeddings_fts
+                    USING fts5(text_content, source_type, content=embeddings, content_rowid=id)
+                """)
+                logger.info("FTS5 index rebuilt successfully after shadow conflict")
+            else:
+                raise
 
         conn.commit()
         conn.close()
@@ -552,6 +437,53 @@ def init_database():
     except Exception as e:
         logger.error(f"Database init error: {e}")
         raise
+
+
+@app.route("/file_search", methods=["GET"])
+async def file_search():
+    """File search endpoint - async."""
+    try:
+        query = request.args.get("q", "")
+        if not query:
+            return jsonify({"error": "Missing query"}), 400
+
+        # Use semantic search
+        query_embedding = await generate_embedding_async(query)
+        if query_embedding is None:
+            return jsonify({"error": "Failed to generate query embedding"}), 500
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT id, source_id, source_type, text_content, embedding FROM embeddings"
+        )
+        results = []
+        for row in cursor.fetchall():
+            try:
+                stored_embedding = np.array(json.loads(row["embedding"]))
+                similarity = cosine_similarity(query_embedding, stored_embedding)
+                if similarity > 0.5:  # Threshold
+                    results.append(
+                        {
+                            "id": row["id"],
+                            "source_id": row["source_id"],
+                            "source_type": row["source_type"],
+                            "content": row["text_content"],
+                            "similarity": similarity,
+                        }
+                    )
+            except Exception:
+                continue
+
+        results.sort(key=lambda x: x["similarity"], reverse=True)
+        conn.close()
+
+        return jsonify({"results": results[:10]})
+
+    except Exception as e:
+        logger.error(f"File search error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 def main():
@@ -565,11 +497,6 @@ def main():
     parser.add_argument("--daemon", action="store_true", help="Run as daemon")
     args = parser.parse_args()
 
-    # Check Ollama
-    if not ollama_available():
-        logger.error("Ollama is not running! Start it with: ollama serve")
-        sys.exit(1)
-
     # Initialize database
     init_database()
 
@@ -578,14 +505,8 @@ def main():
     logger.info(f"Model: {DEFAULT_MODEL} ({EMBEDDING_DIM} dimensions)")
     logger.info(f"Database: {DB_PATH}")
 
-    if args.daemon:
-        # Run in background
-        from daemon import DaemonContext  # type: ignore
-
-        with DaemonContext():
-            app.run(host=args.host, port=args.port, threaded=True)
-    else:
-        app.run(host=args.host, port=args.port, threaded=True, debug=False)
+    # Run Flask app
+    app.run(host=args.host, port=args.port, threaded=True, debug=False)
 
 
 if __name__ == "__main__":

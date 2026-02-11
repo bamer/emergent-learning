@@ -85,3 +85,25 @@ Using print() or exotic loggers defeats the purpose of a unified logging system.
 
 ---
 
+## H-205: Always use unified logging - All ELF components MUST import from Open_ELF.utils.elf_logging.get_logger()
+
+**Confidence**: 0.95
+**Source**: observation
+**Project**: `/home/bamer/.opencode/emergent-learning`
+**Created**: 2026-02-11
+
+Unified logging ensures consistent format, centralized rotation, crash policy support, and proper management across all components. Using basic logging causes fragmentation and misses crash policy benefits.
+
+---
+
+## H-206: Never use polling for event streaming - SSE connections only
+
+**Confidence**: 0.95
+**Source**: observation
+**Project**: `/home/bamer/.opencode/emergent-learning`
+**Created**: 2026-02-11
+
+Polling causes excessive connection overhead and system failures under load. SSE provides real-time event delivery with single persistent connection, preventing connection storms and resource exhaustion.
+
+---
+

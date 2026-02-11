@@ -349,10 +349,11 @@ def record_heuristic(heuristic: dict) -> bool:
         try:
             embedding_text = f"{heuristic['domain']}: {heuristic['rule']}"
             requests.post(
-                "http://localhost:8888/api/v1/persistence/heuristics",
+                "http://localhost:8888/api/v1/persistence/heuristics",  # FIXED: Correct endpoint URL
                 json={
                     "domain": heuristic["domain"],
                     "rule": heuristic["rule"],
+                    "explanation": f"Auto-captured by background service on {heuristic['timestamp']}",
                     "confidence": heuristic["confidence"],
                     "source_type": "auto-capture",
                 },

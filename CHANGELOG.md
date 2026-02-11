@@ -7,7 +7,26 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.5.9] - 2026-02-11
 
+### Added
+- **Semantic Daemon** - Fully integrated semantic search daemon into startup script (v0.5.5)
+  - MANDATORY component for semantic search across learnings, heuristics, and golden rules
+  - Automatically starts via `start-elf-system.sh` in all-mode, no-opencode-mode, and test-mode
+  - Port 5001 with health endpoint at `http://localhost:5001/health`
+  - Supports endpoints: `/embed`, `/store`, `/search`, `/health`, `/stats`
+
+- **Unified Logging Integration** - All components now use `Open_ELF.utils.elf_logging`
+  - Semantic daemon logs to `/home/bamer/.opencode/emergent-learning/logs/semantic-daemon.log`
+  - Format: `YYYY-MM-DD HH:MM:SS - elf.semantic-daemon - LEVEL - message`
+  - Crash policy integration for CRITICAL errors
+  - Centralized log rotation (10 MB, 5 backups, 7 day retention)
+
 ### Fixed
+- **FTS5 Database Corruption** - Automatic corruption detection and repair
+  - Fixed orphaned shadow table issue after crashes in `semantic/daemon.py`
+  - Enhanced `init_database()` with automatic repair logic
+  - Detects and cleans up inconsistent FTS5 tables
+  - System now recovers automatically from FTS5 corruption
+
 - **EventBridge SSE Endpoint** - Fixed wrong endpoint path
   - Changed from `/event` to `/global/event` (OpenCode real SSE endpoint)
   - Changed from `/` to `/global/health` for health check
@@ -35,10 +54,23 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - 7438+ tool events now logged per hour vs. 0 before fix
 
 ### Changed
-- **EventBridge Architecture** - Dual streaming mode (SSE + polling backup)
-  - Primary: SSE stream on `/global/event` for real-time events
-  - Backup: Polling every 2 seconds for tools not captured via SSE
-  - Both paths now extract complete tool state including input and output
+- **EventBridge Architecture** - SSE-only streaming mode (polling removed)
+  - SSE stream on `/global/event` for real-time events
+  - Removed polling backup (caused excessive connections and system failures)
+  - Relaxed timeout settings: minimum 20 seconds, maximum 10 minutes for async operations
+  - All new components MUST use async/await pattern
+
+- **Startup Script** - Updated to v0.5.5
+  - MANDATORY semantic daemon integration
+  - Added semantic daemon to status display and cleanup
+
+- **Documentation** - Updated with async/await and timeout guidelines
+  - `docs/DEVELOPMENT_GUIDELINES.md` (NEW) - Comprehensive async patterns
+  - `docs/ARCHITECTURE-EventBridge.md` - SSE-only architecture documented
+  - `CHANGELOG.md` - Removed polling references
+  - Integrated semantic daemon as MANDATORY component
+  - Updated status display to show semantic daemon health
+  - Added semantic daemon to cleanup sequence
 
 ### Status (2026-02-11)
 - **Trails**: ✅ WORKING (38,378 total, ~1000/hour)

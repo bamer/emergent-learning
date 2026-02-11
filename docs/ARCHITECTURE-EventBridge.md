@@ -60,7 +60,7 @@ The **EventBridge** is the central event processing system for the Emergent Lear
 
 ## Event Sources
 
-### 1. SSE Stream (Primary)
+### SSE Stream (Primary & Only)
 
 **Endpoint:** `http://localhost:4096/event`
 
@@ -71,35 +71,59 @@ The **EventBridge** is the central event processing system for the Emergent Lear
 - `server.heartbeat` - Server health
 - `session.status` - Session status changes
 
-**Limitation:** OpenCode does NOT emit `tool` type events via SSE.
+**Architecture:** SSE-only connection (polling removed due to excessive connections causing system failures)
 
-### 2. Session Polling (Secondary)
+### Timeout Guidelines (MANDATORY)
 
-**Endpoint:** `http://localhost:4096/session/{id}/message`
+**IMPORTANT:** All async operations MUST use relaxed timeout settings:
 
-**Purpose:** Detect tool usage by polling session messages
+- **Minimum timeout:** 20 seconds
+- **Maximum timeout:** 10 minutes
+- **Recommended for long-running tools:** 2-5 minutes
+- **Recommended for database operations:** 30-60 seconds
+- **Recommended for API calls:** 60-120 seconds
 
-**Frequency:** Every 5 seconds (previously 30 seconds)
-
-**Logic:**
-1. Query all active sessions
-2. For each session, fetch all messages
-3. Check message parts for `type: "tool_use"`
-4. Trigger PostToolUse hooks for detected tools
-
-**Advantage:** Catches tools that SSE misses
-
-### 3. Message Inspection
-
-**Process:**
+**Example:**
 ```python
-for session in sessions:
-    messages = fetch_messages(session.id)
-    for msg in messages:
-        for part in msg.parts:
-            if part.type == "tool_use":
-                trigger_hook(part.tool, part.input)
+# Good - relaxed timeout
+async def process_tool(tool_name, input_data):
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=120)) as session:
+        async with session.post(url, json=input_data) as response:
+            return await response.json()
+
+# Bad - aggressive timeout (causes failures)
+async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as session:
+    # This will timeout frequently
 ```
+
+### Async/Await Pattern (MANDATORY)
+
+**IMPORTANT:** All newly developed components MUST use async/await pattern:
+
+```python
+# Correct pattern
+async def process_event(event_data):
+    # Database operations
+    await store_event_async(event_data)
+
+    # API calls
+    await send_notification_async(event_data)
+
+    # File operations
+    await write_log_async(event_data)
+
+# Blocking pattern (NOT ALLOWED in new code)
+def process_event_blocking(event_data):
+    # This blocks the event loop
+    store_event(event_data)  # ❌ Blocking
+    send_notification(event_data)  # ❌ Blocking
+```
+
+**Benefits:**
+- Non-blocking I/O operations
+- Better resource utilization
+- Handles slow operations gracefully
+- Prevents system failures under load
 
 ---
 
@@ -196,9 +220,10 @@ for session in sessions:
 **Location:** `Open_ELF/logs/event_bridge.log`
 
 **Key Log Messages:**
-- `🔧 Tool detected via polling: {tool_name}` - Tool captured
-- `✅ Poll complete: {count} tools found` - Polling summary
-- `❌ Error polling sessions: {error}` - Connection issues
+- `📡 SSE event received: {event_type}` - Event captured via SSE
+- `🔧 Tool detected: {tool_name}` - Tool captured
+- `✅ Events processed: {count}` - Event summary
+- `❌ SSE connection error: {error}` - Connection issues
 
 ### Health Check
 
@@ -314,16 +339,17 @@ python3 scripts/diagnose_event_pipeline.py
 
 ### High Latency
 
-**Issue:** Tools detected with delay
+**Issue:** Tools detected with delay or events missed
 
-**Cause:** Default 30s polling interval too slow
+**Cause:** SSE connection timeout too aggressive
 
-**Fix:** Edit `event_bridge.py`:
+**Fix:** Update timeout settings to be >= 20 seconds:
 ```python
-# Change from:
-time.sleep(30)
-# To:
-time.sleep(5)
+# In SSE client initialization
+async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
+    async with session.get(sse_url) as response:
+        # Process SSE stream
+        pass
 ```
 
 ### Memory Issues
@@ -354,9 +380,9 @@ OpenCode → ELF_superpowers.js → Direct Python hooks
 
 ### Current Architecture (ACTIVE)
 
-**API-based approach:**
+**SSE-only API-based approach:**
 ```
-OpenCode → SSE/REST API → EventBridge → Hooks
+OpenCode → SSE Stream → EventBridge → Hooks
 ```
 
 **Advantages:**
@@ -364,6 +390,14 @@ OpenCode → SSE/REST API → EventBridge → Hooks
 - Works with any OpenCode version
 - More reliable and maintainable
 - Better observability
+- Real-time event delivery
+- Reduced connection overhead (no polling)
+
+**SSE-Only Benefits:**
+- Single persistent connection
+- Lower system resource usage
+- No risk of connection storms from polling
+- Better for system stability
 
 ---
 

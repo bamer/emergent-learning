@@ -456,7 +456,16 @@ class LearningProcessor:
         source_type: str,
         metadata: Optional[Dict] = None,
     ):
-        """Store text with embedding in semantic daemon."""
+        """
+        Store text with embedding in semantic daemon (MANDATORY but non-blocking).
+
+        MANDATORY: Semantic memory is required for the full learning system.
+        NON-BLOCKING: Errors are logged but learning capture continues.
+
+        Errors are tracked in the database for monitoring and alerting.
+        """
+        success = False
+
         try:
             import urllib.request
 
@@ -475,9 +484,68 @@ class LearningProcessor:
                 method="POST",
             )
             with urllib.request.urlopen(req, timeout=5) as resp:
-                pass  # Fire and forget
+                success = True
+
+        except urllib.error.URLError as e:
+            # MANDATORY system not running - log as ERROR (not debug)
+            # This violates golden rule: semantic daemon should be running
+            logger.error(
+                f"[SEMANTIC_FAILURE] Semantic daemon unavailable ({e}) - "
+                f"Source: {source_type}:{source_id}. "
+                f"This is a MANDATORY component - ensure Ollama and semantic daemon are running."
+            )
+
+            # Track failure in database for monitoring
+            self._track_semantic_failure("daemon_unavailable", source_type, str(e))
+
         except Exception as e:
-            logger.error(f"Failed to store embedding: {e}", exc_info=True)
+            logger.error(
+                f"[SEMANTIC_FAILURE] Failed to store embedding: {e}", exc_info=True
+            )
+
+            # Track failure in database for monitoring
+            self._track_semantic_failure("storage_error", source_type, str(e))
+
+        return success
+
+    def _track_semantic_failure(
+        self, failure_type: str, source_type: str, error_detail: str
+    ):
+        """
+        Track semantic memory failures in the database.
+
+        This allows monitoring and alerting to detect when the IMPORTANT
+        semantic memory system is not functioning properly.
+        """
+        conn = self._get_db_connection()
+        if not conn:
+            return
+
+        try:
+            cursor = conn.cursor()
+            timestamp = datetime.now().isoformat()
+
+            # Log semantic failure metric
+            cursor.execute(
+                """
+                INSERT INTO metrics (metric_type, metric_name, metric_value, tags, context, timestamp)
+                VALUES ('semantic_failure', ?, 1, ?, ?, ?)
+            """,
+                (
+                    failure_type,
+                    f"type:{source_type}",
+                    str(error_detail)[:200],
+                    timestamp,
+                ),
+            )
+
+            conn.commit()
+
+        except Exception as e:
+            logger.error(f"Failed to track semantic failure: {e}", exc_info=True)
+            conn.rollback()
+        finally:
+            conn.close()
 
     # =========================================================================
     # POST-TOOL PROCESSING

@@ -23,6 +23,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
 from collections import Counter
 
+
 # Paths
 def _resolve_base_path() -> Path:
     env_path = os.environ.get("ELF_BASE_PATH")
@@ -35,6 +36,7 @@ def _resolve_base_path() -> Path:
             sys.path.insert(0, str(parent / "src"))
             try:
                 from elf_paths import get_base_path
+
                 return get_base_path(parent)
             except ImportError:
                 break
@@ -43,7 +45,13 @@ def _resolve_base_path() -> Path:
 
 
 ELF_DIR = _resolve_base_path()
-PROJECTS_DIR = Path.home() / ".opencode" / "projects"
+# Support both legacy and new project directory structures
+PROJECTS_DIR_LEGACY = Path.home() / ".opencode" / "projects"
+PROJECTS_DIR_ELF = ELF_DIR
+# Use ELF_DIR if legacy path doesn't exist
+PROJECTS_DIR = (
+    PROJECTS_DIR_ELF if not PROJECTS_DIR_LEGACY.exists() else PROJECTS_DIR_LEGACY
+)
 DB_PATH = ELF_DIR / "memory" / "index.db"
 QUEUE_FILE = ELF_DIR / "memory" / "summarization_queue.jsonl"
 LEARNING_EXTRACTOR_TIMEOUT = int(os.environ.get("LEARNING_EXTRACTOR_TIMEOUT", "21600"))
@@ -54,6 +62,7 @@ def get_db():
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
     return conn
+
 
 def load_queue_entries() -> List[Dict[str, Any]]:
     if not QUEUE_FILE.exists():
@@ -70,11 +79,13 @@ def load_queue_entries() -> List[Dict[str, Any]]:
                 continue
     return entries
 
+
 def write_queue_entries(entries: List[Dict[str, Any]]) -> None:
     QUEUE_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(QUEUE_FILE, "w", encoding="utf-8") as handle:
         for entry in entries:
             handle.write(json.dumps(entry) + "\n")
+
 
 def queue_session(session_id: str, reason: str) -> None:
     entries = load_queue_entries()
@@ -89,11 +100,13 @@ def queue_session(session_id: str, reason: str) -> None:
     )
     write_queue_entries(entries)
 
+
 def dequeue_session(session_id: str) -> None:
     entries = load_queue_entries()
     filtered = [entry for entry in entries if entry.get("session_id") != session_id]
     if len(filtered) != len(entries):
         write_queue_entries(filtered)
+
 
 def queued_session_ids() -> set:
     return {entry.get("session_id") for entry in load_queue_entries()}
@@ -122,7 +135,7 @@ def extract_session_data(file_path: Path) -> Dict[str, Any]:
     assistant_snippets = []
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             for line in f:
                 if not line.strip():
                     continue
@@ -177,26 +190,32 @@ def extract_session_data(file_path: Path) -> Dict[str, Any]:
         "files_touched": list(files_touched)[:50],  # Cap at 50 files
         "user_prompts": user_prompts[:10],  # First 10 prompts
         "assistant_snippets": assistant_snippets[:5],  # First 5 snippets
-        "file_size": file_path.stat().st_size
+        "file_size": file_path.stat().st_size,
     }
 
 
 def generate_summary_prompt(session_data: Dict[str, Any], session_id: str) -> str:
     """Create a prompt for the learning-extractor agent."""
-    tool_str = ", ".join(f"{k}: {v}" for k, v in session_data.get("tool_counts", {}).items())
-    files_str = "\n".join(f"  - {f}" for f in session_data.get("files_touched", [])[:20])
-    prompts_str = "\n".join(f"  - {p}" for p in session_data.get("user_prompts", [])[:5])
+    tool_str = ", ".join(
+        f"{k}: {v}" for k, v in session_data.get("tool_counts", {}).items()
+    )
+    files_str = "\n".join(
+        f"  - {f}" for f in session_data.get("files_touched", [])[:20]
+    )
+    prompts_str = "\n".join(
+        f"  - {p}" for p in session_data.get("user_prompts", [])[:5]
+    )
 
     return f"""Summarize this Opencode session concisely. Return JSON only.
 
 Session ID: {session_id}
-Messages: {session_data.get('message_count', 0)}
-Tools used: {tool_str or 'none'}
+Messages: {session_data.get("message_count", 0)}
+Tools used: {tool_str or "none"}
 Files touched:
-{files_str or '  (none)'}
+{files_str or "  (none)"}
 
 User prompts (first few):
-{prompts_str or '  (none)'}
+{prompts_str or "  (none)"}
 
 Return this exact JSON structure (no markdown, just raw JSON):
 {{
@@ -242,7 +261,9 @@ def generate_fallback_summary(session_data: Dict[str, Any]) -> Dict[str, Any]:
 
     # Tool summary
     if tool_counts:
-        parts = [f"{v}x {k}" for k, v in sorted(tool_counts.items(), key=lambda x: -x[1])[:5]]
+        parts = [
+            f"{v}x {k}" for k, v in sorted(tool_counts.items(), key=lambda x: -x[1])[:5]
+        ]
         tool_summary = f"Used {', '.join(parts)}"
     else:
         tool_summary = "No tool usage recorded"
@@ -266,7 +287,7 @@ def generate_fallback_summary(session_data: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "tool_summary": tool_summary,
         "content_summary": content_summary,
-        "conversation_summary": conversation_summary
+        "conversation_summary": conversation_summary,
     }
 
 
@@ -297,7 +318,9 @@ def summarize_session(
     # Extract session data
     session_data = extract_session_data(file_path)
     if "error" in session_data:
-        print(f"Error extracting session data: {session_data['error']}", file=sys.stderr)
+        print(
+            f"Error extracting session data: {session_data['error']}", file=sys.stderr
+        )
         return False
 
     # Generate summary
@@ -308,9 +331,7 @@ def summarize_session(
         if not summary:
             if queue_on_fail:
                 queue_session(session_id, "learning-extractor unavailable")
-                print(
-                    "Learning-extractor failed, queued for later", file=sys.stderr
-                )
+                print("Learning-extractor failed, queued for later", file=sys.stderr)
                 summary = generate_fallback_summary(session_data)
                 model = "fallback"
                 is_stale = 1
@@ -326,7 +347,8 @@ def summarize_session(
     conn = get_db()
     try:
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT OR REPLACE INTO session_summaries (
                 session_id, project,
                 tool_summary, content_summary, conversation_summary,
@@ -334,21 +356,23 @@ def summarize_session(
                 session_file_path, session_file_size, session_last_modified,
                 summarized_at, summarizer_model, is_stale
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
-        """, (
-            session_id,
-            project,
-            summary.get("tool_summary", ""),
-            summary.get("content_summary", ""),
-            summary.get("conversation_summary", ""),
-            json.dumps(session_data.get("files_touched", [])),
-            json.dumps(session_data.get("tool_counts", {})),
-            session_data.get("message_count", 0),
-            str(file_path),
-            session_data.get("file_size", 0),
-            datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
-            model,
-            is_stale,
-        ))
+        """,
+            (
+                session_id,
+                project,
+                summary.get("tool_summary", ""),
+                summary.get("content_summary", ""),
+                summary.get("conversation_summary", ""),
+                json.dumps(session_data.get("files_touched", [])),
+                json.dumps(session_data.get("tool_counts", {})),
+                session_data.get("message_count", 0),
+                str(file_path),
+                session_data.get("file_size", 0),
+                datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
+                model,
+                is_stale,
+            ),
+        )
         conn.commit()
         if model == "learning-extractor":
             dequeue_session(session_id)
@@ -399,6 +423,7 @@ def get_unsummarized_sessions(older_than_hours: float = 1.0) -> List[str]:
 
     return unsummarized
 
+
 def process_queue(limit: int = 10) -> int:
     entries = load_queue_entries()
     if not entries:
@@ -415,15 +440,34 @@ def process_queue(limit: int = 10) -> int:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Summarize Claude sessions with nvidia/qwen/qwen3-next-80b-a3b-instruct")
+    parser = argparse.ArgumentParser(
+        description="Summarize Claude sessions with nvidia/qwen/qwen3-next-80b-a3b-instruct"
+    )
     parser.add_argument("session_id", nargs="?", help="Session ID to summarize")
-    parser.add_argument("--batch", action="store_true", help="Batch summarize multiple sessions")
-    parser.add_argument("--older-than", type=str, default="1h", help="Only sessions older than (e.g., 1h, 30m)")
-    parser.add_argument("--limit", type=int, default=10, help="Max sessions to process in batch")
-    parser.add_argument("--no-llm", action="store_true", help="Use fallback summary (no API call)")
-    parser.add_argument("--process-queue", action="store_true", help="Process queued summaries")
-    parser.add_argument("--queue-limit", type=int, default=10, help="Max queued sessions to process")
-    parser.add_argument("--list-unsummarized", action="store_true", help="List unsummarized sessions")
+    parser.add_argument(
+        "--batch", action="store_true", help="Batch summarize multiple sessions"
+    )
+    parser.add_argument(
+        "--older-than",
+        type=str,
+        default="1h",
+        help="Only sessions older than (e.g., 1h, 30m)",
+    )
+    parser.add_argument(
+        "--limit", type=int, default=10, help="Max sessions to process in batch"
+    )
+    parser.add_argument(
+        "--no-llm", action="store_true", help="Use fallback summary (no API call)"
+    )
+    parser.add_argument(
+        "--process-queue", action="store_true", help="Process queued summaries"
+    )
+    parser.add_argument(
+        "--queue-limit", type=int, default=10, help="Max queued sessions to process"
+    )
+    parser.add_argument(
+        "--list-unsummarized", action="store_true", help="List unsummarized sessions"
+    )
 
     args = parser.parse_args()
 
@@ -443,7 +487,9 @@ def main():
 
     if args.list_unsummarized:
         sessions = get_unsummarized_sessions(older_than_hours)
-        print(f"Found {len(sessions)} unsummarized sessions (older than {args.older_than}):")
+        print(
+            f"Found {len(sessions)} unsummarized sessions (older than {args.older_than}):"
+        )
         for sid in sessions[:20]:
             print(f"  {sid}")
         if len(sessions) > 20:
@@ -458,10 +504,12 @@ def main():
     if args.batch:
         # Batch summarize
         sessions = get_unsummarized_sessions(older_than_hours)
-        print(f"Found {len(sessions)} unsummarized sessions, processing up to {args.limit}")
+        print(
+            f"Found {len(sessions)} unsummarized sessions, processing up to {args.limit}"
+        )
 
         success_count = 0
-        for session_id in sessions[:args.limit]:
+        for session_id in sessions[: args.limit]:
             if summarize_session(session_id, use_llm=not args.no_llm):
                 success_count += 1
 
