@@ -85,7 +85,7 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     return float(dot_product / (norm_a * norm_b))
 
 
-def generate_embedding_sync(text: str) -> Optional[np.ndarray]:
+async def  generate_embedding_sync(text: str) -> Optional[np.ndarray]:
     """
     Synchronous embedding generation using requests.
     Avoids asyncio issues with Flask's event loop.
@@ -198,7 +198,7 @@ def get_stats():
 
 
 @app.route("/embed", methods=["POST"])
-def generate_embedding():
+async def generate_embedding():
     """Generate embedding for text."""
     try:
         data = request.get_json()
@@ -210,7 +210,7 @@ def generate_embedding():
             return jsonify({"error": "Empty text"}), 400
 
         # Generate embedding
-        embedding = generate_embedding_sync(text)
+        embedding = await generate_embedding_sync(text)
 
         if embedding is None:
             return jsonify({"error": "Failed to generate embedding"}), 500
@@ -229,7 +229,7 @@ def generate_embedding():
 
 
 @app.route("/store", methods=["POST"])
-def store_embedding():
+async def store_embedding():
     """Store text with its embedding."""
     try:
         data = request.get_json()
@@ -245,7 +245,7 @@ def store_embedding():
         metadata = json.dumps(data.get("metadata", {}))
 
         # Generate embedding
-        embedding = generate_embedding_sync(text)
+        embedding = await generate_embedding_sync(text)
 
         if embedding is None:
             return jsonify({"error": "Failed to generate embedding"}), 500
@@ -580,9 +580,9 @@ def main():
 
     if args.daemon:
         # Run in background
-        import daemon
+        from daemon import DaemonContext  # type: ignore
 
-        with daemon.DaemonContext():
+        with DaemonContext():
             app.run(host=args.host, port=args.port, threaded=True)
     else:
         app.run(host=args.host, port=args.port, threaded=True, debug=False)

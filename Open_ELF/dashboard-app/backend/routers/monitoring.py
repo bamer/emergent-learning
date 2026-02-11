@@ -1273,6 +1273,121 @@ async def get_ollama_status():
             except:
                 models = []
 
+        # Get embedding statistics from database
+        embedding_stats = {
+            "total_embeddings": 0,
+            "timeframe_stats": {
+                "last_hour": 0,
+                "last_6_hours": 0,
+                "last_24_hours": 0,
+                "last_7_days": 0,
+                "last_30_days": 0,
+            },
+            "by_source_type": {},
+            "by_hour": [],
+            "by_day": [],
+            "recent_embeddings": [],
+            "average_length": 0,
+            "oldest": None,
+            "newest": None,
+            "embedding_dimension": 768,
+        }
+
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            # Total embeddings
+            cursor.execute("SELECT COUNT(*) FROM embeddings")
+            embedding_stats["total_embeddings"] = cursor.fetchone()[0]
+
+            # Oldest and newest
+            cursor.execute("SELECT MIN(created_at), MAX(created_at) FROM embeddings")
+            result = cursor.fetchone()
+            if result[0]:
+                embedding_stats["oldest"] = result[0]
+                embedding_stats["newest"] = result[1]
+
+            # Average text length
+            cursor.execute("SELECT AVG(LENGTH(text_content)) FROM embeddings")
+            avg_len = cursor.fetchone()[0]
+            embedding_stats["average_length"] = round(avg_len, 1) if avg_len else 0
+
+            # By source type
+            cursor.execute("""
+                SELECT source_type, COUNT(*)
+                FROM embeddings
+                GROUP BY source_type
+                ORDER BY COUNT(*) DESC
+            """)
+            for row in cursor.fetchall():
+                embedding_stats["by_source_type"][row[0]] = row[1]
+
+            # By timeframe
+            timeframes = {
+                "last_hour": "-1 hour",
+                "last_6_hours": "-6 hours",
+                "last_24_hours": "-1 day",
+                "last_7_days": "-7 days",
+                "last_30_days": "-30 days",
+            }
+
+            for name, offset in timeframes.items():
+                cursor.execute(f"""
+                    SELECT COUNT(*) FROM embeddings
+                    WHERE created_at > datetime('now', '{offset}')
+                """)
+                embedding_stats["timeframe_stats"][name] = cursor.fetchone()[0]
+
+            # By hour (last 24 hours)
+            cursor.execute("""
+                SELECT
+                    strftime('%Y-%m-%d %H:00', created_at) as hour,
+                    COUNT(*) as count
+                FROM embeddings
+                WHERE created_at > datetime('now', '-24 hours')
+                GROUP BY hour
+                ORDER BY hour DESC
+                LIMIT 24
+            """)
+            for row in cursor.fetchall():
+                embedding_stats["by_hour"].append({"hour": row[0], "count": row[1]})
+
+            # By day (last 30 days)
+            cursor.execute("""
+                SELECT
+                    strftime('%Y-%m-%d', created_at) as day,
+                    COUNT(*) as count
+                FROM embeddings
+                WHERE created_at > datetime('now', '-30 days')
+                GROUP BY day
+                ORDER BY day DESC
+                LIMIT 30
+            """)
+            for row in cursor.fetchall():
+                embedding_stats["by_day"].append({"day": row[0], "count": row[1]})
+
+            # Recent embeddings (last 10)
+            cursor.execute("""
+                SELECT id, source_type, substr(text_content, 1, 60), created_at
+                FROM embeddings
+                ORDER BY created_at DESC
+                LIMIT 10
+            """)
+            for row in cursor.fetchall():
+                embedding_stats["recent_embeddings"].append(
+                    {
+                        "id": row[0],
+                        "source_type": row[1],
+                        "content_preview": row[2] + "...",
+                        "created_at": row[3],
+                    }
+                )
+
+            conn.close()
+        except Exception as e:
+            logger.error(f"Error fetching embedding statistics: {e}")
+
         return {
             "status": "ok",
             "service_running": ollama_running,
@@ -1283,6 +1398,7 @@ async def get_ollama_status():
             else None,
             "service_url": "http://localhost:11434",
             "last_checked": datetime.now().isoformat(),
+            "embedding_stats": embedding_stats,
         }
 
     except Exception as e:

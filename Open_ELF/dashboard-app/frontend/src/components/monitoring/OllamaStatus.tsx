@@ -1,5 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Brain, CheckCircle, XCircle, AlertCircle, RefreshCw, Zap, Database } from 'lucide-react';
+import { Brain, CheckCircle, XCircle, AlertCircle, RefreshCw, Zap, Database, BarChart3, Clock, FileText, TrendingUp } from 'lucide-react';
+
+interface EmbeddingStats {
+  total_embeddings: number;
+  timeframe_stats: {
+    last_hour: number;
+    last_6_hours: number;
+    last_24_hours: number;
+    last_7_days: number;
+    last_30_days: number;
+  };
+  by_source_type: Record<string, number>;
+  by_hour: Array<{ hour: string; count: number }>;
+  by_day: Array<{ day: string; count: number }>;
+  recent_embeddings: Array<{
+    id: number;
+    source_type: string;
+    content_preview: string;
+    created_at: string;
+  }>;
+  average_length: number;
+  oldest: string | null;
+  newest: string | null;
+  embedding_dimension: number;
+}
 
 interface OllamaStatusData {
   status: string;
@@ -10,6 +34,7 @@ interface OllamaStatusData {
   service_url: string;
   last_checked: string;
   error?: string;
+  embedding_stats?: EmbeddingStats;
 }
 
 interface OllamaStatusProps {
@@ -259,6 +284,149 @@ export function OllamaStatus({ apiBaseUrl = '' }: OllamaStatusProps) {
               )}
             </div>
 
+            {/* Embedding Statistics Overview */}
+            {status.embedding_stats && (
+              <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <BarChart3 className="w-4 h-4 text-purple-400" />
+                  <h4 className="text-sm font-medium text-slate-200">Embedding Statistics</h4>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-xs text-slate-400 mb-1">Total Embeddings</div>
+                    <div className="text-2xl font-bold text-slate-100">
+                      {status.embedding_stats.total_embeddings.toLocaleString()}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-400 mb-1">Dimensions</div>
+                    <div className="text-2xl font-bold text-slate-100">
+                      {status.embedding_stats.embedding_dimension}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div>
+                    <div className="text-xs text-slate-400 mb-1">Avg Text Length</div>
+                    <div className="text-lg font-semibold text-slate-100">
+                      {status.embedding_stats.average_length.toLocaleString()} chars
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-400 mb-1">Oldest Embed</div>
+                    <div className="text-xs text-slate-300">
+                      {status.embedding_stats.oldest 
+                        ? new Date(status.embedding_stats.oldest).toLocaleDateString()
+                        : 'N/A'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Embedding Rate by Time */}
+            {status.embedding_stats && (
+              <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="w-4 h-4 text-blue-400" />
+                  <h4 className="text-sm font-medium text-slate-200">Embedding Rate</h4>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-400">Last Hour</span>
+                    <span className="text-sm font-medium text-slate-300">{status.embedding_stats.timeframe_stats?.last_hour || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-400">Last 6 Hours</span>
+                    <span className="text-sm font-medium text-slate-300">{status.embedding_stats.timeframe_stats?.last_6_hours || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-400">Last 24 Hours</span>
+                    <span className="text-sm font-medium text-slate-300">{status.embedding_stats.timeframe_stats?.last_24_hours || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-400">Last 7 Days</span>
+                    <span className="text-sm font-medium text-slate-300">{status.embedding_stats.timeframe_stats?.last_7_days || 0}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-400">Last 30 Days</span>
+                    <span className="text-sm font-medium text-slate-300">{status.embedding_stats.timeframe_stats?.last_30_days || 0}</span>
+                  </div>
+
+                  {/* Indicator for recent activity */}
+                  <div className={`mt-2 pt-2 border-t border-slate-700/50 ${
+                    (status.embedding_stats.timeframe_stats?.last_24_hours || 0) > 0
+                      ? 'text-green-400'
+                      : 'text-yellow-400'
+                  }`}>
+                    <Clock className="w-3 h-3 inline mr-1" />
+                    <span className="text-xs">
+                      {(status.embedding_stats.timeframe_stats?.last_24_hours || 0) > 0
+                        ? '✓ Active in last 24h'
+                        : '⚠ No activity in 24h'
+                      }
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* By Source Type */}
+            {status.embedding_stats && Object.keys(status.embedding_stats.by_source_type || {}).length > 0 && (
+              <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <FileText className="w-4 h-4 text-green-400" />
+                  <h4 className="text-sm font-medium text-slate-200">By Source Type</h4>
+                </div>
+                
+                <div className="space-y-2">
+                  {Object.entries(status.embedding_stats.by_source_type).map(([source, count]) => (
+                    <div key={source} className="flex items-center justify-between">
+                      <span className="text-sm text-slate-300 capitalize">{source}</span>
+                      <span className="text-sm font-mono text-slate-400">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recent Embeddings */}
+            {status.embedding_stats && (status.embedding_stats.recent_embeddings || []).length > 0 && (
+              <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/30">
+                <div className="flex items-center gap-2 mb-3">
+                  <Database className="w-4 h-4 text-orange-400" />
+                  <h4 className="text-sm font-medium text-slate-200">Recent Embeddings (Last 10)</h4>
+                </div>
+                
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {status.embedding_stats.recent_embeddings.map((emb, index) => (
+                    <div key={emb.id} className="p-2 bg-slate-700/30 rounded border border-slate-600/30">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-slate-400 font-mono">#{emb.id}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded ${
+                          emb.source_type === 'python' ? 'bg-blue-900/20 text-blue-400' :
+                          emb.source_type === 'heuristic' ? 'bg-green-900/20 text-green-400' :
+                          emb.source_type === 'bash' ? 'bg-yellow-900/20 text-yellow-400' :
+                          'bg-slate-700/50 text-slate-400'
+                        }`}>
+                          {emb.source_type}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-300 truncate">
+                        {emb.content_preview}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        {emb.created_at ? new Date(emb.created_at).toLocaleString() : 'Unknown'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Embedding Model Details */}
             {status.embedding_model && (
               <div className="bg-slate-800/30 rounded-lg p-4 border border-slate-700/30">
@@ -266,7 +434,7 @@ export function OllamaStatus({ apiBaseUrl = '' }: OllamaStatusProps) {
                   <Zap className="w-4 h-4 text-yellow-400" />
                   <h4 className="text-sm font-medium text-slate-200">Active Embedding Model</h4>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-300 font-mono">{status.embedding_model}</span>
                   <CheckCircle className="w-4 h-4 text-green-400" />

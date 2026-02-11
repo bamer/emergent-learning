@@ -38,6 +38,227 @@ DEFAULT_EMBEDDING_DIM = 768
 # Ollama API endpoint
 OLLAMA_API_URL = "http://localhost:11434/api/embeddings"
 
+# Database path for embedding statistics
+DB_PATH = Path("/home/bamer/.opencode/emergent-learning/memory/index.db")
+
+
+def get_embedding_statistics() -> Dict[str, Any]:
+    """
+    Get comprehensive embedding statistics from the database.
+    Returns user-friendly stats about stored embeddings.
+    """
+    stats = {
+        "total_embeddings": 0,
+        "timeframe_stats": {},
+        "by_source_type": {},
+        "by_hour": {},
+        "by_day": {},
+        "recent_embeddings": [],
+        "average_length": 0,
+        "oldest": None,
+        "newest": None,
+    }
+
+    try:
+        import sqlite3
+
+        conn = sqlite3.connect(str(DB_PATH))
+        cur = conn.cursor()
+
+        # Total embeddings
+        cur.execute("SELECT COUNT(*) FROM embeddings")
+        stats["total_embeddings"] = cur.fetchone()[0]
+
+        # Oldest and newest
+        cur.execute("SELECT MIN(created_at), MAX(created_at) FROM embeddings")
+        result = cur.fetchone()
+        if result[0]:
+            stats["oldest"] = result[0]
+            stats["newest"] = result[1]
+
+        # Average text length
+        cur.execute("SELECT AVG(LENGTH(text_content)) FROM embeddings")
+        avg_len = cur.fetchone()[0]
+        stats["average_length"] = round(avg_len, 1) if avg_len else 0
+
+        # By source type
+        cur.execute("""
+            SELECT source_type, COUNT(*) 
+            FROM embeddings 
+            GROUP BY source_type 
+            ORDER BY COUNT(*) DESC
+        """)
+        for row in cur.fetchall():
+            stats["by_source_type"][row[0]] = row[1]
+
+        # By timeframe
+        timeframes = {
+            "last_hour": "-1 hour",
+            "last_6_hours": "-6 hours",
+            "last_24_hours": "-1 day",
+            "last_7_days": "-7 days",
+            "last_30_days": "-30 days",
+        }
+
+        for name, offset in timeframes.items():
+            cur.execute(f"""
+                SELECT COUNT(*) FROM embeddings 
+                WHERE created_at > datetime('now', '{offset}')
+            """)
+            stats["timeframe_stats"][name] = cur.fetchone()[0]
+
+        # By hour (last 24 hours)
+        cur.execute("""
+            SELECT 
+                strftime('%Y-%m-%d %H:00', created_at) as hour,
+                COUNT(*) as count
+            FROM embeddings
+            WHERE created_at > datetime('now', '-24 hours')
+            GROUP BY hour
+            ORDER BY hour DESC
+            LIMIT 24
+        """)
+        for row in cur.fetchall():
+            stats["by_hour"][row[0]] = row[1]
+
+        # By day (last 30 days)
+        cur.execute("""
+            SELECT 
+                strftime('%Y-%m-%d', created_at) as day,
+                COUNT(*) as count
+            FROM embeddings
+            WHERE created_at > datetime('now', '-30 days')
+            GROUP BY day
+            ORDER BY day DESC
+            LIMIT 30
+        """)
+        for row in cur.fetchall():
+            stats["by_day"][row[0]] = row[1]
+
+        # Recent embeddings (last 5)
+        cur.execute("""
+            SELECT id, source_type, substr(text_content, 1, 60), created_at
+            FROM embeddings
+            ORDER BY created_at DESC
+            LIMIT 5
+        """)
+        for row in cur.fetchall():
+            stats["recent_embeddings"].append(
+                {
+                    "id": row[0],
+                    "source_type": row[1],
+                    "content_preview": row[2] + "...",
+                    "created_at": row[3],
+                }
+            )
+
+        conn.close()
+    except Exception as e:
+        log_debug("ollama_embedder", f"Failed to get statistics: {e}")
+
+    return stats
+
+
+def get_model_card() -> str:
+    """
+    Generate a comprehensive, human-readable Ollama model card.
+    Returns a formatted string containing embedding statistics.
+    """
+    stats = get_embedding_statistics()
+
+    import datetime as dt
+
+    generated_at = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    card = f"""
+╔════════════════════════════════════════════════════════════════╗
+║              OLLAMA NOMIC-EMBED-TEXT MODEL CARD                 ║
+╚════════════════════════════════════════════════════════════════╝
+
+Generated: {generated_at}
+
+📊 OVERVIEW
+──────────
+  Total Embeddings:       {stats["total_embeddings"]:,}
+  Embedding Dimension:    {DEFAULT_EMBEDDING_DIM}
+  Model:                  nomic-embed-text
+  Avg Text Length:        {stats["average_length"]:,} chars
+  Oldest Embed:           {stats["oldest"] or "N/A"}
+  Newest Embed:           {stats["newest"] or "N/A"}
+
+📈 EMBEDDING RATE
+────────────────
+"""
+
+    if len(stats["timeframe_stats"]) > 0:
+        for name, count in stats["timeframe_stats"].items():
+            pretty_name = name.replace("_", " ").title()
+            card += f"  {pretty_name:20s} {count:,}\n"
+    else:
+        card += "  No recent embeddings in tracked timeframes\n"
+
+    card += f"""
+📂 BY SOURCE TYPE
+────────────────
+"""
+
+    if len(stats["by_source_type"]) > 0:
+        for source, count in stats["by_source_type"].items():
+            card += f"  {source:20s} {count:,}\n"
+    else:
+        card += "  No embeddings found\n"
+
+    card += f"""
+🕐 HOURLY BREAKDOWN (Last 24 Hours)
+─────────────────────────────────
+"""
+
+    if len(stats["by_hour"]) > 0:
+        for hour, count in list(stats["by_hour"].items())[:10]:
+            card += f"  {hour:20s} {count:,}\n"
+        if len(stats["by_hour"]) > 10:
+            card += f"  ... and {len(stats['by_hour']) - 10} more hours\n"
+    else:
+        card += "  No embeddings in the last 24 hours\n"
+
+    card += f"""
+📅 DAILY BREAKDOWN (Last 30 Days)
+────────────────────────────────
+"""
+
+    if len(stats["by_day"]) > 0:
+        for day, count in list(stats["by_day"].items())[:7]:
+            card += f"  {day:20s} {count:,}\n"
+        if len(stats["by_day"]) > 7:
+            card += f"  ... and {len(stats['by_day']) - 7} more days\n"
+    else:
+        card += "  No embeddings in the last 30 days\n"
+
+    card += f"""
+📝 RECENT EMBEDDINGS (Last 5)
+──────────────────────────────
+"""
+
+    if len(stats["recent_embeddings"]) > 0:
+        for i, emb in enumerate(stats["recent_embeddings"], 1):
+            created = (
+                emb["created_at"].split("T")[0]
+                if "T" in emb["created_at"]
+                else emb["created_at"]
+            )
+            card += f"  {i}. [{emb['source_type']}] {emb['content_preview']}\n"
+            card += f"     Created: {created}\n"
+    else:
+        card += "  No recent embeddings\n"
+
+    card += f"""
+╔════════════════════════════════════════════════════════════════╗
+║  ✅ Model Card Generated Successfully                         ║
+╚════════════════════════════════════════════════════════════════╝
+"""
+
+    return card
+
 
 def ollama_available() -> bool:
     """Check if Ollama server is running and accessible."""
