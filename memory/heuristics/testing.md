@@ -59,3 +59,14 @@ When verifying system health, use focused tests that check specific functionalit
 
 ---
 
+## H-213: Test endpoints with correct payloads during root cause investigation
+
+**Confidence**: 0.95
+**Source**: auto
+**Project**: `/home/bamer/.opencode/emergent-learning`
+**Created**: 2026-02-11
+
+Wrong endpoint test returned 404, correct endpoint showed validation errors - critical distinction
+
+---
+

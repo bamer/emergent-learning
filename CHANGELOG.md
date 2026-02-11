@@ -20,6 +20,19 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Crash policy integration for CRITICAL errors
   - Centralized log rotation (10 MB, 5 backups, 7 day retention)
 
+- **Flask with Async Support** - Requirements updated
+  - Added `Flask[async]>=3.0.0` to requirements.txt
+  - Added `flask-cors>=4.0.0` to requirements.txt
+  - Enables async/await pattern for semantic daemon endpoints (MANDATORY per ELF guidelines)
+  - All HTTP requests now use aiohttp with relaxed timeouts (120 seconds)
+
+- **New Heuristics Saved to ELF Memory** - 5 development patterns recorded
+  - Always use unified logging (infrastructure, confidence: 0.95)
+  - Never use polling for event streaming (infrastructure, confidence: 0.95)
+  - Use relaxed timeouts (python, confidence: 0.95)
+  - Always use async/await for all new development (python, confidence: 1.00)
+  - Handle FTS5 shadow table corruption (database, confidence: 0.90)
+
 ### Fixed
 - **FTS5 Database Corruption** - Automatic corruption detection and repair
   - Fixed orphaned shadow table issue after crashes in `semantic/daemon.py`
@@ -52,6 +65,25 @@ This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Added `_log_event()` call in `_process_tool_event()` for tool events
   - Events now properly recorded in `metrics` table with type, name, and data
   - 7438+ tool events now logged per hour vs. 0 before fix
+
+- **Database Noise Cleanup** - Removed 24,104 noise events from event_chronicle (60% reduction)
+  - Removed auto-save noise: message.updated (11,153), session.status (5,674), session.updated (3,618), session.diff (2,677)
+  - Removed session state noise: session.compacted, session.idle
+  - Removed connection noise: server.connected, server.instance.disposed
+  - Removed LSP noise: lsp.client.diagnostics
+  - Kept only important/informative events: tool, health checks, file changes, permissions, commands
+
+- **Test Entries Removed** - Cleaned test data from knowledge base
+  - Removed 20 test/maintenance heuristics (domain: test, testing, test-fix)
+  - Removed 6 test learning entries (type: test, workflow test runs)
+  - Removed 5 test embeddings
+  - Removed 13 noise metrics (auto-generated indexes, test metrics)
+  - Database size reduced: event_chronicle 40,484→16,380, metrics 34,105→34,092
+
+- **Event Filtering Policy** - Established what to record vs discard
+  - KEEP: tool executions, health checks, file changes, permissions, commands, missions
+  - DISCARD: auto-save, session state noise, connection events, LSP diagnostics
+  - Events now stored in human-readable and user-friendly format
 
 ### Changed
 - **EventBridge Architecture** - SSE-only streaming mode (polling removed)

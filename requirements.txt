@@ -13,6 +13,10 @@ aiohttp>=3.8.0
 # HTTP client (for OpenCode API) - upgraded for security
 requests>=2.32.0
 
+# Web framework with async support (for semantic daemon)
+Flask[async]>=3.0.0
+flask-cors>=4.0.0
+
 # Note: The dashboard has additional dependencies in dashboard-app/backend/requirements.txt
 
 # YAML config parsing (for per-project config) - upgraded for security

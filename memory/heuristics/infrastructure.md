@@ -107,3 +107,14 @@ Polling causes excessive connection overhead and system failures under load. SSE
 
 ---
 
+## H-211: Always verify API endpoint URLs before deployment - Wrong URLs cause silent failures
+
+**Confidence**: 1.0
+**Source**: auto
+**Project**: `/home/bamer/.opencode/emergent-learning`
+**Created**: 2026-02-11
+
+Background learning script posted to wrong URL causing 11 days of embedding failures
+
+---
+
