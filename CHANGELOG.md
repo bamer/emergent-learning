@@ -5,6 +5,47 @@ All notable changes to the Emergent Learning Framework will be documented in thi
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.10] - 2026-02-11
+
+### Added
+- **Unified ELF Logger** - Implemented in all core ELF components without logger
+  - Added to `agents/dashboard_sentinel_complete.py` - Dashboard monitoring agent
+  - Added to `agents/elf_heuristic_discovery.py` - Heuristic discovery manager
+  - Added to `agents/experiment_analyzer.py` - Experiment analysis agent
+  - Added to `agents/Fail_event_bridge_client.py` - Event Bridge client
+  - Added to `agents/opencode_swarm.py` - OpenCode swarm manager
+  - Added to `core/test_learning_processor.py` - Test file now uses unified logger
+  - All files now import from `Open_ELF.utils.elf_logging` with fallback to standard logging
+
+### Changed
+- **Unified Logger Usage in Alert Agent** - Migrated from custom setup to unified system
+  - Removed `setup_logging()` method that created duplicate file handlers
+  - Replaced `print()` statements with `log_warning()` and `log_info()` calls
+  - Consolidated all logging through unified logger (`/logs/alert_agent.log`)
+  - Removed duplicate `ELF_DIR` constant definition
+  - Added `os` module import for file operations
+
+### Fixed
+- **CEO Monitor History Tab** - Fixed empty history in Dashboard → Monitoring → CEO Status
+  - Updated `/api/v1/ceo/cycles` endpoint to read from correct log locations
+  - Now checks `/logs/ceo_inbox_monitor.log` (unified logging) first, then `/coordination/ceo-monitor.log` (legacy)
+  - Added parsing for both old and new CEO monitor log formats
+  - Extracts CEO 60-min analysis results:
+    - Golden rule promotion candidates
+    - Active experiments count
+    - Recent learnings count
+    - Degraded golden rules
+    - Unresolved alerts
+    - Golden rule violations
+  - History tab now displays CEO's hourly analysis cycles with full details
+  - Updated `CeoStatusPanel.tsx` History tab to show CEO cycles instead of archived inbox items
+
+### Technical Notes
+- All production-level logging uses `get_logger()`, `log_info()`, `log_error()`, `log_warning()`, `log_debug()`
+- Test sections (`if __name__ == "__main__":`) may still use `print()` for console output
+- Unified logger provides: centralized log location (`/logs/`), database event logging, crash policy enforcement, consistent formatting
+- The unified logger is imported from `Open_ELF.utils.elf_logging` with graceful fallback to standard logging
+
 ## [0.5.9] - 2026-02-11
 
 ### Added
