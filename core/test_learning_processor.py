@@ -17,36 +17,53 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Import unified ELF logger
+try:
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_info,
+        log_error,
+        log_warning,
+        log_debug,
+    )
+
+    logger = get_logger("test_learning_processor")
+except ImportError:
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 try:
     from learning_processor import LearningProcessor, ToolEvent
     from learning_patterns import match_error_pattern, match_anti_pattern
 except ImportError as e:
-    print(f"Import error: {e}")
+    logger.error(f"Import error: {e}", exc_info=True)
     sys.exit(1)
 
 
 def test_shared_patterns():
     """Test that shared patterns are imported correctly."""
-    print("\n=== Test 1: Shared Pattern Imports ===")
+    logger.info("\n=== Test 1: Shared Pattern Imports ===")
 
     # Test error pattern matching
     error_text = "sqlite3.OperationalError: database is locked"
     matches = match_error_pattern(error_text)
-    print(f"Error matches for '{error_text[:40]}...': {len(matches)}")
+    logger.info(f"Error matches for '{error_text[:40]}...': {len(matches)}")
 
     for domain, pattern, heuristic in matches:
-        print(f"  [{domain}] {heuristic[:50]}...")
+        logger.debug(f"  [{domain}] {heuristic[:50]}...")
 
     assert len(matches) > 0, "Should match database lock error"
-    print("✓ Shared error patterns work correctly")
+    logger.info("✓ Shared error patterns work correctly")
 
     # Test anti-pattern matching
     code_text = "result = eval(user_input)"
     matches = match_anti_pattern(code_text)
-    print(f"Anti-pattern matches for '{code_text[:30]}...': {len(matches)}")
+    logger.info(f"Anti-pattern matches for '{code_text[:30]}...': {len(matches)}")
 
     for domain, pattern, heuristic in matches:
-        print(f"  [{domain}] {heuristic[:50]}...")
+        logger.debug(f"  [{domain}] {heuristic[:50]}...")
 
     assert len(matches) > 0, "Should match eval anti-pattern"
     print("✓ Shared anti-patterns work correctly")

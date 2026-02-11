@@ -24,6 +24,23 @@ import json
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
+# Import unified ELF logger
+try:
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_info,
+        log_error,
+        log_warning,
+        log_debug,
+    )
+
+    logger = get_logger("elf_heuristic_discovery")
+except ImportError:
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 
 class ELFHeuristicManager:
     """Manages heuristic discovery and golden rule promotion using ELF building."""
@@ -50,9 +67,12 @@ class ELFHeuristicManager:
             interaction.get("type") for interaction in interaction_data
         ]
         # Filter out None values to avoid type errors
-        valid_interaction_types = [itype for itype in interaction_types if itype is not None]
+        valid_interaction_types = [
+            itype for itype in interaction_types if itype is not None
+        ]
         type_counts = {
-            itype: valid_interaction_types.count(itype) for itype in set(valid_interaction_types)
+            itype: valid_interaction_types.count(itype)
+            for itype in set(valid_interaction_types)
         }
 
         # Find most successful patterns

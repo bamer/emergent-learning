@@ -171,11 +171,11 @@ def calculate_ceo_metrics() -> CeoMetrics:
 
     # Process pending items (not in archive) - support multiple patterns
     all_files = (
-        list(CEO_INBOX_DIR.glob("escalation_*.md")) +
-        list(CEO_INBOX_DIR.glob("sentinel_esc_*.md")) +
-        list(CEO_INBOX_DIR.glob("escalation-*.md"))
+        list(CEO_INBOX_DIR.glob("escalation_*.md"))
+        + list(CEO_INBOX_DIR.glob("sentinel_esc_*.md"))
+        + list(CEO_INBOX_DIR.glob("escalation-*.md"))
     )
-    
+
     for file in all_files:
         if file.parent == CEO_ARCHIVE_DIR:
             metrics["archived"] += 1
@@ -272,9 +272,9 @@ async def get_ceo_status():
     try:
         # Count pending items - support multiple file patterns
         all_files = (
-            list(CEO_INBOX_DIR.glob("escalation_*.md")) +
-            list(CEO_INBOX_DIR.glob("sentinel_esc_*.md")) +
-            list(CEO_INBOX_DIR.glob("escalation-*.md"))
+            list(CEO_INBOX_DIR.glob("escalation_*.md"))
+            + list(CEO_INBOX_DIR.glob("sentinel_esc_*.md"))
+            + list(CEO_INBOX_DIR.glob("escalation-*.md"))
         )
         pending_items = [f for f in all_files if f.parent != CEO_ARCHIVE_DIR]
         pending_count = len(pending_items)
@@ -325,11 +325,11 @@ async def get_ceo_items(
 
         # Support multiple escalation file patterns
         all_files = (
-            list(CEO_INBOX_DIR.glob("escalation_*.md")) +
-            list(CEO_INBOX_DIR.glob("sentinel_esc_*.md")) +
-            list(CEO_INBOX_DIR.glob("escalation-*.md"))
+            list(CEO_INBOX_DIR.glob("escalation_*.md"))
+            + list(CEO_INBOX_DIR.glob("sentinel_esc_*.md"))
+            + list(CEO_INBOX_DIR.glob("escalation-*.md"))
         )
-        
+
         for file in all_files:
             # Skip archive directory by default
             if file.parent == CEO_ARCHIVE_DIR:
@@ -463,7 +463,21 @@ async def get_ceo_analysis():
 async def get_ceo_cycles(limit: int = Query(10, ge=1, le=50)):
     """Get recent CEO processing cycles from monitor log."""
     try:
-        monitor_log = ELF_DIR / ".coordination" / "ceo-monitor.log"
+        # Try multiple log locations (unified logging OR coordination directory)
+        monitor_log_paths = [
+            ELF_DIR / "logs" / "ceo_inbox_monitor.log",
+            ELF_DIR / ".coordination" / "ceo-monitor.log",
+        ]
+
+        monitor_log = None
+        for path in monitor_log_paths:
+            if path.exists():
+                monitor_log = path
+                break
+
+        if not monitor_log:
+            return []
+
         cycles = []
 
         if not monitor_log.exists():
@@ -471,31 +485,109 @@ async def get_ceo_cycles(limit: int = Query(10, ge=1, le=50)):
 
         log_content = monitor_log.read_text()
 
-        # Extract cycle information
-        # Pattern: Cycle #N - YYYY-MM-DD HH:MM:SS
-        cycle_pattern = re.compile(
-            r"Cycle #(\d+)\s+-\s+(.+?)\n(.*?)(?=\nCycle #|\Z)", re.DOTALL
+        # Extract cycle information - Handles both old and new log formats
+        # Old format: 2026-02-08 23:28:25 - elf.ceo_inbox_monitor - INFO - 🔍 CEO Inbox Monitor - Cycle #50
+        # New format: 2026-02-11 16:51:50,138 - CEOInboxMonitor - INFO - 👑 CEO Inbox Monitor - Cycle #1 (60-min analysis)
+        cycle_pattern_old = re.compile(
+            r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+-\s+elf\.ceo_inbox_monitor\s+-\s+INFO\s+-\s+.*?CEO Inbox Monitor\s+-\s+Cycle #(\d+)\s*\n(.*?)(?=\n\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\s+-\s+elf\.ceo_inbox_monitor|\Z)",
+            re.DOTALL,
         )
-        for match in cycle_pattern.finditer(log_content):
-            cycle_num = int(match.group(1))
-            timestamp = match.group(2)
+        cycle_pattern_new = re.compile(
+            r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:,\d+)?)\s+-\s+CEOInboxMonitor\s+-\s+INFO\s+-\s+.*?CEO Inbox Monitor\s+-\s+Cycle #(\d+)(?:\s+\([^)]+\))?\s*\n(.*?)(?=\n\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:,\d+)?\s+-\s+CEOInboxMonitor|\Z)",
+            re.DOTALL,
+        )
+
+        # Try new format first, then old
+        cycle_pattern = cycle_pattern_new
+        matches = list(cycle_pattern.finditer(log_content))
+        if not matches:
+            cycle_pattern = cycle_pattern_old
+            matches = list(cycle_pattern.finditer(log_content))
+
+        for match in matches:
+            timestamp_str = match.group(1).replace(",", ".")[
+                0:19
+            ]  # Normalize timestamp
+            cycle_num = int(match.group(2))
             cycle_content = match.group(3)
+
+            # Convert timestamp to ISO format
+            try:
+                timestamp = datetime.strptime(timestamp_str, "%Y-%m-%d %H:%M:%S")
+                timestamp = timestamp.isoformat()
+            except:
+                timestamp = timestamp_str
 
             # Parse cycle content for decisions and actions
             decisions = []
             actions = []
             items_processed = 0
 
+            # Count processed escalations
             if "Processing escalation:" in cycle_content:
-                items_processed += 1
-            if "Decision:" in cycle_content:
+                items_processed = cycle_content.count("Processing escalation:")
+
+            # Parse CEO analysis results (60-min analysis pattern)
+            if "👑 CEO 60-min Analysis Results:" in cycle_content:
+                # Extract promotion candidates
+                promo_match = re.search(
+                    r"- Golden rule promotion candidates:\s+(\d+)", cycle_content
+                )
+                if promo_match and int(promo_match.group(1)) > 0:
+                    decisions.append(
+                        f"Found {promo_match.group(1)} heuristics ready for golden rule promotion"
+                    )
+
+                # Extract active experiments
+                exp_match = re.search(r"- Active experiments:\s+(\d+)", cycle_content)
+                if exp_match and int(exp_match.group(1)) > 0:
+                    decisions.append(
+                        f"Monitoring {exp_match.group(1)} active experiment(s)"
+                    )
+
+                # Extract recent learnings
+                learning_match = re.search(
+                    r"- Recent learnings:\s+(\d+)", cycle_content
+                )
+                if learning_match:
+                    actions.append(
+                        f"Captured {learning_match.group(1)} new learnings in last 24h"
+                    )
+
+                # Extract degraded golden rules
+                degraded_match = re.search(
+                    r"- Degraded golden rules:\s+(\d+)", cycle_content
+                )
+                if degraded_match and int(degraded_match.group(1)) > 0:
+                    decisions.append(
+                        f"⚠️ {degraded_match.group(1)} golden rules degraded and require review"
+                    )
+
+                # Extract unresolved alerts
+                alert_match = re.search(r"- Unresolved alerts:\s+(\d+)", cycle_content)
+                if alert_match and int(alert_match.group(1)) > 0:
+                    actions.append(
+                        f"⚠️ {alert_match.group(1)} unresolved alerts pending review"
+                    )
+
+                # Extract golden rule violations
+                violation_match = re.search(
+                    r"- Golden rule violations:\s+(\d+)", cycle_content
+                )
+                if violation_match and int(violation_match.group(1)) > 0:
+                    decisions.append(
+                        f"⚠️ {violation_match.group(1)} golden rule violations detected"
+                    )
+
+            # Fallback: legacy Decision:/Action: pattern
+            elif "Decision:" in cycle_content:
                 for decision_match in re.finditer(
                     r"Decision:\s*(.+?)(?:\n|$)", cycle_content
                 ):
                     decisions.append(decision_match.group(1).strip())
-            if "Action:" in cycle_content or "Archived:" in cycle_content:
+            elif "Archived:" in cycle_content:
                 for action_match in re.finditer(
-                    r"(?:Action|Archived):\s*(.+?)(?:\n|$)", cycle_content
+                    r"Archived:\s*(.+?)(?:\n|$)", cycle_content
                 ):
                     actions.append(action_match.group(1).strip())
 

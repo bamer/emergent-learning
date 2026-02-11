@@ -233,11 +233,25 @@ export function CeoStatusPanel({
     try {
       const response = await fetch(`${apiBaseUrl}/api/v1/escalations?agent=ceo&limit=10`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      
+
       const data = await response.json();
       setEscalations(data.escalations || []);
     } catch (err) {
       console.error('Failed to fetch escalations:', err);
+    }
+  }, [apiBaseUrl]);
+
+  // Fetch CEO cycles
+  const fetchCeoCycles = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/ceo/cycles?limit=20`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const cycles = await response.json();
+      setCycleHistory(cycles || []);
+    } catch (err) {
+      console.error('Failed to fetch CEO cycles:', err);
+      setCycleHistory([]);
     }
   }, [apiBaseUrl]);
 
@@ -282,16 +296,18 @@ Please check the ceo-inbox directory and process any pending items. For each ite
 
   useEffect(() => {
     isMountedRef.current = true;
-    
+
     // Initial fetch
     fetchCeoStatus();
     fetchEscalations();
-    
+    fetchCeoCycles();
+
     // Setup auto-refresh
     if (autoRefresh) {
       intervalRef.current = setInterval(() => {
         fetchCeoStatus();
         fetchEscalations();
+        fetchCeoCycles();
       }, refreshInterval);
     }
     
@@ -801,36 +817,68 @@ Please check the ceo-inbox directory and process any pending items. For each ite
             {/* History Tab */}
             {selectedTab === 'history' && (
               <div className="space-y-3">
-                {items.filter(item => item.status.toLowerCase() !== 'pending').length === 0 ? (
+                {cycleHistory.length === 0 ? (
                   <div className="text-center text-slate-500 py-8">
                     <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No resolved items yet</p>
+                    <p>No CEO activity recorded yet</p>
+                    <p className="text-xs mt-2">The CEO monitor logs processing cycles every hour</p>
                   </div>
                 ) : (
-                  items
-                    .filter(item => item.status.toLowerCase() !== 'pending')
-                    .map((item) => {
-                      const priorityConfig = getPriorityConfig(item.priority);
-                      return (
-                        <div
-                          key={item.filename}
-                          className="p-3 bg-slate-800/30 rounded-lg border border-slate-700/30 flex items-center gap-3"
-                        >
-                          <CheckCircle className="w-4 h-4 text-emerald-400" />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm text-slate-300 truncate">
-                              {item.title}
-                            </div>
-                            <div className="text-xs text-slate-500">
-                              {item.date} • Resolved
-                            </div>
+                  cycleHistory.map((cycle, index) => (
+                    <div
+                      key={index}
+                      className="p-3 bg-slate-800/30 rounded-lg border border-slate-700/30"
+                    >
+                      <div className="flex items-start gap-3 mb-2">
+                        <Crown className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-sm font-medium text-amber-400">
+                              CEO Analysis Cycle
+                            </span>
+                            <span className="text-xs text-slate-500 font-mono">
+                              {new Date(cycle.timestamp).toLocaleString()}
+                            </span>
                           </div>
-                          <span className={`text-xs px-2 py-0.5 rounded ${priorityConfig.bgColor} ${priorityConfig.color}`}>
-                            {item.priority}
-                          </span>
+                          {cycle.items_processed > 0 && (
+                            <div className="text-xs text-slate-400 mb-2">
+                              {cycle.items_processed} escalation{cycle.items_processed !== 1 ? 's' : ''} processed
+                            </div>
+                          )}
                         </div>
-                      );
-                    })
+                      </div>
+
+                      {cycle.decisions_made.length > 0 && (
+                        <div className="mt-2 pl-7 space-y-1">
+                          <div className="text-xs font-medium text-violet-400 mb-1">Decisions:</div>
+                          {cycle.decisions_made.map((decision, i) => (
+                            <div key={i} className="text-xs text-slate-300 flex items-start gap-2">
+                              <span className="text-violet-400">•</span>
+                              <span>{decision}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {cycle.actions_taken.length > 0 && (
+                        <div className="mt-2 pl-7 space-y-1">
+                          <div className="text-xs font-medium text-emerald-400 mb-1">Actions:</div>
+                          {cycle.actions_taken.map((action, i) => (
+                            <div key={i} className="text-xs text-slate-300 flex items-start gap-2">
+                              <span className="text-emerald-400">✓</span>
+                              <span>{action}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {cycle.decisions_made.length === 0 && cycle.actions_taken.length === 0 && cycle.items_processed === 0 && (
+                        <div className="mt-2 pl-7 text-xs text-slate-400 italic">
+                          System health check complete - No escalations to process
+                        </div>
+                      )}
+                    </div>
+                  ))
                 )}
               </div>
             )}

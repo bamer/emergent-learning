@@ -35,6 +35,7 @@ LOGS_DIR = ELF_DIR / "logs"
 DB_PATH = ELF_DIR / "memory" / "index.db"
 COORDINATION_DIR = ELF_DIR / ".coordination"
 EVENT_BRIDGE_HEARTBEAT = COORDINATION_DIR / "event-bridge-heartbeat.json"
+EVENT_BRIDGE_PID = COORDINATION_DIR / "event_bridge_v2.pid"
 EVENT_BRIDGE_PORT = 9998
 
 # Setup logging
@@ -92,6 +93,81 @@ class EventBridge:
         except Exception as e:
             logger.error(f"❌ Failed to load LearningProcessor: {e}", exc_info=True)
 
+        # Singleton lock tracking
+        self._lock_acquired = False
+
+    def _check_singleton_lock(self) -> "tuple[bool, str]":
+        """
+        Check if EventBridge is already running using PID file.
+
+        Returns:
+            (is_locked, message): Tuple indicating if locked and descriptive message
+        """
+        if not EVENT_BRIDGE_PID.exists():
+            return False, ""
+
+        try:
+            existing_pid = int(EVENT_BRIDGE_PID.read_text().strip())
+
+            # Check if process is running
+            import os
+
+            try:
+                os.kill(existing_pid, 0)  # Signal 0 doesn't kill, just checks existence
+                return True, f"EventBridge is already running (PID: {existing_pid})"
+            except OSError:
+                # Process not running, stale lock file
+                EVENT_BRIDGE_PID.unlink()
+                return False, ""
+        except (ValueError, IOError) as e:
+            logger.warning(f"Invalid PID file, removing: {e}")
+            try:
+                EVENT_BRIDGE_PID.unlink()
+            except:
+                pass
+            return False, ""
+
+    def _acquire_singleton_lock(self) -> bool:
+        """
+        Acquire singleton lock by creating PID file.
+
+        Returns:
+            True if lock acquired, False if already locked
+        """
+        # First check if already running
+        is_locked, msg = self._check_singleton_lock()
+        if is_locked:
+            logger.error(f"⚠️  {msg}")
+            logger.error("⚠️  Only one EventBridge instance can run at a time")
+            return False
+
+        # Create pid
+        import os
+
+        try:
+            pid = os.getpid()
+            COORDINATION_DIR.mkdir(parents=True, exist_ok=True)
+            EVENT_BRIDGE_PID.write_text(str(pid), encoding="utf-8")
+            self._lock_acquired = True
+            logger.info(f"🔒 Singleton lock acquired (PID: {pid})")
+            return True
+        except Exception as e:
+            logger.error(f"❌ Failed to acquire singleton lock: {e}")
+            return False
+
+    def _release_singleton_lock(self):
+        """Release singleton lock by removing PID file."""
+        if not self._lock_acquired:
+            return
+
+        try:
+            if EVENT_BRIDGE_PID.exists():
+                EVENT_BRIDGE_PID.unlink()
+                self._lock_acquired = False
+                logger.info("🔓 Singleton lock released")
+        except Exception as e:
+            logger.warning(f"⚠️  Failed to release singleton lock: {e}")
+
     def _get_db_connection(self):
         """Get database connection."""
         if not DB_PATH.exists():
@@ -104,7 +180,9 @@ class EventBridge:
             logger.error(f"Failed to get database connection: {e}", exc_info=True)
             return None
 
-    def _log_event(self, event_type: str, details: str = "", data: Optional[Dict] = None):
+    def _log_event(
+        self, event_type: str, details: str = "", data: Optional[Dict] = None
+    ):
         """Log event to database."""
         self.event_count += 1
         self.last_event_time = datetime.now().isoformat()
@@ -172,6 +250,10 @@ class EventBridge:
         logger.info("🌉 EventBridge v2.0 Starting")
         logger.info("=" * 70)
 
+        # Check singleton lock - ensure only one instance runs
+        if not self._acquire_singleton_lock():
+            return False
+
         # Check OpenCode connection using /global/health
         try:
             response = self.http_session.get(
@@ -201,9 +283,9 @@ class EventBridge:
         # polling_thread.start()
         # logger.info("🔄 Session polling started (backup)")
 
-        # Start status server
-        # self._start_status_server()
-        # logger.info(f"✅ Status server on port {EVENT_BRIDGE_PORT}")
+        # Start status server (health and status endpoints)
+        self._start_status_server()
+        logger.info(f"✅ Status server on port {EVENT_BRIDGE_PORT}")
 
         # Write initial heartbeat
         self._write_heartbeat()
@@ -218,6 +300,9 @@ class EventBridge:
 
         # Write final heartbeat
         self._write_heartbeat()
+
+        # Release singleton lock
+        self._release_singleton_lock()
 
         # Close HTTP session (releases connections)
         if hasattr(self, "http_session"):

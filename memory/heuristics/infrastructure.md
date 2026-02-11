@@ -118,3 +118,25 @@ Background learning script posted to wrong URL causing 11 days of embedding fail
 
 ---
 
+## H-220: Critical service failure detected at 22:04 UTC - EventBridge and Sentinel not running after system memory recovery from 284MB to 6.5GB free
+
+**Confidence**: 1.0
+**Source**: monitoring
+**Project**: `/home/bamer/.opencode/emergent-learning`
+**Created**: 2026-02-11
+
+Memory crisis resolved by system actions, but ELF services stopped and need restart
+
+---
+
+## H-232: EventBridge restarted again at 23:13 UTC - Second restart of the session after memory incident. Load average improved to 2.52 from 11+ (external processes likely stopped).
+
+**Confidence**: 1.0
+**Source**: monitoring
+**Project**: `/home/bamer/.opencode/emergent-learning`
+**Created**: 2026-02-11
+
+First restart at 22:06 after memory exhaustion. Second restart at 23:13 possibly for recovery or maintenance.
+
+---
+

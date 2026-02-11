@@ -16,25 +16,28 @@ import sqlite3
 import requests
 import json
 import time
-import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 import asyncio
 import sys
 from pathlib import Path
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(
-            "/home/bamer/.opencode/emergent-learning/logs/sentinel.log"
-        ),
-        logging.StreamHandler(),
-    ],
-)
-logger = logging.getLogger(__name__)
+# Import unified ELF logger
+try:
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_info,
+        log_error,
+        log_warning,
+        log_debug,
+    )
+
+    logger = get_logger("dashboard_sentinel")
+except ImportError:
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
 
 class AISentinel:

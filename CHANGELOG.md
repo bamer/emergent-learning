@@ -2,30 +2,40 @@
 
 All notable changes to the Emergent Learning Framework will be documented in this file.
 
-Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.5.10] - 2026-02-11
-
-### Added
-- **Unified ELF Logger** - Implemented in all core ELF components without logger
-  - Added to `agents/dashboard_sentinel_complete.py` - Dashboard monitoring agent
-  - Added to `agents/elf_heuristic_discovery.py` - Heuristic discovery manager
-  - Added to `agents/experiment_analyzer.py` - Experiment analysis agent
-  - Added to `agents/Fail_event_bridge_client.py` - Event Bridge client
-  - Added to `agents/opencode_swarm.py` - OpenCode swarm manager
-  - Added to `core/test_learning_processor.py` - Test file now uses unified logger
-  - All files now import from `Open_ELF.utils.elf_logging` with fallback to standard logging
+## [Unreleased]
 
 ### Changed
-- **Unified Logger Usage in Alert Agent** - Migrated from custom setup to unified system
-  - Removed `setup_logging()` method that created duplicate file handlers
-  - Replaced `print()` statements with `log_warning()` and `log_info()` calls
-  - Consolidated all logging through unified logger (`/logs/alert_agent.log`)
-  - Removed duplicate `ELF_DIR` constant definition
-  - Added `os` module import for file operations
+
+### Added
+
+### Removed
 
 ### Fixed
+
+## [0.5.11] - 2026-02-11
+
+### Changed
+- **Event Bridge v2**: Added singleton lock to prevent multiple instances
+- **Event Bridge v2**: Enabled HTTP status server (/status, /api/v1/health)
+- **Experiment Analyzer**: Migrated from EventBridgeClient to AgentManager
+- **Agents**: Should use AgentManager instead of Event Bridge for AI calls
+- **CEO Inbox Monitor**: Increased AgentManager timeout to 1800s (30 min) for CEO agent strategic decisions
+- **CEO Inbox Monitor**: Simplified CEO agent prompt for faster processing
+- **CEO Inbox Monitor**: Updated pattern matching to accept any .md file in CEO inbox
+
+### Removed
+- **Event Bridge v1**: Deleted `Open_ELF/orchestrator/event_bridge.py` (old version)
+- **Event Bridge Client**: Deleted `agents/Fail_event_bridge_client.py` (obsolete)
+
+### Fixed
+- **Event Bridge Duplication**: Stopped v1 process, now only v2 runs
+- **API Endpoints**: Restored /status and /api/v1/health endpoints in v2
+- **CEO Monitor Timeout**: Fixed timeout issue by increasing timeout to 1800s and simplifying prompt
+- **CEO Monitor Pattern Matching**: Fixed to accept all .md files in CEO inbox, not just specific patterns
+
 - **CEO Monitor History Tab** - Fixed empty history in Dashboard → Monitoring → CEO Status
   - Updated `/api/v1/ceo/cycles` endpoint to read from correct log locations
   - Now checks `/logs/ceo_inbox_monitor.log` (unified logging) first, then `/coordination/ceo-monitor.log` (legacy)

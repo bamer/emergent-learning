@@ -32,6 +32,23 @@ from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
+# Import unified ELF logger
+try:
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_info,
+        log_error,
+        log_warning,
+        log_debug,
+    )
+
+    logger = get_logger("opencode_swarm")
+except ImportError:
+    import logging
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
 # OpenCode agents directory
 OPENCODE_AGENTS_DIR = Path.home() / ".config" / "opencode" / "agents"
 

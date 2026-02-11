@@ -60,13 +60,18 @@ class CEOInboxMonitor:
         self.cycle_count = 0
         self.check_interval = CHECK_INTERVAL  # seconds
 
-        # AgentManager integration
+        # AgentManager integration with longer timeout for CEO agent
+        # CEO agent needs more time for strategic decisions - 30 minutes
         self.agent_manager = None
         try:
-            from agent_manager import get_agent_manager
+            from agent_manager import AgentManager
 
-            self.agent_manager = get_agent_manager()
-            logger.info("✅ AgentManager initialized for CEO Inbox Monitor")
+            self.agent_manager = AgentManager(
+                opencode_url="http://localhost:4096", timeout=1800
+            )
+            logger.info(
+                "✅ AgentManager initialized for CEO Inbox Monitor (timeout: 1800s)"
+            )
         except Exception as e:
             logger.warning(f"⚠️ AgentManager not available: {e}")
 
@@ -77,21 +82,16 @@ class CEOInboxMonitor:
     def get_pending_escalations(self) -> List[Path]:
         """Get list of pending escalation files."""
         escalations = []
-        # Support all escalation patterns from L2 forwarding or L1 direct:
-        # - CEO escalations from Orchestrator (L2 → L3): ceo_escalation_*.md, orchestrator_*.md
-        # - Sentinel/Sentinel escalations (L1 → L3): sentinel_esc_*.md, sentinel_esc_*.md (forwarded by L2)
-        ceo_patterns = ["ceo_escalation", "orchestrator", "sentinel_esc", "sentinel_esc"]
 
         inbox_path = CEO_INBOX_DIR / "inbox"
         if not inbox_path.exists():
             return escalations
 
+        # Accept any .md file in the CEO inbox as an escalation
+        # This covers: ceo_escalation_*.md, orchestrator_*.md, sentinel_esc_*.md, or any other escalation format
         for file in inbox_path.glob("*.md"):
-            filename = file.name.lower()
-            # Accept any escalation file
-            if any(pattern in filename for pattern in ceo_patterns):
-                if file not in escalations:
-                    escalations.append(file)
+            escalations.append(file)
+
         return sorted(escalations)
 
     def process_escalation(self, file_path: Path) -> Dict[str, Any]:
@@ -108,34 +108,26 @@ class CEOInboxMonitor:
 
             # If AgentManager available, process with CEO agent
             if self.agent_manager:
-                logger.info("🤖 Invoking CEO agent for autonomous escalation processing...")
+                logger.info(
+                    "🤖 Invoking CEO agent for autonomous escalation processing..."
+                )
 
                 # Give instructions to the AI Agent instead of passing full escalation content
                 # The CEO Agent will do its own analysis
-                prompt = f"""Analyze the system state and take all appropriate actions based on your mission, your position and the level of severity if needed.
+                prompt = f"""CEO Agent Strategic Analysis - {datetime.now().strftime("%Y-%m-%d %H:%M")}
 
-{datetime.now().strftime("%d/%m/%Y %H:%M")}
+Your Mission (Level 3 - Final Autonomous):
+Review CEO inbox escalations and take strategic action.
 
-You are the CEO Agent (Level 3) - the final autonomous level before human-in-the-loop.
+Tasks:
+1. Check CEO inbox for pending escalations
+2. Analyze severity (critical failures, strategic issues, unresolved alerts)
+3. Take autonomous actions: approve changes, promote heuristics, restart services
+4. Escalate to human when: irreversible actions, high uncertainty, beyond authority
 
-INSTRUCTIONS:
-1. Review pending escalations in the CEO inbox and analyze their severity:
-   - Check for critical system failures (database corruption, service outages)
-   - Review strategic issues (golden rule violations, degraded heuristics)
-   - Assess unresolved alerts and patterns from Level 1 (Sentinel) and Level 2 (Orchestrator)
-2. Make strategic decisions and take autonomous actions within your competence:
-   - Approve/reject database rebuilds or major system changes
-   - Promote heuristics to golden rules based on confidence metrics
-   - Authorize service restarts or configuration changes
-   - Set system-wide policies and priorities
-3. If issues are beyond your authority or require human judgment:
-   - Flag for human review with clear context and recommendations
-   - Do NOT proceed without human approval for irreversible actions
-4. Document all decisions and actions taken.
+Be decisive but cautious. Document all decisions.
 
-Remember: You are the LAST autonomous level. Escalate to human when uncertain or when stakes are high.
-
-Be decisive but cautious. Focus on strategic decisions - leave operational fixes to lower levels."""
+Current time: {datetime.now().strftime("%Y-%m-%d %H:%M")}"""
 
                 result = self.agent_manager.ask_agent("ceo", prompt)
 
