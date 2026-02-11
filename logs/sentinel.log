@@ -3954,3 +3954,14 @@ Error: opencode request timed out (>300s)
 2026-02-11 08:08:28 - elf.sentinel - INFO - Starting cycle 49
 2026-02-11 08:09:28 - elf.sentinel - INFO - Starting cycle 50
 2026-02-11 08:09:28 - elf.sentinel - INFO - Running AI analysis...
+2026-02-11 08:12:25 - elf.sentinel - INFO - ✅ AgentManager initialized
+2026-02-11 08:12:25 - elf.sentinel - INFO - 🚀 Sentinel v3.0 starting...
+2026-02-11 08:12:25 - elf.sentinel - INFO -    Basic interval: 60s
+2026-02-11 08:12:25 - elf.sentinel - INFO -    AI analysis interval: 300s
+2026-02-11 08:12:25 - elf.sentinel - INFO -    AgentManager: ✅ Available
+2026-02-11 08:12:25 - elf.sentinel - INFO - Starting cycle 1
+2026-02-11 08:13:26 - elf.sentinel - INFO - Starting cycle 2
+2026-02-11 08:14:26 - elf.sentinel - INFO - Starting cycle 3
+2026-02-11 08:15:27 - elf.sentinel - INFO - Starting cycle 4
+2026-02-11 08:16:27 - elf.sentinel - INFO - Starting cycle 5
+2026-02-11 08:16:27 - elf.sentinel - INFO - Running AI analysis...

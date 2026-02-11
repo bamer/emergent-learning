@@ -810,67 +810,89 @@ class EventBridge:
                     "start_time": time.time(),
                 }
 
-    def _extract_and_record_learnings(self, tool_name: str, tool_output: Dict[str, Any], success: bool):
+    def _extract_and_record_learnings(
+        self, tool_name: str, tool_output: Dict[str, Any], success: bool
+    ):
         """Extract learnings directly from tool output and record to database."""
         try:
             # Import learning utilities
             import sqlite3
             import re
-            
+
             db_path = ELF_DIR / "memory" / "index.db"
             if not db_path.exists():
                 logger.debug("Learning database not available")
                 return
-            
+
             # Get output content
             output_content = ""
             if isinstance(tool_output, dict):
                 output_content = tool_output.get("content", "")
                 if isinstance(output_content, list):
                     output_content = "\n".join(
-                        item.get("text", "") for item in output_content if isinstance(item, dict)
+                        item.get("text", "")
+                        for item in output_content
+                        if isinstance(item, dict)
                     )
             elif isinstance(tool_output, str):
                 output_content = tool_output
-            
+
             if not output_content or success is False:
                 return
-            
+
             # Extract sentences with heuristic indicators
             heuristic_indicators = [
-                "should", "always", "never", "must", "don't", "avoid", "prefer",
-                "recommend", "best practice", "rule of thumb", "lesson", "insight",
-                "key takeaway", "critical to", "important to", "never forget", "remember to"
+                "should",
+                "always",
+                "never",
+                "must",
+                "don't",
+                "avoid",
+                "prefer",
+                "recommend",
+                "best practice",
+                "rule of thumb",
+                "lesson",
+                "insight",
+                "key takeaway",
+                "critical to",
+                "important to",
+                "never forget",
+                "remember to",
             ]
-            
+
             sentences = re.split(r"[.!?]", output_content)
             learnings = []
-            
+
             for sentence in sentences:
                 sentence = sentence.strip()
                 if not sentence or len(sentence) < 10:
                     continue
-                
+
                 # Check if sentence contains learning indicators
-                if any(indicator in sentence.lower() for indicator in heuristic_indicators):
+                if any(
+                    indicator in sentence.lower() for indicator in heuristic_indicators
+                ):
                     clean_sentence = re.sub(r"^[^a-zA-Z]*", "", sentence).strip()
                     clean_sentence = re.sub(r"\s+", " ", clean_sentence)
-                    
+
                     if clean_sentence:
-                        learnings.append({
-                            "domain": tool_name.lower(),
-                            "rule": clean_sentence,
-                            "confidence": 0.7,
-                        })
-            
+                        learnings.append(
+                            {
+                                "domain": tool_name.lower(),
+                                "rule": clean_sentence,
+                                "confidence": 0.7,
+                            }
+                        )
+
             if not learnings:
                 return
-            
+
             # Record to database
             conn = sqlite3.connect(db_path)
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            
+
             try:
                 for learning in learnings:
                     # Check if this heuristic already exists
@@ -879,7 +901,7 @@ class EventBridge:
                         (learning["domain"], learning["rule"]),
                     )
                     existing = cursor.fetchone()
-                    
+
                     if existing:
                         # Update existing: increment validation count and boost confidence
                         cursor.execute(
@@ -909,15 +931,17 @@ class EventBridge:
                                 datetime.now().isoformat(),
                             ),
                         )
-                
+
                 conn.commit()
-                logger.info(f"✅ EventBridge recorded {len(learnings)} learnings from {tool_name}")
+                logger.info(
+                    f"✅ EventBridge recorded {len(learnings)} learnings from {tool_name}"
+                )
             except Exception as e:
                 logger.error(f"Failed to record learnings: {e}")
                 conn.rollback()
             finally:
                 conn.close()
-        
+
         except Exception as e:
             logger.debug(f"Learning extraction error (non-fatal): {e}")
 
@@ -926,29 +950,31 @@ class EventBridge:
         try:
             import sqlite3
             import re
-            
+
             db_path = ELF_DIR / "memory" / "index.db"
             if not db_path.exists():
                 return
-            
+
             # Extract file paths from output
             output_content = ""
             if isinstance(tool_output, dict):
                 output_content = tool_output.get("content", "")
             elif isinstance(tool_output, str):
                 output_content = tool_output
-            
+
             # Simple path extraction (file paths with extensions)
-            file_pattern = r"(?:/[\w\-./]+|[\w\-./]+\.(?:py|js|ts|json|md|yaml|yml|sh|go|rs))"
+            file_pattern = (
+                r"(?:/[\w\-./]+|[\w\-./]+\.(?:py|js|ts|json|md|yaml|yml|sh|go|rs))"
+            )
             paths = re.findall(file_pattern, output_content)
-            
+
             if not paths:
                 return
-            
+
             # Record trails
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
-            
+
             try:
                 for path in paths:
                     cursor.execute(
@@ -959,21 +985,25 @@ class EventBridge:
                         (
                             path,
                             "file",
-                            "read" if tool_name in ("Read", "Grep", "Glob") else "write",
+                            "read"
+                            if tool_name in ("Read", "Grep", "Glob")
+                            else "write",
                             0.5 if tool_name in ("Read", "Grep", "Glob") else 0.9,
                             "event-bridge",
                             f"{tool_name} operation",
                             datetime.now().isoformat(),
                         ),
                     )
-                
+
                 conn.commit()
-                logger.info(f"✅ EventBridge recorded {len(paths)} trails from {tool_name}")
+                logger.info(
+                    f"✅ EventBridge recorded {len(paths)} trails from {tool_name}"
+                )
             except Exception as e:
                 logger.error(f"Failed to record trails: {e}")
             finally:
                 conn.close()
-        
+
         except Exception as e:
             logger.debug(f"Trail extraction error (non-fatal): {e}")
 
@@ -1291,6 +1321,83 @@ class EventBridge:
                             "last_event_time": bridge.last_event_time,
                         }
                         self.wfile.write(json.dumps(status).encode())
+                    elif self.path == "/api/v1/health":
+                        # General system health endpoint for Sentinel monitoring
+                        self.send_response(200)
+                        self.send_header("Content-type", "application/json")
+                        self.end_headers()
+
+                        # Calculate uptime
+                        uptime_seconds = None
+                        if bridge.started_at:
+                            uptime_seconds = int(
+                                (datetime.now() - bridge.started_at).total_seconds()
+                            )
+
+                        # Check service health
+                        try:
+                            # Check Orchestrator (via process check)
+                            orchestrator_result = subprocess.run(
+                                ["pgrep", "-f", "unified_orchestrator.py"],
+                                capture_output=True,
+                                text=True,
+                                timeout=2,
+                            )
+                            orchestrator_running = orchestrator_result.returncode == 0
+                        except:
+                            orchestrator_running = False
+
+                        try:
+                            # Check Sentinel (via process check)
+                            sentinel_result = subprocess.run(
+                                ["pgrep", "-f", "core/sentinel.py"],
+                                capture_output=True,
+                                text=True,
+                                timeout=2,
+                            )
+                            sentinel_running = sentinel_result.returncode == 0
+                        except:
+                            sentinel_running = False
+
+                        try:
+                            # Check Learning Capture (via process check)
+                            learning_result = subprocess.run(
+                                ["pgrep", "-f", "background-learning-capture.py"],
+                                capture_output=True,
+                                text=True,
+                                timeout=2,
+                            )
+                            learning_running = learning_result.returncode == 0
+                        except:
+                            learning_running = False
+
+                        # Determine overall status
+                        all_healthy = (
+                            bridge.running and orchestrator_running and sentinel_running
+                        )
+                        overall_status = "nominal" if all_healthy else "degraded"
+
+                        health = {
+                            "overall": overall_status,
+                            "timestamp": datetime.now().isoformat(),
+                            "services": {
+                                "event_bridge": bridge.running,
+                                "orchestrator": orchestrator_running,
+                                "sentinel": sentinel_running,
+                                "learning_capture": learning_running,
+                            },
+                            "components": {
+                                "event_bridge": {
+                                    "running": bridge.running,
+                                    "uptime_seconds": uptime_seconds,
+                                    "events_processed": bridge.event_count,
+                                },
+                                "orchestrator": {"running": orchestrator_running},
+                                "sentinel": {"running": sentinel_running},
+                                "learning_capture": {"running": learning_running},
+                            },
+                        }
+                        self.wfile.write(json.dumps(health).encode())
                     elif self.path == "/api/v1/health/mission_bridge":
                         self.send_response(200)
                         self.send_header("Content-type", "application/json")

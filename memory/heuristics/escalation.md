@@ -14,3 +14,14 @@ Generated from failures, successes, and observations in the **escalation** domai
 
 ---
 
+## H-203: Distinguish between service unreachable and empty response in escalations
+
+**Confidence**: 0.9
+**Source**: observation
+**Project**: `/home/bamer/.opencode/emergent-learning`
+**Created**: 2026-02-11
+
+Before reporting empty health payload, check actual HTTP status code. 404 = service down, not empty payload bug. This misdiagnosis wastes debugging time.
+
+---
+
