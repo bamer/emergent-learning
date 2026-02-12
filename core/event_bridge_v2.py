@@ -73,9 +73,15 @@ class EventBridge:
         self.started_at: Optional[datetime] = None
         self.last_event_time: Optional[str] = None
         self.session_tools: Dict[str, list] = {}
-        self.seen_messages: Dict[str, set] = {}  # Track seen messages per session
+        self.seen_parts: Dict[str, set] = {}  # Track seen parts per session (for tool parts)
+        self.seen_messages: set = set()  # Track processed message IDs
+        
+        # Cleanup tracking
+        self._last_cleanup_time = time.time()
+        self._cleanup_interval = 300  # Cleanup every 5 minutes
+        self._max_seen_entries = 10000  # Max messages to track
 
-        # Stats
+        # Event statistics tracking
         self.event_stats: Dict[str, int] = {}
 
         # HTTP session for connection pooling (reuse connections, better performance)
@@ -313,9 +319,13 @@ class EventBridge:
         logger.info("✅ EventBridge stopped")
 
     def _listen_events(self):
-        """Listen to OpenCode SSE stream."""
-        logger.info("Listening to OpenCode events...")
-
+        """Listen to OpenCode SSE stream with timeout protection."""
+        logger.info("Listening to OpenCode events (SSE endpoint: /global/event)...")
+        
+        sse_events_seen = set()
+        last_data_time = time.time()
+        data_timeout = 120  # 2 minutes without data = timeout
+        
         while self.running:
             try:
                 response = self.http_session.get(
@@ -325,7 +335,7 @@ class EventBridge:
                         "Accept": "text/event-stream",
                         "Cache-Control": "no-cache",
                     },
-                    timeout=60,
+                    timeout=150,  # Total connection timeout
                 )
 
                 if response.status_code != 200:
@@ -335,22 +345,60 @@ class EventBridge:
                     time.sleep(20)
                     continue
 
-                logger.info("✅ Connected to SSE stream")
+                last_data_time = time.time()
 
-                for line in response.iter_lines():
+                for line in response.iter_lines(chunk_size=8192, decode_unicode=True):
                     if not self.running:
                         break
 
+                    # Track last data received
+                    last_data_time = time.time()
+
                     if line:
-                        line_str = line.decode("utf-8")
-                        self._process_sse_line(line_str)
+                        try:
+                            event_type = self._extract_sse_event_type(line)
+                            if event_type:
+                                sse_events_seen.add(event_type)
+                            
+                            self._process_sse_line(line)
+                        except Exception as e:
+                            logger.error(f"Error processing SSE line: {e}")
+                    
+                    # Check if we're waiting too long for data
+                    if time.time() - last_data_time > data_timeout:
+                        logger.warning(f"⚠️ No data for {data_timeout}s, reconnecting...")
+                        break
+
+                # If we only see server.connected, log warning
+                if sse_events_seen == {"server.connected"}:
+                    logger.warning("⚠️ SSE only sending server.connected - tool events not emitted via SSE")
+                    logger.warning("   Falling back to session polling (10s interval) for tool detection")
 
             except requests.exceptions.ChunkedEncodingError:
                 logger.info("⚠️ SSE stream disconnected, reconnecting...")
                 time.sleep(2)
+            except requests.exceptions.ReadTimeout:
+                logger.info("⚠️ SSE read timeout, reconnecting...")
+                time.sleep(5)
             except Exception as e:
                 logger.error(f"❌ Error listening to events: {e}")
                 time.sleep(5)
+
+    def _extract_sse_event_type(self, line: str) -> str:
+        """Extract event type from SSE line for logging."""
+        if line.startswith("data:"):
+            data_str = line[5:].strip()
+            if data_str:
+                try:
+                    import json
+                    data = json.loads(data_str)
+                    # Handle payload format
+                    if "payload" in data:
+                        return data.get("payload", {}).get("type", "unknown")
+                    return data.get("type", "unknown")
+                except:
+                    pass
+        return ""
 
     def _process_sse_line(self, line: str):
         """Process a single SSE line."""
@@ -360,8 +408,9 @@ class EventBridge:
                 try:
                     data = json.loads(data_str)
                     self._handle_event(data)
-                except json.JSONDecodeError:
-                    pass
+                except json.JSONDecodeError as e:
+                    logger.warning(f"SSE JSON parse failed: {e}")
+        # Silently ignore SSE control lines (event:, id:, :comments)
 
     def _handle_event(self, event: Dict[str, Any]):
         """Handle an event from OpenCode."""
@@ -375,13 +424,20 @@ class EventBridge:
             event_type = event.get("type", "unknown")
             event_properties = event.get("properties", {})
 
-        # Handle message.part.updated events (contains tool_use parts)
-        if event_type == "message.part.updated":
-            self._handle_message_part_updated_event(event)
-            return
-
         # Extract details
         details = ""
+        
+        # Handle message.part.updated events (contains tool_use parts)
+        if event_type == "message.part.updated":
+            part = event_properties.get("part", {})
+            part_type = part.get("type", "")
+            details = f"Part type: {part_type}"
+            self._handle_message_part_updated_event(event)
+            # IMPORTANT: Still log the event for metrics
+            self._log_event(event_type, details, event_properties)
+            return
+
+        # Extract details for other event types
         if event_type == "tool":
             tool_name = event_properties.get("tool", "unknown")
             details = f"Tool: {tool_name}"
@@ -400,9 +456,11 @@ class EventBridge:
         # Log event
         self._log_event(event_type, details, event_properties)
 
-        # Log to console (throttled)
-        if event_type in ["tool", "error", "failure"]:
-            logger.info(f"📡 Event: {event_type} | {details}")
+        # Log important events only
+        if event_type == "error":
+            logger.error(f"❌ {details}")
+        elif event_type == "failure":
+            logger.warning(f"⚠️ {details}")
 
     def _process_tool_event(self, event: Dict[str, Any]):
         """Process tool events through LearningProcessor."""
@@ -450,13 +508,28 @@ class EventBridge:
         part_type = part.get("type", "")
         session_id = props.get("session_id", "")
 
-        # Check for tool_use or tool part types
-        if part_type in ["tool_use", "tool"]:
-            tool_name = part.get("tool", "unknown")
-            # Get tool_input and tool_output from state
-            state = part.get("state", {})
-            tool_input = state.get("input", {})
-            tool_output = state.get("output", "")
+        # Check for tool_use, tool, or step-finish part types
+        # OpenCode v1.1.59 sends tools as "step-finish" type
+        if part_type in ["tool_use", "tool", "step-finish"]:
+            # For step-finish, extract tool name from content
+            if part_type == "step-finish":
+                content = part.get("content", {})
+                tool_name = content.get("type", "unknown")
+                # Fallback to step_name or generic
+                step_name = part.get("step_name", "")
+                if not tool_name or tool_name == "unknown":
+                    tool_name = step_name.replace(" ", "_").lower() or "step"
+                # Get tool_input and tool_output from state
+                state = part.get("state", {})
+                tool_input = state.get("input", {})
+                tool_output = state.get("output", {})
+                success = state.get("status") == "completed"
+            else:
+                tool_name = part.get("tool", "unknown")
+                state = part.get("state", {})
+                tool_input = state.get("input", {})
+                tool_output = state.get("output", "")
+                success = state.get("status") == "completed"
 
             # Synthesize a tool event
             tool_event = {
@@ -466,29 +539,75 @@ class EventBridge:
                     "input": tool_input,
                     "output": tool_output,
                     "session_id": session_id,
-                    "success": state.get("status") == "completed",
+                    "success": success,
                 },
             }
+
+            # Log the tool event capture
+            logger.info(f"📡 SSE Tool captured: {tool_name} ({part_type})")
 
             # Process as a regular tool event
             self._process_tool_event(tool_event)
 
+    def _cleanup_seen_trackers(self):
+        """Periodic cleanup of seen trackers to prevent memory leaks."""
+        current_time = time.time()
+        if current_time - self._last_cleanup_time < self._cleanup_interval:
+            return
+        
+        self._last_cleanup_time = current_time
+        
+        # Limit seen_messages size
+        if len(self.seen_messages) > self._max_seen_entries:
+            # Keep only the most recent entries
+            excess = len(self.seen_messages) - self._max_seen_entries
+            # Convert to list, remove oldest, convert back
+            msgs = list(self.seen_messages)
+            for msg in msgs[:excess]:
+                self.seen_messages.discard(msg)
+            logger.info(f"🧹 Cleaned up {excess} old message IDs")
+        
+        # Limit seen_parts per session
+        for session_id in list(self.seen_parts.keys()):
+            if len(self.seen_parts[session_id]) > self._max_seen_entries:
+                parts = list(self.seen_parts[session_id])
+                excess = len(parts) - self._max_seen_entries
+                for part in parts[:excess]:
+                    self.seen_parts[session_id].discard(part)
+                logger.info(f"🧹 Cleaned up {excess} old part IDs from session {session_id[:8]}...")
+
     def _poll_sessions(self):
         """Poll sessions to detect tool usage (fallback for events not captured via SSE)."""
         logger.info("🔄 Starting session polling...")
+        last_poll_time = None
+        poll_count = 0
 
         while self.running:
             try:
+                # Periodic cleanup to prevent memory leaks
+                self._cleanup_seen_trackers()
+                
                 # Get all sessions
-                response = self.http_session.get(
-                    f"{OPENCODE_SERVER}/session", timeout=10
-                )
+                try:
+                    response = self.http_session.get(
+                        f"{OPENCODE_SERVER}/session", timeout=10
+                    )
+                except Exception as e:
+                    logger.debug(f"Session fetch failed: {e}, retrying in 5s...")
+                    time.sleep(5)
+                    continue
+                
                 if response.status_code != 200:
                     time.sleep(5)
                     continue
 
                 sessions = response.json()
                 total_tools_found = 0
+                poll_count += 1
+                
+                # Only log every 60 polls (10 minutes) to reduce noise
+                if poll_count % 60 == 1:
+                    logger.debug(f"🔄 Polling session #{poll_count}, {len(sessions)} sessions")
 
                 for session in sessions:
                     session_id = session.get("id")
@@ -496,74 +615,116 @@ class EventBridge:
                         continue
 
                     # Initialize tracker for this session
-                    if session_id not in self.seen_messages:
-                        self.seen_messages[session_id] = set()
+                    if session_id not in self.seen_parts:
+                        self.seen_parts[session_id] = set()
 
                     # Get messages for this session
-                    msg_response = self.http_session.get(
-                        f"{OPENCODE_SERVER}/session/{session_id}/message", timeout=10
-                    )
+                    try:
+                        msg_response = self.http_session.get(
+                            f"{OPENCODE_SERVER}/session/{session_id}/message", timeout=10
+                        )
+                    except Exception as e:
+                        logger.debug(f"Message fetch failed for session {session_id}: {e}")
+                        continue
 
                     if msg_response.status_code != 200:
                         continue
 
                     messages = msg_response.json()
 
+                    # Process new messages (reverse order to get newest first, but track same)
+                    # Sort by message ID/time to ensure consistent processing
+                    messages.sort(key=lambda m: m.get("info", {}).get("index", 0), reverse=True)
+
                     # Process new messages
                     for msg in messages:
-                        msg_id = msg.get("info", {}).get("id")
-                        if not msg_id or msg_id in self.seen_messages[session_id]:
+                        info = msg.get("info", {})
+                        msg_id = info.get("id")
+                        if not msg_id:
+                            continue
+                        
+                        # Skip if already seen
+                        if msg_id in self.seen_messages:
                             continue
 
-                        self.seen_messages[session_id].add(msg_id)
+                        self.seen_messages.add(msg_id)
 
                         # Check for tools in message parts
                         parts = msg.get("parts", [])
                         for part in parts:
+                            part_id = part.get("id")
+                            if not part_id:
+                                continue
+                            if session_id not in self.seen_parts:
+                                self.seen_parts[session_id] = set()
+                            if part_id in self.seen_parts[session_id]:
+                                continue
+                            self.seen_parts[session_id].add(part_id)
+                            
                             part_type = part.get("type")
-                            # OpenCode envoie les outils dans "step-start", pas "tool_use"
-                            if part_type in ["tool_use", "tool", "step-start"]:
-                                # Pour step-start, extraire le tool_name du contenu
-                                if part_type == "step-start":
-                                    content = part.get("content", {})
-                                    tool_name = content.get("type", "unknown")
-                                    # Essayer d'extraire le tool name de step_name
-                                    step_name = part.get("step_name", "")
-                                    if not tool_name or tool_name == "unknown":
-                                        tool_name = (
-                                            step_name.replace(" ", "_").lower()
-                                            or "step"
-                                        )
-                                else:
-                                    tool_name = part.get("tool", "unknown")
-                                # Get tool_input and tool_output from state
-                                state = part.get("state", {})
-                                tool_input = state.get("input", {})
-                                tool_output = state.get("output", "")
+                            
+                            # Check for tool-related parts - support multiple OpenCode formats
+                            # "tool" = legacy format
+                            # "tool_use" = Claude API format  
+                            # "step-start" = some newer OpenCode versions
+                            # Also check content.type for embedded tool info
+                            content = part.get("content", {})
+                            content_type = content.get("type", "") if isinstance(content, dict) else ""
+                            
+                            is_tool = False
+                            detected_tool_name = None
+                            
+                            if part_type in ["tool", "tool_use"]:
+                                is_tool = True
+                                detected_tool_name = part.get("tool", content_type or "unknown")
+                            elif part_type == "step-start":
+                                is_tool = True
+                                detected_tool_name = content_type or part.get("step_name", "").replace(" ", "_").lower() or "step"
+                            elif content_type in ["tool_use", "bash", "read", "edit", "write", "grep", "glob"]:
+                                # Sometimes tool info is in content.type instead of part.type
+                                is_tool = True
+                                detected_tool_name = content_type
+                                
+                            if not is_tool:
+                                continue
+                                
+                            # Get tool_input and tool_output from state
+                            state = part.get("state", {})
+                            tool_input = state.get("input", {})
+                            
+                            # Handle different output formats
+                            tool_output_raw = state.get("output", "")
+                            if isinstance(tool_output_raw, dict):
+                                # New format: output is a dict with content
+                                tool_output = {"content": tool_output_raw}
+                            elif isinstance(tool_output_raw, str):
+                                tool_output = {"content": tool_output_raw}
+                            else:
+                                tool_output = {"content": str(tool_output_raw)}
 
-                                total_tools_found += 1
+                            total_tools_found += 1
 
-                                # Synthesize and process tool event
-                                tool_event = {
-                                    "type": "tool",
-                                    "properties": {
-                                        "tool": tool_name,
-                                        "input": tool_input,
-                                        "output": tool_output,
-                                        "session_id": session_id,
-                                        "success": state.get("status") == "completed",
-                                    },
-                                }
-                                self._process_tool_event(tool_event)
+                            # Synthesize and process tool event
+                            tool_event = {
+                                "type": "tool",
+                                "properties": {
+                                    "tool": detected_tool_name,
+                                    "input": tool_input,
+                                    "output": tool_output,
+                                    "session_id": session_id,
+                                    "success": state.get("status") == "completed",
+                                },
+                            }
+                            self._process_tool_event(tool_event)
 
                 if total_tools_found > 0:
-                    logger.debug(f"📊 Poll: {total_tools_found} tools processed")
+                    logger.debug(f"📊 {total_tools_found} tools detected in poll #{poll_count}")
 
                 # Wait before next poll (reasonable interval to avoid overloading server)
                 time.sleep(10)
 
             except Exception as e:
-                logger.error(f"❌ Error polling sessions: {e}")
+                logger.error(f"❌ Error polling sessions: {e}", exc_info=True)
                 time.sleep(3)
 
     def _start_status_server(self):

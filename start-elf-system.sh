@@ -557,19 +557,20 @@ start_frontend() {
 
 # Start Semantic Search Daemon
 start_semantic_daemon() {
-    log "🔍 Démarrage du Semantic Search Daemon..."
+    log "🔍 Démarrage du Semantic Search Daemon (port 5001)..."
 
     # Kill any existing semantic daemon
+    pkill -f "semantic/daemon.py" 2>/dev/null || true
     pkill -f "semantic.daemon" 2>/dev/null || true
     sleep 1
 
-    # Start semantic daemon
-    cd "${SCRIPT_DIR}"
-    nohup python3 -m semantic.daemon > "${LOGS_DIR}/semantic-daemon.log" 2>&1 &
+    # Start semantic daemon from the correct location
+    cd "${SCRIPT_DIR}/semantic"
+    python3 daemon.py > "${LOGS_DIR}/semantic-daemon.log" 2>&1 &
     SEMANTIC_DAEMON_PID=$!
     cd - >/dev/null
 
-    # Wait a few seconds
+    # Wait for it to start
     sleep 3
 
     # Check if it's running
@@ -579,7 +580,11 @@ start_semantic_daemon() {
         return 0
     else
         log_warning "⚠️ Semantic Search Daemon non démarré"
-        return 0  # Continue even if not started
+        # Try to read the error
+        if [[ -f "${LOGS_DIR}/semantic-daemon.log" ]]; then
+            log_error "$(head -20 "${LOGS_DIR}/semantic-daemon.log")"
+        fi
+        return 0  # Continue even if not started (non-blocking)
     fi
 }
 
@@ -697,11 +702,11 @@ test_mode() {
     
     # Ne démarrer que les services essentiels
     start_opencode_server || return 1
+    start_semantic_daemon || return 1  # START FIRST - Required by learning_processor
     start_backend || return 1
     start_event_bridge || return 1
     start_orchestrator || return 1  # Unified Orchestrator
     start_sentinel || return 1               # Sentinel
-    start_semantic_daemon || return 0  # Semantic Search Daemon (MANDATORY)
     start_learning_capture || return 0 # Ne pas bloquer si échec
     start_ceo_monitor || return 0    # CEO Inbox Monitor
 
@@ -718,6 +723,7 @@ minimal_mode() {
     
     # Ne démarrer que les services essentiels
     start_opencode_server || return 1
+    start_semantic_daemon || return 0  # Optional in minimal mode but useful
     start_backend || return 1
     
     show_status

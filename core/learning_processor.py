@@ -690,30 +690,66 @@ class LearningProcessor:
 
         content_lower = content.lower()
 
-        # Failure patterns
+        # CRITICAL: Don't match descriptions - only actual error output
+        # Task descriptions like "Check errors" or "Check failures" should NOT be counted as failures
+        
+        # Check if content looks like a task description (starts with action verbs, short, etc.)
+        # These are descriptions like "Check embeddings table", "Get total counts", etc.
+        is_task_description = (
+            len(content) < 150 and  # Short content is likely a description
+            (
+             content.startswith("Check ") or  # "Check X" patterns
+             content.startswith("Verify ") or
+             content.startswith("Test ") or
+             content.startswith("Show ") or
+             content.startswith("Get ") or
+             content.startswith("Run ") or
+             content.startswith("Find ") or
+             content.startswith("Record ") or
+             content.startswith("Start ") or
+             content.startswith("Trigger ") or
+             content.startswith("List ") or
+             content.startswith("Query ") or
+             content.startswith("Search ") or
+             content.startswith("Sync ") or
+             content.startswith("Log ") or
+             content.startswith("Read ") or
+             content.startswith("Write ") or
+             content.startswith("Create ") or
+             content.startswith("Delete ") or
+             "description" in content_lower or
+             "task" in content_lower)
+        )
+        
+        if is_task_description:
+            return "unknown", "Task description, not actual output"
+
+        # Now check for actual failures in real output
         failure_patterns = [
-            (r"(?i)\berror\b[:\s]", "Error detected"),
-            (r"(?i)\bexception\b[:\s]", "Exception raised"),
-            (r"(?i)\bfailed\b[:\s]", "Operation failed"),
-            (r"(?i)\bcould not\b", "Could not complete"),
-            (r"(?i)\bunable to\b", "Unable to complete"),
+            (r"(?i)\berror\b[:\s].*", "Error detected"),
+            (r"(?i)\bexception\b[:\s].*", "Exception raised"),
+            (r"(?i)\bfailed\b[:\s].*", "Operation failed"),
+            (r"(?i)\bcould not\b.*", "Could not complete"),
+            (r"(?i)\bunable to\b.*", "Unable to complete"),
             (r"\[BLOCKER\]", "Blocker encountered"),
             (r"(?i)\btraceback\b", "Exception traceback"),
             (r"(?i)\bpermission denied\b", "Permission denied"),
         ]
 
-        # False positive patterns
+        # False positive patterns (context around error words that aren't real errors)
         false_positives = [
             r"(?i)was not found to be",
             r"(?i)\berror handling\b",
             r"(?i)\bno errors?\b",
             r"(?i)\bwithout errors?\b",
             r"(?i)\bfixed.*\berror\b",
+            r"(?i)\bcheck.*\berrors?\b",  # "Check for errors" is not an error
+            r"(?i)\bsee.*\berrors?\b",
         ]
 
         for pattern, reason in failure_patterns:
             if re.search(pattern, content, re.MULTILINE):
-                # Check for false positives
+                # Check for false positives in surrounding context
                 match = re.search(pattern, content, re.MULTILINE)
                 if match:
                     match_start = max(0, match.start() - 30)
@@ -1412,8 +1448,78 @@ class LearningProcessor:
     # AUTO-FAILURE RECORDING
     # =========================================================================
 
+    def _is_internal_elf_event(self, tool_name: str, tool_input: Dict) -> bool:
+        """
+        Check if this is an internal ELF system event that should NOT be recorded as failure.
+        
+        Internal ELF events are BASH/SHELL commands used for debugging/monitoring the ELF system.
+        These should not pollute the learnings database with false failures.
+        
+        IMPORTANT: Normal tools (read_file, edit_file, etc.) that access ELF files
+        are REAL user actions and SHOULD be recorded. Only filter shell commands
+        that look like ELF system debugging/monitoring.
+        """
+        # Skip if no input
+        if not tool_input:
+            return True
+            
+        # Only filter BASH commands - real user tools (read_file, edit_file, etc.) should be recorded
+        if tool_name.lower() not in ["bash", "shell", "cmd", "command"]:
+            return False  # Allow real tools to be recorded
+            
+        # Convert to string for pattern matching
+        input_str = str(tool_input).lower()
+        
+        # ELF internal debugging/monitoring commands - these are clearly ELF system operations
+        # These patterns match actual shell commands used for debugging the ELF itself
+        internal_shell_patterns = [
+            # Debugging/monitoring shell commands
+            (r"tail.*log", "Log tailing"),
+            (r"cat.*log", "Log reading"),
+            (r"grep.*log", "Log searching"),
+            (r"ps.*aux.*grep", "Process checking"),
+            (r"pgrep.*", "Process checking"),
+            (r"curl.*status", "Status checking"),
+            (r"curl.*health", "Health checking"),
+            # ELF-specific debugging patterns
+            r"event_bridge",  # Commands mentioning event_bridge
+            r"sentinel",      # Commands mentioning sentinel
+            # Generic ELF debugging command patterns
+            r"check.*event.*bridge",
+            r"show.*script.*contents",
+            r"start.*dashboard",
+            r"test.*unified.*orchestrator",
+            r"test.*event.*bridge",
+            r"view.*last.*\d+.*lines",
+            r"check.*end.*of.*file",
+            r"check.*syntax",
+            r"check.*elf.*logging",
+            r"check.*orchestrator",
+            r"check.*system.*state",
+        ]
+        
+        # Check if this bash command looks like ELF system debugging
+        for pattern in internal_shell_patterns:
+            if isinstance(pattern, tuple):
+                # Pattern is (regex, description) - use just the regex
+                regex_pattern = pattern[0]
+            else:
+                regex_pattern = pattern
+                
+            if re.search(regex_pattern, input_str, re.IGNORECASE):
+                return True
+                
+        return False
+
     def _auto_record_failure(self, event: ToolEvent, reason: str):
-        """Auto-record a failure to the database."""
+        """Auto-record a REAL failure to the database."""
+        # CRITICAL: Only record actual FAILURES, not "unknown" outcomes
+        # These are legitimate user tools being misclassified as failures
+        # Skip internal ELF events - these are system debugging commands, not real failures
+        if self._is_internal_elf_event(event.tool_name, event.tool_input):
+            logger.debug(f"[AUTO_FAILURE_SKIP] Skipping internal ELF event: {event.tool_name}")
+            return
+            
         conn = self._get_db_connection()
         if not conn:
             return
@@ -1425,6 +1531,31 @@ class LearningProcessor:
             # Get task description
             description = event.tool_input.get("description", "unknown task")
 
+            # Skip if description is too generic/empty
+            if not description or description == "unknown task" or len(description.strip()) < 3:
+                logger.debug(f"[AUTO_FAILURE_SKIP] Generic description: {description}")
+                return
+
+            # CRITICAL FIX: Check if this is actually a failure (not "unknown" outcome)
+            # Look for actual error indicators in the output
+            output_content = ""
+            if isinstance(event.tool_output, dict):
+                output_content = str(event.tool_output.get("content", "")).lower()
+            elif isinstance(event.tool_output, str):
+                output_content = event.tool_output.lower()
+
+            # Only record if there are ACTUAL error indicators
+            actual_error_patterns = [
+                r"\b(error|exception|failed|could not|unable to|permission denied|traceback|blocker)\b",
+            ]
+            
+            has_actual_error = any(re.search(p, output_content) for p in actual_error_patterns)
+            
+            if not has_actual_error:
+                # This is a "unknown" outcome - NOT a real failure
+                logger.debug(f"[AUTO_FAILURE_SKIP] Not an actual failure (outcome='unknown'): {description[:50]}")
+                return
+
             # Get output content
             output_content = ""
             if isinstance(event.tool_output, dict):
@@ -1434,13 +1565,16 @@ class LearningProcessor:
 
             domains = self.session_state.get("domains_queried", ["general"])
 
+            # Use microseconds for unique filepath
+            filepath = f"auto-failures/failure_{timestamp.strftime('%Y%m%d_%H%M%S_%f')}.md"
+
             cursor.execute(
                 """
                 INSERT INTO learnings (type, filepath, title, summary, domain, severity, created_at)
                 VALUES ('failure', ?, ?, ?, ?, 3, ?)
             """,
                 (
-                    f"auto-failures/failure_{timestamp.strftime('%Y%m%d_%H%M%S')}.md",
+                    filepath,
                     f"Auto-captured: {description[:50]}",
                     f"Reason: {reason}\n\nTask: {description}\n\nOutput: {output_content[:200]}",
                     domains[0] if domains else "general",
