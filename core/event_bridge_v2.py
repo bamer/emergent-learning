@@ -73,9 +73,11 @@ class EventBridge:
         self.started_at: Optional[datetime] = None
         self.last_event_time: Optional[str] = None
         self.session_tools: Dict[str, list] = {}
-        self.seen_parts: Dict[str, set] = {}  # Track seen parts per session (for tool parts)
+        self.seen_parts: Dict[
+            str, set
+        ] = {}  # Track seen parts per session (for tool parts)
         self.seen_messages: set = set()  # Track processed message IDs
-        
+
         # Cleanup tracking
         self._last_cleanup_time = time.time()
         self._cleanup_interval = 300  # Cleanup every 5 minutes
@@ -186,13 +188,23 @@ class EventBridge:
             logger.error(f"Failed to get database connection: {e}", exc_info=True)
             return None
 
+    # Events to filter out from metrics logging (retention policy)
+    _FILTERED_EVENTS = {
+        "message.part.updated",  # High-frequency, low-value internal updates
+        "file.watcher.updated",  # Frequent filesystem noise
+    }
+
     def _log_event(
         self, event_type: str, details: str = "", data: Optional[Dict] = None
     ):
-        """Log event to database."""
+        """Log event to database with retention policy filtering."""
         self.event_count += 1
         self.last_event_time = datetime.now().isoformat()
         self.event_stats[event_type] = self.event_stats.get(event_type, 0) + 1
+
+        # Skip filtered events (retention policy)
+        if event_type in self._FILTERED_EVENTS:
+            return
 
         # Log to database
         conn = self._get_db_connection()
@@ -321,11 +333,11 @@ class EventBridge:
     def _listen_events(self):
         """Listen to OpenCode SSE stream with timeout protection."""
         logger.info("Listening to OpenCode events (SSE endpoint: /global/event)...")
-        
+
         sse_events_seen = set()
         last_data_time = time.time()
         data_timeout = 120  # 2 minutes without data = timeout
-        
+
         while self.running:
             try:
                 response = self.http_session.get(
@@ -359,20 +371,26 @@ class EventBridge:
                             event_type = self._extract_sse_event_type(line)
                             if event_type:
                                 sse_events_seen.add(event_type)
-                            
+
                             self._process_sse_line(line)
                         except Exception as e:
                             logger.error(f"Error processing SSE line: {e}")
-                    
+
                     # Check if we're waiting too long for data
                     if time.time() - last_data_time > data_timeout:
-                        logger.warning(f"⚠️ No data for {data_timeout}s, reconnecting...")
+                        logger.warning(
+                            f"⚠️ No data for {data_timeout}s, reconnecting..."
+                        )
                         break
 
                 # If we only see server.connected, log warning
                 if sse_events_seen == {"server.connected"}:
-                    logger.warning("⚠️ SSE only sending server.connected - tool events not emitted via SSE")
-                    logger.warning("   Falling back to session polling (10s interval) for tool detection")
+                    logger.warning(
+                        "⚠️ SSE only sending server.connected - tool events not emitted via SSE"
+                    )
+                    logger.warning(
+                        "   Falling back to session polling (10s interval) for tool detection"
+                    )
 
             except requests.exceptions.ChunkedEncodingError:
                 logger.info("⚠️ SSE stream disconnected, reconnecting...")
@@ -391,6 +409,7 @@ class EventBridge:
             if data_str:
                 try:
                     import json
+
                     data = json.loads(data_str)
                     # Handle payload format
                     if "payload" in data:
@@ -426,7 +445,7 @@ class EventBridge:
 
         # Extract details
         details = ""
-        
+
         # Handle message.part.updated events (contains tool_use parts)
         if event_type == "message.part.updated":
             part = event_properties.get("part", {})
@@ -554,9 +573,9 @@ class EventBridge:
         current_time = time.time()
         if current_time - self._last_cleanup_time < self._cleanup_interval:
             return
-        
+
         self._last_cleanup_time = current_time
-        
+
         # Limit seen_messages size
         if len(self.seen_messages) > self._max_seen_entries:
             # Keep only the most recent entries
@@ -566,7 +585,7 @@ class EventBridge:
             for msg in msgs[:excess]:
                 self.seen_messages.discard(msg)
             logger.info(f"🧹 Cleaned up {excess} old message IDs")
-        
+
         # Limit seen_parts per session
         for session_id in list(self.seen_parts.keys()):
             if len(self.seen_parts[session_id]) > self._max_seen_entries:
@@ -574,7 +593,32 @@ class EventBridge:
                 excess = len(parts) - self._max_seen_entries
                 for part in parts[:excess]:
                     self.seen_parts[session_id].discard(part)
-                logger.info(f"🧹 Cleaned up {excess} old part IDs from session {session_id[:8]}...")
+                logger.info(
+                    f"🧹 Cleaned up {excess} old part IDs from session {session_id[:8]}..."
+                )
+
+    def _cleanup_old_metrics(self):
+        """Periodic cleanup of old metrics records (retention policy)."""
+        try:
+            conn = self._get_db_connection()
+            if not conn:
+                return
+
+            cursor = conn.cursor()
+            # Delete event metrics older than 6 hours (retention policy)
+            cursor.execute(
+                "DELETE FROM metrics WHERE metric_type = 'event' AND timestamp < datetime('now', '-6 hours')"
+            )
+            deleted_count = cursor.rowcount
+            conn.commit()
+            conn.close()
+
+            if deleted_count > 0:
+                logger.info(
+                    f"🧹 Cleaned up {deleted_count} old event metrics (retention policy)"
+                )
+        except Exception as e:
+            logger.debug(f"Metrics cleanup failed: {e}")
 
     def _poll_sessions(self):
         """Poll sessions to detect tool usage (fallback for events not captured via SSE)."""
@@ -586,7 +630,9 @@ class EventBridge:
             try:
                 # Periodic cleanup to prevent memory leaks
                 self._cleanup_seen_trackers()
-                
+                # Apply metrics retention policy
+                self._cleanup_old_metrics()
+
                 # Get all sessions
                 try:
                     response = self.http_session.get(
@@ -596,7 +642,7 @@ class EventBridge:
                     logger.debug(f"Session fetch failed: {e}, retrying in 5s...")
                     time.sleep(5)
                     continue
-                
+
                 if response.status_code != 200:
                     time.sleep(5)
                     continue
@@ -604,10 +650,12 @@ class EventBridge:
                 sessions = response.json()
                 total_tools_found = 0
                 poll_count += 1
-                
+
                 # Only log every 60 polls (10 minutes) to reduce noise
                 if poll_count % 60 == 1:
-                    logger.debug(f"🔄 Polling session #{poll_count}, {len(sessions)} sessions")
+                    logger.debug(
+                        f"🔄 Polling session #{poll_count}, {len(sessions)} sessions"
+                    )
 
                 for session in sessions:
                     session_id = session.get("id")
@@ -621,10 +669,13 @@ class EventBridge:
                     # Get messages for this session
                     try:
                         msg_response = self.http_session.get(
-                            f"{OPENCODE_SERVER}/session/{session_id}/message", timeout=10
+                            f"{OPENCODE_SERVER}/session/{session_id}/message",
+                            timeout=10,
                         )
                     except Exception as e:
-                        logger.debug(f"Message fetch failed for session {session_id}: {e}")
+                        logger.debug(
+                            f"Message fetch failed for session {session_id}: {e}"
+                        )
                         continue
 
                     if msg_response.status_code != 200:
@@ -634,7 +685,9 @@ class EventBridge:
 
                     # Process new messages (reverse order to get newest first, but track same)
                     # Sort by message ID/time to ensure consistent processing
-                    messages.sort(key=lambda m: m.get("info", {}).get("index", 0), reverse=True)
+                    messages.sort(
+                        key=lambda m: m.get("info", {}).get("index", 0), reverse=True
+                    )
 
                     # Process new messages
                     for msg in messages:
@@ -642,7 +695,7 @@ class EventBridge:
                         msg_id = info.get("id")
                         if not msg_id:
                             continue
-                        
+
                         # Skip if already seen
                         if msg_id in self.seen_messages:
                             continue
@@ -660,38 +713,58 @@ class EventBridge:
                             if part_id in self.seen_parts[session_id]:
                                 continue
                             self.seen_parts[session_id].add(part_id)
-                            
+
                             part_type = part.get("type")
-                            
+
                             # Check for tool-related parts - support multiple OpenCode formats
                             # "tool" = legacy format
-                            # "tool_use" = Claude API format  
+                            # "tool_use" = Claude API format
                             # "step-start" = some newer OpenCode versions
                             # Also check content.type for embedded tool info
                             content = part.get("content", {})
-                            content_type = content.get("type", "") if isinstance(content, dict) else ""
-                            
+                            content_type = (
+                                content.get("type", "")
+                                if isinstance(content, dict)
+                                else ""
+                            )
+
                             is_tool = False
                             detected_tool_name = None
-                            
+
                             if part_type in ["tool", "tool_use"]:
                                 is_tool = True
-                                detected_tool_name = part.get("tool", content_type or "unknown")
+                                detected_tool_name = part.get(
+                                    "tool", content_type or "unknown"
+                                )
                             elif part_type == "step-start":
                                 is_tool = True
-                                detected_tool_name = content_type or part.get("step_name", "").replace(" ", "_").lower() or "step"
-                            elif content_type in ["tool_use", "bash", "read", "edit", "write", "grep", "glob"]:
+                                detected_tool_name = (
+                                    content_type
+                                    or part.get("step_name", "")
+                                    .replace(" ", "_")
+                                    .lower()
+                                    or "step"
+                                )
+                            elif content_type in [
+                                "tool_use",
+                                "bash",
+                                "read",
+                                "edit",
+                                "write",
+                                "grep",
+                                "glob",
+                            ]:
                                 # Sometimes tool info is in content.type instead of part.type
                                 is_tool = True
                                 detected_tool_name = content_type
-                                
+
                             if not is_tool:
                                 continue
-                                
+
                             # Get tool_input and tool_output from state
                             state = part.get("state", {})
                             tool_input = state.get("input", {})
-                            
+
                             # Handle different output formats
                             tool_output_raw = state.get("output", "")
                             if isinstance(tool_output_raw, dict):
@@ -718,7 +791,9 @@ class EventBridge:
                             self._process_tool_event(tool_event)
 
                 if total_tools_found > 0:
-                    logger.debug(f"📊 {total_tools_found} tools detected in poll #{poll_count}")
+                    logger.debug(
+                        f"📊 {total_tools_found} tools detected in poll #{poll_count}"
+                    )
 
                 # Wait before next poll (reasonable interval to avoid overloading server)
                 time.sleep(10)

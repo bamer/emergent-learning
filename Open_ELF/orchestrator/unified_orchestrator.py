@@ -623,7 +623,10 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
         # 2. Register as listener
         self._register_listeners()
 
-        # 3. Start event processor
+        # 3. Auto-start essential services (Learning Capture, Sentinel)
+        self._ensure_services_started()
+
+        # 4. Start event processor
         processor = asyncio.create_task(self._process_events())
         logger.info("⚙️  Event processor started")
 
@@ -736,7 +739,14 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
             register_global_listener(
                 listener_id="unified_orchestrator",
                 callback=self._on_event_received_sync,
-                event_types=["tool", "message", "error", "failure", "service", "health"]
+                event_types=[
+                    "tool",
+                    "message",
+                    "error",
+                    "failure",
+                    "service",
+                    "health",
+                ],
             )
             logger.info("✅ Registered for events via EventBridge v2 global listeners")
         except Exception as e:
@@ -961,6 +971,120 @@ python3 -c "import sqlite3; conn = sqlite3.connect('memory/index.db'); cursor = 
         # Escalate critical issues
         if event.severity == "critical":
             self._escalate_critical(service, status, props)
+
+    def _ensure_services_started(self):
+        """Ensure essential services are running on Orchestrator startup.
+
+        Starts Learning Capture and Sentinel if not already running.
+        No external dependencies (no crontab, no systemd).
+        """
+        import time
+
+        logger.info("=" * 60)
+        logger.info("🔧 Ensuring essential services are started...")
+        logger.info("=" * 60)
+
+        # Learning Capture
+        check = subprocess.run(
+            ["pgrep", "-f", "background-learning-capture.py"],
+            capture_output=True,
+            text=True,
+        )
+        if check.returncode != 0:
+            logger.info("📝 Starting Learning Capture...")
+            LEARNING_CAPTURE_LOG.parent.mkdir(parents=True, exist_ok=True)
+            process = subprocess.Popen(
+                ["python3", str(LEARNING_CAPTURE_SCRIPT)],
+                stdout=open(LEARNING_CAPTURE_LOG, "a"),
+                stderr=subprocess.STDOUT,
+                start_new_session=True,
+            )
+            time.sleep(2)
+            verify = subprocess.run(
+                ["pgrep", "-f", "background-learning-capture.py"],
+                capture_output=True,
+                text=True,
+            )
+            if verify.returncode == 0:
+                self.learning_capture_active = True
+                self.learning_capture_pid = verify.stdout.strip()
+                logger.info(
+                    f"✅ Learning Capture started (PID: {self.learning_capture_pid})"
+                )
+            else:
+                logger.error("❌ Failed to start Learning Capture")
+        else:
+            self.learning_capture_active = True
+            self.learning_capture_pid = check.stdout.strip().split("\n")[0]
+            logger.info(
+                f"✅ Learning Capture already running (PID: {self.learning_capture_pid})"
+            )
+
+        # Sentinel
+        check = subprocess.run(
+            ["pgrep", "-f", "core/sentinel.py"],
+            capture_output=True,
+            text=True,
+        )
+        if check.returncode != 0:
+            logger.info("👁️ Starting Sentinel...")
+            process = subprocess.Popen(
+                ["python3", str(ELF_DIR / "core" / "sentinel.py")],
+                cwd=str(OPEN_ELF_DIR),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                start_new_session=True,
+            )
+            time.sleep(2)
+            verify = subprocess.run(
+                ["pgrep", "-f", "core/sentinel.py"],
+                capture_output=True,
+                text=True,
+            )
+            if verify.returncode == 0:
+                self.sentinel_pid = verify.stdout.strip().split("\n")[0]
+                logger.info(f"✅ Sentinel started (PID: {self.sentinel_pid})")
+            else:
+                logger.error("❌ Failed to start Sentinel")
+        else:
+            self.sentinel_pid = check.stdout.strip().split("\n")[0]
+            logger.info(f"✅ Sentinel already running (PID: {self.sentinel_pid})")
+
+        # EventBridge - Critical dependency (must be running for orchestrator to work)
+        check = subprocess.run(
+            ["pgrep", "-f", "event_bridge_v2.py"],
+            capture_output=True,
+            text=True,
+        )
+        if check.returncode != 0:
+            logger.info("🌉 Starting EventBridge...")
+            process = subprocess.Popen(
+                ["python3", str(ELF_DIR / "core" / "event_bridge_v2.py"), "start"],
+                cwd=str(ELF_DIR),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                start_new_session=True,
+            )
+            time.sleep(3)
+            verify = subprocess.run(
+                ["pgrep", "-f", "event_bridge_v2.py"],
+                capture_output=True,
+                text=True,
+            )
+            if verify.returncode == 0:
+                logger.info(
+                    f"✅ EventBridge started (PID: {verify.stdout.strip().split(chr(10))[0]})"
+                )
+            else:
+                logger.error("❌ Failed to start EventBridge")
+        else:
+            logger.info(
+                f"✅ EventBridge already running (PID: {check.stdout.strip().split(chr(10))[0]})"
+            )
+
+        logger.info("=" * 60)
+        logger.info("🔧 Service initialization complete")
+        logger.info("=" * 60)
 
     def _restart_learning_capture(self) -> bool:
         """Restart Learning Capture service.

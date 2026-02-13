@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Session Summarizer - Uses the learning-extractor agent to generate summaries.
+Session Summarizer - Uses Haiku to generate compact session summaries.
 
 Designed to be called as a background agent or CLI tool.
-Reads raw session JSONL, extracts key info, generates summary via AgentManager.
+Reads raw session JSONL, extracts key info, generates summary via Claude.
 
 Usage:
     python summarize-session.py <session_id>
@@ -17,7 +17,6 @@ import sys
 import os
 import argparse
 import subprocess
-from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeoutError
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List
@@ -45,8 +44,6 @@ def _resolve_base_path() -> Path:
 ELF_DIR = _resolve_base_path()
 PROJECTS_DIR = Path.home() / ".opencode" / "projects"
 DB_PATH = ELF_DIR / "memory" / "index.db"
-QUEUE_FILE = ELF_DIR / "memory" / "summarization_queue.jsonl"
-LEARNING_EXTRACTOR_TIMEOUT = int(os.environ.get("LEARNING_EXTRACTOR_TIMEOUT", "21600"))
 
 
 def get_db():
@@ -54,49 +51,6 @@ def get_db():
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
     return conn
-
-def load_queue_entries() -> List[Dict[str, Any]]:
-    if not QUEUE_FILE.exists():
-        return []
-    entries = []
-    with open(QUEUE_FILE, "r", encoding="utf-8") as handle:
-        for line in handle:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                entries.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
-    return entries
-
-def write_queue_entries(entries: List[Dict[str, Any]]) -> None:
-    QUEUE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(QUEUE_FILE, "w", encoding="utf-8") as handle:
-        for entry in entries:
-            handle.write(json.dumps(entry) + "\n")
-
-def queue_session(session_id: str, reason: str) -> None:
-    entries = load_queue_entries()
-    if any(entry.get("session_id") == session_id for entry in entries):
-        return
-    entries.append(
-        {
-            "session_id": session_id,
-            "queued_at": datetime.now().isoformat(),
-            "reason": reason,
-        }
-    )
-    write_queue_entries(entries)
-
-def dequeue_session(session_id: str) -> None:
-    entries = load_queue_entries()
-    filtered = [entry for entry in entries if entry.get("session_id") != session_id]
-    if len(filtered) != len(entries):
-        write_queue_entries(filtered)
-
-def queued_session_ids() -> set:
-    return {entry.get("session_id") for entry in load_queue_entries()}
 
 
 def find_session_file(session_id: str) -> Optional[Path]:
@@ -182,7 +136,7 @@ def extract_session_data(file_path: Path) -> Dict[str, Any]:
 
 
 def generate_summary_prompt(session_data: Dict[str, Any], session_id: str) -> str:
-    """Create a prompt for the learning-extractor agent."""
+    """Create a prompt for nvidia/qwen/qwen3-next-80b-a3b-instruct to summarize the session."""
     tool_str = ", ".join(f"{k}: {v}" for k, v in session_data.get("tool_counts", {}).items())
     files_str = "\n".join(f"  - {f}" for f in session_data.get("files_touched", [])[:20])
     prompts_str = "\n".join(f"  - {p}" for p in session_data.get("user_prompts", [])[:5])
@@ -206,33 +160,18 @@ Return this exact JSON structure (no markdown, just raw JSON):
 }}"""
 
 
-def call_learning_extractor(prompt: str) -> Optional[Dict[str, Any]]:
-    """Use AgentManager to ask the learning-extractor agent for JSON output."""
-    try:
-        open_elf_dir = Path(__file__).resolve().parents[1]
-        if str(open_elf_dir) not in sys.path:
-            sys.path.insert(0, str(open_elf_dir))
+def call_nvidia/qwen/qwen3-next-80b-a3b-instruct(prompt: str) -> Optional[Dict[str, Any]]:
+    """
+    DEPRECATED: Disabled per Golden Rule #11 (No External APIs - Subscription Only).
 
-        from agents.agent_manager import get_agent_manager
+    Calling 'opencode' CLI with '--model nvidia/qwen/qwen3-next-80b-a3b-instruct' uses the Anthropic API directly,
+    violating the subscription-only policy. Use generate_fallback_summary() instead.
 
-        manager = get_agent_manager()
-        with ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(manager.ask_agent, "learning-extractor", prompt)
-            try:
-                if LEARNING_EXTRACTOR_TIMEOUT <= 0:
-                    result = future.result()
-                else:
-                    result = future.result(timeout=LEARNING_EXTRACTOR_TIMEOUT)
-            except FutureTimeoutError:
-                return None
-        if not result.get("success"):
-            return None
-        response = result.get("response", "")
-        if not response:
-            return None
-        return json.loads(response)
-    except Exception:
-        return None
+    If LLM-powered summarization is needed, it should be done within a Opencode
+    session using the Task tool with model="nvidia/qwen/qwen3-next-80b-a3b-instruct", not via subprocess.
+    """
+    # Always return None to trigger fallback summary
+    return None
 
 
 def generate_fallback_summary(session_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -270,18 +209,13 @@ def generate_fallback_summary(session_data: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def summarize_session(
-    session_id: str,
-    use_llm: bool = True,
-    queue_on_fail: bool = True,
-) -> bool:
+def summarize_session(session_id: str, use_llm: bool = True) -> bool:
     """
     Summarize a single session and store in database.
 
     Args:
         session_id: The session UUID
-        use_llm: Whether to use learning-extractor (True) or fallback summary (False)
-        queue_on_fail: Queue the session if learning-extractor is unavailable
+        use_llm: Whether to use nvidia/qwen/qwen3-next-80b-a3b-instruct (True) or fallback summary (False)
 
     Returns:
         True if successful, False otherwise
@@ -301,23 +235,15 @@ def summarize_session(
         return False
 
     # Generate summary
-    is_stale = 0
     if use_llm:
         prompt = generate_summary_prompt(session_data, session_id)
-        summary = call_learning_extractor(prompt)
+        summary = call_nvidia/qwen/qwen3-next-80b-a3b-instruct(prompt)
         if not summary:
-            if queue_on_fail:
-                queue_session(session_id, "learning-extractor unavailable")
-                print(
-                    "Learning-extractor failed, queued for later", file=sys.stderr
-                )
-                summary = generate_fallback_summary(session_data)
-                model = "fallback"
-                is_stale = 1
-            else:
-                return False
+            print(f"Haiku failed, using fallback summary", file=sys.stderr)
+            summary = generate_fallback_summary(session_data)
+            model = "fallback"
         else:
-            model = "learning-extractor"
+            model = "nvidia/qwen/qwen3-next-80b-a3b-instruct"
     else:
         summary = generate_fallback_summary(session_data)
         model = "fallback"
@@ -333,7 +259,7 @@ def summarize_session(
                 files_touched, tool_counts, message_count,
                 session_file_path, session_file_size, session_last_modified,
                 summarized_at, summarizer_model, is_stale
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, 0)
         """, (
             session_id,
             project,
@@ -346,12 +272,9 @@ def summarize_session(
             str(file_path),
             session_data.get("file_size", 0),
             datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
-            model,
-            is_stale,
+            model
         ))
         conn.commit()
-        if model == "learning-extractor":
-            dequeue_session(session_id)
         print(f"Summarized {session_id} ({model})")
         return True
 
@@ -372,9 +295,8 @@ def get_unsummarized_sessions(older_than_hours: float = 1.0) -> List[str]:
 
     # Get already summarized sessions
     cursor.execute("SELECT session_id FROM session_summaries WHERE is_stale = 0")
-    summarized = set(row[0] for row in cursor)
+    summarized = set(row[0] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
     conn.close()
-    summarized.update(queued_session_ids())
 
     # Scan projects for unsummarized sessions
     for project_dir in PROJECTS_DIR.iterdir():
@@ -399,20 +321,6 @@ def get_unsummarized_sessions(older_than_hours: float = 1.0) -> List[str]:
 
     return unsummarized
 
-def process_queue(limit: int = 10) -> int:
-    entries = load_queue_entries()
-    if not entries:
-        return 0
-    processed = 0
-    for entry in entries[:limit]:
-        session_id = entry.get("session_id")
-        if not session_id:
-            continue
-        if summarize_session(session_id, use_llm=True, queue_on_fail=False):
-            dequeue_session(session_id)
-        processed += 1
-    return processed
-
 
 def main():
     parser = argparse.ArgumentParser(description="Summarize Claude sessions with nvidia/qwen/qwen3-next-80b-a3b-instruct")
@@ -421,8 +329,6 @@ def main():
     parser.add_argument("--older-than", type=str, default="1h", help="Only sessions older than (e.g., 1h, 30m)")
     parser.add_argument("--limit", type=int, default=10, help="Max sessions to process in batch")
     parser.add_argument("--no-llm", action="store_true", help="Use fallback summary (no API call)")
-    parser.add_argument("--process-queue", action="store_true", help="Process queued summaries")
-    parser.add_argument("--queue-limit", type=int, default=10, help="Max queued sessions to process")
     parser.add_argument("--list-unsummarized", action="store_true", help="List unsummarized sessions")
 
     args = parser.parse_args()
@@ -435,11 +341,6 @@ def main():
         older_than_hours = float(older_than_str[:-1]) / 60
     else:
         older_than_hours = float(older_than_str)
-
-    if args.process_queue:
-        processed = process_queue(limit=args.queue_limit)
-        print(f"Processed {processed} queued sessions")
-        return 0
 
     if args.list_unsummarized:
         sessions = get_unsummarized_sessions(older_than_hours)

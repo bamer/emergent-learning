@@ -76,3 +76,47 @@ Large logs like `event_bridge.log` (830MB) will now be properly rotated.
 - Sentinel renamed to Sentinel across codebase
 - Dashboard model cards cleaned up (no duplicate headers)
 - Log rotation and cleanup implemented and tested
+
+---
+
+## 5. Database Crisis Resolution (2026-02-12)
+
+### Problem
+- Database grew from 179 MB to 643 MB in ~1.5 hours
+- Metrics table accumulated 95,808 event records
+- Root cause: Uncontrolled event logging (message.part.updated: 20,485 records)
+- Estimated time to disk full: 3-4 hours
+
+### Solution Implemented
+
+#### Event Filtering (Source Control)
+**File**: `core/event_bridge_v2.py`
+```python
+_FILTERED_EVENTS = {
+    "message.part.updated",  # High-frequency, low-value
+    "file.watcher.updated",  # Filesystem noise
+}
+```
+
+#### Automatic Cleanup (Retention Policy)
+**File**: `core/event_bridge_v2.py`
+```python
+def _cleanup_old_metrics(self):
+    """Delete event metrics older than 6 hours."""
+    DELETE FROM metrics WHERE metric_type = 'event'
+    AND timestamp < datetime('now', '-6 hours')
+```
+
+### Results
+- **Space Recovered**: 563 MB (643 MB → 80 MB)
+- **Records Deleted**: 95,808 event metrics
+- **Prevention**: Dual-layer retention policy active
+
+### Documentation
+- Created [DATABASE_OPERATIONS.md](DATABASE_OPERATIONS.md) - Operations guide
+- Recorded heuristics H-251, H-252 in ELF memory
+
+## Status
+✅ Database crisis resolved
+✅ Retention policy implemented
+✅ Documentation updated

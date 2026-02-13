@@ -1,0 +1,532 @@
+openapi: 3.1.0
+info:
+  title: ELF Monitoring API
+  description: |
+    API for the ELF Monitoring component.
+    
+    The Monitoring API provides real-time monitoring for the ELF architecture,
+    including EventBridge, LearningProcessor, and agent hierarchy status.
+  version: 1.0.0
+  contact:
+    name: ELF Support
+    email: support@elf-framework.com
+    url: https://elf-framework.com/support
+
+servers:
+  - url: http://localhost:9997
+    description: Monitoring API
+
+tags:
+  - name: Summary
+    description: System summary and quick status
+  - name: Statistics
+    description: Detailed system statistics
+  - name: Health
+    description: System health checks
+  - name: Architecture
+    description: Architecture information
+  - name: Learning
+    description: Learning system statistics
+  - name: Events
+    description: Event processing statistics
+
+paths:
+  /:
+    get:
+      tags:
+        - Summary
+      summary: Get monitoring summary
+      description: Retrieve a quick summary of system monitoring data
+      responses:
+        '200':
+          description: Monitoring summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringSummary'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /stats:
+    get:
+      tags:
+        - Statistics
+      summary: Get detailed statistics
+      description: Retrieve detailed system statistics
+      responses:
+        '200':
+          description: Detailed statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringStats'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Get system health
+      description: Retrieve overall system health status
+      responses:
+        '200':
+          description: System health
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemHealth'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/summary:
+    get:
+      tags:
+        - Summary
+      summary: Get API summary
+      description: Retrieve a summary of API endpoints and status
+      responses:
+        '200':
+          description: API summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APISummary'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/architecture:
+    get:
+      tags:
+        - Architecture
+      summary: Get architecture information
+      description: Retrieve information about the system architecture
+      responses:
+        '200':
+          description: Architecture information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArchitectureInfo'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/learning:
+    get:
+      tags:
+        - Learning
+      summary: Get learning statistics
+      description: Retrieve statistics about the learning system
+      responses:
+        '200':
+          description: Learning statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LearningStats'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/events:
+    get:
+      tags:
+        - Events
+      summary: Get event statistics
+      description: Retrieve statistics about system events
+      responses:
+        '200':
+          description: Event statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventStats'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    MonitoringSummary:
+      type: object
+      properties:
+        status:
+          type: string
+          description: System status indicator
+        uptime:
+          type: string
+          description: System uptime
+        events_pm:
+          type: string
+          description: Events per minute
+        heuristics:
+          type: integer
+          description: Number of heuristics
+        golden_rules:
+          type: integer
+          description: Number of golden rules
+        trails:
+          type: integer
+          description: Number of trails
+        pheromones:
+          type: integer
+          description: Number of pheromone trails
+        tools_detected:
+          type: integer
+          description: Number of tools detected
+        db_size:
+          type: string
+          description: Database size
+      required:
+        - status
+        - uptime
+        - events_pm
+        - heuristics
+        - golden_rules
+        - trails
+        - pheromones
+        - tools_detected
+        - db_size
+
+    MonitoringStats:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of statistics
+        uptime_seconds:
+          type: integer
+          description: System uptime in seconds
+        architecture:
+          type: object
+          description: Architecture information
+        database:
+          type: object
+          properties:
+            path:
+              type: string
+              description: Database path
+            size_kb:
+              type: integer
+              description: Database size in KB
+          required:
+            - path
+            - size_kb
+        events:
+          type: object
+          description: Event statistics
+        learning:
+          type: object
+          description: Learning statistics
+        tools:
+          type: object
+          description: Tool detection statistics
+        system:
+          type: object
+          properties:
+            status:
+              type: string
+              description: System status
+            components_healthy:
+              type: integer
+              description: Number of healthy components
+            total_components:
+              type: integer
+              description: Total number of components
+            last_activity:
+              type: string
+              format: date-time
+              description: Timestamp of last activity
+          required:
+            - status
+            - components_healthy
+            - total_components
+      required:
+        - timestamp
+        - uptime_seconds
+        - architecture
+        - database
+        - system
+
+    SystemHealth:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Overall system health
+        components:
+          type: object
+          properties:
+            event_bridge:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+              description: EventBridge health
+            learning_processor:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+              description: Learning processor health
+            sentinel:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+              description: Sentinel health
+            orchestrator:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+              description: Orchestrator health
+            ceo:
+              type: string
+              enum: [healthy, degraded, unhealthy]
+              description: CEO agent health
+          required:
+            - event_bridge
+            - learning_processor
+            - sentinel
+            - orchestrator
+            - ceo
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of health check
+      required:
+        - status
+        - components
+        - timestamp
+
+    APISummary:
+      type: object
+      properties:
+        status:
+          type: string
+          description: System status
+        uptime:
+          type: string
+          description: System uptime
+        events_pm:
+          type: string
+          description: Events per minute
+        heuristics:
+          type: integer
+          description: Number of heuristics
+        golden_rules:
+          type: integer
+          description: Number of golden rules
+        trails:
+          type: integer
+          description: Number of trails
+        pheromones:
+          type: integer
+          description: Number of pheromone trails
+        tools_detected:
+          type: integer
+          description: Number of tools detected
+        db_size:
+          type: string
+          description: Database size
+      required:
+        - status
+        - uptime
+        - events_pm
+        - heuristics
+        - golden_rules
+        - trails
+        - pheromones
+        - tools_detected
+        - db_size
+
+    ArchitectureInfo:
+      type: object
+      properties:
+        event_bridge:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Component name
+            port:
+              type: integer
+              description: Port number
+            status:
+              type: string
+              description: Component status
+            endpoint:
+              type: string
+              description: Status endpoint
+          required:
+            - name
+            - port
+            - status
+        learning_processor:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Component name
+            status:
+              type: string
+              description: Component status
+            functions:
+              type: array
+              items:
+                type: string
+              description: Available functions
+          required:
+            - name
+            - status
+            - functions
+        agents:
+          type: object
+          properties:
+            sentinel:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Agent name
+                status:
+                  type: string
+                  description: Agent status
+              required:
+                - name
+                - status
+            orchestrator:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Agent name
+                status:
+                  type: string
+                  description: Agent status
+              required:
+                - name
+                - status
+            ceo:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Agent name
+                status:
+                  type: string
+                  description: Agent status
+              required:
+                - name
+                - status
+          required:
+            - sentinel
+            - orchestrator
+            - ceo
+      required:
+        - event_bridge
+        - learning_processor
+        - agents
+
+    LearningStats:
+      type: object
+      properties:
+        heuristics:
+          type: integer
+          description: Number of heuristics
+        golden_rules:
+          type: integer
+          description: Number of golden rules
+        trails:
+          type: integer
+          description: Number of trails
+        pheromone_trails:
+          type: integer
+          description: Number of pheromone trails
+        learnings:
+          type: integer
+          description: Number of learnings
+      required:
+        - heuristics
+        - golden_rules
+        - trails
+        - pheromone_trails
+        - learnings
+
+    EventStats:
+      type: object
+      properties:
+        per_minute:
+          type: number
+          format: float
+          description: Events per minute
+        recent:
+          type: array
+          items:
+            type: object
+            properties:
+              event_type:
+                type: string
+                description: Event type
+              count:
+                type: integer
+                description: Number of events
+              last_seen:
+                type: string
+                format: date-time
+                description: When event was last seen
+            required:
+              - event_type
+              - count
+              - last_seen
+          description: Recent events
+      required:
+        - per_minute
+        - recent
+
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [error]
+          description: Error status
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: object
+              description: Additional error details
+          required:
+            - code
+            - message
+      required:
+        - status
+        - error

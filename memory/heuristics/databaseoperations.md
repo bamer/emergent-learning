@@ -15,3 +15,14 @@ The metrics table accumulated 564 MB (89,097 event records) in 1.5 days, driven 
 
 ---
 
+## H-252: Metrics retention policy implementation
+
+**Confidence**: 0.95
+**Source**: success
+**Project**: `/home/bamer/.opencode/emergent-learning`
+**Created**: 2026-02-12
+
+Implemented dual-layer retention policy: (1) Filter high-frequency low-value events at source (message.part.updated, file.watcher.updated), (2) Automatic cleanup of event metrics older than 6 hours. Recovered 563 MB and prevented future database explosion.
+
+---
+

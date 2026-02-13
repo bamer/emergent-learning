@@ -1,0 +1,153 @@
+openapi: 3.1.0
+info:
+  title: ELF EventBridge API
+  description: |
+    API for the ELF EventBridge component.
+    
+    The EventBridge is the central event processing system for the Emergent Learning Framework (ELF).
+    It connects the OpenCode agent execution environment with the ELF learning and monitoring systems.
+  version: 1.0.0
+  contact:
+    name: ELF Support
+    email: support@elf-framework.com
+    url: https://elf-framework.com/support
+
+servers:
+  - url: http://localhost:9998
+    description: EventBridge API
+
+tags:
+  - name: Status
+    description: System status and health
+  - name: Events
+    description: Event processing and monitoring
+  - name: Health
+    description: System health checks
+
+paths:
+  /status:
+    get:
+      tags:
+        - Status
+      summary: Get EventBridge status
+      description: Returns the current status of the EventBridge system
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventBridgeStatus'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/health:
+    get:
+      tags:
+        - Health
+      summary: Get system health
+      description: Returns overall system health status
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    EventBridgeStatus:
+      type: object
+      properties:
+        running:
+          type: boolean
+          description: Whether EventBridge is running
+        events_processed:
+          type: integer
+          description: Total number of events processed
+        opencode_server:
+          type: string
+          description: OpenCode server URL
+        started_at:
+          type: string
+          format: date-time
+          description: When EventBridge was started
+        uptime_seconds:
+          type: integer
+          description: Uptime in seconds
+        last_event_time:
+          type: string
+          format: date-time
+          description: Timestamp of last event
+        version:
+          type: string
+          description: EventBridge version
+        event_stats:
+          type: object
+          description: Event statistics
+      required:
+        - running
+        - events_processed
+        - opencode_server
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Overall system health
+        service:
+          type: string
+          description: Service name
+        running:
+          type: boolean
+          description: Whether service is running
+        events:
+          type: integer
+          description: Number of events processed
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of health check
+      required:
+        - status
+        - service
+        - running
+
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [error]
+          description: Error status
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: object
+              description: Additional error details
+          required:
+            - code
+            - message
+      required:
+        - status
+        - error

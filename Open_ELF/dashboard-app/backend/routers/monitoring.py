@@ -1,7 +1,6 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -429,7 +428,7 @@ async def get_event_bridge_status():
             running = (now - last_time).total_seconds() < 120
         except ValueError:
             running = False
-    
+
     # Also check if process is running via pgrep (handles idle EventBridge)
     if not running:
         try:
@@ -784,6 +783,23 @@ async def get_system_health():
 
         conn.close()
 
+        # If no current data or data is stale (>5 minutes), generate real-time data
+        if not current:
+            current = generate_realtime_health()
+            history = [current] + history[:49]
+        else:
+            # Check if current data is stale
+            try:
+                current_time = datetime.now()
+                record_time = datetime.fromisoformat(current["timestamp"])
+                age = (current_time - record_time).total_seconds()
+                if age > 300:  # 5 minutes old
+                    current = generate_realtime_health()
+                    history = [current] + history[:49]
+            except:
+                current = generate_realtime_health()
+                history = [current] + history[:49]
+
         return {
             "status": "ok",
             "current": current,
@@ -793,8 +809,86 @@ async def get_system_health():
 
     except Exception as e:
         logger.error(f"Error fetching system health: {e}")
-        # Return default response if table doesn't exist
-        return {"status": "ok", "current": None, "history": [], "metrics": None}
+        # Generate real-time data as fallback
+        current = generate_realtime_health()
+        return {
+            "status": "ok",
+            "current": current,
+            "history": [current],
+            "metrics": None,
+        }
+
+
+def generate_realtime_health():
+    """Generate real-time system health data from actual system state."""
+    import shutil
+    import subprocess
+
+    now = datetime.now().isoformat()
+
+    # Get database size
+    db_path = Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
+    db_size_mb = 0
+    if db_path.exists():
+        db_size_mb = db_path.stat().st_size / (1024 * 1024)
+
+    # Get disk space
+    disk_free_mb = shutil.disk_usage("/").free / (1024 * 1024)
+
+    # Get git status
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            cwd=str(Path.home() / ".opencode" / "emergent-learning"),
+        )
+        git_status = "Clean" if not result.stdout.strip() else "Modified"
+    except:
+        git_status = "Unknown"
+
+    # Check database integrity
+    db_integrity = "ok"
+    try:
+        conn = sqlite3.connect(str(db_path))
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA integrity_check")
+        result = cursor.fetchone()
+        if result and result[0] != "ok":
+            db_integrity = "failed"
+        conn.close()
+    except:
+        db_integrity = "error"
+
+    # Check for stale locks
+    stale_locks = 0
+    coordination_dir = Path.home() / ".opencode" / "emergent-learning" / ".coordination"
+    lock_files = ["EVENT_BRIDGE_PID", "sentinel-stop", "orchestrator-stop"]
+    for lock in lock_files:
+        lock_path = coordination_dir / lock
+        if lock_path.exists():
+            stale_locks += 1
+
+    # Determine overall status
+    status = "healthy"
+    if db_integrity != "ok":
+        status = "critical"
+    elif disk_free_mb < 5000:  # Less than 5 GB free
+        status = "warning"
+    elif stale_locks > 0:
+        status = "warning"
+
+    return {
+        "id": 0,
+        "timestamp": now,
+        "status": status,
+        "db_integrity": db_integrity,
+        "db_size_mb": round(db_size_mb, 2),
+        "disk_free_mb": round(disk_free_mb, 2),
+        "git_status": git_status,
+        "stale_locks": stale_locks,
+        "details": "Real-time data",
+    }
 
 
 def calculate_health_metrics(history: List[Dict]) -> Dict:

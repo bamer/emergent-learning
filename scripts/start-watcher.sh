@@ -12,7 +12,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ELF_DIR="$(dirname "$SCRIPT_DIR")"
 SENTINEL_DIR="$ELF_DIR/sentinel"
-LAUNCHER_SCRIPT="$SENTINEL_DIR/elf_sentinel.py"
+LAUNCHER_SCRIPT="$SENTINEL_DIR/launcher.py"
 
 # Detect Python command
 if command -v python3 &> /dev/null; then
@@ -52,7 +52,7 @@ if [ "$DAEMON" = true ]; then
     nohup $PYTHON_CMD "$LAUNCHER_SCRIPT" > /dev/null 2>&1 &
     PID=$!
     echo "Sentinel started with PID: $PID"
-    echo "Monitor logs at: $ELF_DIR/.coordination/sentinel-log.md"
+    echo "Monitor logs at: $ELF_DIR/.coordination/launcher.log"
     echo "Stop with: kill $PID"
 else
     echo "Starting sentinel (Ctrl+C to stop)..."

@@ -37,7 +37,6 @@ log() {
 # Source observability libraries
 if [ -f "$SCRIPT_DIR/lib/logging.sh" ]; then
     source "$SCRIPT_DIR/lib/logging.sh"
-    source "$SCRIPT_DIR/lib/error-handling.sh" 2>/dev/null || true
     source "$SCRIPT_DIR/lib/metrics.sh" 2>/dev/null || true
     source "$SCRIPT_DIR/lib/alerts.sh" 2>/dev/null || true
 
@@ -559,7 +558,7 @@ domain_escaped=$(escape_sql "$domain")
 
 # Insert into database with retry logic for concurrent access
 if ! LAST_ID=$(sqlite_with_retry "$DB_PATH" <<SQL
-INSERT INTO learnings (type, filepath, title, summary, tags, domain, severity, created_at, updated_at)
+INSERT INTO learnings (type, filepath, title, summary, tags, domain, severity)
 VALUES (
     'failure',
     '$relative_path',
@@ -567,9 +566,7 @@ VALUES (
     '$summary_escaped',
     '$tags_escaped',
     '$domain_escaped',
-    '$severity_num',
-    '$now',
-    '$now'
+    CAST($severity AS INTEGER)
 );
 SELECT last_insert_rowid();
 SQL

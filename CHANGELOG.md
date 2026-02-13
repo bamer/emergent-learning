@@ -7,15 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Golden Rule Added**: "Never add crontab entries for ELF project; all automation must use ELF's built‑in agent framework" (2026‑02‑13 CEO directive)
+- **Golden Rule Added**: "Linux OOM Killer is kernel-level and cannot be stopped by ELF scripts. When memory is exhausted, the kernel will kill the highest oom_score_adj process. Solution: Add RAM, not kill scripts." (2026‑02‑13 from OOM crisis)
+
+### Decision
+- **RAM Upgrade Decision**: Upgrade workstation from 32GB to 64GB+ to resolve OOM Killer crashes (2026‑02‑13). Root cause: memory exhaustion (14GB llama-server + 3GB opencode + system > 31GB RAM). Solution: Add physical RAM, not implement kill scripts.
+
+### Fixed
+- **Database Crisis Resolution**: Fixed exponential database growth (643 MB → 80 MB) caused by metrics table explosion
+  - Root cause: 95,808 event records (89% message.part.updated) accumulated in 1.5 days
+  - Recovery: Deleted all event metrics, recovered 563 MB space
+  - Prevention: Implemented dual-layer retention policy
+
 ### Changed
 - **Unified Logger Formatter**: Updated log format from `asctime - name - levelname - message` to `asctime | name | levelname | message` for better readability and parsing
 - **Event Bridge v2**: Removed noisy DEBUG log "Message part updated" that was spamming ~100 logs/second (completely useless noise)
 - **Open_ELF record-heuristic path**: Open_ELF CLI now writes to the global ELF memory database to keep heuristics and embeddings unified
+- **Event Bridge v2 Metrics Retention**: Implemented event filtering and automatic cleanup to prevent database explosion
+  - Added `_FILTERED_EVENTS` set to block high-frequency low-value events (message.part.updated, file.watcher.updated)
+  - Added `_cleanup_old_metrics()` method to delete event metrics older than 6 hours
+  - Cleanup runs every 5 minutes during session polling
 
 ### Added
 - **Mandatory Log Comments**: Added explicit "DO NOT REMOVE" enforcement comments in all logging configurations to ensure compliance with unified logger requirement
 - **Timestamp Validation**: Enhanced all formatters (main.py, run_migration.py, elf_logging.py) to guarantee timestamps on every log line
 - **Heuristic Embedding Backfill Script**: Added `scripts/backfill-heuristic-embeddings.py` to regenerate missing heuristic embeddings in the global memory database
+- **Database Operations Documentation**: Documented metrics retention policy and emergency database cleanup procedures
+- **Golden Rule Added**: Never kill llama.cpp server; it's the main inference server. Killing it crashes the whole system.
 
 ### Removed
 - **Event Bridge v2**: Removed useless debug log `logger.debug(f"📝 Message part updated: {part_type} | Session: {session_id[:8]}...")` from `_handle_message_part_updated_event()` method
@@ -791,3 +810,23 @@ The v0.5.3 entries below contain an error that has been corrected in v0.5.4:
 - **Major (X.0.0)**: Breaking changes to database schema or configuration
 - **Minor (0.X.0)**: New features, backward-compatible
 - **Patch (0.0.X)**: Bug fixes, documentation updates
+
+### Fixed
+- **System Health Panel Real-time Data**: Fixed dashboard monitoring panel to show real-time system health data instead of stale/empty data
+  - Added `generate_realtime_health()` function to calculate live metrics
+  - Endpoint now generates real-time data when `system_health` table is empty or stale
+  - Monitors: database size, disk space, git status, stale locks, database integrity
+  - Auto-refreshes data every 5 minutes with current system state
+
+### Added
+- **Unified Orchestrator Service Auto-Start**: Added `_ensure_services_started()` method to automatically start essential services on Orchestrator initialization
+  - Services auto-started: EventBridge, Learning Capture, Sentinel
+  - No external dependencies (no crontab, no systemd required)
+  - Services are started in proper order: EventBridge → Learning Capture → Sentinel
+  - If service already running, logs it and continues
+  - Provides self-healing: Orchestrator health checks can restart failed services
+
+### Changed
+- **Orchestrator Startup Flow**: Modified `_start_async()` to call `_ensure_services_started()` before starting event processor
+- **Service Dependencies**: EventBridge is now recognized as critical dependency that must be running
+

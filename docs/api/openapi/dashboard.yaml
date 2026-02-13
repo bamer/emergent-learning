@@ -1,0 +1,501 @@
+openapi: 3.1.0
+info:
+  title: ELF Dashboard API
+  description: |
+    API for the ELF Dashboard component.
+    
+    The Dashboard provides a web interface for monitoring and controlling the ELF system.
+    It acts as a proxy to the orchestrator and other components.
+  version: 1.0.0
+  contact:
+    name: ELF Support
+    email: support@elf-framework.com
+    url: https://elf-framework.com/support
+
+servers:
+  - url: http://localhost:8888
+    description: Dashboard API
+
+tags:
+  - name: Orchestrator
+    description: Orchestrator proxy endpoints
+  - name: Agents
+    description: Agent management
+  - name: Missions
+    description: Mission management
+  - name: Status
+    description: System status
+
+paths:
+  /api/v1/orchestrator/status:
+    get:
+      tags:
+        - Orchestrator
+      summary: Get orchestrator status
+      description: Retrieve status information from the orchestrator via dashboard
+      responses:
+        '200':
+          description: Orchestrator status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrchestratorStatus'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/orchestrator/health/{component}:
+    get:
+      tags:
+        - Orchestrator
+      summary: Get component health via dashboard
+      description: Retrieve health information for a component through the dashboard
+      parameters:
+        - name: component
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Component health
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentHealth'
+        '404':
+          description: Component not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/orchestrator/ask:
+    post:
+      tags:
+        - Orchestrator
+      summary: Ask orchestrator via dashboard
+      description: Submit a request to the orchestrator through the dashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrchestratorRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrchestratorResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/orchestrator/mission:
+    post:
+      tags:
+        - Orchestrator
+      summary: Submit mission via dashboard
+      description: Submit a mission through the dashboard to the orchestrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MissionSubmission'
+      responses:
+        '200':
+          description: Mission accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/orchestrator/agents:
+    get:
+      tags:
+        - Orchestrator
+      summary: List agents via dashboard
+      description: Get a list of available agents through the dashboard
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentList'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/orchestrator/agents/{agent_type}/run:
+    post:
+      tags:
+        - Orchestrator
+      summary: Run agent via dashboard
+      description: Execute an agent through the dashboard
+      parameters:
+        - name: agent_type
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MissionSubmission'
+      responses:
+        '200':
+          description: Agent execution started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/agents:
+    get:
+      tags:
+        - Agents
+      summary: List available agents
+      description: Get a list of available agents in the system
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentList'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/agents/{agent_type}/run:
+    post:
+      tags:
+        - Agents
+      summary: Run an agent
+      description: Execute a specific agent with a mission
+      parameters:
+        - name: agent_type
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MissionSubmission'
+      responses:
+        '200':
+          description: Agent execution started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    OrchestratorStatus:
+      type: object
+      properties:
+        orchestrator:
+          type: object
+          properties:
+            running:
+              type: boolean
+              description: Whether orchestrator is running
+            uptime_seconds:
+              type: number
+              description: Uptime in seconds
+          required:
+            - running
+        services:
+          type: object
+          properties:
+            event_bridge:
+              type: boolean
+              description: EventBridge health
+            sentinel:
+              type: boolean
+              description: Sentinel health
+            learning_capture:
+              type: object
+              properties:
+                active:
+                  type: boolean
+                  description: Whether learning capture is active
+                pid:
+                  type: string
+                  description: Process ID
+                health:
+                  type: boolean
+                  description: Learning capture health
+              required:
+                - active
+                - health
+          required:
+            - event_bridge
+            - sentinel
+            - learning_capture
+        alerts:
+          type: object
+          properties:
+            total_count:
+              type: integer
+              description: Total number of alerts
+            alerts_by_type:
+              type: object
+              description: Alerts categorized by type
+        last_health_check:
+          type: string
+          format: date-time
+          description: When last health check was performed
+      required:
+        - orchestrator
+        - services
+
+    ComponentHealth:
+      type: object
+      properties:
+        component:
+          type: string
+          description: Component name
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Component health status
+        details:
+          type: object
+          description: Additional health details
+        confidence:
+          type: number
+          format: float
+          description: Confidence level in health assessment
+        recommendation:
+          type: string
+          description: Recommended action
+      required:
+        - component
+        - status
+
+    OrchestratorRequest:
+      type: object
+      properties:
+        component:
+          type: string
+          description: Component making the request
+        request_type:
+          type: string
+          enum: [decision, coordination, health_check, mission_submission, sentinel_coordination, pattern_coordination, sentinel_analysis]
+          description: Type of request
+        data:
+          type: object
+          description: Request data
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+          description: Request priority (1=low, 10=critical)
+      required:
+        - component
+        - request_type
+        - data
+
+    OrchestratorResponse:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique request identifier
+        response_type:
+          type: string
+          description: Type of response
+        data:
+          type: object
+          description: Response data
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence level in response
+      required:
+        - request_id
+        - response_type
+        - data
+        - timestamp
+
+    MissionSubmission:
+      type: object
+      properties:
+        agent_type:
+          type: string
+          description: Type of agent to execute the mission
+        mission:
+          type: string
+          description: Mission description
+        task_id:
+          type: string
+          description: Optional task identifier
+        source:
+          type: string
+          default: dashboard
+          description: Source of the mission request
+      required:
+        - agent_type
+        - mission
+
+    MissionResponse:
+      type: object
+      properties:
+        mission_id:
+          type: string
+          description: Unique mission identifier
+        status:
+          type: string
+          enum: [submitted, running, completed, failed, cancelled]
+          description: Mission status
+        estimated_time:
+          type: integer
+          description: Estimated completion time in seconds
+        priority:
+          type: integer
+          description: Mission priority
+        confidence:
+          type: number
+          format: float
+          description: Confidence in mission handling
+      required:
+        - mission_id
+        - status
+
+    AgentList:
+      type: object
+      properties:
+        agents:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Agent name
+              type:
+                type: string
+                description: Agent type
+              status:
+                type: string
+                enum: [available, busy, offline]
+                description: Agent status
+              last_seen:
+                type: string
+                format: date-time
+                description: When agent was last seen
+            required:
+              - name
+              - type
+              - status
+        status:
+          type: string
+          enum: [success, error]
+          description: Request status
+      required:
+        - agents
+        - status
+
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [error]
+          description: Error status
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: object
+              description: Additional error details
+          required:
+            - code
+            - message
+      required:
+        - status
+        - error

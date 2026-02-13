@@ -1,7 +1,6 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -15,7 +14,7 @@ Steps (Updated for New Architecture):
 3. Load building context
 4. Display golden rules & heuristics
 5. Check and display architecture status (EventBridge, UnifiedOrchestrator, Sentinel, Learning Capture)
-6. Prompt dashboard (Claude tracks per-session)
+6. Prompt dashboard (system tracks per-session)
 7. Prompt model selection (Claude tracks per-session)
 8. Check CEO decisions
 9. Ready status
@@ -32,13 +31,57 @@ import subprocess
 
 # Unified ELF logging (required for all ELF modules)
 try:
-    from Open_ELF.utils.elf_logging import get_logger, log_debug
+    from Open_ELF.utils.elf_logging import get_logger, log_debug, log_orchestrator_event
 
     _LOGGER = get_logger("checkin")
 except ImportError:
     import logging
 
     _LOGGER = logging.getLogger("checkin")
+
+    # Provide a fallback log_debug that uses the standard logger's debug method
+    def log_debug(module: str, message: str):
+        _LOGGER.debug(f"{module}: {message}")
+
+    # Provide a fallback log_orchestrator_event stub for telemetry
+    def log_orchestrator_event(
+        event_type: str, event_category: str, summary: str, details: dict = None
+    ):
+        _LOGGER.info(f"[{event_type}] {summary}")
+        if details:
+            _LOGGER.debug(f"Details: {details}")
+        # Try to log to database if available
+        try:
+            import sqlite3
+            from pathlib import Path
+            from datetime import datetime, timezone
+            import json
+
+            db_path = (
+                Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
+            )
+            if db_path.exists():
+                conn = sqlite3.connect(str(db_path))
+                cursor = conn.cursor()
+                data_json = json.dumps(details) if details else None
+                timestamp = datetime.now(timezone.utc).isoformat()
+                cursor.execute(
+                    "INSERT INTO event_chronicle (event_type, source, source_id, summary, status, data, timestamp, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))",
+                    (
+                        event_type,
+                        "orchestrator",
+                        None,
+                        summary,
+                        "success",
+                        data_json,
+                        timestamp,
+                    ),
+                )
+                conn.commit()
+                conn.close()
+        except Exception:
+            pass  # Silently fail to avoid breaking checkin
+
 
 if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
@@ -360,6 +403,28 @@ class CheckinOrchestrator:
             print(
                 '[PROMPT_NEEDED] {"type": "dashboard", "question": "Start ELF Dashboard?", "default": "yes"}'
             )
+
+            # Log the question and default response in non-interactive mode
+            log_orchestrator_event(
+                event_type="question_received",
+                event_category="question",
+                summary="Start ELF Dashboard?",
+                details={
+                    "question": "Start ELF Dashboard?",
+                    "default": "yes",
+                    "mode": "non-interactive",
+                },
+            )
+            log_orchestrator_event(
+                event_type="response_sent",
+                event_category="response",
+                summary="Auto-selected: yes (non-interactive mode - Claude will handle)",
+                details={
+                    "response": "yes",
+                    "mode": "non-interactive",
+                    "agent": "Claude",
+                },
+            )
             return False  # Claude will handle this
 
         print("")
@@ -367,9 +432,32 @@ class CheckinOrchestrator:
         print("   The dashboard provides metrics, model routing, and system health.")
 
         try:
+            # Log the question before asking the user
+            log_orchestrator_event(
+                event_type="question_received",
+                event_category="question",
+                summary="Start ELF Dashboard?",
+                details={"question": "Start ELF Dashboard?", "default": "yes"},
+            )
+
             response = input("   Start Dashboard? [Y/n]: ").strip().lower()
+
+            # Log the response after user answers
+            log_orchestrator_event(
+                event_type="response_sent",
+                event_category="response",
+                summary=f"User responded: {response or '(default: yes)'}",
+                details={"response": response or "yes"},
+            )
+
             return response in ["y", "yes", ""]  # Default to yes
         except (EOFError, KeyboardInterrupt):
+            log_orchestrator_event(
+                event_type="response_sent",
+                event_category="response",
+                summary="User cancelled dashboard prompt",
+                details={"response": "cancelled"},
+            )
             return False
 
     def prompt_model_selection(self) -> str:
@@ -378,6 +466,29 @@ class CheckinOrchestrator:
             # Non-interactive: Output JSON hint for Claude to use AskUserQuestion
             print(
                 '[PROMPT_NEEDED] {"type": "model", "question": "Select AI model", "options": ["opencode", "gemini", "codex", "skip"]}'
+            )
+
+            # Log the question and default response in non-interactive mode
+            log_orchestrator_event(
+                event_type="question_received",
+                event_category="question",
+                summary="Select Your Active Model",
+                details={
+                    "question": "Select Your Active Model",
+                    "default": "skip",
+                    "mode": "non-interactive",
+                    "agent": "Claude",
+                },
+            )
+            log_orchestrator_event(
+                event_type="response_sent",
+                event_category="response",
+                summary=f"Auto-selected: {self.selected_model} (non-interactive mode - Claude will handle)",
+                details={
+                    "response": self.selected_model,
+                    "mode": "non-interactive",
+                    "agent": "Claude",
+                },
             )
             return self.selected_model  # Claude will handle this
 
@@ -390,6 +501,14 @@ class CheckinOrchestrator:
         print("     (s)kip      - Use current model")
 
         try:
+            # Log the question before asking the user
+            log_orchestrator_event(
+                event_type="question_received",
+                event_category="question",
+                summary="Select Your Active Model",
+                details={"question": "Select Your Active Model", "default": "skip"},
+            )
+
             response = input("   Select [c/g/o/s]: ").strip().lower()
 
             model_map = {
@@ -407,12 +526,29 @@ class CheckinOrchestrator:
             os.environ["ELF_MODEL"] = selected
             self.selected_model = selected
 
+            # Log the response after user selects
+            log_orchestrator_event(
+                event_type="response_sent",
+                event_category="response",
+                summary=f"User selected: {selected}",
+                details={"response": response, "selected_model": selected},
+            )
+
             if selected != "opencode":
                 print(f"   [OK] Using {selected}")
 
             return selected
 
-        except (EOFError, KeyboardInterrupt, IndexError):
+        except (EOFError, KeyboardInterrupt, IndexError) as e:
+            log_orchestrator_event(
+                event_type="response_sent",
+                event_category="response",
+                summary="User cancelled or invalid model selection",
+                details={
+                    "response": f"exception_{type(e).__name__}",
+                    "selected_model": self.selected_model,
+                },
+            )
             return self.selected_model
 
     def start_dashboard(self):
@@ -440,14 +576,64 @@ class CheckinOrchestrator:
         if not self.interactive:
             # En mode non-interactif : lancer automatiquement
             print("\n🚀 Launch OpenCode services now? (y/n) [default: n]: y")
+
+            # Log question and automatic response in non-interactive mode
+            log_orchestrator_event(
+                event_type="question_received",
+                event_category="question",
+                summary="Launch OpenCode services now?",
+                details={
+                    "question": "Launch OpenCode services now?",
+                    "default": "no",
+                    "mode": "non-interactive",
+                },
+            )
+            log_orchestrator_event(
+                event_type="response_sent",
+                event_category="response",
+                summary="Auto-selected: yes (non-interactive mode)",
+                details={"response": "yes", "mode": "non-interactive"},
+            )
             return True
 
-        response = (
-            input("\n🚀 Launch OpenCode services now? (y/n) [default: n]: ")
-            .lower()
-            .strip()
-        )
-        return response in ["y", "yes"]
+        # Interactive mode
+        try:
+            # Log the question before asking the user
+            log_orchestrator_event(
+                event_type="question_received",
+                event_category="question",
+                summary="Launch OpenCode services now?",
+                details={
+                    "question": "Launch OpenCode services now?",
+                    "default": "no",
+                    "mode": "interactive",
+                },
+            )
+
+            response = (
+                input("\n🚀 Launch OpenCode services now? (y/n) [default: n]: ")
+                .lower()
+                .strip()
+            )
+
+            # Log the response after user answers
+            log_orchestrator_event(
+                event_type="response_sent",
+                event_category="response",
+                summary=f"User responded: {response or 'no'}",
+                details={"response": response or "no"},
+            )
+
+            return response in ["y", "yes"]
+
+        except (EOFError, KeyboardInterrupt):
+            log_orchestrator_event(
+                event_type="response_sent",
+                event_category="response",
+                summary="User cancelled service launch prompt",
+                details={"response": "cancelled"},
+            )
+            return False
 
     def launch_opencode_services(self):
         """Services launch delegated to ./start-elf-system.sh - skipped here."""

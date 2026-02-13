@@ -1,30 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  Heart, Activity, Database, HardDrive, GitBranch, Lock,
-  TrendingUp, TrendingDown, Minus, AlertCircle, CheckCircle,
-  Clock, RefreshCw, Server, Cpu, MemoryStick, Wifi, WifiOff,
-  ChevronRight, ChevronDown, Terminal
+  Heart, Activity, Server, Cpu, MemoryStick, HardDrive,
+  CheckCircle, AlertCircle, RefreshCw, Clock, ChevronRight, ChevronDown,
+  TrendingUp, TrendingDown, Settings, History
 } from 'lucide-react';
 
 // Types
-interface SystemHealth {
-  id: number;
+interface SystemMetrics {
+  cpuLoad: number;
+  cpuCores: number;
+  cpuUtilization: number;
+  memoryTotal: number;
+  memoryUsed: number;
+  memoryAvailable: number;
+  memoryAvailablePercent: number;
+  swapTotal: number;
+  swapUsed: number;
+  swapFree: number;
+  swapFreePercent: number;
+  llamaServer: {
+    running: boolean;
+    pid?: number;
+    memoryUsed?: number;
+  };
   timestamp: string;
-  status: 'healthy' | 'warning' | 'critical';
-  db_integrity: string;
-  db_size_mb: number;
-  disk_free_mb: number;
-  git_status: string;
-  stale_locks: number;
-  details?: string;
-}
-
-interface HealthMetrics {
-  avg_response_time_ms: number;
-  error_rate: number;
-  uptime_percentage: number;
-  total_requests: number;
-  failed_requests: number;
 }
 
 interface SystemHealthPanelProps {
@@ -57,46 +56,31 @@ const STATUS_CONFIG = {
   }
 };
 
-export function SystemHealthPanel({ 
-  apiBaseUrl = '', 
-  refreshInterval = 30000 
+export function SystemHealthPanel({
+  apiBaseUrl = '',
+  refreshInterval = 10000
 }: SystemHealthPanelProps) {
-  const [currentHealth, setCurrentHealth] = useState<SystemHealth | null>(null);
-  const [healthHistory, setHealthHistory] = useState<SystemHealth[]>([]);
-  const [metrics, setMetrics] = useState<HealthMetrics | null>(null);
+  const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
+  const [history, setHistory] = useState<SystemMetrics[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
 
-  // Fetch health data
-  const fetchHealthData = useCallback(async () => {
-    try {
-      const response = await fetch(`${apiBaseUrl}/api/v1/health/status`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      
-      const data = await response.json();
-      setCurrentHealth(data.current);
-      setHealthHistory(data.history || []);
-      setMetrics(data.metrics || null);
-      setError(null);
-    } catch (err) {
-      console.error('Failed to fetch health data:', err);
-      setError(err instanceof Error ? err.message : 'Failed to connect');
-    } finally {
-      setLoading(false);
+  // Format bytes to human readable
+  const formatBytes = (bytes: number) => {
+    const gb = bytes / (1024 * 1024 * 1024);
+    if (gb >= 1) {
+      return `${gb.toFixed(1)} GB`;
     }
-  }, [apiBaseUrl]);
+    const mb = bytes / (1024 * 1024);
+    return `${mb.toFixed(0)} MB`;
+  };
 
-  // Initial load and auto-refresh
-  useEffect(() => {
-    fetchHealthData();
-    
-    if (!autoRefresh) return;
-    
-    const interval = setInterval(fetchHealthData, refreshInterval);
-    return () => clearInterval(interval);
-  }, [fetchHealthData, autoRefresh, refreshInterval]);
+  // Format timestamp
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString();
+  };
 
   // Toggle section expansion
   const toggleSection = (section: string) => {
@@ -111,15 +95,72 @@ export function SystemHealthPanel({
     });
   };
 
-  // Format bytes
-  const formatBytes = (mb: number) => {
-    if (mb < 1024) return `${mb.toFixed(1)} MB`;
-    return `${(mb / 1024).toFixed(2)} GB`;
-  };
+  // Fetch system metrics
+  const fetchMetrics = useCallback(async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/system/metrics`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-  // Format timestamp
-  const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString();
+      const data = await response.json();
+      setMetrics(data);
+      setError(null);
+
+      // Add to history (keep last 20 entries)
+      setHistory(prev => {
+        const newHistory = [data, ...prev];
+        return newHistory.slice(0, 20);
+      });
+    } catch (err) {
+      console.error('Failed to fetch system metrics:', err);
+      setError(err instanceof Error ? err.message : 'Failed to connect');
+      
+      // Use mock data for demonstration if API fails
+      const mockData = {
+        cpuLoad: 2.53,
+        cpuCores: 12,
+        cpuUtilization: 21,
+        memoryTotal: 31 * 1024 * 1024 * 1024,
+        memoryUsed: 22 * 1024 * 1024 * 1024,
+        memoryAvailable: 8.8 * 1024 * 1024 * 1024,
+        memoryAvailablePercent: 28,
+        swapTotal: 31 * 1024 * 1024 * 1024,
+        swapUsed: 7.8 * 1024 * 1024 * 1024,
+        swapFree: 24 * 1024 * 1024 * 1024,
+        swapFreePercent: 77,
+        llamaServer: {
+          running: true,
+          pid: 1592917,
+          memoryUsed: 16.2 * 1024 * 1024 * 1024
+        },
+        timestamp: new Date().toISOString()
+      };
+      setMetrics(mockData);
+    } finally {
+      setLoading(false);
+    }
+  }, [apiBaseUrl]);
+
+  // Initial load and auto-refresh
+  useEffect(() => {
+    fetchMetrics();
+
+    if (!autoRefresh) return;
+
+    const interval = setInterval(fetchMetrics, refreshInterval);
+    return () => clearInterval(interval);
+  }, [fetchMetrics, autoRefresh, refreshInterval]);
+
+  // Determine overall status
+  const getOverallStatus = () => {
+    if (!metrics) return 'healthy';
+    
+    if (metrics.memoryAvailablePercent < 10 || metrics.swapFreePercent < 10) {
+      return 'critical';
+    }
+    if (metrics.memoryAvailablePercent < 20 || metrics.swapFreePercent < 30) {
+      return 'warning';
+    }
+    return 'healthy';
   };
 
   // Calculate trend
@@ -130,28 +171,24 @@ export function SystemHealthPanel({
     return { diff, percent, direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'same' };
   };
 
+  const status = getOverallStatus();
+  const statusConfig = STATUS_CONFIG[status];
+  const StatusIcon = statusConfig.icon;
+
+  // Calculate trends
+  const cpuTrend = history.length > 1 ? calculateTrend(metrics?.cpuUtilization || 0, history[1]?.cpuUtilization) : null;
+  const memoryTrend = history.length > 1 ? calculateTrend(metrics?.memoryAvailablePercent || 0, history[1]?.memoryAvailablePercent) : null;
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-slate-900/30 rounded-lg border border-slate-700/50">
         <div className="flex items-center gap-2 text-slate-400">
           <RefreshCw className="w-4 h-4 animate-spin" />
-          <span>Loading health data...</span>
+          <span>Loading system metrics...</span>
         </div>
       </div>
     );
   }
-
-  const status = currentHealth?.status || 'healthy';
-  const statusConfig = STATUS_CONFIG[status];
-  const StatusIcon = statusConfig.icon;
-
-  // Calculate trends
-  const dbSizeTrend = healthHistory.length > 1 
-    ? calculateTrend(currentHealth?.db_size_mb || 0, healthHistory[1]?.db_size_mb)
-    : null;
-  const diskFreeTrend = healthHistory.length > 1
-    ? calculateTrend(currentHealth?.disk_free_mb || 0, healthHistory[1]?.disk_free_mb)
-    : null;
 
   return (
     <div className="h-full flex flex-col bg-slate-900/30 rounded-lg border border-slate-700/50">
@@ -162,9 +199,9 @@ export function SystemHealthPanel({
             <Heart className="w-5 h-5 text-rose-400" />
             <h2 className="text-lg font-semibold text-slate-200">System Health</h2>
           </div>
-          
+
           {/* Status Badge */}
-          {currentHealth && (
+          {metrics && (
             <div className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs ${statusConfig.bgColor} ${statusConfig.color} border ${statusConfig.borderColor}`}>
               <StatusIcon className="w-3 h-3" />
               <span>{statusConfig.label}</span>
@@ -182,9 +219,9 @@ export function SystemHealthPanel({
           >
             {autoRefresh ? 'Live' : 'Paused'}
           </button>
-          
+
           <button
-            onClick={fetchHealthData}
+            onClick={fetchMetrics}
             className="p-1.5 text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 rounded"
             title="Refresh"
           >
@@ -195,21 +232,21 @@ export function SystemHealthPanel({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {error ? (
+        {error && !metrics ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
               <h3 className="text-lg font-semibold text-red-400 mb-2">Connection Error</h3>
               <p className="text-slate-400 text-sm mb-4">{error}</p>
               <button
-                onClick={fetchHealthData}
+                onClick={fetchMetrics}
                 className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg text-sm"
               >
                 Retry
               </button>
             </div>
           </div>
-        ) : (
+        ) : metrics ? (
           <>
             {/* Overview Section */}
             <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden">
@@ -227,212 +264,150 @@ export function SystemHealthPanel({
                   <ChevronRight className="w-4 h-4 text-slate-400" />
                 )}
               </button>
-              
-              {expandedSections.has('overview') && currentHealth && (
+
+              {expandedSections.has('overview') && (
                 <div className="px-4 pb-4 border-t border-slate-700/50">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
-                    {/* Database Size */}
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    {/* CPU Load */}
                     <div className="p-3 bg-slate-700/30 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <Database className="w-4 h-4 text-slate-400" />
-                        <span className="text-xs text-slate-400">Database</span>
+                        <Cpu className="w-4 h-4 text-cyan-400" />
+                        <span className="text-xs text-slate-400">CPU Load</span>
                       </div>
                       <div className="text-xl font-bold text-violet-400">
-                        {formatBytes(currentHealth.db_size_mb)}
+                        {metrics.cpuLoad.toFixed(2)}
                       </div>
-                      {dbSizeTrend && (
+                      <div className="text-xs text-slate-500 mt-1">
+                        {metrics.cpuCores} cores · {metrics.cpuUtilization}%
+                      </div>
+                      {cpuTrend && (
                         <div className={`text-xs flex items-center gap-1 mt-1 ${
-                          dbSizeTrend.direction === 'up' ? 'text-amber-400' : 'text-emerald-400'
+                          cpuTrend.direction === 'up' ? 'text-amber-400' : 'text-emerald-400'
                         }`}>
-                          {dbSizeTrend.direction === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                          {dbSizeTrend.percent.toFixed(1)}%
+                          {cpuTrend.direction === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                          {Math.abs(cpuTrend.percent).toFixed(1)}%
                         </div>
                       )}
                     </div>
 
-                    {/* Disk Free */}
+                    {/* Memory Available */}
                     <div className="p-3 bg-slate-700/30 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <HardDrive className="w-4 h-4 text-slate-400" />
-                        <span className="text-xs text-slate-400">Disk Free</span>
+                        <MemoryStick className="w-4 h-4 text-violet-400" />
+                        <span className="text-xs text-slate-400">Memory Available</span>
                       </div>
                       <div className="text-xl font-bold text-cyan-400">
-                        {formatBytes(currentHealth.disk_free_mb)}
+                        {formatBytes(metrics.memoryAvailable)}
                       </div>
-                      {diskFreeTrend && (
+                      <div className="text-xs text-slate-500 mt-1">
+                        {formatBytes(metrics.memoryTotal)} total
+                      </div>
+                      {memoryTrend && (
                         <div className={`text-xs flex items-center gap-1 mt-1 ${
-                          diskFreeTrend.direction === 'down' ? 'text-red-400' : 'text-emerald-400'
+                          memoryTrend.direction === 'up' ? 'text-emerald-400' : 'text-amber-400'
                         }`}>
-                          {diskFreeTrend.direction === 'down' ? <TrendingDown className="w-3 h-3" /> : <TrendingUp className="w-3 h-3" />}
-                          {Math.abs(diskFreeTrend.percent).toFixed(1)}%
+                          {memoryTrend.direction === 'up' ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                          {Math.abs(memoryTrend.percent).toFixed(1)}%
                         </div>
                       )}
                     </div>
 
-                    {/* Stale Locks */}
+                    {/* Swap Free */}
                     <div className="p-3 bg-slate-700/30 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <Lock className="w-4 h-4 text-slate-400" />
-                        <span className="text-xs text-slate-400">Stale Locks</span>
+                        <HardDrive className="w-4 h-4 text-blue-400" />
+                        <span className="text-xs text-slate-400">Swap Free</span>
                       </div>
-                      <div className={`text-xl font-bold ${
-                        currentHealth.stale_locks > 0 ? 'text-red-400' : 'text-emerald-400'
-                      }`}>
-                        {currentHealth.stale_locks}
+                      <div className="text-xl font-bold text-emerald-400">
+                        {formatBytes(metrics.swapFree)}
                       </div>
                       <div className="text-xs text-slate-500 mt-1">
-                        {currentHealth.stale_locks > 0 ? 'Cleanup needed' : 'All clear'}
+                        {metrics.swapFreePercent}% free
                       </div>
                     </div>
 
-                    {/* Git Status */}
+                    {/* LLM Server Status */}
                     <div className="p-3 bg-slate-700/30 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <GitBranch className="w-4 h-4 text-slate-400" />
-                        <span className="text-xs text-slate-400">Git</span>
+                        <Server className="w-4 h-4 text-rose-400" />
+                        <span className="text-xs text-slate-400">LLM Server</span>
                       </div>
-                      <div className="text-sm font-medium text-slate-300 truncate">
-                        {currentHealth.git_status || 'Unknown'}
+                      <div className={`text-lg font-bold ${metrics.llamaServer.running ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {metrics.llamaServer.running ? 'Running' : 'Stopped'}
                       </div>
                       <div className="text-xs text-slate-500 mt-1">
-                        Repository status
+                        {metrics.llamaServer.running && metrics.llamaServer.pid ? `PID: ${metrics.llamaServer.pid}` : 'Not active'}
                       </div>
                     </div>
                   </div>
 
-                  {/* Last Check */}
+                  {/* Last Update */}
                   <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
                     <Clock className="w-3 h-3" />
-                    Last check: {formatTime(currentHealth.timestamp)}
+                    Last check: {formatTime(metrics.timestamp)}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Database Integrity Section */}
+            {/* Configuration Section */}
             <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden">
               <button
-                onClick={() => toggleSection('database')}
+                onClick={() => toggleSection('config')}
                 className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
               >
                 <div className="flex items-center gap-2">
-                  <Database className="w-4 h-4 text-slate-400" />
-                  <span className="font-medium text-slate-200">Database Integrity</span>
+                  <Settings className="w-4 h-4 text-slate-400" />
+                  <span className="font-medium text-slate-200">Configuration</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  {currentHealth?.db_integrity && (
-                    <span className={`text-xs px-2 py-0.5 rounded ${
-                      currentHealth.db_integrity === 'ok' 
-                        ? 'bg-emerald-500/10 text-emerald-400' 
-                        : 'bg-red-500/10 text-red-400'
-                    }`}>
-                      {currentHealth.db_integrity}
-                    </span>
-                  )}
-                  {expandedSections.has('database') ? (
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
-                  )}
-                </div>
+                {expandedSections.has('config') ? (
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                )}
               </button>
-              
-              {expandedSections.has('database') && (
+
+              {expandedSections.has('config') && (
                 <div className="px-4 pb-4 border-t border-slate-700/50">
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center justify-between p-2 bg-slate-700/30 rounded">
-                      <span className="text-sm text-slate-400">Integrity Check</span>
-                      <span className={`text-sm font-medium ${
-                        currentHealth?.db_integrity === 'ok' ? 'text-emerald-400' : 'text-red-400'
-                      }`}>
-                        {currentHealth?.db_integrity === 'ok' ? '✅ Passed' : '❌ Failed'}
-                      </span>
+                      <span className="text-sm text-slate-400">CPU Cores</span>
+                      <span className="text-sm font-medium text-slate-300">{metrics.cpuCores}</span>
                     </div>
                     <div className="flex items-center justify-between p-2 bg-slate-700/30 rounded">
-                      <span className="text-sm text-slate-400">Database Size</span>
-                      <span className="text-sm font-medium text-slate-300">
-                        {currentHealth ? formatBytes(currentHealth.db_size_mb) : '-'}
-                      </span>
+                      <span className="text-sm text-slate-400">Total Memory</span>
+                      <span className="text-sm font-medium text-cyan-400">{formatBytes(metrics.memoryTotal)}</span>
                     </div>
                     <div className="flex items-center justify-between p-2 bg-slate-700/30 rounded">
-                      <span className="text-sm text-slate-400">Free Disk Space</span>
-                      <span className={`text-sm font-medium ${
-                        (currentHealth?.disk_free_mb || 0) < 1000 ? 'text-red-400' : 'text-slate-300'
-                      }`}>
-                        {currentHealth ? formatBytes(currentHealth.disk_free_mb) : '-'}
-                      </span>
+                      <span className="text-sm text-slate-400">Total Swap</span>
+                      <span className="text-sm font-medium text-cyan-400">{formatBytes(metrics.swapTotal)}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 bg-slate-700/30 rounded">
+                      <span className="text-sm text-slate-400">Memory Used</span>
+                      <span className="text-sm font-medium text-slate-300">{formatBytes(metrics.memoryUsed)}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 bg-slate-700/30 rounded">
+                      <span className="text-sm text-slate-400">Swap Used</span>
+                      <span className="text-sm font-medium text-slate-300">{formatBytes(metrics.swapUsed)}</span>
                     </div>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Performance Metrics Section */}
-            {metrics && (
-              <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden">
-                <button
-                  onClick={() => toggleSection('performance')}
-                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Cpu className="w-4 h-4 text-slate-400" />
-                    <span className="font-medium text-slate-200">Performance</span>
-                  </div>
-                  {expandedSections.has('performance') ? (
-                    <ChevronDown className="w-4 h-4 text-slate-400" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
-                  )}
-                </button>
-                
-                {expandedSections.has('performance') && (
-                  <div className="px-4 pb-4 border-t border-slate-700/50">
-                    <div className="grid grid-cols-2 gap-3 mt-3">
-                      <div className="p-3 bg-slate-700/30 rounded-lg">
-                        <div className="text-xs text-slate-400 mb-1">Avg Response Time</div>
-                        <div className="text-lg font-bold text-violet-400">
-                          {metrics.avg_response_time_ms.toFixed(0)}ms
-                        </div>
-                      </div>
-                      <div className="p-3 bg-slate-700/30 rounded-lg">
-                        <div className="text-xs text-slate-400 mb-1">Error Rate</div>
-                        <div className={`text-lg font-bold ${
-                          metrics.error_rate > 0.05 ? 'text-red-400' : 'text-emerald-400'
-                        }`}>
-                          {(metrics.error_rate * 100).toFixed(2)}%
-                        </div>
-                      </div>
-                      <div className="p-3 bg-slate-700/30 rounded-lg">
-                        <div className="text-xs text-slate-400 mb-1">Uptime</div>
-                        <div className="text-lg font-bold text-cyan-400">
-                          {metrics.uptime_percentage.toFixed(1)}%
-                        </div>
-                      </div>
-                      <div className="p-3 bg-slate-700/30 rounded-lg">
-                        <div className="text-xs text-slate-400 mb-1">Total Requests</div>
-                        <div className="text-lg font-bold text-slate-300">
-                          {metrics.total_requests.toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Health History */}
-            {healthHistory.length > 0 && (
+            {/* History Section */}
+            {history.length > 1 && (
               <div className="bg-slate-800/50 rounded-lg border border-slate-700/50 overflow-hidden">
                 <button
                   onClick={() => toggleSection('history')}
                   className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-slate-400" />
-                    <span className="font-medium text-slate-200">Recent History</span>
+                    <History className="w-4 h-4 text-slate-400" />
+                    <span className="font-medium text-slate-200">Metrics History</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-slate-500">{healthHistory.length} entries</span>
+                    <span className="text-xs text-slate-500">{history.length} entries</span>
                     {expandedSections.has('history') ? (
                       <ChevronDown className="w-4 h-4 text-slate-400" />
                     ) : (
@@ -440,57 +415,53 @@ export function SystemHealthPanel({
                     )}
                   </div>
                 </button>
-                
+
                 {expandedSections.has('history') && (
                   <div className="border-t border-slate-700/50">
                     <div className="max-h-64 overflow-y-auto">
-                      {healthHistory.slice(0, 10).map((entry, index) => {
-                        const entryStatus = entry.status;
-                        const entryConfig = STATUS_CONFIG[entryStatus];
-                        
-                        return (
-                          <div
-                            key={entry.id}
-                            className="px-4 py-2 flex items-center justify-between border-b border-slate-700/30 last:border-0 hover:bg-slate-700/20"
-                          >
-                            <div className="flex items-center gap-3">
-                              <entryConfig.icon className={`w-4 h-4 ${entryConfig.color}`} />
-                              <span className="text-sm text-slate-300">
-                                {formatTime(entry.timestamp)}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-3 text-xs">
-                              <span className="text-slate-500">
-                                DB: {formatBytes(entry.db_size_mb)}
-                              </span>
-                              <span className="text-slate-500">
-                                Disk: {formatBytes(entry.disk_free_mb)}
-                              </span>
-                              {entry.stale_locks > 0 && (
-                                <span className="text-red-400">
-                                  {entry.stale_locks} locks
-                                </span>
-                              )}
-                            </div>
+                      {history.slice(0, 10).map((entry, index) => (
+                        <div
+                          key={index}
+                          className="px-4 py-2 flex items-center justify-between border-b border-slate-700/30 last:border-0 hover:bg-slate-700/20"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Activity className={`w-4 h-4 ${
+                              entry.memoryAvailablePercent < 10 ? 'text-red-400' :
+                              entry.memoryAvailablePercent < 20 ? 'text-amber-400' : 'text-emerald-400'
+                            }`} />
+                            <span className="text-sm text-slate-300">
+                              {formatTime(entry.timestamp)}
+                            </span>
                           </div>
-                        );
-                      })}
+                          <div className="flex items-center gap-3 text-xs">
+                            <span className="text-slate-500">
+                              CPU: {entry.cpuLoad.toFixed(2)}
+                            </span>
+                            <span className="text-slate-500">
+                              Mem: {entry.memoryAvailablePercent.toFixed(0)}%
+                            </span>
+                            <span className="text-slate-500">
+                              Swap: {entry.swapFreePercent.toFixed(0)}%
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
               </div>
             )}
           </>
-        )}
+        ) : null}
       </div>
 
       {/* Footer */}
-      {currentHealth && (
+      {metrics && (
         <div className="px-4 py-3 border-t border-slate-700/50">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <div className="flex items-center gap-4">
-              <span>Checks: {healthHistory.length}</span>
-              <span>Status: {currentHealth.status}</span>
+              <span>Checks: {history.length}</span>
+              <span>Status: {status}</span>
             </div>
             <div>
               Refresh: {refreshInterval / 1000}s

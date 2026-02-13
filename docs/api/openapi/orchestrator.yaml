@@ -1,0 +1,441 @@
+openapi: 3.1.0
+info:
+  title: ELF Unified Orchestrator API
+  description: |
+    API for the ELF Unified Orchestrator component.
+    
+    The Unified Orchestrator manages system services and processes events.
+    It connects to the EventBridge and provides coordination capabilities.
+  version: 1.0.0
+  contact:
+    name: ELF Support
+    email: support@elf-framework.com
+    url: https://elf-framework.com/support
+
+servers:
+  - url: http://localhost:9998
+    description: Unified Orchestrator API
+
+tags:
+  - name: Orchestration
+    description: Service management and coordination
+  - name: Missions
+    description: Mission management and execution
+  - name: Health
+    description: System health checks
+  - name: Agents
+    description: Agent management and coordination
+
+paths:
+  /api/v1/ask:
+    post:
+      tags:
+        - Orchestration
+      summary: Ask orchestrator for a decision
+      description: Submit a request to the orchestrator for coordination or decision-making
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrchestratorRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrchestratorResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/mission:
+    post:
+      tags:
+        - Missions
+      summary: Submit a mission
+      description: Submit a new mission for execution by the orchestrator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MissionSubmission'
+      responses:
+        '200':
+          description: Mission accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/mission/{mission_id}:
+    get:
+      tags:
+        - Missions
+      summary: Get mission details
+      description: Retrieve details about a specific mission
+      parameters:
+        - name: mission_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Mission details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionDetails'
+        '404':
+          description: Mission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - Missions
+      summary: Update mission status
+      description: Update the status of an existing mission
+      parameters:
+        - name: mission_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MissionStatusUpdate'
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Mission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/missions:
+    get:
+      tags:
+        - Missions
+      summary: List active missions
+      description: Retrieve a list of currently active missions
+      responses:
+        '200':
+          description: List of missions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MissionList'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/health/{component}:
+    get:
+      tags:
+        - Health
+      summary: Get component health
+      description: Returns health status for a specific component
+      parameters:
+        - name: component
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [event_bridge, orchestrator, dashboard, learning_processor]
+      responses:
+        '200':
+          description: Component health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComponentHealth'
+        '404':
+          description: Component not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    OrchestratorRequest:
+      type: object
+      properties:
+        component:
+          type: string
+          description: Component making the request
+        request_type:
+          type: string
+          enum: [decision, coordination, health_check, mission_submission, sentinel_coordination, pattern_coordination, sentinel_analysis]
+          description: Type of request
+        data:
+          type: object
+          description: Request data
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+          description: Request priority (1=low, 10=critical)
+      required:
+        - component
+        - request_type
+        - data
+
+    OrchestratorResponse:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: Unique request identifier
+        response_type:
+          type: string
+          description: Type of response
+        data:
+          type: object
+          description: Response data
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence level in response
+      required:
+        - request_id
+        - response_type
+        - data
+        - timestamp
+
+    MissionSubmission:
+      type: object
+      properties:
+        agent_type:
+          type: string
+          description: Type of agent to execute the mission
+        mission:
+          type: string
+          description: Mission description
+        task_id:
+          type: string
+          description: Optional task identifier
+        source:
+          type: string
+          default: dashboard
+          description: Source of the mission request
+      required:
+        - agent_type
+        - mission
+
+    MissionResponse:
+      type: object
+      properties:
+        mission_id:
+          type: string
+          description: Unique mission identifier
+        status:
+          type: string
+          enum: [submitted, running, completed, failed, cancelled]
+          description: Mission status
+        estimated_time:
+          type: integer
+          description: Estimated completion time in seconds
+        priority:
+          type: integer
+          description: Mission priority
+        confidence:
+          type: number
+          format: float
+          description: Confidence in mission handling
+      required:
+        - mission_id
+        - status
+
+    MissionDetails:
+      type: object
+      properties:
+        mission_id:
+          type: string
+          description: Unique mission identifier
+        agent_type:
+          type: string
+          description: Type of agent executing the mission
+        mission:
+          type: string
+          description: Mission description
+        status:
+          type: string
+          enum: [submitted, running, completed, failed, cancelled]
+          description: Current mission status
+        created_at:
+          type: string
+          format: date-time
+          description: When mission was created
+        updated_at:
+          type: string
+          format: date-time
+          description: When mission was last updated
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Mission progress percentage
+      required:
+        - mission_id
+        - agent_type
+        - mission
+        - status
+        - created_at
+
+    MissionStatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [submitted, running, completed, failed, cancelled]
+          description: New mission status
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Mission progress percentage
+        details:
+          type: object
+          description: Additional status details
+      required:
+        - status
+
+    MissionList:
+      type: object
+      properties:
+        missions:
+          type: array
+          items:
+            $ref: '#/components/schemas/MissionDetails'
+        total:
+          type: integer
+          description: Total number of missions
+        active:
+          type: integer
+          description: Number of active missions
+      required:
+        - missions
+        - total
+        - active
+
+    ComponentHealth:
+      type: object
+      properties:
+        component:
+          type: string
+          description: Component name
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Component health status
+        details:
+          type: object
+          description: Additional health details
+        confidence:
+          type: number
+          format: float
+          description: Confidence level in health assessment
+        recommendation:
+          type: string
+          description: Recommended action
+      required:
+        - component
+        - status
+
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [error]
+          description: Error status
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              description: Error code
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: object
+              description: Additional error details
+          required:
+            - code
+            - message
+      required:
+        - status
+        - error

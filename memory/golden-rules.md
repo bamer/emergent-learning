@@ -133,4 +133,14 @@ These are proven principles with high confidence. They are ALWAYS loaded into co
 **Promoted:** 2025-12-13 (CEO identified that sync is pointless - async + block when needed is always better)
 **Validations:** CONSTITUTIONAL - default behavior change
 
+---
+
+## 13. Never Kill Llama.cpp Server
+>
+> Never kill the llama.cpp inference server; it's the main inference server. Killing it crashes the entire system.
+
+**Why:** The llama.cpp server is critical for all AI inference. Stopping it halts all model operations, causing system failure.
+**Promoted:** 2026-02-13 (User request)
+**Validations:** Pending
+
 

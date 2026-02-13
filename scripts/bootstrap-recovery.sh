@@ -447,26 +447,18 @@ auto_recovery() {
 main() {
     mkdir -p "$LOGS_DIR" "$BACKUP_DIR"
 
-    # Check for flags
-    local force_mode=false
+    # Check for --auto flag
     if [[ "$1" == "--auto" ]]; then
         auto_recovery
-        return
-    elif [[ "$1" == "--force" ]]; then
-        force_mode=true
-    fi
-
-    # First check if recovery is even needed
-    if ! $force_mode && check_system_health; then
-        echo ""
-        echo "System is healthy. No recovery needed."
-        echo "Use --force to run recovery anyway."
-        exit 0
-    fi
-
-    if $force_mode; then
-        auto_recovery
     else
+        # First check if recovery is even needed
+        if check_system_health; then
+            echo ""
+            echo "System is healthy. No recovery needed."
+            echo "Use --force to run recovery anyway."
+            exit 0
+        fi
+
         interactive_recovery
     fi
 
