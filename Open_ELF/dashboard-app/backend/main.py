@@ -132,6 +132,7 @@ from routers import (
     ceo_router,
     missions_router,
     system_router,
+    escalations_router,
 )
 from routers.auth import init_redis
 
@@ -143,7 +144,7 @@ def integrate_timeline_dashboard(app):
 
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -153,6 +154,7 @@ try:
     if str(_elf_path) not in sys.path:
         sys.path.insert(0, str(_elf_path))
     from utils.elf_logging import get_logger
+
     logger = get_logger("dashboard_backend")
 except ImportError:
     # Fallback to standard logging if elf_logging unavailable
@@ -162,20 +164,20 @@ except ImportError:
     LOG_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     LOG_FILE = LOG_DIR / "dashboard.log"
-    
+
     # MANDATORY: Formatter with timestamps on EVERY line
     formatter = logging.Formatter(
         "%(asctime)s | %(name)s | %(levelname)-8s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(formatter)
-    
+
     file_handler = logging.FileHandler(LOG_FILE)
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
-    
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s | %(name)s | %(levelname)-8s | %(message)s",

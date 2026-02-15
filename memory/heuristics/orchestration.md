@@ -24,3 +24,13 @@ Real-world validation of Orchestrator workflow protocol. Quality gate (code-revi
 
 ---
 
+## H-267: Chunk tasks in parallel batches with file dependency analysis to prevent agent conflicts.
+
+**Confidence**: 0.8
+**Source**: observation
+**Created**: 2026-02-14
+
+Group independent tasks by target files, execute sequentially when dependencies exist on same file.
+
+---
+

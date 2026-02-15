@@ -1,7 +1,6 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -23,7 +22,13 @@ from utils import get_db, dict_from_row
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_critical,
+        log_error,
+        log_warning,
+        log_info,
+    )
 
     logger = get_logger("admin")
 except ImportError:
@@ -79,7 +84,7 @@ def _is_path_allowed(file_path: Path) -> bool:
 
 @router.get("/ceo-inbox")
 async def get_ceo_inbox():
-    """Get CEO inbox items (pending decisions)."""
+    """Get CEO inbox items (pending decisions + recent archived if empty)."""
     if EMERGENT_LEARNING_PATH is None:
         raise HTTPException(status_code=500, detail="Paths not configured")
 
@@ -124,6 +129,54 @@ async def get_ceo_inbox():
         except Exception as e:
             logger.error(f"Error reading CEO inbox item {file_path}: {e}")
             continue
+
+    # If inbox is empty, also get recent items from archive
+    if not items:
+        archive_path = ceo_inbox_path / "archive"
+        if archive_path.exists():
+            # Get 10 most recent archived items
+            archived_files = sorted(
+                archive_path.glob("*.md"), key=lambda f: f.stat().st_mtime, reverse=True
+            )[:10]
+
+            for file_path in archived_files:
+                if file_path.name == "TEMPLATE.md":
+                    continue
+                try:
+                    content = file_path.read_text(encoding="utf-8")
+                    title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
+                    priority_match = re.search(r"\*\*Priority:\*\*\s*(\w+)", content)
+                    status_match = re.search(r"\*\*Status:\*\*\s*(\w+)", content)
+                    date_match = re.search(r"\*\*Date:\*\*\s*([\d-]+)", content)
+                    summary_match = re.search(
+                        r"^##\s+Context\s*\n+(.+?)(?=\n\n|\n##)",
+                        content,
+                        re.MULTILINE | re.DOTALL,
+                    )
+                    summary = (
+                        summary_match.group(1).strip()[:200] if summary_match else ""
+                    )
+
+                    items.append(
+                        {
+                            "filename": file_path.name,
+                            "title": title_match.group(1)
+                            if title_match
+                            else file_path.stem,
+                            "priority": priority_match.group(1)
+                            if priority_match
+                            else "Medium",
+                            "status": status_match.group(1)
+                            if status_match
+                            else "Archived",
+                            "date": date_match.group(1) if date_match else None,
+                            "summary": summary,
+                            "path": str(file_path),
+                        }
+                    )
+                except Exception as e:
+                    logger.error(f"Error reading archived item {file_path}: {e}")
+                    continue
 
     # Sort by priority (Critical > High > Medium > Low) then by date
     priority_order = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3}

@@ -1,0 +1,24 @@
+{
+  "task": "Test the swarm system",
+  "context": "",
+  "mode": "analysis",
+  "timestamp": "2026-02-14T01:23:59.555571",
+  "agents": [
+    {
+      "name": "researcher",
+      "display_name": "researcher",
+      "status": "ready",
+      "prompt_file": "/home/bamer/.opencode/agents/OPC_ELF_System_Agents/researcher.md",
+      "prompt_length": 3995
+    },
+    {
+      "name": "architect",
+      "display_name": "architect",
+      "status": "ready",
+      "prompt_file": "/home/bamer/.opencode/agents/OPC_ELF_System_Agents/architect.md",
+      "prompt_length": 5728
+    }
+  ],
+  "status": "ready",
+  "agent_count": 2
+}

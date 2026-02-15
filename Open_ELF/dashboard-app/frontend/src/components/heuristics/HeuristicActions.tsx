@@ -1,10 +1,11 @@
-import { Star, TrendingDown, Edit2, Trash2, X, Eye } from 'lucide-react'
+import { Star, TrendingDown, Edit2, Trash2, X, Eye, Zap } from 'lucide-react'
 import { Heuristic } from '../../types'
 
 interface HeuristicActionsProps {
   heuristic: Heuristic
   isDeleting: boolean
   onPromote: () => void
+  onPromoteToSuper?: () => void
   onDemote: () => void
   onStartEdit: () => void
   onStartDelete: () => void
@@ -17,6 +18,7 @@ export default function HeuristicActions({
   heuristic: h,
   isDeleting,
   onPromote,
+  onPromoteToSuper,
   onDemote,
   onStartEdit,
   onStartDelete,
@@ -67,13 +69,22 @@ export default function HeuristicActions({
         </button>
       )}
       {h.is_golden && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onDemote() }}
-          className="flex items-center space-x-1 px-3 py-1.5 bg-slate-600 text-slate-300 rounded-lg text-sm hover:bg-slate-500 transition"
-        >
-          <TrendingDown className="w-4 h-4" />
-          <span>Demote from Golden</span>
-        </button>
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); onPromoteToSuper?.() }}
+            className="flex items-center space-x-1 px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-lg text-sm hover:bg-purple-500/30 transition"
+          >
+            <Zap className="w-4 h-4" />
+            <span>Promote to Super</span>
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDemote() }}
+            className="flex items-center space-x-1 px-3 py-1.5 bg-slate-600 text-slate-300 rounded-lg text-sm hover:bg-slate-500 transition"
+          >
+            <TrendingDown className="w-4 h-4" />
+            <span>Demote from Golden</span>
+          </button>
+        </>
       )}
       <button
         onClick={(e) => { e.stopPropagation(); onStartEdit() }}

@@ -13,6 +13,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ELF_DIR="$(dirname "$SCRIPT_DIR")"
 
+# Track if we started OpenCode server (don't kill externally-started servers)
+OPENCODE_STARTED_BY_SCRIPT=false
+
 # Couleurs pour le terminal
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -62,6 +65,7 @@ start_opencode_separated_terminal() {
     # Vérifier si déjà en cours
     if check_opencode; then
         echo -e "${YELLOW}⚠️  Le serveur OpenCode est déjà en cours d'exécution${NC}"
+        OPENCODE_STARTED_BY_SCRIPT=false  # External server, don't kill on exit
         return 0
     fi
     

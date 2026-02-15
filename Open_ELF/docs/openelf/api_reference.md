@@ -326,7 +326,8 @@ Get current status of all agents.
 Start a specific agent.
 
 **Path Parameters:**
-- `agent_type` (string): Type of agent to start (sentinel, researcher, architect, skeptic, creative, ceo)
+- `agent_type` (string): Type of agent to start (sentinel, researcher, architect, skeptic, creative)
+- **Note**: CEO is NOT available for spawning - CEO manages autonomously
 
 **Response:**
 ```json

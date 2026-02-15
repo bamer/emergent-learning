@@ -20,6 +20,7 @@ import {
   SemanticSearchPanel,
   MonitoringPanel
 } from './components'
+import { AdvancedVisualizations, WorkflowBuilder } from './components/visualizations'
 import { LivePanel } from './components/live'
 import { CosmicTimelineView, CosmicRunsView } from './components/cosmic-view'
 import {
@@ -68,7 +69,7 @@ class ErrorBoundary extends React.Component<
 }
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'heuristics' | 'runs' | 'timeline' | 'query' | 'analytics' | 'graph' | 'sessions' | 'assumptions' | 'spikes' | 'invariants' | 'fraud' | 'live' | 'semantic' | 'monitoring'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'heuristics' | 'runs' | 'timeline' | 'query' | 'analytics' | 'graph' | 'sessions' | 'assumptions' | 'spikes' | 'invariants' | 'fraud' | 'live' | 'semantic' | 'monitoring' | 'visualizations' | 'workflow'>('overview')
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
@@ -91,6 +92,7 @@ function AppContent() {
     heuristics,
     promoteHeuristic,
     demoteHeuristic,
+    promoteToSuperGolden,
     deleteHeuristic,
     updateHeuristic,
     reloadHeuristics,
@@ -383,6 +385,7 @@ function AppContent() {
             <HeuristicPanel
               heuristics={normalizedHeuristics}
               onPromote={promoteHeuristic}
+              onPromoteToSuper={promoteToSuperGolden}
               onDemote={demoteHeuristic}
               onDelete={deleteHeuristic}
               onUpdate={updateHeuristic}
@@ -442,6 +445,12 @@ function AppContent() {
 
           {/* Analytics is handled by DashboardLayout for Cosmic mode, but we keep this for grid mode */}
           {activeTab === 'analytics' && <LearningVelocity days={30} />}
+
+          {/* Advanced Visualizations Tab */}
+          {activeTab === 'visualizations' && <AdvancedVisualizations />}
+
+          {/* Workflow Builder Tab */}
+          {activeTab === 'workflow' && <WorkflowBuilder />}
         </div>
       </DashboardLayout>
     </>

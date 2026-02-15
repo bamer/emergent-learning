@@ -20,6 +20,7 @@ interface DataContextType {
   heuristics: Heuristic[]
   setHeuristics: React.Dispatch<React.SetStateAction<Heuristic[]>>
   promoteHeuristic: (id: number) => Promise<void>
+  promoteToSuperGolden: (id: number) => Promise<void>
   demoteHeuristic: (id: number) => Promise<void>
   deleteHeuristic: (id: number) => Promise<void>
   updateHeuristic: (id: number, updates: { rule?: string; explanation?: string; domain?: string }) => Promise<void>
@@ -62,6 +63,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     heuristics: heuristicsData.heuristics,
     setHeuristics: heuristicsData.setHeuristics,
     promoteHeuristic: heuristicsData.promoteHeuristic,
+    promoteToSuperGolden: heuristicsData.promoteToSuperGolden,
     demoteHeuristic: heuristicsData.demoteHeuristic,
     deleteHeuristic: heuristicsData.deleteHeuristic,
     updateHeuristic: heuristicsData.updateHeuristic,

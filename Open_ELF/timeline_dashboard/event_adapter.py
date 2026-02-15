@@ -39,11 +39,20 @@ except ImportError:
 
 # Event type mapping: operational types → timeline-friendly types
 EVENT_TYPE_MAPPING: Dict[str, str] = {
+    # Agent lifecycle (Missions)
     "agent_started": "task_start",
     "agent_stopped": "task_end",
+    "agent_spawned": "task_start",
+    # Heuristic events (Neural Sync, Pattern Verified, Anomaly Detected)
     "heuristic_created": "heuristic_consulted",
     "heuristic_validated": "heuristic_validated",
     "heuristic_violated": "heuristic_violated",
+    "heuristic_consulted": "heuristic_consulted",
+    # Sentinel and monitoring events
+    "sentinel_check": "neural_sync",  # Sentinel pattern checks
+    "sentinel_cycle": "neural_sync",
+    "system_verification": "pattern_verified",  # System checks that pass
+    # Orchestrator and workflow events
     "tool_poll": "task_start",
     "message.updated": "task_start",
     "message.part.updated": "task_start",
@@ -53,16 +62,22 @@ EVENT_TYPE_MAPPING: Dict[str, str] = {
     "session.idle": "task_end",
     "session.ended": "task_end",
     "session.started": "task_start",
-    "server.heartbeat": "task_start",
-    "sentinel_check": "task_start",
-    "sentinel_cycle": "task_start",
+    "server.heartbeat": "neural_sync",
+    # Issue tracking (Incident Logged, Mission Complete)
     "checkin": "task_start",
     "checkout": "task_end",
     "swarm_execution": "task_start",
     "workflow_started": "task_start",
     "workflow_completed": "task_end",
+    "escalation_created": "anomaly_detected",  # Issues that need attention
+    "issue_resolved": "mission_complete",  # Successfully resolved issues
     "error_logged": "failure_recorded",
+    # AI/Swarm events
+    "question_received": "neural_sync",  # AI queries to the system
+    "response_sent": "neural_sync",  # AI responses
+    # Golden rule events
     "golden_promoted": "golden_promoted",
+    # Default fallback
     "unknown": "task_start",
 }
 

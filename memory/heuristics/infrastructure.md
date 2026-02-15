@@ -154,3 +154,63 @@ This ensures centralized log management for the emergent learning framework.
 
 ---
 
+## H-270: Always check for recent CEO decisions before creating new escalations - CEO may have already taken action
+
+**Confidence**: 0.9
+**Source**: observation
+**Created**: 2026-02-14
+
+Escalations created at 12:34 was outdated because CEO had intervened at 12:32 with direct user instruction. Must verify escalation inbox/processed folder for recent CEO actions before escalating
+
+---
+
+## H-271: EventChronicle is the events table - not named 'events' table
+
+**Confidence**: 1.0
+**Source**: observation
+**Created**: 2026-02-14
+
+When querying for events, use event_chronicle table, not events table. Events are stored in event_chronicle table with proper schema.
+
+---
+
+## H-272: High load from external LLM servers (llama-server) often causes elevated but acceptable system load - ELF systems remain unaffected if EventBridge/Orchestrator CPU stays below 10% and swap usage remains 0%
+
+**Confidence**: 0.9
+**Source**: observation
+**Created**: 2026-02-14
+
+Load average of 17.97 with ELF systems at 0% CPU indicates external LLMinference workload. Monitor ELF systems, not overall load. External user processes cannot be intervened with.
+
+---
+
+## H-273: Rapid memory declines (>12GB in <1 hour) without ELF system degradation indicate external user process memory bloat - monitor available RAM and swap. Escalate only when available RAM < 500 MB or swap > 5%, not based on overall memory percentage
+
+**Confidence**: 0.95
+**Source**: observation
+**Created**: 2026-02-14
+
+External processes (llama-server 2.4GB, opencode 2.7GB, code-insiders 1.6GB, godot 1.2GB) can cause rapid RAM decline. ELF systems unaffected until swap engages. Monitor actual available RAM in GB, not percentage.
+
+---
+
+## H-278: Git LFS orphaned objects can accumulate to tens of GB - run 'git lfs prune'定期清理孤立的 LFS 对象 (Git LFS orphaned objects can accumulate to tens of GB - run 'git lfs prune' periodically)
+
+**Confidence**: 0.9
+**Source**: observation
+**Created**: 2026-02-15
+
+
+
+---
+
+## H-280: Large Git LFS storage (>10GB) indicates orphaned objects - run 'git lfs prune --dry-run' first to preview cleanup impact
+
+**Confidence**: 0.9
+**Source**: observation
+**Created**: 2026-02-15
+
+
+
+---
+

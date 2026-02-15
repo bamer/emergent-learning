@@ -173,7 +173,7 @@ export default function NotificationCenter({
               }`}
             >
               <Inbox className="w-4 h-4" />
-              <span>CEO Inbox</span>
+              <span>Human CEO</span>
               {ceoCount > 0 && (
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                   activeTab === 'ceo'

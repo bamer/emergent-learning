@@ -1,7 +1,6 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -26,7 +25,13 @@ from utils import get_db, dict_from_row
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_critical,
+        log_error,
+        log_warning,
+        log_info,
+    )
 
     logger = get_logger("heuristics")
 except ImportError:
@@ -439,6 +444,67 @@ async def demote_from_golden(heuristic_id: int) -> ActionResult:
             )
 
         return ActionResult(success=True, message="Demoted from golden rule")
+
+
+@router.post("/golden-rules/{heuristic_id}/promote-to-super")
+@retry_on_locked(max_retries=3, base_delay=0.2)
+async def promote_golden_to_super(heuristic_id: int) -> ActionResult:
+    """Promote a golden rule to Super Golden Rule (universal scope)."""
+    with get_db() as conn:
+        cursor = conn.cursor()
+
+        # Check if the heuristic exists and is golden
+        cursor.execute(
+            """
+            SELECT id, rule, domain, is_golden
+            FROM heuristics WHERE id = ?
+        """,
+            (heuristic_id,),
+        )
+        heuristic = cursor.fetchone()
+
+        if not heuristic:
+            raise HTTPException(status_code=404, detail="Heuristic not found")
+
+        if not heuristic["is_golden"]:
+            return ActionResult(
+                success=False,
+                message="Must be a golden rule to promote to Super Golden Rule",
+            )
+
+        # Insert into golden_rules with universal scope
+        cursor.execute(
+            """
+            INSERT INTO golden_rules (rule, category, confidence, source, scope)
+            VALUES (?, ?, 1.0, ?, 'universal')
+        """,
+            (
+                heuristic["rule"],
+                heuristic["domain"],
+                f"promoted_from_heuristic_{heuristic_id}",
+            ),
+        )
+
+        # Log the promotion
+        cursor.execute(
+            """
+            INSERT INTO metrics (metric_type, metric_name, metric_value, context, timestamp)
+            VALUES ('super_golden_promotion', 'manual_promotion', ?, ?, ?)
+        """,
+            (heuristic_id, heuristic["rule"][:100], datetime.now().isoformat()),
+        )
+
+        conn.commit()
+
+        if manager:
+            await manager.broadcast_update(
+                "super_golden_promoted",
+                {"heuristic_id": heuristic_id, "rule": heuristic["rule"]},
+            )
+
+        return ActionResult(
+            success=True, message="Promoted to Super Golden Rule (universal)"
+        )
 
 
 @router.put("/heuristics/{heuristic_id}")

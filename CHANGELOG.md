@@ -1,3 +1,17 @@
+## 2026-02-13 - CEO Agent Strategic Analysis
+
+### Critical Learning: Essential Services Must Never Be Killed
+
+**Issue**: llama-server was killed 8 times causing system failures. Orchestrator deployed auto-kill scripts violating golden rules.
+
+**Resolution**:
+- Golden Rule #13: "ESSENTIAL system services (like llama-server) must NEVER be killed, even if they consume high resources. LLM servers legitimately require substantial CPU and memory for production workloads."
+- Auto-kill scripts removed from crontab and file system
+- System monitoring updated to understand normal LLM server resource consumption
+- CEO escalations archived as learning artifacts
+
+**Status**: ✅ Resolved - System stable, critical learning captured
+
 # Changelog
 
 All notable changes to the Emergent Learning Framework will be documented in this file.
@@ -6,6 +20,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2026-02-14] - SDK Optimization & Duplicate Request Fix
+
+### Fixed
+- **Triple/Triplicate Messages**: Fixed duplicate AI agent requests caused by multiple monitoring services running simultaneously
+  - Root cause: Both `sentinel.py` and `unified_orchestrator.py` were running and sending requests
+  - Solution: Killed duplicate `unified_orchestrator.py`, now only `sentinel.py` runs
+- **Auto-Kill Scripts Disabled**: OpenCode server is now protected from accidental termination
+  - Modified `start-elf-system.sh` cleanup to never kill OpenCode
+  - Created `DISABLE_AUTO_KILL` flag in `.coordination/`
+
+### Added
+- **SDK Process Locking**: Implemented thread-safe SDK client spawning to prevent duplicate processes
+  - Added `threading.Lock()` to prevent concurrent SDK spawns
+  - Added `_active_sdk_requests` counter to track in-flight requests
+  - Logs warning: "⚠️ Duplicate SDK request prevented" if concurrent request detected
+  - File: `Open_ELF/agents/agent_manager.py`
+- **PartDelta Event Support**: OpenCode SDK now supports incremental message updates
+  - `PartDelta` event sends only changes, not full content
+  - Reduces bandwidth and processing overhead
+  - Schema: `sessionID`, `messageID`, `partID`, `field`, `delta`
+
+### Documentation Added
+- **SDK_PROCESS_LOCKING.md**: Technical documentation of the SDK locking implementation
+- Updated changelog with today's fixes
 
 ### Added
 - **Golden Rule Added**: "Never add crontab entries for ELF project; all automation must use ELF's built‑in agent framework" (2026‑02‑13 CEO directive)

@@ -2,7 +2,7 @@
 
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -28,6 +28,8 @@ Usage:
 import json
 import time as _time
 import traceback
+import threading
+import traceback as _traceback
 
 import re
 import subprocess
@@ -55,7 +57,10 @@ except ImportError:
 import logging  # Import here for class type hints
 
 # Chemins par défaut
-DEFAULT_AGENTS_DIR = Path("/home/bamer/.opencode/agents/OPC_ELF_System_Agents")
+DEFAULT_AGENTS_DIRS = [
+    Path("/home/bamer/.opencode/agents/OPC_ELF_System_Agents"),
+    Path.home() / ".config" / "opencode" / "agents",
+]
 DEFAULT_OPENCODE_URL = "http://localhost:4096"
 DEFAULT_MODEL = "model: llamacpp/nemotron-v3-coder"  # Modèle rapide et gratuit
 DEFAULT_WORKDIR = Path("/home/bamer/.opencode/emergent-learning")
@@ -126,7 +131,11 @@ class AgentManager:
             logger: Logger optionnel
         """
         self.opencode_url = opencode_url.rstrip("/")
-        self.agents_dir = agents_dir or DEFAULT_AGENTS_DIR
+        # Support single agent_dir or multiple
+        if agents_dir:
+            self.agents_dirs = [agents_dir]
+        else:
+            self.agents_dirs = DEFAULT_AGENTS_DIRS
         self.timeout = timeout
         self.workdir = workdir or DEFAULT_WORKDIR
         self.logger = logger or logging.getLogger("AgentManager")
@@ -135,10 +144,16 @@ class AgentManager:
         self.agents: Dict[str, AgentConfig] = {}
         self.sessions: Dict[str, AgentSession] = {}
 
+        # Process tracking to prevent duplicate SDK spawns
+        self._sdk_lock = threading.Lock()
+        self._active_sdk_requests = 0
+        self._sdk_client_path = SDK_CLIENT_PATH
+
         # Charger tous les agents
         self._load_all_agents()
 
         self.logger.info(f"✅ AgentManager initialisé avec {len(self.agents)} agents")
+        self.logger.info(f"🔒 SDK process locking enabled (singleton)")
 
     def _log_session_entry(
         self,
@@ -182,18 +197,24 @@ class AgentManager:
         return f"ELF {agent_name.title()} Session {date_label}"
 
     def _load_all_agents(self):
-        """Charge tous les agents depuis les fichiers .md"""
-        if not self.agents_dir.exists():
-            self.logger.error(f"❌ Répertoire agents non trouvé: {self.agents_dir}")
-            return
+        """Charge tous les agents depuis les fichiers .md dans tous les répertoires"""
+        for agents_dir in self.agents_dirs:
+            if not agents_dir.exists():
+                continue
 
-        for md_file in self.agents_dir.glob("*.md"):
-            try:
-                agent_config = self._parse_agent_file(md_file)
-                self.agents[agent_config.name] = agent_config
-                self.logger.info(f"📄 Agent chargé: {agent_config.name}")
-            except Exception as e:
-                self.logger.error(f"❌ Erreur chargement {md_file.name}: {e}")
+            self.logger.debug(f"📂 Recherche agents dans: {agents_dir}")
+
+            for md_file in agents_dir.glob("*.md"):
+                try:
+                    agent_config = self._parse_agent_file(md_file)
+                    # Skip duplicates, keep first found
+                    if agent_config.name not in self.agents:
+                        self.agents[agent_config.name] = agent_config
+                        self.logger.info(f"📄 Agent chargé: {agent_config.name}")
+                    else:
+                        self.logger.debug(f"⚠️  Agent déjà chargé: {agent_config.name}")
+                except Exception as e:
+                    self.logger.error(f"❌ Erreur chargement {md_file.name}: {e}")
 
     def _parse_agent_file(self, md_file: Path) -> AgentConfig:
         """
@@ -394,23 +415,11 @@ class AgentManager:
             return False
 
     def _sdk_request(self, action: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-        # Preflight checks
-        sdk_path = SDK_CLIENT_PATH
+        """Send request to OpenCode SDK client with process locking to prevent duplicate spawns."""
+        sdk_path = self.workdir / "Open_ELF/agents/opencode_sdk_client.mjs"
+
         if not sdk_path.exists():
-            return {"success": False, "error": f"SDK client not found at {sdk_path}"}
-
-        if not hasattr(self, "_bun_available"):
-            import shutil
-
-            self._bun_available = shutil.which("bun") is not None
-            if not self._bun_available:
-                self.logger.error("bun runtime not found in PATH")
-
-        if not self._bun_available:
-            return {
-                "success": False,
-                "error": "bun runtime not found. Install from https://bun.sh",
-            }
+            return {"success": False, "error": f"SDK client not found: {sdk_path}"}
 
         request_body = {
             "action": action,
@@ -418,52 +427,75 @@ class AgentManager:
             "payload": payload,
         }
 
-        max_retries = 2
-        last_error = None
-        for attempt in range(max_retries + 1):
-            try:
-                result = subprocess.run(
-                    ["bun", str(sdk_path)],
-                    input=json.dumps(request_body),
-                    capture_output=True,
-                    text=True,
-                    check=False,
-                    timeout=self.timeout,
-                )
-                break
-            except subprocess.TimeoutExpired:
-                last_error = f"SDK request timed out after {self.timeout}s (attempt {attempt + 1})"
-                self.logger.warning(last_error)
-                if attempt < max_retries:
-                    _time.sleep(1)
-                    continue
-                return {"success": False, "error": last_error}
-            except FileNotFoundError:
-                return {"success": False, "error": "bun command not found"}
-            except Exception as e:
-                last_error = str(e)
+        # Acquire lock to prevent concurrent SDK spawns
+        with self._sdk_lock:
+            if self._active_sdk_requests > 0:
                 self.logger.warning(
-                    f"SDK request failed (attempt {attempt + 1}): {last_error}"
+                    f"⚠️ Duplicate SDK request prevented (already {self._active_sdk_requests} in flight)"
                 )
-                if attempt < max_retries:
-                    _time.sleep(1)
-                    continue
-                return {
-                    "success": False,
-                    "error": f"SDK request failed after {max_retries + 1} attempts: {last_error}",
-                }
+                # Wait briefly and retry once
+                _time.sleep(0.1)
 
-        if result.returncode != 0:
-            stderr_msg = result.stderr[:500] if result.stderr else "No error output"
-            return {
-                "success": False,
-                "error": f"SDK exited with code {result.returncode}: {stderr_msg}",
-            }
+            self._active_sdk_requests += 1
+            max_retries = 2
+            last_error = None
 
-        try:
-            return json.loads(result.stdout)
-        except json.JSONDecodeError as exc:
-            return {"success": False, "error": f"Réponse SDK invalide: {exc}"}
+            try:
+                for attempt in range(max_retries + 1):
+                    try:
+                        result = subprocess.run(
+                            ["bun", str(sdk_path)],
+                            input=json.dumps(request_body),
+                            capture_output=True,
+                            text=True,
+                            check=False,
+                            timeout=self.timeout,
+                        )
+                        break
+                    except subprocess.TimeoutExpired:
+                        last_error = f"SDK request timed out after {self.timeout}s (attempt {attempt + 1})"
+                        self.logger.warning(last_error)
+                        if attempt < max_retries:
+                            _time.sleep(1)
+                            continue
+                        return {"success": False, "error": last_error}
+                    except FileNotFoundError:
+                        return {"success": False, "error": "bun command not found"}
+                    except Exception as e:
+                        last_error = str(e)
+                        self.logger.warning(
+                            f"SDK request failed (attempt {attempt + 1}): {last_error}"
+                        )
+                        if attempt < max_retries:
+                            _time.sleep(1)
+                            continue
+                        return {
+                            "success": False,
+                            "error": f"SDK request failed after {max_retries + 1} attempts: {last_error}",
+                        }
+
+                if result.returncode != 0:
+                    stderr_msg = (
+                        result.stderr[:500] if result.stderr else "No error output"
+                    )
+                    return {
+                        "success": False,
+                        "error": f"SDK exited with code {result.returncode}: {stderr_msg}",
+                    }
+
+                try:
+                    return json.loads(result.stdout)
+                except json.JSONDecodeError as exc:
+                    return {"success": False, "error": f"Réponse SDK invalide: {exc}"}
+
+            finally:
+                # Always decrement the active request counter
+                self._active_sdk_requests -= 1
+                if self._active_sdk_requests < 0:
+                    self._active_sdk_requests = 0
+                    self.logger.error(
+                        "⚠️ Active SDK requests counter went negative - bug detected"
+                    )
 
     def ask_agent(
         self,
@@ -611,10 +643,6 @@ class AgentManager:
             return {"success": False, "error": error_msg, "agent": agent_name}
 
     # Méthodes de convenance pour les agents principaux
-
-    def sentinel(self, request: str, context: Optional[Dict] = None) -> Dict[str, Any]:
-        """Interroge l'agent Sentinel"""
-        return self.ask_agent("sentinel", request, context)
 
     def sentinel(self, request: str, context: Optional[Dict] = None) -> Dict[str, Any]:
         """Interroge l'agent Sentinel"""

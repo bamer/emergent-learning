@@ -6,6 +6,7 @@ import HeuristicDetailModal from './heuristics/HeuristicDetailModal'
 interface HeuristicPanelProps {
   heuristics: Heuristic[]
   onPromote: (id: number) => Promise<void>
+  onPromoteToSuper?: (id: number) => Promise<void>
   onDemote: (id: number) => Promise<void>
   onDelete: (id: number) => void
   onUpdate: (id: number, updates: { rule?: string; explanation?: string; domain?: string }) => void
@@ -16,6 +17,7 @@ interface HeuristicPanelProps {
 export default function HeuristicPanel({
   heuristics,
   onPromote,
+  onPromoteToSuper,
   onDemote,
   onDelete,
   onUpdate,
@@ -143,6 +145,7 @@ export default function HeuristicPanel({
             onSaveEdit={() => saveEdit(h.id)}
             onEditFormChange={setEditForm}
             onPromote={() => onPromote(h.id)}
+            onPromoteToSuper={onPromoteToSuper ? () => onPromoteToSuper(h.id) : undefined}
             onDemote={() => onDemote(h.id)}
             onStartDelete={() => setDeleteConfirmId(h.id)}
             onConfirmDelete={() => confirmDelete(h.id)}

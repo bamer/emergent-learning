@@ -17,6 +17,7 @@ interface HeuristicCardProps {
   onSaveEdit: () => void
   onEditFormChange: (form: EditFormData) => void
   onPromote: () => void
+  onPromoteToSuper?: () => void
   onDemote: () => void
   onStartDelete: () => void
   onConfirmDelete: () => void
@@ -50,6 +51,7 @@ export default function HeuristicCard({
   onSaveEdit,
   onEditFormChange,
   onPromote,
+  onPromoteToSuper,
   onDemote,
   onStartDelete,
   onConfirmDelete,
@@ -150,6 +152,7 @@ export default function HeuristicCard({
                 heuristic={h}
                 isDeleting={isDeleting}
                 onPromote={onPromote}
+                onPromoteToSuper={onPromoteToSuper}
                 onDemote={onDemote}
                 onStartEdit={onStartEdit}
                 onStartDelete={onStartDelete}

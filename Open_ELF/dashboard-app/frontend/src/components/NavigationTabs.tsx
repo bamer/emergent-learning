@@ -1,6 +1,6 @@
-import { Globe, Brain, BarChart3, Clock, LineChart, Sparkles, Activity, Search, Shield } from 'lucide-react'
+import { Globe, Brain, BarChart3, Clock, LineChart, Sparkles, Activity, Search, Shield, Grid3X3, GitBranch } from 'lucide-react'
 
-export type TabType = 'overview' | 'heuristics' | 'runs' | 'timeline' | 'analytics' | 'graph' | 'live' | 'semantic' | 'monitoring'
+export type TabType = 'overview' | 'heuristics' | 'runs' | 'timeline' | 'analytics' | 'graph' | 'live' | 'semantic' | 'monitoring' | 'visualizations' | 'workflow'
 
 interface Tab {
   id: TabType
@@ -19,6 +19,8 @@ const tabs: Tab[] = [
   { id: 'live', label: 'LIVE', icon: Activity, color: '#8b5cf6', glowColor: 'rgba(139, 92, 246, 0.5)' },
   { id: 'semantic', label: 'SEMANTIC', icon: Search, color: '#06b6d4', glowColor: 'rgba(6, 182, 212, 0.5)' },
   { id: 'monitoring', label: 'MONITORING', icon: Shield, color: '#10b981', glowColor: 'rgba(16, 185, 129, 0.5)' },
+  { id: 'visualizations', label: 'VISUALIZATIONS', icon: Grid3X3, color: '#f59e0b', glowColor: 'rgba(245, 158, 11, 0.5)' },
+  { id: 'workflow', label: 'WORKFLOW', icon: GitBranch, color: '#ec4899', glowColor: 'rgba(236, 72, 153, 0.5)' },
 ]
 
 interface NavigationTabsProps {

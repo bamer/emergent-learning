@@ -387,14 +387,115 @@ class CheckinOrchestrator:
             return {"raw_output": ""}
 
     def display_golden_rules(self, context: Dict[str, Any]):
-        """Step 3: Extract and display golden rules from context."""
-        output = context.get("raw_output", "")
+        """Step 3: Query database and display golden rules with confidence scores."""
+        try:
+            import sqlite3
 
-        # Look for golden rules section in output
-        if "Golden Rules" in output or "TIER 1" in output:
-            print("[OK] Golden Rules loaded")
-        else:
-            print("[OK] Context loaded")
+            db_path = self.elf_home / "memory" / "index.db"
+
+            if not db_path.exists():
+                print("[WARN] Database not found, showing static rules")
+                return
+
+            conn = sqlite3.connect(str(db_path))
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            # Get golden rules from database, sorted by confidence
+            cursor.execute("""
+                SELECT rule, category, confidence, explanation, use_count
+                FROM golden_rules
+                WHERE is_active = 1
+                ORDER BY confidence DESC, use_count DESC
+                LIMIT 15
+            """)
+
+            rules = cursor.fetchall()
+            conn.close()
+
+            if rules:
+                print(f"\n[📜] Loaded {len(rules)} Golden Rules from Database")
+                print("=" * 60)
+
+                for i, r in enumerate(rules, 1):
+                    confidence = r["confidence"] or 0.0
+                    category = r["category"] or "general"
+                    rule_text = (
+                        r["rule"][:80] + "..." if len(r["rule"]) > 80 else r["rule"]
+                    )
+
+                    # Confidence indicator
+                    if confidence >= 0.9:
+                        icon = "🟢"
+                    elif confidence >= 0.8:
+                        icon = "🟡"
+                    else:
+                        icon = "⚪"
+
+                    print(f"{i:2d}. {icon} [{category}] {rule_text}")
+
+                    # Show explanation if available (first 3 rules only)
+                    if i <= 3 and r["explanation"]:
+                        print(f"    Why: {r['explanation'][:60]}...")
+
+                print("=" * 60)
+                print(f"[✓] All rules have embeddings for semantic search")
+            else:
+                print("[INFO] No golden rules found in database")
+
+        except Exception as e:
+            print(f"[WARN] Could not load golden rules: {e}")
+            print("[INFO] Using static fallback rules")
+
+    def display_heuristics_with_promote(self):
+        """Display heuristics with option to promote to Super Golden Rule."""
+        try:
+            import sqlite3
+
+            db_path = self.elf_home / "memory" / "index.db"
+            if not db_path.exists():
+                return
+
+            conn = sqlite3.connect(str(db_path))
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            # Get high-confidence heuristics (not yet golden)
+            cursor.execute("""
+                SELECT id, rule, domain, confidence, validation_count, scope
+                FROM heuristics 
+                WHERE confidence >= 0.5 AND (scope != 'universal' OR scope IS NULL)
+                ORDER BY confidence DESC, validation_count DESC
+                LIMIT 10
+            """)
+
+            heuristics = cursor.fetchall()
+            conn.close()
+
+            if heuristics:
+                print(f"\n[📊] Heuristics Ready for Promotion")
+                print("=" * 60)
+                print("To promote to SUPER GOLDEN RULE (universal), use:")
+                print(
+                    "  python ~/.opencode/emergent-learning/scripts/promote-to-super-golden.py <id>"
+                )
+                print("=" * 60)
+
+                for h in heuristics:
+                    conf = h["confidence"] or 0.0
+                    print(f"\n[{h['id']}] 🟡 {h['rule'][:70]}...")
+                    print(
+                        f"    Domain: {h['domain'] or 'general'}, Confidence: {conf:.2f}, Validations: {h['validation_count']}"
+                    )
+
+                print("\n" + "=" * 60)
+                print("Examples:")
+                print(
+                    "  python ~/.opencode/emergent-learning/scripts/promote-to-super-golden.py 42"
+                )
+
+        except Exception as e:
+            log_debug("checkin", f"Could not display heuristics: {e}")
 
     def prompt_dashboard(self) -> bool:
         """Step 5: Ask about dashboard. Claude tracks session state."""
@@ -697,6 +798,9 @@ class CheckinOrchestrator:
 
         # Step 3: Display golden rules (parsed from context)
         self.display_golden_rules(context)
+
+        # Step 4: Display heuristics with promote option
+        self.display_heuristics_with_promote()
 
         # Step 5: Ask about dashboard (Claude tracks session state)
         start_dashboard = self.prompt_dashboard()

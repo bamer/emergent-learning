@@ -1,7 +1,6 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -97,7 +96,9 @@ def get_orchestrator() -> UnifiedOrchestrator:
 class SpawnRequest(BaseModel):
     """Request to spawn an agent."""
 
-    agent_type: str  # researcher, architect, skeptic, creative, ceo
+    agent_type: (
+        str  # researcher, architect, skeptic, creative (CEO not available for spawning)
+    )
     params: Optional[Dict[str, Any]] = None
 
 
@@ -191,7 +192,8 @@ async def spawn_agent(request: SpawnRequest):
     Returns:
         {"status": "ok", "agent": "researcher", "message": "Agent spawned successfully", "mission": "..."}
     """
-    valid_agents = ["researcher", "architect", "skeptic", "creative", "ceo"]
+    # CEO is NOT available for spawning - CEO manages the system autonomously
+    valid_agents = ["researcher", "architect", "skeptic", "creative"]
 
     if request.agent_type not in valid_agents:
         raise HTTPException(

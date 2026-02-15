@@ -101,6 +101,10 @@ class EventBridge:
         except Exception as e:
             logger.error(f"❌ Failed to load LearningProcessor: {e}", exc_info=True)
 
+        # SSE JSON buffer for handling incomplete JSON across chunks
+        self._sse_buffer = ""
+        self._sse_buffer_max_size = 50000  # 50KB max buffer
+
         # Singleton lock tracking
         self._lock_acquired = False
 
@@ -420,15 +424,46 @@ class EventBridge:
         return ""
 
     def _process_sse_line(self, line: str):
-        """Process a single SSE line."""
+        """Process a single SSE line with buffer for incomplete JSON."""
         if line.startswith("data:"):
             data_str = line[5:].strip()
             if data_str:
+                # Accumulate data in buffer
+                self._sse_buffer += data_str
+
+                # Limit buffer size to prevent memory issues
+                if len(self._sse_buffer) > self._sse_buffer_max_size:
+                    logger.warning(
+                        f"SSE buffer overflow ({len(self._sse_buffer)} chars), clearing"
+                    )
+                    self._sse_buffer = ""
+                    return
+
+                # Try to parse complete JSON
                 try:
-                    data = json.loads(data_str)
+                    data = json.loads(self._sse_buffer)
+                    self._sse_buffer = ""  # Clear buffer on success
+                    self._handle_event(data)
+                except json.JSONDecodeError:
+                    # Incomplete JSON, wait for more data
+                    # Only log occasionally to avoid spam
+                    if len(self._sse_buffer) > 1000:
+                        logger.debug(
+                            f"SSE buffer accumulating ({len(self._sse_buffer)} chars)..."
+                        )
+                    return
+        elif line.strip() == "":
+            # Empty line (SSE double newline) - try to flush buffer
+            if self._sse_buffer.strip():
+                try:
+                    data = json.loads(self._sse_buffer)
+                    self._sse_buffer = ""
                     self._handle_event(data)
                 except json.JSONDecodeError as e:
-                    logger.warning(f"SSE JSON parse failed: {e}")
+                    logger.warning(
+                        f"SSE JSON parse failed after flush: {e}, data: {self._sse_buffer[:200]}..."
+                    )
+                    self._sse_buffer = ""
         # Silently ignore SSE control lines (event:, id:, :comments)
 
     def _handle_event(self, event: Dict[str, Any]):

@@ -18,7 +18,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-BASE_DIR = Path("/home/bamer/.opocode/emergent-learning")
+BASE_DIR = Path("/home/bamer/.opencode/emergent-learning")
 PROPOSALS_DIR = BASE_DIR / "proposals" / "pending"
 SESSIONS_DIR = BASE_DIR / "sessions"
 DB_PATH = BASE_DIR / "memory" / "index.db"

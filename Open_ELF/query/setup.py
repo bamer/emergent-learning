@@ -1,7 +1,6 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -355,16 +354,17 @@ def _find_installer(start_path: Path, is_windows: bool) -> Optional[Path]:
 
 def ensure_full_setup():
     """
-    Check setup status and return status code for Claude to handle.
-    Claude will use AskUserQuestion tool to show selection boxes if needed.
+    Check setup status and return status code for OpenCode agent to handle.
 
     Returns:
         "ok" - Already set up, proceed normally
         "fresh_install" - New user, auto-installed successfully
-        "needs_user_choice" - Has existing config, Claude should ask user
+        "needs_user_choice" - Has existing config, OpenCode agent should ask user
         "install_failed" - Something went wrong
     """
-    global_opencode_md = Path.home() / ".opencode" / "CLAUDE.md"
+    global_agents_md = (
+        Path.home() / ".config" / "opencode" / "instructionsELF" / "AGENTS.md"
+    )
 
     # Detect OS and find appropriate installer
     is_windows = platform.system() == "Windows"
@@ -375,15 +375,15 @@ def ensure_full_setup():
         # or a minimal install where auto-setup isn't possible.
         return "ok"
 
-    # Case 1: No CLAUDE.md - new user, auto-install
-    if not global_opencode_md.exists():
+    # Case 1: No AGENTS.md - new user, auto-install
+    if not global_agents_md.exists():
         print("")
         print("=" * 60)
         print("[ELF] Welcome! First-time setup...")
         print("=" * 60)
         print("")
         print("Installing:")
-        print("  - CLAUDE.md : Core instructions")
+        print("  - AGENTS.md : Core instructions (OpenCode)")
         print("  - /search   : Session history search")
         print("  - /checkin  : Building check-in")
         print("  - /swarm    : Multi-agent coordination")
@@ -420,9 +420,9 @@ def ensure_full_setup():
             print(f"[ELF] Setup issue: {e}")
             return "install_failed"
 
-    # Case 2: Has CLAUDE.md with ELF already
+    # Case 2: Has AGENTS.md with ELF already
     try:
-        with open(global_opencode_md, "r", encoding="utf-8") as f:
+        with open(global_agents_md, "r", encoding="utf-8") as f:
             content = f.read()
         if (
             "Emergent Learning Framework" in content
@@ -432,14 +432,16 @@ def ensure_full_setup():
     except:
         pass
 
-    # Case 3: Has CLAUDE.md but no ELF - Claude should ask user
+    # Case 3: Has AGENTS.md but no ELF - OpenCode agent should note this
     print("")
     print("=" * 60)
     print("[ELF] Existing configuration detected")
     print("=" * 60)
     print("")
-    print("You have ~/.opencode/CLAUDE.md but it doesn't include ELF.")
-    print("Claude will ask how you'd like to proceed.")
+    print(
+        "You have ~/.config/opencode/instructionsELF/AGENTS.md but it doesn't include ELF."
+    )
+    print("Note: ELF uses OpenCode (AGENTS.md), not Claude (CLAUDE.md)")
     print("")
     print("[ELF_NEEDS_USER_CHOICE]")
     print("")

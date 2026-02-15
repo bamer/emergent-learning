@@ -38,6 +38,7 @@ from .persistence import router as persistence_router
 from .ceo import router as ceo_router
 from .missions import router as missions_router
 from .system import router as system_router
+from .escalations import router as escalations_router
 
 __all__ = [
     "analytics_router",

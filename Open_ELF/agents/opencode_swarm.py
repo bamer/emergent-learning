@@ -1,7 +1,6 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -57,8 +56,11 @@ except ImportError:
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
-# OpenCode agents directory
-OPENCODE_AGENTS_DIR = Path.home() / ".config" / "opencode" / "agents"
+# OpenCode agents directories (search all)
+OPENCODE_AGENTS_DIRS = [
+    Path.home() / ".opencode" / "agents" / "OPC_ELF_System_Agents",
+    Path.home() / ".config" / "opencode" / "agents",
+]
 
 
 class SwarmMode(Enum):
@@ -96,45 +98,45 @@ class OpenCodeSwarmManager:
     """
 
     def __init__(self):
-        self.agents_dir = OPENCODE_AGENTS_DIR
+        self.agents_dirs = OPENCODE_AGENTS_DIRS
         self.available_agents = self._discover_agents()
 
     def _discover_agents(self) -> Dict[str, Dict[str, Any]]:
-        """Discover available OpenCode agents from the agents directory."""
+        """Discover available OpenCode agents from multiple agent directories."""
         agents = {}
 
-        if not self.agents_dir.exists():
-            return agents
+        for agents_dir in self.agents_dirs:
+            if not agents_dir.exists():
+                continue
 
-        for agent_file in self.agents_dir.glob("*.md"):
-            agent_name = agent_file.stem
-            try:
-                content = agent_file.read_text()
-                # Parse frontmatter if present
-                if content.startswith("---"):
-                    lines = content.split("\n")
-                    frontmatter = {}
-                    in_frontmatter = False
-                    for line in lines[1:]:
-                        if line.startswith("---"):
-                            break
-                        if ":" in line:
-                            key, value = line.split(":", 1)
-                            frontmatter[key.strip()] = value.strip()
+            for agent_file in agents_dir.glob("*.md"):
+                agent_name = agent_file.stem
+                try:
+                    content = agent_file.read_text()
+                    # Parse frontmatter if present
+                    if content.startswith("---"):
+                        lines = content.split("\n")
+                        frontmatter = {}
+                        for line in lines[1:]:
+                            if line.startswith("---"):
+                                break
+                            if ":" in line:
+                                key, value = line.split(":", 1)
+                                frontmatter[key.strip()] = value.strip()
 
-                    agents[agent_name] = {
-                        "name": frontmatter.get("name", agent_name),
-                        "description": frontmatter.get("description", ""),
-                        "file": str(agent_file),
-                    }
-                else:
-                    agents[agent_name] = {
-                        "name": agent_name,
-                        "description": "",
-                        "file": str(agent_file),
-                    }
-            except Exception as e:
-                print(f"Error reading agent {agent_name}: {e}")
+                        agents[agent_name] = {
+                            "name": frontmatter.get("name", agent_name),
+                            "description": frontmatter.get("description", ""),
+                            "file": str(agent_file),
+                        }
+                    else:
+                        agents[agent_name] = {
+                            "name": agent_name,
+                            "description": "",
+                            "file": str(agent_file),
+                        }
+                except Exception as e:
+                    print(f"Error reading agent {agent_name}: {e}")
 
         return agents
 

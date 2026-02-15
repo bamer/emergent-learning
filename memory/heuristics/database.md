@@ -26,3 +26,13 @@ After crashes, FTS5 external content tables can have orphaned shadow tables (emb
 
 ---
 
+## H-276: SQLite CHECK constraints are not easily removable. To allow new values, either recreate the table or simply remove the CHECK constraint entirely and validate in application code instead.
+
+**Confidence**: 0.9
+**Source**: success
+**Created**: 2026-02-15
+
+When expanding from 5 to 50+ categories, the CHECK(category IN ('food', 'drinks', ...)) constraint blocked new values. Removed constraint from schema.sql and validate in app code.
+
+---
+

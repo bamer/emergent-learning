@@ -23,9 +23,11 @@ export default function Header({ isConnected, onOpenCommandPalette }: HeaderProp
   const { heuristics } = useDataContext()
   const { toggleMenu } = useGame()
 
-  // Get golden rules for alerts panel
-  const goldenRules = heuristics
-    .filter(h => h.is_golden)
+  // Get NEW golden rules (recently promoted) for alerts - NOT all golden rules
+  // Only show rules promoted in the last hour as alerts
+  const oneHourAgo = Date.now() - 60 * 60 * 1000
+  const recentGoldenRules = heuristics
+    .filter(h => h.is_golden && h.updated_at && new Date(h.updated_at).getTime() > oneHourAgo)
     .map(h => ({ ...h, id: String(h.id) }))
 
   // Fetch CEO inbox items
@@ -157,7 +159,7 @@ export default function Header({ isConnected, onOpenCommandPalette }: HeaderProp
                 ceoItems={ceoItems}
                 onCeoItemClick={handleItemClick}
                 anomalies={[]}
-                goldenRules={goldenRules as any}
+                goldenRules={recentGoldenRules as any}
                 onDismissAnomaly={(index) => {}}
               />
 

@@ -14,13 +14,29 @@ interface CosmicTimelineViewProps {
 }
 
 const eventConfig: Record<string, { icon: any; color: string; glowColor: string; label: string }> = {
+  // Mission events
   task_start: { icon: Rocket, color: '#38bdf8', glowColor: 'rgba(56, 189, 248, 0.6)', label: 'Mission Launched' },
   task_end: { icon: CheckCircle, color: '#4ade80', glowColor: 'rgba(74, 222, 128, 0.6)', label: 'Mission Complete' },
+  mission_complete: { icon: CheckCircle, color: '#4ade80', glowColor: 'rgba(74, 222, 128, 0.6)', label: 'Mission Complete' },
+
+  // Neural/Knowledge events
   heuristic_consulted: { icon: Brain, color: '#a78bfa', glowColor: 'rgba(167, 139, 250, 0.6)', label: 'Neural Sync' },
+  neural_sync: { icon: Brain, color: '#a78bfa', glowColor: 'rgba(167, 139, 250, 0.6)', label: 'Neural Sync' },
+
+  // Validation events
   heuristic_validated: { icon: Shield, color: '#4ade80', glowColor: 'rgba(74, 222, 128, 0.6)', label: 'Pattern Verified' },
+  pattern_verified: { icon: Shield, color: '#4ade80', glowColor: 'rgba(74, 222, 128, 0.6)', label: 'Pattern Verified' },
+
+  // Anomaly/Detection events (Incident Logged)
   heuristic_violated: { icon: Zap, color: '#f87171', glowColor: 'rgba(248, 113, 113, 0.6)', label: 'Anomaly Detected' },
+  anomaly_detected: { icon: Zap, color: '#f87171', glowColor: 'rgba(248, 113, 113, 0.6)', label: 'Anomaly Detected' },
   failure_recorded: { icon: AlertTriangle, color: '#fb923c', glowColor: 'rgba(251, 146, 60, 0.6)', label: 'Incident Logged' },
+
+  // Golden rule events
   golden_promoted: { icon: Star, color: '#fbbf24', glowColor: 'rgba(251, 191, 36, 0.6)', label: 'Ascension Event' },
+
+  // Fallback for未知 event types
+  unknown: { icon: FileText, color: '#64748b', glowColor: 'rgba(100, 116, 139, 0.6)', label: 'Unknown' },
 };
 
 // Animated star particle

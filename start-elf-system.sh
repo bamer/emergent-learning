@@ -131,11 +131,7 @@ cleanup() {
     RUNNING=false
     
     # Tuer les processus enfants avec kill -9 si nécessaire
-    if [[ -n "${OPENCODE_PID:-}" ]]; then
-        kill "${OPENCODE_PID}" 2>/dev/null || true
-        sleep 1
-        kill -9 "${OPENCODE_PID}" 2>/dev/null || true
-    fi
+
     if [[ -n "${BACKEND_PID:-}" ]]; then
         kill "${BACKEND_PID}" 2>/dev/null || true
         sleep 1
@@ -178,7 +174,9 @@ cleanup() {
     fi
 
     # Kill tous les processus liés à Open_ELF et dashboard
-    pkill -f "opencode serve" 2>/dev/null || true
+    # NEVER kill OpenCode (auto-kill DISABLED per user request)
+    log_info "💡 OpenCode server préservé (auto-kill DISABLED)"
+    # pkill -f "opencode serve" 2>/dev/null || true  # DISABLED - User requested
     pkill -f "uvicorn main:app" 2>/dev/null || true
     pkill -f "event_bridge.py" 2>/dev/null || true
     pkill -f "npm run dev" 2>/dev/null || true

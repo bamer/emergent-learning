@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Heuristic } from '../types'
 import { useAPI } from './useAPI'
+import { useNotificationContext } from '../context/NotificationContext'
 
 interface UseHeuristicsOptions {
   onStatsChange?: () => void
@@ -11,6 +12,7 @@ export function useHeuristics(options?: UseHeuristicsOptions) {
   const [heuristics, setHeuristics] = useState<Heuristic[]>([])
   const api = useAPI()
   const { onStatsChange, scope = 'global' } = options || {}
+  const { addNotification } = useNotificationContext()
   const scopeRef = useRef(scope)
   scopeRef.current = scope
 
@@ -49,6 +51,18 @@ export function useHeuristics(options?: UseHeuristicsOptions) {
     }
   }, [api, onStatsChange])
 
+  const promoteToSuperGolden = useCallback(async (id: number) => {
+    try {
+      await api.post(`/api/v1/golden-rules/${id}/promote-to-super`)
+      // The heuristic stays golden but now it's also a super golden rule
+      addNotification('Super Golden Rule', 'Promoted to Super Golden Rule!', { type: 'success' })
+      if (onStatsChange) onStatsChange()
+    } catch (err) {
+      console.error('Failed to promote to super golden:', err)
+      throw err
+    }
+  }, [api, onStatsChange, addNotification])
+
   const deleteHeuristic = useCallback(async (id: number) => {
     try {
       await api.del(`/api/v1/heuristics/${id}`)
@@ -84,9 +98,10 @@ export function useHeuristics(options?: UseHeuristicsOptions) {
     heuristics,
     setHeuristics,
     promoteHeuristic,
+    promoteToSuperGolden,
     demoteHeuristic,
     deleteHeuristic,
     updateHeuristic,
     reloadHeuristics,
-  }), [heuristics, promoteHeuristic, demoteHeuristic, deleteHeuristic, updateHeuristic, reloadHeuristics])
+  }), [heuristics, promoteHeuristic, promoteToSuperGolden, demoteHeuristic, deleteHeuristic, updateHeuristic, reloadHeuristics])
 }

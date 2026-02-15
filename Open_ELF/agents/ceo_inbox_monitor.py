@@ -2,7 +2,7 @@
 
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -83,6 +83,19 @@ class CEOInboxMonitor:
         except Exception as e:
             logger.warning(f"⚠️ AgentManager not available: {e}")
 
+        # Escalation tracker for database storage
+        self.escalation_tracker = None
+        try:
+            from escalation_tracker import create_escalation, update_escalation_response
+
+            self.escalation_tracker = {
+                "create": create_escalation,
+                "update": update_escalation_response,
+            }
+            logger.info("✅ Escalation tracker initialized")
+        except Exception as e:
+            logger.warning(f"⚠️ Escalation tracker not available: {e}")
+
         # Ensure directories exist
         CEO_INBOX_DIR.mkdir(exist_ok=True)
         CEO_ARCHIVE_DIR.mkdir(exist_ok=True)
@@ -106,6 +119,8 @@ class CEOInboxMonitor:
         """Process a single escalation file via CEO agent."""
         logger.info(f"📬 Processing escalation: {file_path.name}")
 
+        escalation_id = None
+
         try:
             # Read escalation file for reference only (not passed to AI)
             content = file_path.read_text()
@@ -113,6 +128,19 @@ class CEOInboxMonitor:
 
             # Extract escalation details for logging only
             escalation_data = self._parse_escalation(content)
+
+            # Create escalation record in database
+            if self.escalation_tracker:
+                try:
+                    escalation_id = self.escalation_tracker["create"](
+                        source_agent=escalation_data.get("from_role", "unknown"),
+                        target_agent="ceo",
+                        escalation_file_path=str(file_path.relative_to(ROOT_DIR)),
+                        escalation_content=content,
+                        severity=self._extract_severity(content),
+                    )
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to create escalation record: {e}")
 
             # If AgentManager available, process with CEO agent
             if self.agent_manager:
@@ -145,11 +173,23 @@ Current time: {datetime.now().strftime("%Y-%m-%d %H:%M")}"""
                         f"✅ CEO agent processed escalation: {response[:200]}..."
                     )
 
+                    # Update escalation record with response
+                    if escalation_id and self.escalation_tracker:
+                        try:
+                            self.escalation_tracker["update"](
+                                escalation_id=escalation_id,
+                                response_content=response,
+                                response_agent="ceo",
+                            )
+                        except Exception as e:
+                            logger.warning(f"⚠️ Failed to update escalation record: {e}")
+
                     return {
                         "status": "processed",
                         "ceo_response": response,
                         "file_path": str(file_path),
                         "timestamp": datetime.now().isoformat(),
+                        "escalation_id": escalation_id,
                     }
                 else:
                     logger.error(f"❌ CEO agent failed: {result.get('error')}")
@@ -184,6 +224,20 @@ Current time: {datetime.now().strftime("%Y-%m-%d %H:%M")}"""
         data["rule_name"] = "unknown"
 
         return data
+
+    def _extract_severity(self, content: str) -> str:
+        """Extract severity level from escalation content."""
+        content_lower = content.lower()
+
+        # Check for severity indicators
+        if "critical" in content_lower or "🚨" in content:
+            return "critical"
+        elif "urgent" in content_lower or "emergency" in content_lower:
+            return "high"
+        elif "warning" in content_lower or "⚠️" in content:
+            return "medium"
+        else:
+            return "low"
 
     def _basic_escalation_processing(
         self, escalation_data: Dict, file_path: Path
