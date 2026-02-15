@@ -1,7 +1,6 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -434,16 +433,35 @@ class ContextBuilderMixin:
                     except Exception as e:
                         log_debug("context", f"Project context detection failed: {e}")
 
-                # Tier 1: Golden Rules
+                # Tier 1: Golden Rules (now contextual!)
+                # Prepare context parameters for golden rules filtering
+                golden_project_path = None
+                golden_project_domains = None
+                if project_ctx and project_ctx.has_project_context():
+                    golden_project_path = str(project_ctx.elf_root)
+                    if project_ctx.domains:
+                        golden_project_domains = list(project_ctx.domains)
+                        log_debug(
+                            "context",
+                            f"Golden rules contextual to: {golden_project_path} with domains: {golden_project_domains}",
+                        )
+
                 # For minimal depth, only load configured always_load_categories
                 if depth == "minimal":
                     always_cats = get_always_load_categories()
-                    golden_rules = await self.get_golden_rules(categories=always_cats)
+                    golden_rules = await self.get_golden_rules(
+                        categories=always_cats,
+                        project_path_str=golden_project_path,
+                        project_domains=golden_project_domains,
+                    )
                     context_parts.append(
                         f"# TIER 1: Golden Rules ({', '.join(always_cats)})\n"
                     )
                 else:
-                    golden_rules = await self.get_golden_rules()
+                    golden_rules = await self.get_golden_rules(
+                        project_path_str=golden_project_path,
+                        project_domains=golden_project_domains,
+                    )
                     context_parts.append("# TIER 1: Golden Rules\n")
 
                 # Append custom golden rules if they exist
@@ -529,6 +547,7 @@ class ContextBuilderMixin:
                                 threshold=0.5,  # Lower threshold for broader coverage in minimal mode
                                 limit=3,  # Only top 3 in minimal mode
                                 domain=domain,
+                                project_path=golden_project_path,  # Contextual semantic search
                             )
                             try:
                                 await searcher.cleanup()
@@ -607,6 +626,7 @@ class ContextBuilderMixin:
                             threshold=0.6,  # Lower threshold for broader coverage
                             limit=limits.get("heuristics", 5),
                             domain=domain,
+                            project_path=golden_project_path,  # Contextual semantic search
                         )
                         try:
                             await searcher.cleanup()
@@ -639,7 +659,10 @@ class ContextBuilderMixin:
                 if domain:
                     context_parts.append(f"## Domain: {domain}\n\n")
                     domain_data = await self.query_by_domain(
-                        domain, limit=limits["heuristics"], timeout=timeout
+                        domain,
+                        limit=limits["heuristics"],
+                        timeout=timeout,
+                        project_path=golden_project_path,  # Contextual domain query
                     )
 
                     if domain_data["heuristics"]:
@@ -1451,15 +1474,25 @@ class ContextBuilderMixin:
 
     # ========== GOLDEN RULES AND HEURISTIC QUERIES ==========
 
-    async def get_golden_rules(self, categories: Optional[List[str]] = None) -> str:
+    async def get_golden_rules(
+        self,
+        categories: Optional[List[str]] = None,
+        project_path_str: Optional[str] = None,
+        project_domains: Optional[List[str]] = None,
+    ) -> str:
         """
         Get golden rules from database (preferred) with fallback to file.
 
         Fetches is_golden=True heuristics from database, which are the authoritative
         source of golden rules. Falls back to golden-rules.md if database is empty.
 
+        Contextual mode: When project_path_str is provided, filters for project-specific
+        and global golden rules relevant to the project.
+
         Args:
             categories: Optional list of categories to filter by.
+            project_path_str: Project path for contextual filtering (None = global mode).
+            project_domains: List of domains from project config for domain filtering.
 
         Returns:
             Formatted golden rules content
@@ -1483,19 +1516,85 @@ class ContextBuilderMixin:
                     all_golden = []
                     async for h in golden_query:
                         all_golden.append(h)
-                        # Filter by category if specified
-                        if not categories:
-                            golden_rules.append(h)
-                        elif h.domain:
-                            # Match category by substring (e.g., "core" matches "core-principles")
-                            categories_lower = [c.lower() for c in categories]
-                            domain_lower = h.domain.lower()
-                            if any(cat in domain_lower for cat in categories_lower):
-                                golden_rules.append(h)
 
-                    # If filtering returned no results, return all golden rules
-                    if not golden_rules and categories:
-                        golden_rules = all_golden
+                        # ===== SUPER GOLDEN RULES (always included) =====
+                        # Super golden rules are:
+                        # 1. Core domain rules ("core", "core-principles", "fundamental", "constitutional")
+                        #    - These apply regardless of project location (first priority)
+                        # 2. Global (project_path IS NULL) - fundamental rules that apply everywhere
+                        is_super_golden = False
+
+                        # Check if core domain (fundamental principles) - FIRST PRIORITY
+                        if h.domain:
+                            domain_lower = h.domain.lower()
+                            core_domains = [
+                                "core",
+                                "core-principles",
+                                "fundamental",
+                                "constitutional",
+                            ]
+                            if any(core in domain_lower for core in core_domains):
+                                is_super_golden = True
+                                log_debug(
+                                    "context",
+                                    f"[SUPER] Domain-based: {h.rule[:50]}... (domain: {h.domain})",
+                                )
+
+                        # Check if global (NULL project_path) - SECONDARY PRIORITY
+                        elif h.project_path is None:
+                            is_super_golden = True
+                            log_debug(
+                                "context",
+                                f"[SUPER] NULL path: {h.rule[:50]}... (domain: {h.domain})",
+                            )
+
+                        # Super golden rules ALWAYS included
+                        if is_super_golden:
+                            golden_rules.append(h)
+                            continue
+
+                        # ===== CONTEXTUAL FILTERING (non-super rules) =====
+                        # 1. Filter by project_path (location awareness)
+                        #    - NULL = already handled as super
+                        #    - matching path = project-specific
+                        #    - non-matching path = other project (exclude)
+                        if project_path_str is not None and h.project_path is not None:
+                            # Both non-null: check if paths match
+                            from pathlib import Path
+
+                            try:
+                                heur_path = Path(h.project_path).resolve()
+                                proj_path = Path(project_path_str).resolve()
+                                if heur_path != proj_path:
+                                    continue  # Skip heuristics from other projects
+                            except Exception as e:
+                                log_debug("context", f"Path comparison failed: {e}")
+                                continue
+
+                        # 2. Filter by category/domain
+                        #    Priority: categories > project_domains > no filter
+                        target_domains = categories or project_domains
+
+                        if target_domains:
+                            if not h.domain:
+                                continue  # Skip rules without domain when filtering requested
+
+                            # Match domain by substring (e.g., "core" matches "core-principles")
+                            target_domains_lower = [d.lower() for d in target_domains]
+                            domain_lower = h.domain.lower()
+                            if any(dom in domain_lower for dom in target_domains_lower):
+                                golden_rules.append(h)
+                                log_debug(
+                                    "context",
+                                    f"[PROJECT] Including: {h.rule[:50]}... (domain: {h.domain})",
+                                )
+                        else:
+                            # No domain filter: include all location-matching rules
+                            golden_rules.append(h)
+                            log_debug(
+                                "context",
+                                f"[PROJECT] Including: {h.rule[:50]}... (no domain filter)",
+                            )
 
                     # Format golden rules for display
                     if golden_rules:
@@ -1517,13 +1616,20 @@ class ContextBuilderMixin:
                             lines.append("\n---\n")
 
                         return "".join(lines)
+
         except Exception as e:
+            # CRITICAL: Always log errors - never silent failures
+            _LOGGER = _LOGGER if "_LOGGER" in locals() else logging.getLogger("context")
+            _LOGGER.error(
+                f"Failed to fetch golden rules from database: {e}", exc_info=True
+            )
             log_debug("context", f"Failed to fetch golden rules from database: {e}")
 
         # Fallback to golden-rules.md file
         golden_rules_path = Path(self.base_path) / "memory" / "golden-rules.md"
 
         if not golden_rules_path.exists():
+            log_debug("context", f"Golden rules file not found at {golden_rules_path}")
             return "# Golden Rules\n\nNo golden rules have been established yet."
 
         cache_key = str(golden_rules_path)
@@ -1596,18 +1702,31 @@ class ContextBuilderMixin:
             return filtered_result
 
         except Exception as e:
+            # CRITICAL: Always log errors - never silent failures
+            _LOGGER.error(
+                f"Failed to read golden rules from file {golden_rules_path}: {e}",
+                exc_info=True,
+            )
+            log_debug("context", f"Golden rules file read failed: {e}")
             return f"# Error Reading Golden Rules\n\nError: {str(e)}"
 
     async def query_by_domain(
-        self, domain: str, limit: int = 10, timeout: Optional[int] = None
+        self,
+        domain: str,
+        limit: int = 10,
+        timeout: Optional[int] = None,
+        project_path: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Get heuristics and learnings for a specific domain (async).
+
+        Now supports contextual filtering by project_path!
 
         Args:
             domain: The domain to query
             limit: Maximum number of results
             timeout: Query timeout in seconds
+            project_path: Optional project path for contextual filtering
 
         Returns:
             Dictionary containing heuristics and learnings for the domain
@@ -1618,25 +1737,41 @@ class ContextBuilderMixin:
             m = get_manager()
             async with m:
                 async with m.connection():
-                    heuristics_query = (
-                        Heuristic.select()
-                        .where(Heuristic.domain == domain)
-                        .order_by(
-                            Heuristic.confidence.desc(),
-                            Heuristic.times_validated.desc(),
-                        )
-                        .limit(limit)
+                    # Build heuristics query with optional project filtering
+                    heuristics_query = Heuristic.select().where(
+                        Heuristic.domain == domain
                     )
+
+                    # Apply project filter if specified (include global + project-specific)
+                    if project_path is not None:
+                        heuristics_query = heuristics_query.where(
+                            (Heuristic.project_path.is_null())
+                            | (Heuristic.project_path == project_path)
+                        )
+
+                    heuristics_query = heuristics_query.order_by(
+                        Heuristic.confidence.desc(),
+                        Heuristic.times_validated.desc(),
+                    ).limit(limit)
+
                     heuristics = []
                     async for h in heuristics_query:
                         heuristics.append(h.__data__.copy())
 
-                    learnings_query = (
-                        Learning.select()
-                        .where(Learning.domain == domain)
-                        .order_by(Learning.created_at.desc())
-                        .limit(limit)
-                    )
+                    # Build learnings query with optional project filtering
+                    learnings_query = Learning.select().where(Learning.domain == domain)
+
+                    # Apply project filter if specified (include global + project-specific)
+                    if project_path is not None:
+                        learnings_query = learnings_query.where(
+                            (Learning.project_path.is_null())
+                            | (Learning.project_path == project_path)
+                        )
+
+                    learnings_query = learnings_query.order_by(
+                        Learning.created_at.desc()
+                    ).limit(limit)
+
                     learnings = []
                     async for l in learnings_query:
                         learnings.append(l.__data__.copy())

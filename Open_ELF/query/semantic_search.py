@@ -1,7 +1,6 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -139,7 +138,9 @@ class SemanticSearcher:
                 self.embedding_dim = self.embedder.embedding_dim
                 return
             except Exception as e:
-                print(f"Warning: Failed to initialize Ollama embedder: {e}")
+                log_debug(
+                    "semantic_search", f"Failed to initialize Ollama embedder: {e}"
+                )
 
         # Fallback: use OpenAI if available
         if OPENAI_AVAILABLE and os.environ.get("OPENAI_API_KEY"):
@@ -161,7 +162,7 @@ class SemanticSearcher:
                     for key, vec in data.items():
                         self._cache[key] = np.array(vec)
             except Exception as e:
-                print(f"Warning: Failed to load embedding cache: {e}")
+                log_debug("semantic_search", f"Failed to load embedding cache: {e}")
 
     async def _save_heuristic_embeddings(self):
         """Save heuristic embeddings to disk cache."""
@@ -173,7 +174,7 @@ class SemanticSearcher:
             with open(cache_file, "w") as f:
                 json.dump(data, f)
         except Exception as e:
-            print(f"Warning: Failed to save embedding cache: {e}")
+            log_debug("semantic_search", f"Failed to save embedding cache: {e}")
 
     def _get_cache_key(self, text: str) -> str:
         """Generate cache key for text."""
@@ -298,18 +299,21 @@ class SemanticSearcher:
         threshold: float = 0.75,
         limit: int = 5,
         domain: Optional[str] = None,
+        project_path: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Find heuristics semantically relevant to the task.
+        Find heuristics semantically relevant to the task (now contextual!).
 
         Args:
             task: Task description to match against
             threshold: Minimum similarity score (0.0-1.0)
             limit: Maximum number of results
             domain: Optional domain to filter by first
+            project_path: Optional project path for contextual filtering (NULL = global + project)
 
         Returns:
             List of heuristics with similarity scores, sorted by relevance
+            Includes global rules (project_path IS NULL) + project-specific rules when project_path provided
         """
         # Get task embedding
         task_embedding = await self.embed(task)
@@ -322,11 +326,21 @@ class SemanticSearcher:
             async with m.connection():
                 query = Heuristic.select()
 
+                # ===== CONTEXTUAL FILTERING =====
+                # Apply project path filter if specified
+                if project_path is not None:
+                    # Include global rules (NULL) AND project-specific rules
+                    # This mirrors the logic in get_golden_rules()
+                    query = query.where(
+                        (Heuristic.project_path.is_null())
+                        | (Heuristic.project_path == project_path)
+                    )
+
                 # Filter by domain if specified
                 if domain:
                     query = query.where(Heuristic.domain == domain)
 
-                # Get all heuristics (or domain-filtered)
+                # Get all heuristics (or domain/project-filtered)
                 async for h in query:
                     heuristics.append(h.__data__.copy())
 

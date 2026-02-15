@@ -103,7 +103,9 @@ class EventBridge:
 
         # SSE JSON buffer for handling incomplete JSON across chunks
         self._sse_buffer = ""
-        self._sse_buffer_max_size = 50000  # 50KB max buffer
+        self._sse_buffer_max_size = (
+            500000  # 500KB max buffer (increased from 50KB to fix overflow)
+        )
 
         # Singleton lock tracking
         self._lock_acquired = False
