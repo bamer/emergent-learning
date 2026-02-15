@@ -12,6 +12,8 @@ An interactive real-time dashboard for monitoring and managing your Claude Code 
 - **Natural Language Query** - Ask questions about your data
 - **Visual Workflow Builder** - Create automation rules
 - **Anomaly Detection** - Get alerts for unusual patterns
+- **Task Management** - Live task kanban with detailed views (NEW)
+- **Task Actions** - Start, cancel, restart, escalate, and archive tasks (NEW)
 
 ## Quick Start
 
@@ -72,10 +74,38 @@ dashboard-app/
 - `POST /api/v1/actions/open-editor` - Open file in VS Code
 - `POST /api/v1/query` - Natural language query
 
+### Live System (SSE)
+- `GET /api/v1/live/tasks` - SSE stream for task updates
+- `GET /api/v1/live/trails` - SSE stream for trail updates
+- `GET /api/v1/live/sessions` - All sessions
+
+### Task Management
+- `POST /api/v1/live/task/{session_id}/{task_id}/start` - Start a pending/blocked task
+- `POST /api/v1/live/task/{session_id}/{task_id}/stop` - Stop/cancel an in-progress task
+- `POST /api/v1/live/task/{session_id}/{task_id}/relaunch` - Relaunch a completed/failed task
+- `POST /api/v1/live/task/{session_id}/{task_id}/status` - Change task status
+- `POST /api/v1/live/task/{session_id}/{task_id}/escalate` - Escalate blocked task to orchestrator (NEW)
+- `POST /api/v1/live/task/{session_id}/{task_id}/archive` - Archive completed/failed task from kanban (NEW)
+- `POST /api/v1/live/signal` - Send note to task
+
 ### WebSocket
 - `WS /ws` - Real-time updates
 
 ## Components
+
+### Live Panel (NEW)
+Real-time task monitoring and management:
+- **Task Kanban** - Visual task board with PENDING, IN PROGRESS, FAILED, COMPLETED columns
+- **Task Detail Modal** - Full mission details with logs, output, dependencies, and actions
+- **Task Actions**:
+  - Start - Begin pending or blocked tasks
+  - Cancel - Stop in-progress tasks
+  - Restart - Retry blocked or error tasks
+  - Escalate - Send blocked tasks to orchestrator for analysis
+  - Archive - Hide completed/failed tasks from kanban (keeps in storage)
+- **Trail Feed** - Live signal propagation stream
+- **Agents Panel** - ELF swarm agent status
+- **Mission Modal** - Create new missions with pre-built prompts
 
 ### Overview Tab
 - Stats bar with key metrics

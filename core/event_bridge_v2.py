@@ -304,9 +304,9 @@ class EventBridge:
 
         # Start session polling as backup (for tools not captured via SSE)
         # Use reasonable polling interval (10 seconds) to avoid overloading server
-        polling_thread = threading.Thread(target=self._poll_sessions, daemon=True)
-        polling_thread.start()
-        logger.info("🔄 Session polling started (backup, 10s interval)")
+        # polling_thread = threading.Thread(target=self._poll_sessions, daemon=True)
+        # polling_thread.start()
+        # logger.info("🔄 Session polling started (backup, 10s interval)")
 
         # Start status server (health and status endpoints)
         self._start_status_server()
@@ -342,10 +342,21 @@ class EventBridge:
 
         sse_events_seen = set()
         last_data_time = time.time()
-        data_timeout = 120  # 2 minutes without data = timeout
+        # Increased from 120s to 600s (10 min) to match HTTP timeout
+        # This reduces unnecessary reconnections during quiet periods
+        data_timeout = 600
+        reconnect_count = 0
+        max_reconnect_backoff = 60  # Max backoff between reconnects
 
         while self.running:
             try:
+                # Exponential backoff with jitter for reconnections
+                if reconnect_count > 0:
+                    backoff = min(2 ** reconnect_count, max_reconnect_backoff)
+                    sleep_time = backoff + (hash(str(time.time())) % 5)
+                    logger.info(f"⏳ Reconnecting in {sleep_time:.1f}s (attempt {reconnect_count})")
+                    time.sleep(sleep_time)
+
                 response = self.http_session.get(
                     f"{OPENCODE_SERVER}/global/event",
                     stream=True,
@@ -353,17 +364,21 @@ class EventBridge:
                         "Accept": "text/event-stream",
                         "Cache-Control": "no-cache",
                     },
-                    timeout=150,  # Total connection timeout
+                    timeout=600,  # Total connection timeout (10 min)
                 )
 
                 if response.status_code != 200:
                     logger.error(
                         f"Failed to connect to event stream: {response.status_code}"
                     )
+                    reconnect_count += 1
                     time.sleep(20)
                     continue
 
+                # Successfully connected - reset counters
+                reconnect_count = 0
                 last_data_time = time.time()
+                sse_events_seen = set()  # Reset for new connection
 
                 for line in response.iter_lines(chunk_size=8192, decode_unicode=True):
                     if not self.running:
@@ -383,29 +398,34 @@ class EventBridge:
                             logger.error(f"Error processing SSE line: {e}")
 
                     # Check if we're waiting too long for data
-                    if time.time() - last_data_time > data_timeout:
+                    time_since_data = time.time() - last_data_time
+                    if time_since_data > data_timeout:
                         logger.warning(
                             f"⚠️ No data for {data_timeout}s, reconnecting..."
                         )
                         break
 
-                # If we only see server.connected, log warning
+                # If we only see server.connected, log warning once
                 if sse_events_seen == {"server.connected"}:
                     logger.warning(
-                        "⚠️ SSE only sending server.connected - tool events not emitted via SSE"
+                        "⚠️ SSE only sending server.connected - tool events emitted via SSE"
                     )
-                    logger.warning(
-                        "   Falling back to session polling (10s interval) for tool detection"
-                    )
-
+    
             except requests.exceptions.ChunkedEncodingError:
-                logger.info("⚠️ SSE stream disconnected, reconnecting...")
+                logger.info("⚠️ SSE stream disconnected (ChunkedEncodingError), reconnecting...")
+                reconnect_count += 1
                 time.sleep(2)
             except requests.exceptions.ReadTimeout:
                 logger.info("⚠️ SSE read timeout, reconnecting...")
+                reconnect_count += 1
+                time.sleep(5)
+            except requests.exceptions.ConnectionError as e:
+                logger.warning(f"⚠️ SSE connection error: {e}, reconnecting...")
+                reconnect_count += 1
                 time.sleep(5)
             except Exception as e:
-                logger.error(f"❌ Error listening to events: {e}")
+                logger.error(f"❌ Error listening to events: {e}", exc_info=True)
+                reconnect_count += 1
                 time.sleep(5)
 
     def _extract_sse_event_type(self, line: str) -> str:
@@ -426,44 +446,54 @@ class EventBridge:
         return ""
 
     def _process_sse_line(self, line: str):
-        """Process a single SSE line with buffer for incomplete JSON."""
+        """Process a single SSE line - parse each data: line individually."""
         if line.startswith("data:"):
             data_str = line[5:].strip()
             if data_str:
-                # Accumulate data in buffer
-                self._sse_buffer += data_str
-
-                # Limit buffer size to prevent memory issues
-                if len(self._sse_buffer) > self._sse_buffer_max_size:
-                    logger.warning(
-                        f"SSE buffer overflow ({len(self._sse_buffer)} chars), clearing"
-                    )
-                    self._sse_buffer = ""
-                    return
-
-                # Try to parse complete JSON
+                # Try to parse this single data: line as JSON
+                # SSE events are separate - each data: line is a complete event
                 try:
-                    data = json.loads(self._sse_buffer)
-                    self._sse_buffer = ""  # Clear buffer on success
+                    data = json.loads(data_str)
+                    # Success! Clear any stale buffer and process this event
+                    if self._sse_buffer:
+                        logger.debug(f"Clearing stale buffer ({len(self._sse_buffer)} chars)")
+                        self._sse_buffer = ""
                     self._handle_event(data)
                 except json.JSONDecodeError:
-                    # Incomplete JSON, wait for more data
-                    # Only log occasionally to avoid spam
-                    if len(self._sse_buffer) > 1000:
-                        logger.debug(
-                            f"SSE buffer accumulating ({len(self._sse_buffer)} chars)..."
+                    # This data: line alone is not valid JSON
+                    # Could be a chunked response - accumulate but don't spam
+                    self._sse_buffer += data_str
+                    
+                    # Limit buffer size to prevent memory issues
+                    if len(self._sse_buffer) > self._sse_buffer_max_size:
+                        logger.warning(
+                            f"SSE buffer overflow ({len(self._sse_buffer)} chars), clearing"
                         )
-                    return
+                        self._sse_buffer = ""
+                        return
+                    
+                    # Try to parse the accumulated buffer
+                    try:
+                        data = json.loads(self._sse_buffer)
+                        self._sse_buffer = ""
+                        self._handle_event(data)
+                    except json.JSONDecodeError:
+                        # Still incomplete - only log occasionally
+                        if len(self._sse_buffer) > 1000 and len(self._sse_buffer) < 2000:
+                            logger.debug(
+                                f"SSE buffer accumulating ({len(self._sse_buffer)} chars)..."
+                            )
+                        return
         elif line.strip() == "":
-            # Empty line (SSE double newline) - try to flush buffer
+            # Empty line (SSE double newline) - try to flush any pending buffer
             if self._sse_buffer.strip():
                 try:
                     data = json.loads(self._sse_buffer)
                     self._sse_buffer = ""
                     self._handle_event(data)
                 except json.JSONDecodeError as e:
-                    logger.warning(
-                        f"SSE JSON parse failed after flush: {e}, data: {self._sse_buffer[:200]}..."
+                    logger.debug(
+                        f"SSE JSON parse failed after empty line: {e}, clearing buffer"
                     )
                     self._sse_buffer = ""
         # Silently ignore SSE control lines (event:, id:, :comments)

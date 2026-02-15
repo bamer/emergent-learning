@@ -796,6 +796,113 @@ EVENT_TYPES = [
 ]
 
 
+@router.get("/timeline/events-by-type")
+async def get_timeline_events_by_type(
+    per_type_limit: int = Query(default=20, le=50, description="Max events per type"),
+):
+    """
+    Get the most recent events for EACH event type.
+    
+    This returns the last N events for each event type, giving a balanced
+    view of recent activity across all event types rather than just the most recent events.
+    
+    Args:
+        per_type_limit: Number of recent events to return per type (max 50)
+    
+    Returns:
+        Dictionary with events grouped by type
+    """
+    try:
+        import sys
+        from pathlib import Path
+
+        current = Path(__file__).resolve()
+        for parent in current.parents:
+            open_elf_path = parent.parent / "Open_ELF"
+            if open_elf_path.exists():
+                sys.path.insert(0, str(open_elf_path))
+                break
+
+        from timeline_dashboard.event_adapter import get_chronicle_events
+
+        # Define event type mapping locally to avoid import issues
+        EVENT_TYPE_MAPPING = {
+            "agent_started": "task_start",
+            "agent_stopped": "task_end",
+            "agent_spawned": "task_start",
+            "heuristic_created": "heuristic_consulted",
+            "heuristic_validated": "heuristic_validated",
+            "heuristic_violated": "heuristic_violated",
+            "heuristic_consulted": "heuristic_consulted",
+            "sentinel_check": "neural_sync",
+            "sentinel_cycle": "neural_sync",
+            "system_verification": "pattern_verified",
+            "tool_poll": "task_start",
+            "message.updated": "task_start",
+            "message.part.updated": "task_start",
+            "message.created": "task_start",
+            "session.updated": "task_start",
+            "session.status": "task_end",
+            "session.idle": "task_end",
+            "session.ended": "task_end",
+            "session.started": "task_start",
+            "server.heartbeat": "neural_sync",
+            "checkin": "task_start",
+            "checkout": "task_end",
+            "swarm_execution": "task_start",
+            "workflow_started": "task_start",
+            "workflow_completed": "task_end",
+            "escalation_created": "anomaly_detected",
+            "issue_resolved": "mission_complete",
+            "error_logged": "failure_recorded",
+            "question_received": "neural_sync",
+            "response_sent": "neural_sync",
+            "golden_promoted": "golden_promoted",
+            "unknown": "task_start",
+        }
+        
+        # Get unique mapped event types (timeline types)
+        timeline_types = set(EVENT_TYPE_MAPPING.values())
+        
+        result = {
+            "status": "ok",
+            "events_by_type": {},
+            "total_types": 0,
+        }
+        
+        # For each timeline type, get the most recent events
+        for event_type in sorted(timeline_types):
+            # Find original event types that map to this timeline type
+            original_types = [ot for ot, tt in EVENT_TYPE_MAPPING.items() if tt == event_type]
+            
+            all_events = []
+            for orig_type in original_types:
+                events = get_chronicle_events(
+                    event_type=orig_type,
+                    limit=per_type_limit,
+                    days_back=30,  # Look back 30 days for enough events
+                )
+                all_events.extend(events)
+            
+            # Sort by timestamp and take top N
+            all_events.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+            result["events_by_type"][event_type] = all_events[:per_type_limit]
+        
+        result["total_types"] = len(result["events_by_type"])
+        
+        # Calculate total events
+        total_events = sum(len(v) for v in result["events_by_type"].values())
+        result["total_events"] = total_events
+        
+        return result
+
+    except ImportError as e:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=500, detail=f"Event Chronicle not available: {str(e)}"
+        )
+
+
 @router.get("/timeline/event-types")
 async def get_event_types():
     """

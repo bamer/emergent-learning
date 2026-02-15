@@ -299,7 +299,7 @@ class MissionStore:
                 "description": mission.mission_text,
                 "status": task_status,
                 "session_id": "elf_missions",
-                "session_name": f"ELF Missions {datetime.now().strftime('%Y-%m-%d')}",
+                "session_name": f"ELF Missions - {mission.created_at.split('T')[0] if mission.created_at else datetime.now().strftime('%Y-%m-%d')}",
                 "notes": [
                     {
                         "text": log.get("message", ""),

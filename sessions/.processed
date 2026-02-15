@@ -11,7 +11,8 @@
     "2026-02-10_session.jsonl",
     "manual_2026-02-10_session.jsonl",
     "test_session.jsonl",
-    "2026-02-14_session.jsonl"
+    "2026-02-14_session.jsonl",
+    "2026-02-15_session.jsonl"
   ],
-  "last_processed": "2026-02-14T16:31:27.518285"
+  "last_processed": "2026-02-16T00:57:08.803439"
 }

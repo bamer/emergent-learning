@@ -17,24 +17,24 @@ Less than 1 feature shipped, no performance gain, engagement flat
 
 ## Variables
 
-[What parameters are we varying?]
+Feature set A vs Feature set B vs Feature set C
+Implementation timeline variations
+User segmentation approaches
 
 ## Controls
 
-[What are we keeping constant?]
+Same user base
+Same measurement metrics
+Same deployment environment
 
 ## Methodology
 
-[How will we conduct this experiment?]
+A/B/C testing with user segments
+Progressive rollout across user groups
+Performance monitoring and engagement tracking
 
 ## Expected Outcomes
 
-[What do we expect to learn?]
-## Methodology
-[How will we conduct this experiment?
-
-## Variables
-[What parameters are we varying?]
-
-## Controls
-[What are we keeping constant?]
+Identification of most effective feature set
+Optimal implementation timeline
+User segmentation insights for future feature development

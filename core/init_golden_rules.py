@@ -25,22 +25,6 @@ except ImportError:
     logger = logging.getLogger("init_golden_rules")
 
 
-def extract_golden_rules():
-    """Extract golden rules from markdown file."""
-    if not MARKDOWN_FILE.exists():
-        logger.error(f"Fichier non trouvé: {MARKDOWN_FILE}")
-        return []
-
-    content = MARKDOWN_FILE.read_text()
-
-    # Match rules like "## 1. Rule Title"
-    rules = []
-    for match in re.finditer(r"^##\s+\d+\.\s+(.+)$", content, re.MULTILINE):
-        title = match.group(1).strip()
-        if title and title != "How Rules Become Golden":
-            rules.append(title)
-
-    return rules
 
 
 def init_golden_rules():
@@ -49,10 +33,6 @@ def init_golden_rules():
         logger.error(f"Base de données non trouvée: {DB_PATH}")
         return False
 
-    rules = extract_golden_rules()
-    if not rules:
-        logger.warning("Aucune règle trouvée dans le fichier markdown")
-        return False
 
     logger.info(f"{len(rules)} règles trouvées dans golden-rules.md")
 

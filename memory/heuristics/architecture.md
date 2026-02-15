@@ -34,3 +34,13 @@ The Emergent Learning Framework demonstrates excellent API architecture with 15+
 
 ---
 
+## H-290: God Object anti-pattern: When a file exceeds 500 lines, consider splitting into modules. The modal.js at 1071 lines was refactored into 5 focused modules (~150 lines each) for better maintainability.
+
+**Confidence**: 0.9
+**Source**: success
+**Created**: 2026-02-15
+
+Large files become unmaintainable. Split by responsibility: each modal type (expense, revenue, invoice) gets its own module with a factory to orchestrate.
+
+---
+

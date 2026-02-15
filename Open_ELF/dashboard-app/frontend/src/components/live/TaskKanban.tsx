@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
-import { ChevronDown, ChevronRight, Link2, AlertCircle, Clock, CheckCircle2, Circle, X, Play, Square, RefreshCw } from 'lucide-react'
+import { ChevronDown, ChevronRight, Link2, AlertCircle, Clock, CheckCircle2, Circle, X, XCircle, Play, Square, RefreshCw, Eye, Archive } from 'lucide-react'
+import { TaskDetailModal } from './TaskDetailModal'
 
 export interface Task {
   id: string
   subject: string
   description?: string
-  status: 'pending' | 'in_progress' | 'completed' | 'blocked' | 'cancelled' | 'error'
+  status: 'pending' | 'in_progress' | 'completed' | 'blocked' | 'cancelled' | 'error' | 'failed'
   activeForm?: string
   blocks?: string[]
   blockedBy?: string[]
@@ -14,6 +15,8 @@ export interface Task {
   result?: string
   session_id: string
   session_name?: string
+  archived?: boolean  // If true, task is archived and hidden from kanban
+  archived_at?: string
 }
 
 export interface TaskSessions {
@@ -30,6 +33,9 @@ interface TaskKanbanProps {
   onStartTask?: (sessionId: string, taskId: string) => void
   onStopTask?: (sessionId: string, taskId: string) => void
   onRelaunchTask?: (sessionId: string, taskId: string) => void
+  onEscalate?: (taskId: string) => void
+  onArchive?: (taskId: string) => void
+  onRestart?: (taskId: string) => void
 }
 
 const STATUS_CONFIG = {
@@ -75,6 +81,13 @@ const STATUS_CONFIG = {
     bgColor: 'bg-red-500/10',
     borderColor: 'border-red-500/30',
   },
+  failed: {
+    label: 'Failed',
+    icon: AlertCircle,
+    color: 'text-red-400',
+    bgColor: 'bg-red-500/10',
+    borderColor: 'border-red-500/30',
+  },
 }
 
 function TaskCard({
@@ -85,6 +98,8 @@ function TaskCard({
   onStartTask,
   onStopTask,
   onRelaunchTask,
+  onDetailsClick,
+  onArchiveClick,
 }: {
   task: Task
   isSelected: boolean
@@ -93,6 +108,8 @@ function TaskCard({
   onStartTask?: (sessionId: string, taskId: string) => void
   onStopTask?: (sessionId: string, taskId: string) => void
   onRelaunchTask?: (sessionId: string, taskId: string) => void
+  onDetailsClick?: (task: Task) => void
+  onArchiveClick?: (task: Task) => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const config = STATUS_CONFIG[task.status] || STATUS_CONFIG.pending
@@ -103,8 +120,10 @@ function TaskCard({
   
   // Determine which action to show based on task status
   const showStartButton = task.status === 'pending' || task.status === 'blocked' || task.status === 'error'
-  const showStopButton = task.status === 'in_progress'
-  const showRelaunchButton = task.status === 'completed' || task.status === 'cancelled'
+  const showCancelButton = task.status === 'in_progress' || task.status === 'cancelled'
+  const showDetailsButton = task.status === 'completed' || task.status === 'error' || task.status === 'failed'
+  const showRelaunchButton = task.status === 'completed' || task.status === 'cancelled' || task.status === 'error'
+  const showArchiveButton = task.status === 'completed' || task.status === 'error' || task.status === 'failed' || task.status === 'cancelled'
   
   // Handle task actions with stopPropagation to prevent card selection
   const handleStart = (e: React.MouseEvent) => {
@@ -125,6 +144,23 @@ function TaskCard({
     e.stopPropagation()
     if (onRelaunchTask && task.session_id && task.id) {
       onRelaunchTask(task.session_id, task.id)
+    }
+  }
+  
+  const handleDetails = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    // Show details modal for completed/failed tasks
+    if (onDetailsClick) {
+      onDetailsClick(task)
+    } else {
+      onClick() // For now, just expand the card
+    }
+  }
+
+  const handleArchive = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onArchiveClick) {
+      onArchiveClick(task)
     }
   }
   
@@ -152,7 +188,7 @@ function TaskCard({
             ))}
           
           {/* Action Buttons - Always visible, not just when selected */}
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex gap-2 flex-wrap">
             {showStartButton && (
               <button
                 onClick={handleStart}
@@ -164,21 +200,43 @@ function TaskCard({
               </button>
             )}
             
-            {showStopButton && (
+            {showCancelButton && (
               <button
                 onClick={handleStop}
-                className="flex items-center gap-1 px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded text-xs font-medium border border-red-500/30"
-                title="Stop task"
+                className="flex items-center gap-1 px-2 py-1 bg-slate-600/20 hover:bg-slate-600/30 text-slate-400 rounded text-xs font-medium border border-slate-500/30"
+                title="Cancel task"
               >
-                <Square className="w-3 h-3" />
-                Stop
+                <XCircle className="w-3 h-3" />
+                Cancel
               </button>
             )}
             
+            {showDetailsButton && (
+              <button
+                onClick={handleDetails}
+                className="flex items-center gap-1 px-2 py-1 bg-violet-600/20 hover:bg-violet-600/30 text-violet-400 rounded text-xs font-medium border border-violet-500/30"
+                title="View mission details"
+              >
+                <Eye className="w-3 h-3" />
+                Details
+              </button>
+            )}
+
+            {showArchiveButton && (
+              <button
+                onClick={handleArchive}
+                className="flex items-center gap-1 px-2 py-1 bg-slate-600/20 hover:bg-slate-600/30 text-slate-400 rounded text-xs font-medium border border-slate-500/30"
+                title="Archive from kanban"
+              >
+                <Archive className="w-3 h-3" />
+                Archive
+              </button>
+            )}
+
             {showRelaunchButton && (
               <button
                 onClick={handleRelaunch}
-                className="flex items-center gap-1 px-2 py-1 bg-violet-600/20 hover:bg-violet-600/30 text-violet-400 rounded text-xs font-medium border border-violet-500/30"
+                className="flex items-center gap-1 px-2 py-1 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-400 rounded text-xs font-medium border border-cyan-500/30"
                 title="Relaunch task"
               >
                 <RefreshCw className="w-3 h-3" />
@@ -244,6 +302,8 @@ function KanbanColumn({
   onStartTask,
   onStopTask,
   onRelaunchTask,
+  onDetailsClick,
+  onArchiveClick,
 }: {
   title: string
   tasks: Task[]
@@ -254,6 +314,8 @@ function KanbanColumn({
   onStartTask?: (sessionId: string, taskId: string) => void
   onStopTask?: (sessionId: string, taskId: string) => void
   onRelaunchTask?: (sessionId: string, taskId: string) => void
+  onDetailsClick?: (task: Task) => void
+  onArchiveClick?: (task: Task) => void
 }) {
   const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending
 
@@ -285,6 +347,8 @@ function KanbanColumn({
               onStartTask={onStartTask}
               onStopTask={onStopTask}
               onRelaunchTask={onRelaunchTask}
+              onDetailsClick={onDetailsClick}
+              onArchiveClick={onArchiveClick}
             />
           ))
         )}
@@ -302,11 +366,49 @@ export function TaskKanban({
   onStartTask,
   onStopTask,
   onRelaunchTask,
+  onEscalate,
+  onArchive,
+  onRestart,
 }: TaskKanbanProps) {
+  // State for TaskDetailModal
+  const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<Task | null>(null)
+
   // Get all tasks from selected session or all sessions
   const allTasks = selectedSession
     ? sessions[selectedSession] || []
     : Object.values(sessions).flat()
+
+  // Handlers for TaskDetailModal actions
+  const handleDetailsClick = (task: Task) => {
+    setSelectedTaskForDetails(task)
+  }
+
+  const handleEscalate = (taskId: string) => {
+    if (onEscalate) {
+      onEscalate(taskId)
+      setSelectedTaskForDetails(null)
+    }
+  }
+
+  const handleArchive = (taskId: string) => {
+    if (onArchive) {
+      onArchive(taskId)
+      setSelectedTaskForDetails(null)
+    }
+  }
+
+  const handleArchiveFromCard = (task: Task) => {
+    if (onArchive && task.id) {
+      onArchive(task.id)
+    }
+  }
+
+  const handleRestart = (taskId: string) => {
+    if (onRestart) {
+      onRestart(taskId)
+      setSelectedTaskForDetails(null)
+    }
+  }
 
   // Group tasks by status
   const pendingTasks = allTasks.filter(t => t.status === 'pending' || t.status === 'blocked')
@@ -353,6 +455,8 @@ export function TaskKanban({
           onStartTask={onStartTask}
           onStopTask={onStopTask}
           onRelaunchTask={onRelaunchTask}
+          onDetailsClick={handleDetailsClick}
+          onArchiveClick={handleArchiveFromCard}
         />
         <KanbanColumn
           title="IN PROGRESS"
@@ -364,6 +468,8 @@ export function TaskKanban({
           onStartTask={onStartTask}
           onStopTask={onStopTask}
           onRelaunchTask={onRelaunchTask}
+          onDetailsClick={handleDetailsClick}
+          onArchiveClick={handleArchiveFromCard}
         />
         <KanbanColumn
           title="FAILED"
@@ -375,6 +481,8 @@ export function TaskKanban({
           onStartTask={onStartTask}
           onStopTask={onStopTask}
           onRelaunchTask={onRelaunchTask}
+          onDetailsClick={handleDetailsClick}
+          onArchiveClick={handleArchiveFromCard}
         />
         <KanbanColumn
           title="COMPLETED"
@@ -386,8 +494,21 @@ export function TaskKanban({
           onStartTask={onStartTask}
           onStopTask={onStopTask}
           onRelaunchTask={onRelaunchTask}
+          onDetailsClick={handleDetailsClick}
+          onArchiveClick={handleArchiveFromCard}
         />
       </div>
+
+      {/* Task Detail Modal */}
+      <TaskDetailModal
+        isOpen={!!selectedTaskForDetails}
+        task={selectedTaskForDetails}
+        onClose={() => setSelectedTaskForDetails(null)}
+        apiBaseUrl={''} // Will be overridden by LivePanel
+        onEscalate={handleEscalate}
+        onArchive={handleArchive}
+        onRestart={handleRestart}
+      />
     </div>
   )
 }

@@ -15,3 +15,23 @@ Watch SQL queries with time filters: 'timestamp > datetime("now", "-1 hour")' fi
 
 ---
 
+## H-292: Always use proper modal component for detailed views rather than expanding cards in kanban
+
+**Confidence**: 0.7
+**Source**: success
+**Created**: 2026-02-16
+
+Provides better UX for complex mission details with full logs, output, and action buttons (Restart, Escalate, Archive)
+
+---
+
+## H-293: Never merge large file modifications in single write operations
+
+**Confidence**: 0.9
+**Source**: failure
+**Created**: 2026-02-16
+
+Large write operations to MissionModal.tsx caused file corruption - use incremental approach with small edits to avoid truncation
+
+---
+

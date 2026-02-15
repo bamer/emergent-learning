@@ -42,7 +42,12 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
           const data = JSON.parse(event.data)
 
           if (data.type === 'initial' || data.type === 'update') {
-            setTaskSessions(data.sessions || {})
+            // Filter out archived tasks from the display
+            const filteredSessions: TaskSessions = {}
+            for (const [sessionId, tasks] of Object.entries(data.sessions || {})) {
+              filteredSessions[sessionId] = tasks.filter((task: Task) => !task.archived)
+            }
+            setTaskSessions(filteredSessions)
           } else if (data.type === 'error') {
             console.error('Task SSE error:', data.message)
           }
@@ -182,6 +187,97 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
       console.info(`Relaunched task ${taskId} in session ${sessionId}`)
     }
   }, [apiBaseUrl])
+
+  // Task detail modal handlers
+  const handleEscalateToOrchestrator = useCallback(async (taskId: string) => {
+    // Find the task in all sessions
+    let targetTask: Task | null = null
+    let sessionId: string | null = null
+
+    for (const [sid, tasks] of Object.entries(taskSessions)) {
+      const task = tasks.find(t => t.id === taskId)
+      if (task) {
+        targetTask = task
+        sessionId = sid
+        break
+      }
+    }
+
+    if (!targetTask || !sessionId) {
+      console.error(`Task ${taskId} not found`)
+      return
+    }
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/live/task/${sessionId}/${taskId}/escalate`, {
+        method: 'POST',
+      })
+      if (response.ok) {
+        console.info(`Escalated task ${taskId} to orchestrator`)
+      } else {
+        console.error(`Failed to escalate task ${taskId}`)
+      }
+    } catch (err) {
+      console.error(`Error escalating task ${taskId}:`, err)
+    }
+  }, [apiBaseUrl, taskSessions])
+
+  const handleArchiveTask = useCallback(async (taskId: string) => {
+    // Find the task in all sessions
+    let sessionId: string | null = null
+
+    for (const [sid, tasks] of Object.entries(taskSessions)) {
+      const task = tasks.find(t => t.id === taskId)
+      if (task) {
+        sessionId = sid
+        break
+      }
+    }
+
+    if (!sessionId) {
+      console.error(`Task ${taskId} not found`)
+      return
+    }
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/v1/live/task/${sessionId}/${taskId}/archive`, {
+        method: 'POST',
+      })
+      if (response.ok) {
+        console.info(`Archived task ${taskId}`)
+      } else {
+        console.error(`Failed to archive task ${taskId}`)
+      }
+    } catch (err) {
+      console.error(`Error archiving task ${taskId}:`, err)
+    }
+  }, [apiBaseUrl, taskSessions])
+
+  const handleRestartTask = useCallback(async (taskId: string) => {
+    // Find the task in all sessions
+    let sessionId: string | null = null
+
+    for (const [sid, tasks] of Object.entries(taskSessions)) {
+      const task = tasks.find(t => t.id === taskId)
+      if (task) {
+        sessionId = sid
+        break
+      }
+    }
+
+    if (!sessionId) {
+      console.error(`Task ${taskId} not found`)
+      return
+    }
+
+    // Restart is essentially a relaunch for blocked/error tasks
+    const response = await fetch(`${apiBaseUrl}/api/v1/live/task/${sessionId}/${taskId}/relaunch`, {
+      method: 'POST',
+    })
+    if (response.ok) {
+      console.info(`Restarted task ${taskId}`)
+    }
+  }, [apiBaseUrl, taskSessions])
 
   const handleLaunchSentinel = useCallback(async () => {
     try {
@@ -357,9 +453,13 @@ export function LivePanel({ apiBaseUrl = '' }: LivePanelProps) {
                   onSessionSelect={setSelectedSession}
                   onTaskSelect={setSelectedTask}
                   selectedTask={selectedTask}
+                  apiBaseUrl={apiBaseUrl}
                   onStartTask={handleTaskStart}
                   onStopTask={handleTaskStop}
                   onRelaunchTask={handleTaskRelaunch}
+                  onEscalate={handleEscalateToOrchestrator}
+                  onArchive={handleArchiveTask}
+                  onRestart={handleRestartTask}
                 />
               </div>
             </div>

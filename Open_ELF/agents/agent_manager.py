@@ -60,6 +60,7 @@ import logging  # Import here for class type hints
 DEFAULT_AGENTS_DIRS = [
     Path("/home/bamer/.opencode/agents/OPC_ELF_System_Agents"),
     Path.home() / ".config" / "opencode" / "agents",
+    Path.home() / ".opencode" / "agents" / "plugins",
 ]
 DEFAULT_OPENCODE_URL = "http://localhost:4096"
 DEFAULT_MODEL = "model: llamacpp/nemotron-v3-coder"  # Modèle rapide et gratuit
@@ -204,7 +205,8 @@ class AgentManager:
 
             self.logger.debug(f"📂 Recherche agents dans: {agents_dir}")
 
-            for md_file in agents_dir.glob("*.md"):
+            # Chercher aussi dans les sous-dossiers (ex: python-development/agents/)
+            for md_file in agents_dir.glob("**/*.md"):
                 try:
                     agent_config = self._parse_agent_file(md_file)
                     # Skip duplicates, keep first found

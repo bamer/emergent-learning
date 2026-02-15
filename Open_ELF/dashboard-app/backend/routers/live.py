@@ -1,7 +1,6 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -29,7 +28,13 @@ from utils.database import get_db, dict_from_row
 
 # Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
 try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+    from Open_ELF.utils.elf_logging import (
+        get_logger,
+        log_critical,
+        log_error,
+        log_warning,
+        log_info,
+    )
 
     logger = get_logger("live")
 except ImportError:
@@ -583,3 +588,138 @@ async def update_task_status(session_id: str, task_id: str, request: TaskStatusR
         raise HTTPException(status_code=500, detail=f"Invalid task JSON: {e}")
     except IOError as e:
         raise HTTPException(status_code=500, detail=f"Failed to update task file: {e}")
+
+
+@router.post("/task/{session_id}/{task_id}/escalate")
+async def escalate_task(session_id: str, task_id: str):
+    """
+    Escalate a blocked task to the orchestrator for analysis.
+
+    This marks the task for orchestrator attention while keeping it in the blocked state.
+    The orchestrator will analyze the blocking dependencies and determine next steps.
+
+    Args:
+        session_id: Session UUID
+        task_id: Task ID within session (must be in 'blocked' state)
+
+    Returns:
+        {"status": "ok", "task_id": "...", "escalated": true}
+    """
+    try:
+        task_file = TASKS_DIR / session_id / f"{task_id}.json"
+        if not task_file.exists():
+            raise HTTPException(
+                status_code=404, detail=f"Task file not found: {task_id}"
+            )
+
+        with open(task_file, "r") as f:
+            task_data = json.load(f)
+
+        # Only blocked tasks can be escalated
+        current_status = task_data.get("status")
+        if current_status != "blocked":
+            raise HTTPException(
+                status_code=400,
+                detail=f"Task {task_id} is not blocked (current status: {current_status})",
+            )
+
+        # Add escalation note
+        if "notes" not in task_data:
+            task_data["notes"] = []
+
+        task_data["notes"].append(
+            {
+                "text": "Task escalated to orchestrator for analysis",
+                "timestamp": datetime.now().isoformat(),
+                "source": "dashboard",
+            }
+        )
+
+        # Set escalation flag (for future use by orchestrator)
+        task_data["escalated"] = True
+        task_data["escalated_at"] = datetime.now().isoformat()
+
+        with open(task_file, "w") as f:
+            json.dump(task_data, f, indent=2)
+
+        logger.info(f"Escalated task {task_id} to orchestrator")
+
+        return {
+            "status": "ok",
+            "task_id": task_id,
+            "escalated": True,
+            "escalated_at": task_data["escalated_at"],
+        }
+    except Exception as e:
+        logger.error(f"Error escalating task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/task/{session_id}/{task_id}/archive")
+async def archive_task(session_id: str, task_id: str):
+    """
+    Archive a completed/failed/error task from the kanban view.
+
+    This marks the task as archived, hiding it from the main kanban while keeping
+    it in storage. The task remains available in the task history.
+
+    Args:
+        session_id: Session UUID
+        task_id: Task ID within session (must be completed, failed, or error)
+
+    Returns:
+        {"status": "ok", "task_id": "...", "archived": true}
+    """
+    try:
+        task_file = TASKS_DIR / session_id / f"{task_id}.json"
+        if not task_file.exists():
+            raise HTTPException(
+                status_code=404, detail=f"Task file not found: {task_id}"
+            )
+
+        with open(task_file, "r") as f:
+            task_data = json.load(f)
+
+        # Only completed, failed, or error tasks can be archived
+        current_status = task_data.get("status")
+        valid_statuses = ["completed", "failed", "error", "cancelled"]
+        if current_status not in valid_statuses:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Task {task_id} cannot be archived (current status: {current_status}. Valid: {valid_statuses})",
+            )
+
+        # Mark as archived with timestamp
+        if "notes" not in task_data:
+            task_data["notes"] = []
+
+        task_data["notes"].append(
+            {
+                "text": f"Task archived from kanban - original status: {current_status}",
+                "timestamp": datetime.now().isoformat(),
+                "source": "dashboard",
+            }
+        )
+
+        # Set archive flag
+        task_data["archived"] = True
+        task_data["archived_at"] = datetime.now().isoformat()
+
+        # Store original status before archiving (for reference)
+        task_data["archived_from_status"] = current_status
+
+        with open(task_file, "w") as f:
+            json.dump(task_data, f, indent=2)
+
+        logger.info(f"Archived task {task_id} from kanban")
+
+        return {
+            "status": "ok",
+            "task_id": task_id,
+            "archived": True,
+            "archived_at": task_data["archived_at"],
+            "archived_from_status": task_data["archived_from_status"],
+        }
+    except Exception as e:
+        logger.error(f"Error archiving task {task_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
