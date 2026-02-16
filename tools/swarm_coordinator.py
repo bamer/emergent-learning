@@ -24,34 +24,35 @@ class SwarmCoordinator:
         self.coordination_dir = base_path / ".coordination" / "swarm"
         self.coordination_dir.mkdir(parents=True, exist_ok=True)
 
-        # Agent definitions based on elf-swarm skill
+        # Agent definitions based on available ELF agents
+        # Mapping aliases to actual existing agents
         self.agent_catalog = {
             # Code Quality
-            "code-reviewer": "Expert code analysis and review",
-            "debugger": "System debugging and issue resolution",
-            "test-automator": "Automated testing and quality assurance",
+            "code-reviewer": "code-review-agent",
+            "debugger": "debugger",
+            "test-automator": "test-automation",
             # Architecture
-            "architect-review": "System architecture analysis",
-            "backend-architect": "Backend system design",
-            "database-architect": "Database design and optimization",
+            "architect-review": "architect",
+            "backend-architect": "architect",
+            "database-architect": "architect",
             # Security
-            "security-auditor": "Security vulnerability assessment",
-            "backend-security-coder": "Backend security implementation",
-            # Language-Specific
-            "python-pro": "Python development specialist",
-            "fastapi-pro": "FastAPI framework expert",
-            "typescript-pro": "TypeScript/JavaScript specialist",
-            "frontend-developer": "Frontend development expert",
+            "security-auditor": "security-auditor",
+            "backend-security-coder": "backend-security-coder",
+            # Language-Specific - Map to actual ELF agents
+            "python-pro": "python-pro",
+            "fastapi-pro": "fastapi-pro",
+            "typescript-pro": "typescript-pro",
+            "frontend-developer": "frontend-developer",
             # Database
-            "database-optimizer": "Database performance optimization",
-            "sql-pro": "SQL expert",
+            "database-optimizer": "database-optimizer",
+            "sql-pro": "sql-pro",
             # Documentation
-            "docs-architect": "Documentation system design",
-            "tutorial-engineer": "Tutorial and guide creation",
+            "docs-architect": "docs-architect",
+            "tutorial-engineer": "tutorial-engineer",
             # Performance
-            "performance-engineer": "Performance optimization",
+            "performance-engineer": "performance-engineer",
             # Shell/Scripts
-            "bash-pro": "Shell scripting expert",
+            "bash-pro": "bash-pro",
         }
 
     def detect_domains(self, target_path: str) -> List[str]:

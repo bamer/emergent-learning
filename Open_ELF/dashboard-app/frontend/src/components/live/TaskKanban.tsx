@@ -412,7 +412,7 @@ export function TaskKanban({
 
   // Group tasks by status
   const pendingTasks = allTasks.filter(t => t.status === 'pending' || t.status === 'blocked')
-  const inProgressTasks = allTasks.filter(t => t.status === 'in_progress')
+  const inProgressTasks = allTasks.filter(t => t.status === 'in_progress' || t.status === 'running')
   const failedTasks = allTasks.filter(t => t.status === 'error')
   const completedTasks = allTasks.filter(t => t.status === 'completed' || t.status === 'cancelled')
 

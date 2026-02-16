@@ -1,0 +1,19 @@
+{
+  "id": "mission_20260216_174922_0ef0305a",
+  "title": "Write comprehensive unit tests following test-driven development. Test individual functions/methods ...",
+  "mission": "Write comprehensive unit tests following test-driven development. Test individual functions/methods in isolation, mock external dependencies, test edge cases and error conditions, achieve >90% code coverage, and keep tests fast and independent.",
+  "agent_type": "general",
+  "status": "running",
+  "priority": "medium",
+  "created_at": "2026-02-16T17:49:22.221977",
+  "started_at": "2026-02-16T17:49:22.328615",
+  "completed_at": null,
+  "mode": "manual",
+  "model_id": "nemotron-v3-coder",
+  "metadata": {
+    "mode": "manual",
+    "model_id": "nemotron-v3-coder"
+  },
+  "logs": [],
+  "session_id": "ses_39c8d3db3ffetIwq1ywoFYm76J"
+}

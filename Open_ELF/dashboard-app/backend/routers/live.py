@@ -49,6 +49,11 @@ router = APIRouter(prefix="/api/v1/live", tags=["live"])
 TASKS_DIR = Path.home() / ".opencode" / "tasks"
 PROJECTS_DIR = Path.home() / ".opencode" / "projects"
 
+# Path to Dashboard missions directory
+DASHBOARD_MISSIONS_DIR = (
+    Path.home() / ".opencode" / "emergent-learning" / ".coordination" / "missions"
+)
+
 
 def _load_session_names() -> Dict[str, str]:
     """Load session names from all sessions-index.json files."""
@@ -98,64 +103,157 @@ class TaskStatusRequest(BaseModel):
 
 
 def _load_tasks_from_dir() -> Dict[str, List[Dict[str, Any]]]:
-    """Load all tasks from the tasks directory, grouped by session."""
+    """Load all tasks from multiple directories, grouped by session."""
     sessions = {}
     session_names = _load_session_names()
 
-    if not TASKS_DIR.exists():
-        return sessions
+    # Helper function to load tasks from a directory
+    def load_tasks_from_directory(task_dir: Path, root_dir: Path):
+        local_sessions = {}
 
-    for session_dir in TASKS_DIR.iterdir():
-        if not session_dir.is_dir():
-            continue
+        for session_dir in task_dir.iterdir():
+            if not session_dir.is_dir():
+                continue
 
-        session_id = session_dir.name
-        session_name = session_names.get(session_id, session_id[:8] + "...")
-        tasks = []
+            session_id = session_dir.name
+            # Determine session name
+            if task_dir == DASHBOARD_MISSIONS_DIR:
+                # Dashboard missions: use session_id as name
+                session_name = f"Dashboard: {session_id}"
+            else:
+                session_name = session_names.get(session_id, session_id[:8] + "...")
 
-        for task_file in session_dir.glob("*.json"):
-            try:
-                with open(task_file, "r") as f:
-                    task_data = json.load(f)
-                    task_data["session_id"] = session_id
-                    task_data["session_name"] = session_name
-                    task_data["file_path"] = str(task_file)
-                    tasks.append(task_data)
-            except (json.JSONDecodeError, IOError) as e:
-                logger.warning(f"Failed to load task file {task_file}: {e}")
+            tasks = []
 
-        if tasks:
-            # Sort by ID (extract numeric part if present)
-            def extract_numeric_id(task_id):
-                # Try to extract numeric part from IDs like "architect_m1769888197"
-                match = re.search(r"m(\d+)", str(task_id))
-                if match:
-                    return int(match.group(1))
-                # Fallback to a very large number for non-matching IDs (put them at the end)
-                return 999999999999
+            # Special handling for elf_missions: look for mission_*.json instead of task_*.json
+            if session_id == "elf_missions":
+                pattern = "mission_*.json"
+            else:
+                pattern = "*.json"
 
-            tasks.sort(key=lambda t: extract_numeric_id(t.get("id", "")))
-            sessions[session_id] = tasks
+            for task_file in session_dir.glob(pattern):
+                try:
+                    with open(task_file, "r") as f:
+                        task_data = json.load(f)
+                        # Use session_id and session_name from the file if present
+                        task_data["session_id"] = task_data.get(
+                            "session_id", session_id
+                        )
+                        task_data["session_name"] = task_data.get(
+                            "session_name", session_name
+                        )
+                        task_data["file_path"] = str(task_file)
+                        tasks.append(task_data)
+                except (json.JSONDecodeError, IOError) as e:
+                    logger.warning(f"Failed to load task file {task_file}: {e}")
+
+            if tasks:
+                # Sort by ID (extract numeric part if present)
+                def extract_numeric_id(task_id):
+                    # Try to extract numeric part from IDs like "architect_m1769888197" or "mission_20260216_011128_5417"
+                    # Format: mission_YYYYMMDD_HHMMSS_timestamp or agent_mXXXXX...
+                    match = re.search(r"m(\d+)", str(task_id))
+                    if match:
+                        return int(match.group(1))
+                    # Also match timestamps in mission filenames
+                    match = re.search(r"(\d{14})", str(task_id))
+                    if match:
+                        return int(match.group(1))
+                    # Fallback to a very large number for non-matching IDs (put them at the end)
+                    return 999999999999
+
+                tasks.sort(key=lambda t: extract_numeric_id(t.get("id", "")))
+                local_sessions[session_id] = tasks
+
+        return local_sessions
+
+    # Load from TASKS_DIR (elf_missions, sessions, etc.)
+    if TASKS_DIR.exists():
+        sessions.update(load_tasks_from_directory(TASKS_DIR, TASKS_DIR))
+
+    # Load from DASHBOARD_MISSIONS_DIR (pending, running, completed, failed, archive)
+    if DASHBOARD_MISSIONS_DIR.exists():
+        # Load missions from all status subdirectories
+        for status in ["pending", "running", "completed", "failed", "archive"]:
+            status_dir = DASHBOARD_MISSIONS_DIR / status
+            if not status_dir.exists():
+                continue
+
+            for mission_file in status_dir.glob("mission_*.json"):
+                try:
+                    with open(mission_file, "r") as f:
+                        task_data = json.load(f)
+
+                        # Mission becomes its own "session" with format dashboard_missions_YYYYMMDD_HHMMSS_XXXXXX
+                        mission_id = task_data.get("id", mission_file.stem)
+                        session_key = f"dashboard_missions_{mission_id}"
+
+                        # Add session_id and session_name to the task
+                        task_data["session_id"] = mission_id
+                        task_data["session_name"] = (
+                            f"Dashboard Mission: {status.title()}"
+                        )
+                        task_data["file_path"] = str(mission_file)
+
+                        # Normalize field names for frontend compatibility
+                        # Dashboard missions use "title", tasks use "subject"
+                        if "title" in task_data and "subject" not in task_data:
+                            task_data["subject"] = task_data["title"]
+
+                        # Add creation_time and updated_time for consistency
+                        if (
+                            "created_at" in task_data
+                            and "creation_time" not in task_data
+                        ):
+                            task_data["creation_time"] = task_data["created_at"]
+                        if "started_at" in task_data and not task_data.get(
+                            "updated_time"
+                        ):
+                            task_data["updated_time"] = task_data["started_at"]
+
+                        # Add to sessions under this unique key
+                        if session_key not in sessions:
+                            sessions[session_key] = []
+                        sessions[session_key].append(task_data)
+
+                except (json.JSONDecodeError, IOError) as e:
+                    logger.warning(f"Failed to load mission file {mission_file}: {e}")
 
     return sessions
 
 
 def _get_task_file_mtimes() -> Dict[str, float]:
-    """Get modification times for all task files."""
+    """Get modification times for all task files across all directories."""
     mtimes = {}
 
-    if not TASKS_DIR.exists():
-        return mtimes
+    # Helper function to collect mtimes from a directory
+    def collect_mtimes_from_directory(task_dir: Path):
+        if not task_dir.exists():
+            return
 
-    for session_dir in TASKS_DIR.iterdir():
-        if not session_dir.is_dir():
-            continue
+        for session_dir in task_dir.iterdir():
+            if not session_dir.is_dir():
+                continue
 
-        for task_file in session_dir.glob("*.json"):
-            try:
-                mtimes[str(task_file)] = task_file.stat().st_mtime
-            except OSError:
-                pass
+            for task_file in session_dir.glob("*.json"):
+                try:
+                    mtimes[str(task_file)] = task_file.stat().st_mtime
+                except OSError:
+                    pass
+
+    # Collect from TASKS_DIR
+    collect_mtimes_from_directory(TASKS_DIR)
+
+    # Collect from DASHBOARD_MISSIONS_DIR (pending, running, completed, failed, archive)
+    if DASHBOARD_MISSIONS_DIR.exists():
+        for status in ["pending", "running", "completed", "failed", "archive"]:
+            status_dir = DASHBOARD_MISSIONS_DIR / status
+            if status_dir.exists():
+                for mission_file in status_dir.glob("mission_*.json"):
+                    try:
+                        mtimes[str(mission_file)] = mission_file.stat().st_mtime
+                    except OSError:
+                        pass
 
     return mtimes
 

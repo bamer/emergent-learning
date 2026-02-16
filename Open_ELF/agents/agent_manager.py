@@ -153,8 +153,28 @@ class AgentManager:
         # Charger tous les agents
         self._load_all_agents()
 
+        # Récupérer les agents depuis l'API OpenCode pour enrichir le catalogue
+        self._setup_dynamic_agent_discovery()
+
         self.logger.info(f"✅ AgentManager initialisé avec {len(self.agents)} agents")
         self.logger.info(f"🔒 SDK process locking enabled (singleton)")
+
+    def _setup_dynamic_agent_discovery(self):
+        """
+        Configure la découverte dynamique d'agents depuis OpenCode.
+
+        Tente de récupérer les agents via l'API pour enrichir le catalogue
+        avec les agents qui ne sont pas dans les fichiers .md locaux.
+        """
+        try:
+            api_agents = self.fetch_agents_from_opencode()
+            if api_agents:
+                self.logger.info(
+                    f"📊 {len(api_agents)} agents découverts via API OpenCode"
+                )
+        except Exception as e:
+            self.logger.warning(f"⚠️ Découverte dynamique désactivée: {e}")
+            # Non-critical - continue avec les agents fichiers .md
 
     def _log_session_entry(
         self,
@@ -912,6 +932,193 @@ class AgentManager:
     def list_agents(self) -> List[str]:
         """Liste tous les agents disponibles"""
         return list(self.agents.keys())
+
+    def fetch_agents_from_opencode(self) -> List[Dict[str, Any]]:
+        """
+        Récupère la liste des agents depuis l'API OpenCode.
+
+        Utilise client.app.agents() pour récupérer les agents disponibles
+        et met à jour le catalogue local.
+
+        Returns:
+            Liste des agents avec leurs métadonnées
+        """
+        try:
+            result = self._sdk_request("agents_list", payload={})
+
+            if result.get("success"):
+                agents = result.get("data", [])
+                self.logger.info(
+                    f"📡 {len(agents)} agents récupérés depuis OpenCode API"
+                )
+
+                # Mettre à jour les configs locales avec les données de l'API
+                for api_agent in agents:
+                    agent_name = api_agent.get("name")
+                    if agent_name and agent_name not in self.agents:
+                        # Créer une config minimale pour les agents découverts via API
+                        metadata = {
+                            "description": api_agent.get("description", ""),
+                            "model": api_agent.get("model", DEFAULT_MODEL),
+                            "tags": api_agent.get("tags", []),
+                        }
+                        self.agents[agent_name] = AgentConfig(
+                            name=agent_name,
+                            metadata=metadata,
+                            system_prompt=api_agent.get("system_prompt", ""),
+                        )
+                        self.logger.debug(f"📄 Agent découvert via API: {agent_name}")
+
+                return agents
+            else:
+                self.logger.warning(
+                    f"⚠️ Échec récupération agents API: {result.get('error')}"
+                )
+                return []
+        except Exception as e:
+            self.logger.error(f"❌ Erreur récupération agents OpenCode: {e}")
+            return []
+
+    def get_available_agents(self) -> List[Dict[str, Any]]:
+        """
+        Retourne tous les agents disponibles avec leurs métadonnées enrichies.
+
+        Combine les agents chargés depuis fichiers .md et ceux découverts via API.
+
+        Returns:
+            Liste de dict avec nom, description, tags, modèle, etc.
+        """
+        agents_data = []
+
+        for agent_name, config in self.agents.items():
+            agents_data.append(
+                {
+                    "name": agent_name,
+                    "description": config.description,
+                    "model": config.model,
+                    "tags": config.tags,
+                    "has_session": agent_name in self.sessions,
+                    "session_id": self.sessions.get(
+                        agent_name, AgentSession("", "", datetime.now())
+                    ).session_id
+                    if agent_name in self.sessions
+                    else None,
+                }
+            )
+
+        return agents_data
+
+    def find_best_agent_for_task(
+        self,
+        task_description: str,
+        task_type: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+    ) -> Optional[str]:
+        """
+        Trouve le meilleur agent pour une tâche donnée.
+
+        Analyse la tâche et sélectionne l'agent le plus approprié en fonction
+        de ses tags, description, et de correspondances spécialisées.
+
+        Args:
+            task_description: Description de la tâche
+            task_type: Type de tâche (ex: "python", "frontend", "debugging")
+            tags: Tags optionnels pour améliorer la sélection
+
+        Returns:
+            Nom de l'agent le plus approprié ou None
+        """
+        task_lower = task_description.lower()
+        task_type_lower = (task_type or "").lower()
+        tags_lower = [tag.lower() for tag in tags or []]
+
+        # Mapping des mots-clés vers agents
+        keyword_mappings = {
+            "python": ["python", "backend", "api", "fastapi"],
+            "javascript": [
+                "javascript",
+                "js",
+                "typescript",
+                "tsx",
+                "frontend",
+                "react",
+            ],
+            "frontend": ["frontend", "react", "vue", "ui", "interface", "css", "html"],
+            "backend": ["backend", "api", "server", "database", "sql"],
+            "debug": ["debug", "error", "bug", "issue", "fix", "problem"],
+            "test": ["test", "testing", "unit", "integration"],
+            "code": ["code", "feature", "implement", "refactor"],
+            "design": ["design", "architecture", "pattern", "structure"],
+            "review": ["review", "check", "audit", "analyze"],
+            "security": ["security", "auth", "permission", "vulnerability"],
+            "performance": ["performance", "optimize", "speed", "cache"],
+        }
+
+        # Scorer chaque agent
+        agent_scores = {}
+
+        for agent_name, config in self.agents.items():
+            score = 0
+
+            # Priorité à certains agents connus
+            priority_agents = {
+                "coder-agent": 5,
+                "multi-agent-orchestrator-bf": 3,
+                "multi-agent-coordinator": 3,
+            }
+            score += priority_agents.get(agent_name, 0)
+
+            # Analyse des tags
+            for tag in config.tags:
+                tag_lower = tag.lower()
+                if any(
+                    keyword in task_lower for keyword in keyword_mappings.get(tag, [])
+                ):
+                    score += 3
+                if tag_lower in task_type_lower:
+                    score += 2
+
+            # Analyse de la description
+            desc_lower = config.description.lower()
+            for keywords in keyword_mappings.values():
+                if any(
+                    keyword in task_lower and keyword in desc_lower
+                    for keyword in keywords
+                ):
+                    score += 2
+
+            # Correspondance directe du nom
+            agent_name_lower = agent_name.lower()
+            if any(keyword in task_lower for keyword in agent_name_lower.split("-")):
+                score += 4
+
+            # Correspondance tags utilisateur
+            provided_tags = tags_lower + [task_type_lower]
+            for tag in provided_tags:
+                if any(
+                    pt in agent_name_lower or pt in desc_lower
+                    for pt in [tag.lower() for tag in provided_tags]
+                ):
+                    score += 2
+
+            if score > 0:
+                agent_scores[agent_name] = score
+
+        # Retourner l'agent avec le score le plus élevé
+        if agent_scores:
+            best_agent = max(agent_scores, key=agent_scores.get)
+            self.logger.debug(
+                f"🎯 Agent sélectionné pour tâche: {best_agent} (score: {agent_scores[best_agent]}, "
+                f"options: {agent_scores})"
+            )
+            return best_agent
+
+        # Fallback: coder-agent s'il existe
+        if "coder-agent" in self.agents:
+            self.logger.debug("🔄 Fallback vers coder-agent pour tâche générique")
+            return "coder-agent"
+
+        return None
 
     def get_agent_info(self, agent_name: str) -> Optional[Dict[str, Any]]:
         """Retourne les informations sur un agent"""

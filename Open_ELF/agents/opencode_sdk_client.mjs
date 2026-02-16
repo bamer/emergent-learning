@@ -75,6 +75,10 @@ const main = async () => {
         })
         return { success: true, data }
       }
+      case "agents_list": {
+        const data = await client.app.agents()
+        return { success: true, data }
+      }
       default:
         return { success: false, error: `Unknown action: ${action}` }
     }

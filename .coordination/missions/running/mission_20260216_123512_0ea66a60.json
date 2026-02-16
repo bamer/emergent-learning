@@ -1,0 +1,19 @@
+{
+  "id": "mission_20260216_123512_0ea66a60",
+  "title": "Design comprehensive design system. Document design tokens (colors, typography, spacing, shadows), c...",
+  "mission": "Design comprehensive design system. Document design tokens (colors, typography, spacing, shadows), create atomic components, design patterns, ensure consistent implementation, and provide Figma/Sketch exports.",
+  "agent_type": "general",
+  "status": "running",
+  "priority": "medium",
+  "created_at": "2026-02-16T12:35:12.335560",
+  "started_at": "2026-02-16T12:35:12.445862",
+  "completed_at": null,
+  "mode": "swarm",
+  "model_id": null,
+  "metadata": {
+    "mode": "swarm",
+    "model_id": null
+  },
+  "logs": [],
+  "session_id": "ses_39c8d3db3ffetIwq1ywoFYm76J"
+}

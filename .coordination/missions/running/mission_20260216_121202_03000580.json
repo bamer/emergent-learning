@@ -1,0 +1,19 @@
+{
+  "id": "mission_20260216_121202_03000580",
+  "title": "Investigate this memory leak thoroughly. Use memory profiling tools, analyze object retention, ident...",
+  "mission": "Investigate this memory leak thoroughly. Use memory profiling tools, analyze object retention, identify circular references, check event listener cleanup, timer/interval handling, and provide patch with leak-free code. Write production-ready code with clean, readable, and maintainable structures. Include comprehensive error handling, type hints, inline comments, and follow SOLID principles. Structure your code with single-responsibility functions and meaningful variable names.",
+  "agent_type": "general",
+  "status": "running",
+  "priority": "medium",
+  "created_at": "2026-02-16T12:12:02.923000",
+  "started_at": "2026-02-16T12:12:03.029640",
+  "completed_at": null,
+  "mode": "swarm",
+  "model_id": null,
+  "metadata": {
+    "mode": "swarm",
+    "model_id": null
+  },
+  "logs": [],
+  "session_id": "ses_39c8d3db3ffetIwq1ywoFYm76J"
+}
