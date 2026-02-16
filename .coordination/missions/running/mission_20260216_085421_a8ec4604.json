@@ -1,0 +1,19 @@
+{
+  "id": "mission_20260216_085421_a8ec4604",
+  "title": "What is 2+2? Just answer briefly.",
+  "mission": "What is 2+2? Just answer briefly.",
+  "agent_type": "general",
+  "status": "running",
+  "priority": "medium",
+  "created_at": "2026-02-16T08:54:21.466193",
+  "started_at": "2026-02-16T08:54:29.908167",
+  "completed_at": null,
+  "mode": "smart",
+  "model_id": null,
+  "metadata": {
+    "mode": "smart",
+    "model_id": null
+  },
+  "logs": [],
+  "session_id": "ses_39c8d3db3ffetIwq1ywoFYm76J"
+}

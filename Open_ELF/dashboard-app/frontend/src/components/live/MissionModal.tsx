@@ -391,8 +391,9 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
 
     const pollMissionStatus = async () => {
       try {
+        // Use the /result endpoint which gives us the actual result
         const response = await fetch(
-          `${apiBaseUrl}/api/v1/missions/${currentMission.mission_id}/status`
+          `${apiBaseUrl}/api/v1/missions/${currentMission.mission_id}/result`
         );
         if (response.ok) {
           const statusData = await response.json();
@@ -402,20 +403,30 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
             statusData.status === 'failed'
           ) {
             setCurrentMission({ ...currentMission, ...statusData });
+            
+            // Extract result from the response
+            const missionResult = statusData.result || {};
             setAsyncMissionResult({
               mission_id: statusData.mission_id,
               status: statusData.status,
-              result: statusData.result,
-              error: statusData.error,
-              heuristics: statusData.heuristics,
-              duration_seconds: statusData.duration_seconds,
-              completed_at: statusData.completed_at,
+              result: missionResult.response || missionResult.result || null,
+              error: missionResult.error || null,
+              heuristics: missionResult.heuristics || [],
+              duration_seconds: missionResult.execution_time_seconds || null,
+              completed_at: statusData.metadata?.completed_at || null,
             });
 
             if (pollingInterval) {
               clearInterval(pollingInterval);
               setPollingInterval(null);
             }
+          } else if (statusData.live_status) {
+            // Update with live status for running missions
+            setCurrentMission({ 
+              ...currentMission, 
+              status: statusData.status,
+              live_preview: statusData.live_status?.last_response_preview 
+            });
           }
         }
       } catch (err) {
@@ -425,7 +436,7 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
 
     pollMissionStatus();
 
-    const interval = setInterval(pollMissionStatus, 2000);
+    const interval = setInterval(pollMissionStatus, 3000);  // Poll every 3 seconds
     setPollingInterval(interval);
 
     return () => {
@@ -784,44 +795,63 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
           {/* Async Mission Result */}
           {asyncMissionResult && (
             <div className="mt-6 p-4 bg-slate-800 rounded-lg border border-slate-700">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-slate-300">
-                  Mission Result
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-semibold text-white">
+                  📋 Mission Result
                 </span>
                 <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${
+                  className={`px-3 py-1 rounded text-xs font-bold ${
                     asyncMissionResult.status === 'completed'
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-red-500/20 text-red-400'
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}
                 >
-                  {asyncMissionResult.status === 'completed' ? 'Completed' : 'Failed'}
+                  {asyncMissionResult.status === 'completed' ? '✓ Completed' : '✗ Failed'}
                 </span>
               </div>
               {asyncMissionResult.result && (
-                <div className="mt-3 max-h-50 overflow-y-auto">
-                  <pre className="text-xs text-slate-300 whitespace-pre-wrap">
-                    {asyncMissionResult.result.substring(0, 2000)}
-                    {asyncMissionResult.result.length > 2000 && '...'}
+                <div className="mt-3 max-h-[400px] overflow-y-auto bg-slate-900/50 p-4 rounded border border-slate-600">
+                  <pre className="text-sm text-slate-200 whitespace-pre-wrap font-mono">
+                    {asyncMissionResult.result}
                   </pre>
                 </div>
               )}
               {asyncMissionResult.error && (
-                <div className="mt-3 text-xs text-red-400 font-mono">
-                  {asyncMissionResult.error}
+                <div className="mt-3 p-3 bg-red-500/10 rounded border border-red-500/30">
+                  <p className="text-sm text-red-400 font-mono">
+                    ⚠️ {asyncMissionResult.error}
+                  </p>
                 </div>
               )}
-              {asyncMissionResult.heuristics && asyncMissionResult.heuristics.length > 0 && (
-                <div className="mt-3 text-xs text-slate-400">
-                  Heuristics: {asyncMissionResult.heuristics.length} extracted
+              <div className="mt-3 flex gap-4 text-xs text-slate-400">
+                {asyncMissionResult.heuristics && asyncMissionResult.heuristics.length > 0 && (
+                  <span>🧠 Heuristics: {asyncMissionResult.heuristics.length}</span>
+                )}
+                {asyncMissionResult.duration_seconds && (
+                  <span>⏱️ Duration: {asyncMissionResult.duration_seconds.toFixed(1)}s</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Running Mission Preview */}
+          {currentMission && currentMission.status === 'running' && !asyncMissionResult && (
+            <div className="mt-6 p-4 bg-cyan-500/10 rounded-lg border border-cyan-500/30">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-cyan-300">
+                  Mission en cours d'exécution...
+                </span>
+              </div>
+              {currentMission.live_preview && (
+                <div className="mt-2 text-xs text-cyan-200/70 font-mono bg-slate-900/30 p-2 rounded">
+                  {currentMission.live_preview.substring(0, 300)}
+                  {currentMission.live_preview.length > 300 && '...'}
                 </div>
               )}
-              {asyncMissionResult.duration_seconds && (
-                <div className="mt-3 text-xs text-slate-400">
-                  Duration:{' '}
-                  {asyncMissionResult.duration_seconds.toFixed(2)}s
-                </div>
-              )}
+              <p className="mt-2 text-xs text-cyan-400/60">
+                Les résultats apparaîtront automatiquement une fois la mission terminée.
+              </p>
             </div>
           )}
 

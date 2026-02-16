@@ -222,6 +222,127 @@ def check_mission_process(mission_id: str) -> bool:
         return False
 
 
+def monitor_and_capture_result(
+    mission_id: str, session_id: str, timeout_seconds: int = 3600
+):
+    """
+    Background task to monitor a mission session and capture the result.
+
+    This runs in a separate thread and:
+    1. Polls the session status periodically
+    2. Captures the result when completed
+    3. Updates the mission file with the result
+    4. Moves the mission to completed/failed directory
+    """
+    import threading
+    import time
+
+    def _monitor():
+        start_time = time.time()
+        result_captured = False
+
+        logger.info(
+            f"[Monitor] Starting result capture for mission {mission_id[:16]}..."
+        )
+
+        while time.time() - start_time < timeout_seconds:
+            try:
+                # Try to get session status from agent manager
+                import sys
+
+                backend_path = Path(__file__).parent.parent
+                if str(backend_path) not in sys.path:
+                    sys.path.insert(0, str(backend_path))
+
+                from routers.agents import get_agent_manager_instance
+
+                manager = get_agent_manager_instance()
+                if not manager:
+                    logger.warning(
+                        f"[Monitor] AgentManager not available for mission {mission_id[:16]}"
+                    )
+                    time.sleep(10)
+                    continue
+
+                session_result = manager.get_session_status(session_id)
+
+                if not session_result.get("success"):
+                    logger.warning(
+                        f"[Monitor] Session {session_id[:8]} not found for mission {mission_id[:16]}"
+                    )
+                    time.sleep(10)
+                    continue
+
+                status = session_result.get("status", "unknown")
+
+                if status in ["completed", "failed", "error"]:
+                    # Capture the result
+                    running_file = MISSION_STATUS_DIRS["running"] / f"{mission_id}.json"
+
+                    if running_file.exists():
+                        with open(running_file, "r") as f:
+                            mission_data = json.load(f)
+
+                        # Update with result
+                        mission_data["status"] = status
+                        mission_data["completed_at"] = datetime.now().isoformat()
+                        mission_data["result"] = {
+                            "success": status == "completed",
+                            "response": session_result.get("last_response", ""),
+                            "error": session_result.get("error")
+                            if status != "completed"
+                            else None,
+                            "execution_time_seconds": time.time() - start_time,
+                        }
+
+                        # Add log entry
+                        if "logs" not in mission_data:
+                            mission_data["logs"] = []
+                        mission_data["logs"].append(
+                            {
+                                "timestamp": datetime.now().isoformat(),
+                                "level": "info" if status == "completed" else "error",
+                                "message": f"Mission {status} - Result captured",
+                            }
+                        )
+
+                        # Determine target directory
+                        target_dir = MISSION_STATUS_DIRS.get(
+                            status, MISSION_STATUS_DIRS["completed"]
+                        )
+                        target_dir.mkdir(parents=True, exist_ok=True)
+
+                        # Write to target directory
+                        target_file = target_dir / f"{mission_id}.json"
+                        with open(target_file, "w") as f:
+                            json.dump(mission_data, f, indent=2)
+
+                        # Remove from running
+                        running_file.unlink()
+
+                        logger.info(
+                            f"[Monitor] Result captured for mission {mission_id[:16]} (status: {status})"
+                        )
+                        result_captured = True
+                        break
+
+                time.sleep(5)  # Poll every 5 seconds
+
+            except Exception as e:
+                logger.error(
+                    f"[Monitor] Error monitoring mission {mission_id[:16]}: {e}"
+                )
+                time.sleep(10)
+
+        if not result_captured:
+            logger.warning(f"[Monitor] Timeout or error for mission {mission_id[:16]}")
+
+    # Start monitoring in background thread
+    monitor_thread = threading.Thread(target=_monitor, daemon=True)
+    monitor_thread.start()
+    return monitor_thread
+
+
 # ============================================================================
 # API Endpoints
 # ============================================================================
@@ -334,6 +455,9 @@ async def create_mission(request: MissionCreateRequest):
                     logger.info(
                         f"Mission {mission_id} started with session {session_id[:8] if session_id else 'unknown'}"
                     )
+
+                    # Start background monitoring to capture result
+                    monitor_and_capture_result(mission_id, session_id)
                 else:
                     logger.warning(
                         f"Mission {mission_id} execution failed: {result.get('error')}"
@@ -717,4 +841,97 @@ async def delete_mission(
         raise
     except Exception as e:
         logger.error(f"Error deleting mission {mission_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{mission_id}/result")
+async def get_mission_result(mission_id: str):
+    """
+    Get the result of a completed mission.
+
+    Returns the agent's response, execution time, and any errors.
+    For running missions, returns current status without full result.
+    """
+    try:
+        # Search for mission in all status directories
+        mission_file = None
+        for status_dir in MISSION_STATUS_DIRS.values():
+            potential_file = status_dir / f"{mission_id}.json"
+            if potential_file.exists():
+                mission_file = potential_file
+                break
+
+        # Also check for .md files
+        if not mission_file:
+            for status_dir in MISSION_STATUS_DIRS.values():
+                potential_file = status_dir / f"{mission_id}.md"
+                if potential_file.exists():
+                    mission_file = potential_file
+                    break
+
+        if not mission_file:
+            raise HTTPException(
+                status_code=404, detail=f"Mission {mission_id} not found"
+            )
+
+        # Parse mission file
+        mission_data = parse_mission_file(mission_file)
+        if not mission_data:
+            raise HTTPException(
+                status_code=500, detail=f"Failed to parse mission file {mission_id}"
+            )
+
+        status = mission_data.get("status", "unknown")
+        result = mission_data.get("result")
+
+        # Build response
+        response = {
+            "mission_id": mission_id,
+            "status": status,
+            "has_result": result is not None,
+        }
+
+        if result:
+            response["result"] = result
+        elif status == "running":
+            # Try to get live status from agent manager
+            try:
+                import sys
+
+                backend_path = Path(__file__).parent.parent
+                if str(backend_path) not in sys.path:
+                    sys.path.insert(0, str(backend_path))
+
+                from routers.agents import get_agent_manager_instance
+
+                manager = get_agent_manager_instance()
+                session_id = mission_data.get("session_id")
+
+                if manager and session_id:
+                    session_status = manager.get_session_status(session_id)
+                    if session_status.get("success"):
+                        response["live_status"] = {
+                            "status": session_status.get("status"),
+                            "last_response_preview": session_status.get(
+                                "last_response", ""
+                            )[:500],
+                        }
+            except Exception as e:
+                logger.warning(f"Could not get live status: {e}")
+
+        # Include mission metadata
+        response["metadata"] = {
+            "created_at": mission_data.get("created_at"),
+            "started_at": mission_data.get("started_at"),
+            "completed_at": mission_data.get("completed_at"),
+            "agent_type": mission_data.get("agent_type"),
+            "mode": mission_data.get("mode"),
+        }
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting mission result {mission_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

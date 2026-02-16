@@ -1,0 +1,19 @@
+{
+  "id": "mission_20260216_092930_740191d1",
+  "title": "Dis moi bonjour en fran\u00e7ais",
+  "mission": "Dis moi bonjour en fran\u00e7ais",
+  "agent_type": "general",
+  "status": "running",
+  "priority": "medium",
+  "created_at": "2026-02-16T09:29:30.847439",
+  "started_at": "2026-02-16T09:29:30.954298",
+  "completed_at": null,
+  "mode": "smart",
+  "model_id": null,
+  "metadata": {
+    "mode": "smart",
+    "model_id": null
+  },
+  "logs": [],
+  "session_id": "ses_39c8d3db3ffetIwq1ywoFYm76J"
+}
