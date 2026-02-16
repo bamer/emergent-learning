@@ -1,0 +1,19 @@
+{
+  "id": "mission_20260216_065409_70023472",
+  "title": "Write comprehensive unit tests following test-driven development. Test individual functions/methods ...",
+  "mission": "Write comprehensive unit tests following test-driven development. Test individual functions/methods in isolation, mock external dependencies, test edge cases and error conditions, achieve >90% code coverage, and keep tests fast and independent.",
+  "agent_type": "general",
+  "status": "running",
+  "priority": "medium",
+  "created_at": "2026-02-16T06:54:09.711651",
+  "started_at": "2026-02-16T06:54:09.830858",
+  "completed_at": null,
+  "mode": "smart",
+  "model_id": null,
+  "metadata": {
+    "mode": "smart",
+    "model_id": null
+  },
+  "logs": [],
+  "session_id": "ses_39c8d3db3ffetIwq1ywoFYm76J"
+}

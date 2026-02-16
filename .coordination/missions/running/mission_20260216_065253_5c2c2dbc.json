@@ -1,0 +1,19 @@
+{
+  "id": "mission_20260216_065253_5c2c2dbc",
+  "title": "Test mission",
+  "mission": "Test mission",
+  "agent_type": "general",
+  "status": "running",
+  "priority": "medium",
+  "created_at": "2026-02-16T06:52:53.966036",
+  "started_at": "2026-02-16T06:52:54.136594",
+  "completed_at": null,
+  "mode": "smart",
+  "model_id": null,
+  "metadata": {
+    "mode": "smart",
+    "model_id": null
+  },
+  "logs": [],
+  "session_id": "ses_39c8d3db3ffetIwq1ywoFYm76J"
+}

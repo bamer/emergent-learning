@@ -1,7 +1,6 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -94,6 +93,26 @@ class MissionControlRequest(BaseModel):
     """Mission control request."""
 
     action: str  # start, stop, restart, cancel, retry
+
+
+class MissionCreateRequest(BaseModel):
+    """Mission creation request."""
+
+    task: str
+    mode: str = "smart"  # smart, auto, swarm, manual
+    model_id: Optional[str] = None
+    agent_type: Optional[str] = None
+
+
+class MissionResult(BaseModel):
+    """Mission result data."""
+
+    success: bool
+    response: Optional[str] = None
+    error: Optional[str] = None
+    heuristics_count: int = 0
+    execution_time_seconds: Optional[float] = None
+    completed_at: Optional[str] = None
 
 
 class MissionStats(BaseModel):
@@ -217,6 +236,128 @@ async def get_mission_status():
 
     except Exception as e:
         logger.error(f"Error getting mission status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/")
+@router.post("")
+async def create_mission(request: MissionCreateRequest):
+    """
+    Create and execute a new mission.
+
+    This endpoint creates a mission and triggers execution via the agent system.
+    Supports multiple execution modes:
+    - smart: AI determines best approach
+    - auto: Automatic agent selection
+    - swarm: Multi-agent coordination
+    - manual: Specific agent/model selection
+    """
+    import uuid
+    from datetime import datetime
+
+    try:
+        # Generate mission ID
+        mission_id = f"mission_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{str(uuid.uuid4())[:8]}"
+
+        # Determine agent type based on mode
+        agent_type = request.agent_type or "general"
+
+        # Create mission file in pending directory
+        pending_dir = MISSION_STATUS_DIRS["pending"]
+        pending_dir.mkdir(parents=True, exist_ok=True)
+
+        mission_data = {
+            "id": mission_id,
+            "title": request.task[:100] + ("..." if len(request.task) > 100 else ""),
+            "mission": request.task,
+            "agent_type": agent_type,
+            "status": "pending",
+            "priority": "medium",
+            "created_at": datetime.now().isoformat(),
+            "started_at": None,
+            "completed_at": None,
+            "mode": request.mode,
+            "model_id": request.model_id,
+            "metadata": {
+                "mode": request.mode,
+                "model_id": request.model_id,
+            },
+            "logs": [],
+        }
+
+        mission_file = pending_dir / f"{mission_id}.json"
+        with open(mission_file, "w") as f:
+            json.dump(mission_data, f, indent=2)
+
+        logger.info(f"Created mission {mission_id} with mode={request.mode}")
+
+        # Try to trigger execution via agent manager if available
+        execution_status = "pending"
+        session_id = None
+        response_preview = None
+
+        try:
+            # Import agent manager if available
+            import sys
+
+            backend_path = Path(__file__).parent.parent
+            if str(backend_path) not in sys.path:
+                sys.path.insert(0, str(backend_path))
+
+            from routers.agents import get_agent_manager_instance
+
+            manager = get_agent_manager_instance()
+            if manager:
+                # Execute the mission
+                result = manager.ask_agent(agent_type, request.task)
+                if result.get("success"):
+                    session_id = result.get("session_id")
+                    execution_status = "running"
+                    response_preview = result.get("response", "")[:200]
+
+                    # Move to running directory
+                    running_dir = MISSION_STATUS_DIRS["running"]
+                    running_dir.mkdir(parents=True, exist_ok=True)
+
+                    mission_data["status"] = "running"
+                    mission_data["started_at"] = datetime.now().isoformat()
+                    mission_data["session_id"] = session_id
+
+                    # Update file in running directory
+                    running_file = running_dir / f"{mission_id}.json"
+                    with open(running_file, "w") as f:
+                        json.dump(mission_data, f, indent=2)
+
+                    # Remove from pending
+                    mission_file.unlink()
+
+                    logger.info(
+                        f"Mission {mission_id} started with session {session_id[:8] if session_id else 'unknown'}"
+                    )
+                else:
+                    logger.warning(
+                        f"Mission {mission_id} execution failed: {result.get('error')}"
+                    )
+                    execution_status = "failed"
+        except Exception as e:
+            logger.warning(f"Could not trigger execution: {e}")
+            # Mission remains pending - can be started manually
+
+        return {
+            "status": execution_status,
+            "mission_id": mission_id,
+            "session_id": session_id,
+            "created_at": mission_data["created_at"],
+            "mode": request.mode,
+            "agent_type": agent_type,
+            "execution_time_ms": 0,
+            "heuristics_count": 0,
+            "response_preview": response_preview,
+            "message": f"Mission created with status: {execution_status}",
+        }
+
+    except Exception as e:
+        logger.error(f"Error creating mission: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

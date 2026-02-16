@@ -584,7 +584,7 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
         className="absolute inset-0 bg-gray-900/90 backdrop-blur-sm animate-in fade-in"
         onClick={handleClose}
       />
-      <div className="absolute inset-y-0 right-0 w-[700px] bg-slate-900 shadow-2xl animate-in slide-in-from-right overflow-y-auto custom-scrollbar">
+      <div className="absolute inset-y-0 right-0 w-[700px] max-h-[90vh] bg-slate-900 shadow-2xl animate-in slide-in-from-right overflow-y-auto custom-scrollbar rounded-l-xl">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -633,8 +633,8 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
                 onChange={(e) => setSelectedModel(e.target.value)}
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-600 bg-slate-800 text-white"
               >
-                {availableModels.map((model) => (
-                  <option key={model.id} value={model.id}>
+                {availableModels.map((model, index) => (
+                  <option key={`${model.id}-${model.provider_id || index}`} value={model.id}>
                     {model.name} ({model.provider})
                   </option>
                 ))}
@@ -679,7 +679,7 @@ export function MissionModal({ isOpen, onClose, apiBaseUrl, selectedAgentName }:
                 {selectedCategoryData.category} Prompts
               </label>
               <div
-                className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2"
+                className="grid grid-cols-2 gap-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-2"
               >
                 {selectedCategoryData.prompts.map((prompt) => (
                   <button
