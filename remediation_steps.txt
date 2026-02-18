@@ -1,5 +1,0 @@
-1. Add user to required groups: sudo usermod -a -G kgettext,wheel,dialout,sudo -r bamer
-2. Fix cleanup permissions: sudo chmod -R 775 /tmp /var/log && sudo chown -R bamer:bamer /home/bamer/.opencode/emergent-learning
-3. Restart critical services: systemctl restart dashboard-backend.service learning-capture.service eventsbridge-agent.service
-4. Execute disk cleanup: disk_cleanup.sh --force --include "/tmp/*" "/var/log/*" "/home/bamer/.opencode/emergent-learning"
-5. Fallback union mount: union_mount_temp_area.sh --target /tmp --mode=rw
