@@ -26,6 +26,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 import asyncio
+import random
 
 # Setup paths
 SCRIPT_DIR = Path(__file__).resolve().parent

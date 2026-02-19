@@ -101,7 +101,7 @@ except Exception:
         logger.error(message)
 
 
-router = APIRouter(prefix="/api/v1", tags=["monitoring"])
+router = APIRouter(tags=["monitoring"])
 
 # Database path - Production database (restored with 6885 records)
 DB_PATH = Path.home() / ".opencode" / "emergent-learning" / "memory" / "index.db"
@@ -121,66 +121,6 @@ def get_db_connection() -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
-
-
-# ==============================================================================
-# Sentinel Endpoints
-# ==============================================================================
-
-
-@router.get("/sentinel/status")
-async def get_sentinel_status():
-    """Get current sentinel monitoring status and recent cycles."""
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Get recent sentinel cycles from event_chronicle
-        cursor.execute(
-            """
-            SELECT timestamp, data, summary, status
-            FROM event_chronicle
-            WHERE event_type = 'sentinel_cycle'
-            ORDER BY timestamp DESC
-            LIMIT 50
-            """
-        )
-
-        cycles = []
-        for row in cursor.fetchall():
-            try:
-                data = json.loads(row["data"]) if row["data"] else {}
-                cycles.append(
-                    {
-                        "timestamp": row["timestamp"],
-                        "metrics": data.get("metrics", {}),
-                        "analysis": data.get("analysis", {}),
-                        "actions_taken": data.get("actions", []),
-                        "agent_executions": data.get("agent_executions", []),
-                    }
-                )
-            except json.JSONDecodeError:
-                continue
-
-        conn.close()
-
-        # Get current cycle (most recent)
-        current_cycle = cycles[0] if cycles else None
-
-        # Detect patterns from cycles
-        patterns = detect_patterns_from_cycles(cycles[:20])
-
-        return {
-            "status": "ok",
-            "current_cycle": current_cycle,
-            "recent_cycles": cycles[:20],
-            "patterns": patterns,
-            "total_cycles": len(cycles),
-        }
-
-    except Exception as e:
-        logger.error(f"Error fetching sentinel status: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 def detect_patterns_from_cycles(cycles: List[Dict]) -> List[Dict]:

@@ -556,33 +556,77 @@ start_frontend() {
 # Start Semantic Search Daemon
 start_semantic_daemon() {
     log "🔍 Démarrage du Semantic Search Daemon (port 5001)..."
-
-    # Kill any existing semantic daemon
-    pkill -f "semantic/daemon.py" 2>/dev/null || true
-    pkill -f "semantic.daemon" 2>/dev/null || true
-    sleep 1
-
+    
+    # Kill any existing semantic daemon - AGGRESSIVE CLEANUP
+    log "   Nettoyage des anciens processus..."
+    
+    # Method 1: Kill by pattern
+    pkill -9 -f "semantic/daemon.py" 2>/dev/null || true
+    pkill -9 -f "daemon.py.*5001" 2>/dev/null || true
+    pkill -9 -f "semantic.daemon" 2>/dev/null || true
+    
+    # Method 2: Kill by port (more reliable)
+    if command -v lsof &> /dev/null; then
+        PORT_PID=$(lsof -ti:5001 2>/dev/null)
+        if [[ -n "${PORT_PID:-}" ]]; then
+            log "   Port 5001 occupé par PID ${PORT_PID}, kill -9..."
+            kill -9 "${PORT_PID}" 2>/dev/null || true
+            sleep 2
+        fi
+    fi
+    
+    # Method 3: Kill by fuser (if lsof not available)
+    if command -v fuser &> /dev/null; then
+        fuser -k 5001/tcp 2>/dev/null || true
+    fi
+    
+    # Wait for port to be released
+    sleep 2
+    
+    # Verify port is free
+    if command -v lsof &> /dev/null; then
+        if lsof -ti:5001 2>/dev/null; then
+            log_error "❌ Échec: Port 5001 toujours occupé après nettoyage"
+            return 1
+        fi
+    fi
+    
+    log "   ✅ Port 5001 est libre"
+    
     # Start semantic daemon from the correct location
     cd "${SCRIPT_DIR}/semantic"
-    python3 daemon.py > "${LOGS_DIR}/semantic-daemon.log" 2>&1 &
+    
+    # Run WITHOUT --daemon flag to avoid DaemonContext issues
+    python3 daemon.py --port 5001 > "${LOGS_DIR}/semantic-daemon.log" 2>&1 &
     SEMANTIC_DAEMON_PID=$!
     cd - >/dev/null
-
+    
     # Wait for it to start
-    sleep 3
-
+    sleep 4
+    
     # Check if it's running
     if is_running "${SEMANTIC_DAEMON_PID}"; then
         log_success "✅ Semantic Search Daemon démarré (PID: ${SEMANTIC_DAEMON_PID})"
-        log_info   "   Port: 5001 - Semantic search activée"
+        log_info "   Port: 5001 - Semantic search activée"
+        
+        # Additional check: verify it's listening
+        sleep 2
+        if command -v nc &> /dev/null; then
+            if nc -z localhost 5001 2>/dev/null; then
+                log_success "   ✅ Daemon écoute sur le port 5001"
+            else
+                log_warning "   ⚠️ Daemon tourne mais n'écoute pas sur 5001"
+            fi
+        fi
+        
         return 0
     else
         log_warning "⚠️ Semantic Search Daemon non démarré"
         # Try to read the error
         if [[ -f "${LOGS_DIR}/semantic-daemon.log" ]]; then
-            log_error "$(head -20 "${LOGS_DIR}/semantic-daemon.log")"
+            log_error "$(head -30 "${LOGS_DIR}/semantic-daemon.log")"
         fi
-        return 0  # Continue even if not started (non-blocking)
+        return 1
     fi
 }
 

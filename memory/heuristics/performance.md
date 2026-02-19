@@ -65,3 +65,13 @@ Pool sizes: 50 projectiles, 20 enemies maintains 60 FPS during intense combat
 
 ---
 
+## H-300: Monitor Core Web Vitals (LCP, FID, CLS) in real-time to catch performance regressions early
+
+**Confidence**: 0.9
+**Source**: observation
+**Created**: 2026-02-19
+
+
+
+---
+

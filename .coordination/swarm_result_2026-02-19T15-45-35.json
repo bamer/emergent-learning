@@ -1,0 +1,19 @@
+{
+  "task": "Create a comprehensive audit and optimization plan for the Tango Restaurant Management project. Analyze all aspects: backend architecture, database schema and queries, frontend code, API endpoints, data import/export processes, payment type handling, security, performance, code quality, testing coverage, documentation, and user experience. The plan should be detailed, actionable, and cover every part of the system. Output should be structured as a formal project plan with phases, tasks, priorities, and estimated effort.",
+  "context": null,
+  "mode": "analysis",
+  "timestamp": "2026-02-19T15-45-35",
+  "agents": [
+    {
+      "name": "researcher",
+      "status": "spawned",
+      "session_id": "ses_38aec8b56ffeuDpCvCkvlj7M6s"
+    },
+    {
+      "name": "architect",
+      "status": "spawned",
+      "session_id": "ses_38aec8a8effetbb9VJ8Q8Fm3Jo"
+    }
+  ],
+  "status": "spawned"
+}

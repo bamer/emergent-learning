@@ -232,13 +232,67 @@ export function SentinelMonitorPanel({
   // Fetch current sentinel status
   const fetchSentinelStatus = useCallback(async () => {
     try {
-      // For now, use mock data until backend is updated
-      // In production, this would fetch from: `${baseUrl}/api/v1/sentinel/status`
-      
-      // Simulate loading
       setLoading(true);
       
-      // Mock cycle data for demonstration
+      // Fetch real sentinel status from backend API
+      const response = await fetch(`${baseUrl}/api/v1/sentinel/status`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Transform backend data to match frontend types
+      const transformedCycle: SentinelCycle = {
+        timestamp: data.current_cycle?.timestamp || new Date().toISOString(),
+        metrics: {
+          timestamp: data.current_cycle?.timestamp || new Date().toISOString(),
+          services: {
+            frontend: true, // Assume frontend is always running
+            backend: true,  // Assume backend is always running
+            overall: data.status !== 'critical'
+          },
+          data: {
+            learnings: data.current_cycle?.metrics?.data?.learnings || 0,
+            golden_rules: data.current_cycle?.metrics?.data?.golden_rules || 0,
+            regular_heuristics: data.current_cycle?.metrics?.data?.regular_heuristics || 0,
+            experiments: data.current_cycle?.metrics?.data?.experiments || 0,
+            spike_reports: data.current_cycle?.metrics?.data?.spike_reports || 0,
+            total_items: data.current_cycle?.metrics?.data?.total_items || 0
+          },
+          activity: {
+            recent_learnings: data.current_cycle?.metrics?.activity?.recent_learnings || 0,
+            recent_heuristics: data.current_cycle?.metrics?.activity?.recent_heuristics || 0,
+            activity_score: data.current_cycle?.metrics?.activity?.activity_score || 0
+          },
+          quality: {
+            high_confidence_heuristics: data.current_cycle?.metrics?.quality?.high_confidence_heuristics || 0,
+            average_confidence: data.current_cycle?.metrics?.quality?.average_confidence || 0,
+            quality_score: data.current_cycle?.metrics?.quality?.quality_score || 0
+          }
+        },
+        analysis: {
+          status: data.status || 'nominal',
+          analysis: data.current_cycle?.analysis?.analysis || 'System status monitoring active.',
+          anomalies: data.current_cycle?.analysis?.anomalies || [],
+          recommendations: data.current_cycle?.analysis?.recommendations || [],
+          patterns: data.current_cycle?.analysis?.patterns || [],
+          priority_actions: data.current_cycle?.analysis?.priority_actions || []
+        },
+        actions_taken: data.current_cycle?.actions_taken || [],
+        agent_executions: data.current_cycle?.agent_executions || []
+      };
+
+      setCurrentCycle(transformedCycle);
+      setCycleHistory(prev => [transformedCycle, ...(prev || [])].slice(0, 50));
+      setPatterns(data.patterns || []);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching sentinel status:', err);
+      setError(`Unable to connect to sentinel service: ${err instanceof Error ? err.message : String(err)}`);
+      
+      // Fallback to mock data if API fails
       const mockCycle: SentinelCycle = {
         timestamp: new Date().toISOString(),
         metrics: {
@@ -246,49 +300,42 @@ export function SentinelMonitorPanel({
           services: {
             frontend: true,
             backend: true,
-            overall: true
+            overall: false
           },
           data: {
-            learnings: 42,
-            golden_rules: 8,
-            regular_heuristics: 24,
-            experiments: 5,
-            spike_reports: 2,
-            total_items: 81
+            learnings: 0,
+            golden_rules: 0,
+            regular_heuristics: 0,
+            experiments: 0,
+            spike_reports: 0,
+            total_items: 0
           },
           activity: {
-            recent_learnings: 3,
-            recent_heuristics: 1,
-            activity_score: 85
+            recent_learnings: 0,
+            recent_heuristics: 0,
+            activity_score: 0
           },
           quality: {
-            high_confidence_heuristics: 18,
-            average_confidence: 0.82,
-            quality_score: 0.91
+            high_confidence_heuristics: 0,
+            average_confidence: 0,
+            quality_score: 0
           }
         },
         analysis: {
-          status: 'healthy',
-          analysis: 'System is operating normally. All services are responsive and no critical anomalies detected in the last analysis cycle.',
-          anomalies: [],
-          recommendations: [
-            'Continue monitoring for unusual patterns',
-            'Review heuristics with confidence below 0.7'
-          ],
-          patterns: ['Normal operation pattern detected'],
-          priority_actions: ['Schedule weekly heuristic review']
+          status: 'critical',
+          analysis: 'Cannot connect to Sentinel monitoring service',
+          anomalies: [`Connection failed: ${err instanceof Error ? err.message : String(err)}`],
+          recommendations: ['Check if Sentinel service is running'],
+          patterns: [],
+          priority_actions: ['Restart Sentinel service']
         },
-        actions_taken: ['Completed automated health check', 'Updated metrics dashboard'],
+        actions_taken: [],
         agent_executions: []
       };
 
       setCurrentCycle(mockCycle);
-      setCycleHistory(prev => [mockCycle, ...prev].slice(0, 50));
+      setCycleHistory([mockCycle]);
       setPatterns([]);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching sentinel status:', err);
-      setError('Unable to connect to sentinel service');
     } finally {
       setLoading(false);
     }

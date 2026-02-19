@@ -26,3 +26,13 @@ Enforced error logging across 12 ELF files. Pattern: replace 'except Exception: 
 
 ---
 
+## H-302: Use global Error Boundaries with graceful degradation and user-friendly messages
+
+**Confidence**: 0.9
+**Source**: observation
+**Created**: 2026-02-19
+
+
+
+---
+

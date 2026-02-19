@@ -54,7 +54,7 @@ metrics:
 
 # Analysis Configuration
 analysis:
-  use_ai: true  # Use Claude Haiku for analysis
+  use_ai: true  # Use Claude Haiku for analysis ==> good idea connard on n'a pas de claude code
   complexity_scoring: true
   pattern_detection: true
   adaptive_learning: true

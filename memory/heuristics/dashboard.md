@@ -35,3 +35,13 @@ Large write operations to MissionModal.tsx caused file corruption - use incremen
 
 ---
 
+## H-298: Always implement code splitting with React.lazy() and Suspense for large dashboards to reduce bundle size
+
+**Confidence**: 0.9
+**Source**: observation
+**Created**: 2026-02-19
+
+
+
+---
+
