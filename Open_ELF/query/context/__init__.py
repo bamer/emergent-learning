@@ -24,7 +24,15 @@ from .validation import (
     validate_limit,
 )
 
+# Import ContextBuilderMixin from renamed module
+try:
+    from query.context_builder import ContextBuilderMixin
+except ImportError:
+    from ..context_builder import ContextBuilderMixin
+
 __all__ = [
+    # Core
+    "ContextBuilderMixin",
     # Validation
     "ContextValidator",
     "validate_query",

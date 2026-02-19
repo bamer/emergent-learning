@@ -20,7 +20,7 @@ import aiofiles.os
 LOG_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
 ROTATION_SCRIPT = "/home/bamer/.opencode/emergent-learning/scripts/auto_log_rotation.py"
 WATCH_CONFIG = "/home/bamer/.opencode/emergent-learning/scripts/watch_config.json"
-STATUS_FILE = Path("/home/bamer/.opencode/emergent-learning/logs/sentinel_status.json")
+STATUS_FILE = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs/sentinel_status.json")
 
 # Default thresholds (size in MB)
 DEFAULT_THRESHOLDS = {

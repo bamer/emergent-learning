@@ -1,7 +1,6 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
 # /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
@@ -156,7 +155,10 @@ except ImportError:
 try:
     from query.context import ContextBuilderMixin
 except ImportError:
-    from context import ContextBuilderMixin
+    try:
+        from query.context_builder import ContextBuilderMixin
+    except ImportError:
+        from context_builder import ContextBuilderMixin
 
 # Import schema migrations
 try:

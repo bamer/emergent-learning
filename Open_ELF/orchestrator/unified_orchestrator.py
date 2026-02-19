@@ -1361,6 +1361,90 @@ System Health Summary:
             else None,
         }
 
+    def get_health_metrics(self) -> Dict[str, Any]:
+        """Get detailed health metrics for monitoring.
+
+        Returns:
+            Dict with health metrics suitable for Prometheus/Grafana.
+        """
+        status = self.get_services_status()
+
+        # Calculate health score (0-100)
+        services = status["services"]
+        healthy_count = sum(
+            [
+                1 if services.get("event_bridge") else 0,
+                1 if services.get("sentinel") else 0,
+                1 if services["learning_capture"].get("health") else 0,
+            ]
+        )
+        health_score = int((healthy_count / 3) * 100)
+
+        return {
+            "health_score": health_score,
+            "status": "healthy"
+            if health_score >= 66
+            else "degraded"
+            if health_score >= 33
+            else "critical",
+            "uptime_seconds": status["orchestrator"]["uptime_seconds"],
+            "cycle_count": self.cycle_count,
+            "events_processed": len(self.events),
+            "services": {
+                "event_bridge": {
+                    "status": "up" if services.get("event_bridge") else "down",
+                    "healthy": services.get("event_bridge", False),
+                },
+                "sentinel": {
+                    "status": "up" if services.get("sentinel") else "down",
+                    "healthy": services.get("sentinel", False),
+                },
+                "learning_capture": {
+                    "status": "up"
+                    if services["learning_capture"].get("health")
+                    else "down",
+                    "healthy": services["learning_capture"].get("health", False),
+                    "pid": services["learning_capture"].get("pid"),
+                },
+            },
+            "alerts": status["alerts"],
+            "timestamp": datetime.now().isoformat(),
+        }
+
+    def log_structured(self, level: str, message: str, **kwargs):
+        """Log a structured message with additional context.
+
+        Args:
+            level: Log level (debug, info, warning, error, critical)
+            message: Log message
+            **kwargs: Additional context to include
+        """
+        log_data = {
+            "timestamp": datetime.now().isoformat(),
+            "level": level,
+            "message": message,
+            "orchestrator_running": self.running,
+            "cycle_count": self.cycle_count,
+            **kwargs,
+        }
+
+        # Use appropriate log level
+        log_func = getattr(logger, level, logger.info)
+        log_func(f"{message} | {json.dumps(kwargs)}")
+
+        # Also log to database if available
+        if _database_logging_available:
+            try:
+                log_orchestrator_db(
+                    event_type="orchestrator_log",
+                    source="unified_orchestrator",
+                    summary=message,
+                    data=log_data,
+                    status=level,
+                )
+            except Exception:
+                pass  # Don't fail on logging errors
+
 
 async def main():
     """Entry point for running orchestrator."""

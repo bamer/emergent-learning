@@ -15,3 +15,13 @@ HTTP 404 means service down, not empty payload. When Sentinel reports empty heal
 
 ---
 
+## H-305: EventBridge must exist and be running before Unified Orchestrator can start
+
+**Confidence**: 1.0
+**Source**: observation
+**Created**: 2026-02-19
+
+Unified Orchestrator has hard dependency on EventBridge (port 9998). EventBridge is SSE client connecting to OpenCode. If missing, orchestrator exits with dependency error immediately. Always verify event_bridge.py exists at ~/Open_ELF/orchestrator/event_bridge.py and is running on port 9998 before starting orchestrator.
+
+---
+

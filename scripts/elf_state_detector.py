@@ -21,7 +21,7 @@ class ELFStateDetector:
         self.dashboard_port = 3000  # Port du dashboard
         self.api_port = 8000  # Port de l'API backend
         self.state_file = Path(
-            "/home/bamer/.opencode/emergent-learning/logs/elf_state.json"
+            "/home/bamer/.opencode/emergent-learning/Open_ELF/logs/elf_state.json"
         )
 
         # Processus ELF typiques à surveiller

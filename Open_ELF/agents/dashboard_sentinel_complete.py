@@ -803,7 +803,7 @@ class AISentinel:
                 logger.info("🔧 Attempting automatic service recovery...")
                 # Log recovery attempt
                 with open(
-                    "/home/bamer/.opencode/emergent-learning/logs/recovery_attempts.log",
+                    "/home/bamer/.opencode/emergent-learning/Open_ELF/logs/recovery_attempts.log",
                     "a",
                 ) as f:
                     f.write(f"{datetime.now().isoformat()}: Recovery attempt\n")

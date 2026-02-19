@@ -27,7 +27,7 @@ MAX_AGE_HOURS = 24  # Rotation quand fichier plus vieux que 24h
 MAX_ARCHIVES = 10  # Nombre maximum d'archives à garder
 CRITICAL_SIZE_MB = 20  # Taille critique pour alerte
 STATUS_FILE = Path(
-    "/home/bamer/.opencode/emergent-learning/logs/auto_rotation_status.json"
+    "/home/bamer/.opencode/emergent-learning/Open_ELF/logs/auto_rotation_status.json"
 )
 
 

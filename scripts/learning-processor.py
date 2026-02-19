@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 
 DB_PATH = Path("/home/bamer/.opencode/emergent-learning/memory/index.db")
-LOG_FILE = Path("/home/bamer/.opencode/emergent-learning/logs/learning-processor.log")
+LOG_FILE = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs/learning-processor.log")
 
 def log(message):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
