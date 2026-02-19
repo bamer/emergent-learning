@@ -600,7 +600,7 @@ class LifecycleManager:
             params.append(self.config.contradiction_rate_threshold * 0.7)  # 70% of threshold = at risk
 
             cursor = conn.execute(base_query, params)
-            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
 
@@ -755,7 +755,7 @@ class LifecycleManager:
             """)
 
             context_lower = context.lower()
-            for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+            for row in cursor.fetchall():
                 if row['keyword'] in context_lower:
                     candidates.append({
                         "id": row['id'],
@@ -778,7 +778,7 @@ class LifecycleManager:
                   AND julianday('now') - julianday(h.dormant_since) >= CAST(rt.trigger_value AS INTEGER)
             """)
 
-            for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+            for row in cursor.fetchall():
                 candidates.append({
                     "id": row['id'],
                     "rule": row['rule'],
@@ -812,7 +812,7 @@ class LifecycleManager:
                 WHERE domain = ? AND status = 'active'
                 ORDER BY eviction_score ASC
             """, (domain,))
-            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
 
@@ -895,7 +895,7 @@ class LifecycleManager:
                 params.append(domain)
 
             cursor = conn.execute(query, params)
-            to_archive = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            to_archive = cursor.fetchall()
 
             archived = []
             for row in to_archive:
@@ -1093,7 +1093,7 @@ class LifecycleManager:
                 WHERE domain = ? AND status = 'active'
             """, (domain,))
 
-            existing_rules = [row['rule'] for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            existing_rules = [row['rule'] for row in cursor.fetchall()]
 
             if not existing_rules:
                 return 1.0  # First heuristic is always novel
@@ -1225,7 +1225,7 @@ class LifecycleManager:
                 ORDER BY confidence DESC
             """, (domain,))
 
-            heuristics = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            heuristics = [dict(row) for row in cursor.fetchall()]
             candidates = []
 
             # Compare all pairs
@@ -1290,7 +1290,7 @@ class LifecycleManager:
                 WHERE id IN ({placeholders}) AND status = 'active'
             """, source_ids)
 
-            sources = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            sources = [dict(row) for row in cursor.fetchall()]
 
             if len(sources) != len(source_ids):
                 return {"success": False, "reason": "Some heuristics not found or not active"}
@@ -1405,7 +1405,7 @@ class LifecycleManager:
                   AND julianday('now') - julianday(COALESCE(last_used_at, created_at)) > ?
             """, (self.config.decay_half_life_days,))
 
-            for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+            for row in cursor.fetchall():
                 new_conf = max(row['confidence'] * 0.92, self.config.min_confidence)
                 conn.execute("""
                     UPDATE heuristics SET confidence = ?, updated_at = CURRENT_TIMESTAMP
@@ -1430,7 +1430,7 @@ class LifecycleManager:
         conn = self._get_connection()
         try:
             cursor = conn.execute("SELECT DISTINCT domain FROM heuristics WHERE status = 'active'")
-            for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+            for row in cursor.fetchall():
                 enforcement = self.enforce_domain_limits(row['domain'])
                 if enforcement["action"] != "none":
                     results["domain_enforcement"][row['domain']] = enforcement
@@ -1461,11 +1461,11 @@ class LifecycleManager:
             stats["by_status"] = {row['status']: {
                 "count": row['count'],
                 "avg_confidence": round(row['avg_confidence'], 3) if row['avg_confidence'] else 0
-            } for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire}
+            } for row in cursor.fetchall()}
 
             # Domain health
             cursor = conn.execute("SELECT * FROM domain_health ORDER BY active_count DESC")
-            stats["domains"] = [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            stats["domains"] = [dict(row) for row in cursor.fetchall()]
 
             # At-risk heuristics
             stats["at_risk"] = self.get_at_risk_heuristics()
@@ -1480,7 +1480,7 @@ class LifecycleManager:
             stats["recent_updates"] = {row['update_type']: {
                 "count": row['count'],
                 "avg_delta": round(row['avg_delta'], 4) if row['avg_delta'] else 0
-            } for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire}
+            } for row in cursor.fetchall()}
 
             return stats
         finally:

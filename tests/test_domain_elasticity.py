@@ -514,7 +514,7 @@ def test_merge_execution(manager):
     conn = manager._get_connection()
     try:
         cursor = conn.execute("SELECT status FROM heuristics WHERE id IN (?, ?)", (id1, id2))
-        statuses = [row['status'] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+        statuses = [row['status'] for row in cursor.fetchall()]
         assert all(s == 'archived' for s in statuses), "Source heuristics should be archived"
 
         # Verify merged heuristic exists

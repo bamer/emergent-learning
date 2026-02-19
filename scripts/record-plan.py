@@ -78,7 +78,7 @@ def list_active_plans() -> list:
         LIMIT 10
     """)
 
-    plans = [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+    plans = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return plans
 

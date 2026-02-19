@@ -258,7 +258,7 @@ def test_record_outcome(tracker, test_db):
         FROM fraud_reports
         WHERE review_outcome IS NOT NULL
     """)
-    results = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+    results = cursor.fetchall()
     conn.close()
 
     assert len(results) == 2, f"Expected 2 outcomes, got {len(results)}"

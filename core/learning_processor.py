@@ -1253,6 +1253,52 @@ class LearningProcessor:
         if not learnings:
             return 0
 
+        # Record to database
+        conn = self._get_db_connection()
+        if not conn:
+            return 0
+        try:
+            cursor = conn.cursor()
+            timestamp = datetime.now().isoformat()
+            count = 0
+            domains = self.session_state.get("domains_queried", ["general"])
+            for learning in learnings:
+                domain = learning.get("domain", domains[0] if domains else "general")
+                rule = learning.get("rule", "")
+                if not rule:
+                    continue
+                cursor.execute(
+                    """
+                    INSERT INTO heuristics (domain, rule, explanation, confidence, source_type, created_at)
+                    VALUES (?, ?, 'Auto-extracted from tool output', ?, 'auto', ?)
+                    ON CONFLICT(domain, rule) DO UPDATE SET
+                        times_validated = times_validated + 1,
+                        confidence = MIN(1.0, confidence + 0.05),
+                        updated_at = CURRENT_TIMESTAMP
+                    """,
+                    (domain, rule, learning.get("confidence", 0.5), timestamp),
+                )
+                count += 1
+                self._store_embedding(
+                    text=f"{domain}: {rule}",
+                    source_id=f"heuristic_{domain}_{hash(rule) % 100000}",
+                    source_type="heuristic",
+                    metadata={
+                        "domain": domain,
+                        "confidence": learning.get("confidence", 0.5),
+                        "source": learning.get("source", "auto"),
+                    },
+                )
+            conn.commit()
+            logger.info(f"[LEARNINGS] Recorded {count} learnings to database")
+            return count
+        except Exception as e:
+            logger.error(f"Error recording learnings: {e}", exc_info=True)
+            conn.rollback()
+            return 0
+        finally:
+            conn.close()
+
     def _contains_error(self, text: str) -> bool:
         """Check if text contains error indicators."""
         error_keywords = [
@@ -1325,61 +1371,6 @@ class LearningProcessor:
                 logger.info(f"[ANTI_PATTERN] Detected: {heuristic_text[:50]}...")
 
         return learnings
-
-        # Record to database
-        conn = self._get_db_connection()
-        if not conn:
-            return 0
-
-        try:
-            cursor = conn.cursor()
-            timestamp = datetime.now().isoformat()
-            count = 0
-
-            domains = self.session_state.get("domains_queried", ["general"])
-
-            for learning in learnings:
-                domain = learning.get("domain", domains[0] if domains else "general")
-                rule = learning.get("rule", "")
-
-                if not rule:
-                    continue
-
-                # Upsert heuristic
-                cursor.execute(
-                    """
-                    INSERT INTO heuristics (domain, rule, explanation, confidence, source_type, created_at)
-                    VALUES (?, ?, 'Auto-extracted from tool output', ?, 'auto', ?)
-                    ON CONFLICT(domain, rule) DO UPDATE SET
-                        times_validated = times_validated + 1,
-                        confidence = MIN(1.0, confidence + 0.05),
-                        updated_at = CURRENT_TIMESTAMP
-                """,
-                    (domain, rule, learning.get("confidence", 0.5), timestamp),
-                )
-                count += 1
-
-                # Store embedding in semantic daemon
-                self._store_embedding(
-                    text=f"{domain}: {rule}",
-                    source_id=f"heuristic_{domain}_{hash(rule) % 100000}",
-                    source_type="heuristic",
-                    metadata={
-                        "domain": domain,
-                        "confidence": learning.get("confidence", 0.5),
-                        "source": learning.get("source", "auto"),
-                    },
-                )
-
-            conn.commit()
-            return count
-
-        except Exception as e:
-            logger.error(f"Error recording learnings: {e}", exc_info=True)
-            conn.rollback()
-            return 0
-        finally:
-            conn.close()
 
     def _extract_implicit_learnings(self, content: str) -> List[Dict]:
         """Extract implicit learnings from content."""

@@ -72,7 +72,7 @@ class ReplayManager:
                 WHERE run_id = ?
                 ORDER BY created_at
             """, (run_id,))
-            run["executions"] = [dict(r) for r in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            run["executions"] = [dict(r) for r in cursor.fetchall()]
 
             return run
 
@@ -85,7 +85,7 @@ class ReplayManager:
                 WHERE run_id = ? AND status = 'failed'
                 ORDER BY created_at
             """, (run_id,))
-            return [dict(r) for r in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(r) for r in cursor.fetchall()]
 
     def get_node_by_id(self, run_id: int, node_id: str) -> Optional[Dict]:
         """Get a specific node execution."""

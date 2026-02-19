@@ -87,13 +87,13 @@ export function HeatmapView({ data, onCellSelect, title = 'Activity Heatmap' }: 
   }, [heatmapData])
   
   return (
-    <div className="w-full h-full flex flex-col bg-slate-900 rounded-lg overflow-hidden">
+    <div className="w-full h-full min-h-[300px] flex flex-col bg-slate-900 rounded-lg">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-700">
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between p-2 border-b border-slate-700">
+        <h3 className="text-sm font-semibold text-white">{title}</h3>
+        <div className="flex items-center gap-1">
           <span className="text-xs text-slate-400">Low</span>
-          <div className="w-24 h-3 rounded" style={{
+          <div className="w-16 h-2 rounded" style={{
             background: `linear-gradient(to right, ${colorScale(0)}, ${colorScale(50)}, ${colorScale(100)})`
           }}></div>
           <span className="text-xs text-slate-400">High</span>
@@ -101,7 +101,7 @@ export function HeatmapView({ data, onCellSelect, title = 'Activity Heatmap' }: 
       </div>
       
       {/* Heatmap Grid */}
-      <div className="flex-1 p-4 overflow-auto">
+      <div className="flex-1 min-h-0 p-2 overflow-auto">
         <div className="inline-block">
           {/* Column headers */}
           <div className="flex ml-12 mb-1">

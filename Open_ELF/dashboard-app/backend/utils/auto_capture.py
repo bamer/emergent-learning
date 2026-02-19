@@ -301,7 +301,7 @@ class AutoCapture:
 
             failures = (
                 cursor.fetchall()
-            )  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            )
             captured = 0
 
             for f in failures:
@@ -369,7 +369,7 @@ class AutoCapture:
 
             successes = (
                 cursor.fetchall()
-            )  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            )
             captured = 0
 
             for s in successes:

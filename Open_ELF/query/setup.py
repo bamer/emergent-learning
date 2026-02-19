@@ -362,7 +362,16 @@ def ensure_full_setup():
         "needs_user_choice" - Has existing config, OpenCode agent should ask user
         "install_failed" - Something went wrong
     """
+    # OpenCode uses instruction_building.md, not AGENTS.md
     global_agents_md = (
+        Path.home()
+        / ".config"
+        / "opencode"
+        / "instructionsELF"
+        / "instruction_building.md"
+    )
+    # Also check for legacy AGENTS.md location
+    legacy_agents_md = (
         Path.home() / ".config" / "opencode" / "instructionsELF" / "AGENTS.md"
     )
 
@@ -375,15 +384,16 @@ def ensure_full_setup():
         # or a minimal install where auto-setup isn't possible.
         return "ok"
 
-    # Case 1: No AGENTS.md - new user, auto-install
-    if not global_agents_md.exists():
+    # Case 1: No instruction file found - new user, auto-install
+    # Check both new (instruction_building.md) and legacy (AGENTS.md) locations
+    if not global_agents_md.exists() and not legacy_agents_md.exists():
         print("")
         print("=" * 60)
         print("[ELF] Welcome! First-time setup...")
         print("=" * 60)
         print("")
         print("Installing:")
-        print("  - AGENTS.md : Core instructions (OpenCode)")
+        print("  - instruction_building.md : Core instructions (OpenCode)")
         print("  - /search   : Session history search")
         print("  - /checkin  : Building check-in")
         print("  - /swarm    : Multi-agent coordination")
@@ -420,9 +430,11 @@ def ensure_full_setup():
             print(f"[ELF] Setup issue: {e}")
             return "install_failed"
 
-    # Case 2: Has AGENTS.md with ELF already
+    # Case 2: Has instruction file with ELF already
+    # Check the file that exists (prefer new location)
+    check_file = global_agents_md if global_agents_md.exists() else legacy_agents_md
     try:
-        with open(global_agents_md, "r", encoding="utf-8") as f:
+        with open(check_file, "r", encoding="utf-8") as f:
             content = f.read()
         if (
             "Emergent Learning Framework" in content
@@ -432,16 +444,14 @@ def ensure_full_setup():
     except:
         pass
 
-    # Case 3: Has AGENTS.md but no ELF - OpenCode agent should note this
+    # Case 3: Has instruction file but no ELF - OpenCode agent should note this
     print("")
     print("=" * 60)
     print("[ELF] Existing configuration detected")
     print("=" * 60)
     print("")
-    print(
-        "You have ~/.config/opencode/instructionsELF/AGENTS.md but it doesn't include ELF."
-    )
-    print("Note: ELF uses OpenCode (AGENTS.md), not Claude (CLAUDE.md)")
+    print(f"You have {check_file.name} but it doesn't include ELF.")
+    print("Note: ELF uses OpenCode (instruction_building.md), not Claude (CLAUDE.md)")
     print("")
     print("[ELF_NEEDS_USER_CHOICE]")
     print("")

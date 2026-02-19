@@ -58,7 +58,6 @@ interface AgentsPanelProps {
 
 const AGENT_ICONS: Record<string, React.ComponentType<any>> = {
   orchestrator: Building,
-  sentinel: Search,
   sentinel: Activity,
   researcher: FileSearch,
   architect: Lightbulb,
@@ -134,7 +133,8 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
   const [testedAgentKey, setTestedAgentKey] = useState<string | null>(null);
   const [startingAgentKey, setStartingAgentKey] = useState<string | null>(null);
   
-  // Helper to generate unique key for each agent (using name which is unique per agent)
+  // Helper to generate unique key for each agent
+  // Using name and system combination to ensure uniqueness across different agent systems
   const getAgentKey = (agent: Agent) => `${agent.name}-${agent.system}`;
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showMissionModal, setShowMissionModal] = useState(false);
@@ -640,7 +640,7 @@ export function AgentsPanel({ apiBaseUrl = '' }: AgentsPanelProps) {
               const isElf = agent.system === 'elf';
               
               return (
-                <div key={`${agent.system}-${agent.id}-${index}`} className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4">
+                <div key={getAgentKey(agent)} className="bg-slate-800/50 rounded-lg border border-slate-700/50 p-4">
                   {/* Agent Header */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">

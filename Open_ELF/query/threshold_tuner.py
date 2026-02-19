@@ -83,7 +83,7 @@ class ThresholdTuner:
                 ORDER BY asig.score ASC
             """, (detector_name,))
 
-            signals = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            signals = cursor.fetchall()
 
             if len(signals) < min_samples:
                 return {
@@ -256,7 +256,7 @@ class ThresholdTuner:
                 ORDER BY fraud_score ASC
             """)
 
-            reports = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            reports = cursor.fetchall()
 
             if len(reports) < min_samples:
                 return {
@@ -408,7 +408,7 @@ class ThresholdTuner:
     def _get_current_classification_thresholds(self, conn: sqlite3.Connection) -> Dict[str, float]:
         """Get current classification thresholds."""
         cursor = conn.execute("SELECT level, threshold FROM classification_thresholds")
-        thresholds = {row['level']: row['threshold'] for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire}
+        thresholds = {row['level']: row['threshold'] for row in cursor.fetchall()}
 
         # Fallback to defaults if not in DB
         defaults = {
@@ -501,7 +501,7 @@ class ThresholdTuner:
                 WHERE review_decision IS NULL
                 ORDER BY created_at DESC
             """)
-            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
 

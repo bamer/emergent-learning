@@ -7,7 +7,7 @@
 #
 # Usage:
 #   bash ralph.sh                  # Run until all stories complete or max iterations
-#   bash ralph.sh --max-iterations 5
+#   bash ralph.sh --max-iterations 50
 #   bash ralph.sh --prd custom-prd.json
 #
 

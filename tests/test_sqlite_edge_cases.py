@@ -115,7 +115,7 @@ class SQLiteEdgeCaseTester:
 
             # Check if column exists
             cursor.execute("PRAGMA table_info(learnings)")
-            columns = [row[1] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            columns = [row[1] for row in cursor.fetchall()]
 
             missing_columns = []
             expected_columns = ['tags', 'domain', 'severity', 'created_at', 'updated_at']
@@ -198,7 +198,7 @@ class SQLiteEdgeCaseTester:
 
             # Test 2: Retrieve and compare
             cursor.execute("SELECT * FROM test_types")
-            rows = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            rows = cursor.fetchall()
 
             for row in rows:
                 # Check if severity_int is actually integer
@@ -293,7 +293,7 @@ class SQLiteEdgeCaseTester:
 
             # Test 2: Check actual learnings table constraints
             cursor.execute("PRAGMA table_info(learnings)")
-            columns = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            columns = cursor.fetchall()
 
             # Expected NOT NULL columns
             required_fields = ['type', 'filepath', 'title']
@@ -362,12 +362,12 @@ class SQLiteEdgeCaseTester:
 
             # Test 1: Check for UNIQUE constraint on filepath
             cursor.execute("PRAGMA index_list(learnings)")
-            indexes = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            indexes = cursor.fetchall()
 
             has_unique_filepath = False
             for idx in indexes:
                 cursor.execute(f"PRAGMA index_info({idx[1]})")
-                index_cols = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+                index_cols = cursor.fetchall()
                 if any(col[2] == 'filepath' for col in index_cols):
                     # Check if unique
                     if 'unique' in idx[1].lower() or idx[2] == 1:
@@ -400,7 +400,7 @@ class SQLiteEdgeCaseTester:
 
             # Test 4: Check if heuristics table has foreign key to learnings
             cursor.execute("PRAGMA foreign_key_list(heuristics)")
-            fks = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            fks = cursor.fetchall()
 
             # source_id should reference learnings(id)
             has_source_fk = any(fk[2] == 'learnings' and fk[3] == 'source_id' for fk in fks)
@@ -719,7 +719,7 @@ class SQLiteEdgeCaseTester:
 
             # Test index usage
             cursor.execute("EXPLAIN QUERY PLAN SELECT * FROM test_index WHERE domain='domain_5'")
-            plan = cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            plan = cursor.fetchall()
 
             uses_index = any("idx_test_domain" in str(row) for row in plan)
 

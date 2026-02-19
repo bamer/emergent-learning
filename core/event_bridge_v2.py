@@ -52,6 +52,39 @@ except ImportError:
     logger = logging.getLogger("event_bridge")
 
 
+# ============================================================================
+# MODULE-LEVEL LISTENER REGISTRY
+# Allows external modules (e.g. unified_orchestrator) to register callbacks
+# that receive every event processed by EventBridge.
+# ============================================================================
+
+_global_listeners: list = []
+
+
+def register_global_listener(callback) -> None:
+    """
+    Register a callback to receive all events handled by EventBridge.
+
+    The callback will be called with a single argument: the event dict
+    (same format as passed to EventBridge._handle_event).
+
+    Usage (from unified_orchestrator):
+        from core.event_bridge_v2 import register_global_listener
+        register_global_listener(my_handler)
+    """
+    if callable(callback) and callback not in _global_listeners:
+        _global_listeners.append(callback)
+        logger.info(f"✅ Registered global listener: {getattr(callback, '__name__', repr(callback))}")
+
+
+def unregister_global_listener(callback) -> None:
+    """Remove a previously registered global listener."""
+    try:
+        _global_listeners.remove(callback)
+    except ValueError:
+        pass
+
+
 class EventBridge:
     """
     Simplified EventBridge for routing OpenCode events.
@@ -450,6 +483,13 @@ class EventBridge:
         if line.startswith("data:"):
             data_str = line[5:].strip()
             if data_str:
+                # Fast-reject non-JSON content (heartbeats, plain-text lines, etc.)
+                # Valid JSON events always start with '{' or '['.
+                # OpenCode heartbeats are ~267-char plain-text strings - skip them
+                # immediately to avoid polluting the buffer with unjoinable garbage.
+                if not data_str.startswith(('{', '[')):
+                    return
+
                 # Try to parse this single data: line as JSON
                 # SSE events are separate - each data: line is a complete event
                 try:
@@ -547,6 +587,13 @@ class EventBridge:
             logger.error(f"❌ {details}")
         elif event_type == "failure":
             logger.warning(f"⚠️ {details}")
+
+        # Dispatch to registered global listeners
+        for listener in _global_listeners:
+            try:
+                listener(event)
+            except Exception as e:
+                logger.error(f"Global listener error: {e}", exc_info=True)
 
     def _process_tool_event(self, event: Dict[str, Any]):
         """Process tool events through LearningProcessor."""

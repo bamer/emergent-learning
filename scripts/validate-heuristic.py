@@ -124,7 +124,7 @@ def list_heuristics(cursor, domain=None):
         cursor.execute(
             "SELECT id, domain, rule, confidence, times_validated, times_violated, is_golden FROM heuristics ORDER BY confidence DESC"
         )
-    return cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+    return cursor.fetchall()
 
 
 def main():

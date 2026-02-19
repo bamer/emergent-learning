@@ -24,39 +24,135 @@ MAX_LIMIT = 1000
 DEFAULT_TIMEOUT = 30
 MAX_TOKENS = 50000
 
+# Garbage domains to reject (common words that are clearly not valid domains)
+GARBAGE_DOMAINS = {
+    "the",
+    "these",
+    "those",
+    "this",
+    "that",
+    "a",
+    "an",
+    "and",
+    "or",
+    "but",
+    "in",
+    "on",
+    "at",
+    "to",
+    "for",
+    "of",
+    "with",
+    "by",
+    "from",
+    "as",
+    "is",
+    "was",
+    "are",
+    "were",
+    "been",
+    "be",
+    "have",
+    "has",
+    "had",
+    "do",
+    "does",
+    "did",
+    "will",
+    "would",
+    "could",
+    "should",
+    "may",
+    "might",
+    "must",
+    "shall",
+    "can",
+    "need",
+    "dare",
+    "ought",
+    "used",
+    "it",
+    "its",
+    "they",
+    "them",
+    "their",
+    "we",
+    "our",
+    "you",
+    "your",
+    "he",
+    "she",
+    "him",
+    "her",
+    "his",
+    # Also add any single-character domains
+    # These will be handled by the minimum length check
+}
+
 
 def validate_domain(domain: str) -> str:
     """
-    Validate domain string.
+    Validate and normalize domain string.
+
+    Automatically normalizes domains by:
+    - Converting spaces to hyphens
+    - Converting to lowercase
+    - Removing invalid characters
+    - Rejecting garbage/common words
 
     Args:
         domain: Domain to validate
 
     Returns:
-        Validated domain string
+        Validated and normalized domain string
 
     Raises:
-        ValidationError: If domain is invalid
+        ValidationError: If domain is empty, too short, or garbage
     """
     if not domain:
         raise ValidationError(
             "Domain cannot be empty. Provide a valid domain name. [QS001]"
         )
 
-    if len(domain) > MAX_DOMAIN_LENGTH:
+    # Normalize: strip whitespace, convert to lowercase
+    normalized = domain.strip().lower()
+
+    # Replace spaces with hyphens
+    normalized = normalized.replace(" ", "-")
+
+    # Replace multiple consecutive hyphens with single hyphen
+    normalized = re.sub(r"-+", "-", normalized)
+
+    # Remove any remaining invalid characters (keep only alphanumeric, hyphen, underscore, dot)
+    normalized = re.sub(r"[^a-z0-9\-_.]", "", normalized)
+
+    if len(normalized) > MAX_DOMAIN_LENGTH:
         raise ValidationError(
             f"Domain exceeds maximum length of {MAX_DOMAIN_LENGTH} characters. "
             f"Use a shorter domain name. [QS001]"
         )
 
-    # Allow alphanumeric, hyphen, underscore, and dot
-    if not re.match(r'^[a-zA-Z0-9\-_.]+$', domain):
+    if not normalized:
         raise ValidationError(
-            f"Domain '{domain}' contains invalid characters. "
-            f"Use only alphanumeric, hyphen, underscore, and dot. [QS001]"
+            f"Domain '{domain}' contains only invalid characters. "
+            f"Use alphanumeric characters, hyphens, underscores, or dots. [QS001]"
         )
 
-    return domain.strip()
+    # Reject garbage domains (common words that are clearly not valid domains)
+    if normalized in GARBAGE_DOMAINS:
+        raise ValidationError(
+            f"Domain '{normalized}' is not a valid domain. "
+            f"It appears to be a common word. Use a descriptive domain like 'debugging', 'api', 'frontend'. [QS001]"
+        )
+
+    # Reject single-character domains (too short to be meaningful)
+    if len(normalized) < 2:
+        raise ValidationError(
+            f"Domain '{normalized}' is too short. "
+            f"Use a descriptive domain name (minimum 2 characters). [QS001]"
+        )
+
+    return normalized
 
 
 def validate_limit(limit: int) -> int:
@@ -127,7 +223,7 @@ def validate_tags(tags: List[str]) -> List[str]:
             )
 
         # Allow Unicode alphanumeric characters, hyphen, underscore, and dot
-        if not re.match(r'^[\w\-\.]+$', tag, re.UNICODE):
+        if not re.match(r"^[\w\-\.]+$", tag, re.UNICODE):
             raise ValidationError(
                 f"Tag '{tag}' contains invalid characters. "
                 f"Use only alphanumeric (including Unicode), hyphen, underscore, and dot. [QS001]"
@@ -136,9 +232,7 @@ def validate_tags(tags: List[str]) -> List[str]:
         validated_tags.append(tag)
 
     if not validated_tags:
-        raise ValidationError(
-            "No valid tags provided after filtering. [QS001]"
-        )
+        raise ValidationError("No valid tags provided after filtering. [QS001]")
 
     return validated_tags
 
@@ -157,9 +251,7 @@ def validate_query(query: str) -> str:
         ValidationError: If query is invalid
     """
     if not query:
-        raise ValidationError(
-            "Query string cannot be empty. [QS001]"
-        )
+        raise ValidationError("Query string cannot be empty. [QS001]")
 
     if len(query) > MAX_QUERY_LENGTH:
         raise ValidationError(

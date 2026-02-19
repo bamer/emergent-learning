@@ -216,14 +216,14 @@ export function ForceGraph({ data, onNodeSelect }: ForceGraphProps) {
   }, [selectedNode, graphData.links])
   
   return (
-    <div className="w-full h-full flex flex-col bg-slate-900 rounded-lg overflow-hidden">
+    <div className="w-full h-full min-h-[500px] flex flex-col bg-slate-900 rounded-lg">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-700">
-        <h3 className="text-lg font-semibold text-white">Force-Directed Graph</h3>
-        <div className="flex gap-2">
+      <div className="flex items-center justify-between p-2 border-b border-slate-700">
+        <h3 className="text-sm font-semibold text-white">Force Graph</h3>
+        <div className="flex gap-1">
           <button
             onClick={() => setLayout('3d')}
-            className={`px-3 py-1 rounded text-sm ${
+            className={`px-2 py-1 rounded text-xs ${
               layout === '3d' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300'
             }`}
           >
@@ -231,7 +231,7 @@ export function ForceGraph({ data, onNodeSelect }: ForceGraphProps) {
           </button>
           <button
             onClick={() => setLayout('2d')}
-            className={`px-3 py-1 rounded text-sm ${
+            className={`px-2 py-1 rounded text-xs ${
               layout === '2d' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300'
             }`}
           >
@@ -242,7 +242,7 @@ export function ForceGraph({ data, onNodeSelect }: ForceGraphProps) {
       
       {/* Canvas */}
       <div className="flex-1 min-h-[400px]">
-        <Canvas camera={{ position: [0, 0, 80], fov: 60 }}>
+        <Canvas camera={{ position: [0, 0, 100], fov: 50 }}>
           <ambientLight intensity={0.5} />
           <pointLight position={[50, 50, 50]} intensity={1} />
           <pointLight position={[-50, -50, 50]} intensity={0.5} />
@@ -293,8 +293,8 @@ export function ForceGraph({ data, onNodeSelect }: ForceGraphProps) {
       </div>
       
       {/* Legend */}
-      <div className="p-4 border-t border-slate-700 bg-slate-800">
-        <div className="flex flex-wrap gap-4 text-sm">
+      <div className="p-2 border-t border-slate-700 bg-slate-800">
+        <div className="flex flex-wrap gap-2 text-xs">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-blue-500"></div>
             <span className="text-slate-400">Orchestration</span>

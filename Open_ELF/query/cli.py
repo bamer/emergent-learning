@@ -285,7 +285,7 @@ async def _async_main(args: argparse.Namespace) -> int:
                     )
                     heuristics = (
                         cursor.fetchall()
-                    )  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+                    )
                     if heuristics:
                         output.append("## Project Heuristics" + chr(10) + chr(10))
                         for rule, expl, conf in heuristics:
@@ -306,7 +306,7 @@ async def _async_main(args: argparse.Namespace) -> int:
                     )
                     learnings = (
                         cursor.fetchall()
-                    )  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+                    )
                     if learnings:
                         output.append("## Project Learnings" + chr(10) + chr(10))
                         for ltype, summary in learnings:
@@ -366,17 +366,23 @@ async def _async_main(args: argparse.Namespace) -> int:
             print(result)
             return exit_code
 
+        elif args.rules or args.heuristics:
+            # Query heuristics - no limit = return all, limit < 100 = bump to 100
+            result = await query_system.get_recent_heuristics(
+                limit=args.limit, domain=args.domain, timeout=args.timeout
+            )
+
         elif args.decisions:
             # Handle decisions query (must come before --domain check)
             result = await query_system.get_decisions(
-                args.domain, args.decision_status, args.limit, args.timeout
+                args.domain, args.decision_status, args.limit or 10, args.timeout
             )
 
         elif args.spikes:
             result = await query_system.get_spike_reports(
                 domain=args.domain,
                 tags=args.tags.split(",") if args.tags else None,
-                limit=args.limit,
+                limit=args.limit or 10,
                 timeout=args.timeout,
             )
 
@@ -386,7 +392,7 @@ async def _async_main(args: argparse.Namespace) -> int:
                 domain=args.domain,
                 status=args.assumption_status,
                 min_confidence=args.min_confidence,
-                limit=args.limit,
+                limit=args.limit or 10,
                 timeout=args.timeout,
             )
             # Also show challenged/invalidated if viewing all or specifically requested
@@ -395,7 +401,7 @@ async def _async_main(args: argparse.Namespace) -> int:
             elif not result:
                 # If no active assumptions, show a summary
                 challenged = await query_system.get_challenged_assumptions(
-                    args.domain, args.limit, args.timeout
+                    args.domain, args.limit or 10, args.timeout
                 )
                 if challenged:
                     print("\n--- Challenged/Invalidated Assumptions ---\n")
@@ -408,7 +414,7 @@ async def _async_main(args: argparse.Namespace) -> int:
                 status=args.invariant_status,
                 scope=args.invariant_scope,
                 severity=args.invariant_severity,
-                limit=args.limit,
+                limit=args.limit or 10,
                 timeout=args.timeout,
             )
 
@@ -417,19 +423,21 @@ async def _async_main(args: argparse.Namespace) -> int:
             result = await query_system.query_semantic(
                 task=args.semantic,
                 threshold=args.threshold,
-                limit=args.limit,
+                limit=args.limit or 5,
                 domain=args.domain,  # Optional domain filter
                 timeout=args.timeout,
             )
 
         elif args.domain:
             result = await query_system.query_by_domain(
-                args.domain, args.limit, args.timeout
+                args.domain, args.limit or 10, args.timeout
             )
 
         elif args.tags:
             tags = [t.strip() for t in args.tags.split(",")]
-            result = await query_system.query_by_tags(tags, args.limit, args.timeout)
+            result = await query_system.query_by_tags(
+                tags, args.limit or 10, args.timeout
+            )
 
         elif args.recent is not None or args.learning is not None:
             # Handle learnings query (args.learning is deprecated alias for --recent)
@@ -542,6 +550,12 @@ Examples:
   python query.py --ceo-reviews
   python query.py --stats
 
+  # HEURISTICS/RULES
+  python query.py --rules --limit 5               # Get 5 recent heuristics
+  python query.py --heuristics --domain api       # Get heuristics for 'api' domain
+  python query.py --rules --domain debugging      # Same as --heuristics
+  python query.py --golden-rules                  # Get constitutional golden rules
+
   # LEARNINGS (replaces deprecated --learning argument)
   python query.py --recent 20  # Get recent learnings (same as old --learning)
   python query.py --recent 10 --type heuristic  # Filter by type
@@ -615,6 +629,16 @@ Error Codes:
         "--golden-rules", action="store_true", help="Display golden rules"
     )
     parser.add_argument(
+        "--rules",
+        action="store_true",
+        help="Query heuristics (use --domain to filter, --limit to limit results)",
+    )
+    parser.add_argument(
+        "--heuristics",
+        action="store_true",
+        help="Same as --rules: query heuristics (use --domain to filter, --limit to limit results)",
+    )
+    parser.add_argument(
         "--stats", action="store_true", help="Display knowledge base statistics"
     )
     parser.add_argument(
@@ -682,8 +706,8 @@ Error Codes:
     parser.add_argument(
         "--limit",
         type=int,
-        default=10,
-        help="Limit number of results (default: 10, max: 1000)",
+        default=None,
+        help="Limit number of results (default varies by query type, max: 1000)",
     )
 
     # Enhanced arguments

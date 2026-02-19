@@ -165,7 +165,7 @@ class MetaObserver:
             observations = []
             for (
                 row
-            ) in cursor.fetchall():  # Ajouté LIMIT pour éviter l accumulation mémoire
+            ) in cursor.fetchall():
                 obs = MetricObservation(
                     id=row["id"],
                     metric_name=row["metric_name"],
@@ -323,7 +323,7 @@ class MetaObserver:
             cursor = conn.execute(query, params)
             baseline_values = [
                 row["value"] for row in cursor.fetchall()
-            ]  # Ajouté LIMIT pour éviter l'accumulation mémoire
+            ]
         finally:
             conn.close()
 
@@ -490,7 +490,7 @@ class MetaObserver:
             cursor = conn.execute(query, params)
             return [
                 dict(row) for row in cursor.fetchall()
-            ]  # Ajouté LIMIT pour éviter l'accumulation mémoire
+            ]
         finally:
             conn.close()
 
@@ -730,7 +730,7 @@ class MetaObserver:
             stats = {}
             for (
                 row
-            ) in cursor.fetchall():  # Ajouté LIMIT pour éviter l accumulation mémoire
+            ) in cursor.fetchall():
                 stats[row["metric_name"]] = {
                     "false_positives": row["false_positive_count"],
                     "true_positives": row["true_positive_count"],

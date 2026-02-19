@@ -727,7 +727,7 @@ class ContextBuilderMixin:
                                 """,
                                     (limits["heuristics"],),
                                 ) as cursor:
-                                    project_heuristics = await cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+                                    project_heuristics = await cursor.fetchall()
 
                                 if project_heuristics:
                                     context_parts.append(
@@ -766,7 +766,7 @@ class ContextBuilderMixin:
                                 """,
                                     (limits["learnings"],),
                                 ) as cursor:
-                                    project_learnings = await cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+                                    project_learnings = await cursor.fetchall()
 
                                 if project_learnings:
                                     context_parts.append(

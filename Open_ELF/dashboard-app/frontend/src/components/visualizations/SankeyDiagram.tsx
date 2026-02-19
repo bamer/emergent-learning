@@ -194,18 +194,18 @@ export function SankeyDiagram({ data, onNodeSelect }: SankeyDiagramProps) {
   }, [onNodeSelect])
   
   return (
-    <div className="w-full h-full flex flex-col bg-slate-900 rounded-lg overflow-hidden">
+    <div className="w-full h-full min-h-[300px] flex flex-col bg-slate-900 rounded-lg">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-700">
-        <h3 className="text-lg font-semibold text-white">Flow Analysis</h3>
-        <div className="text-sm text-slate-400">
-          Data Flow Visualization
+      <div className="flex items-center justify-between p-2 border-b border-slate-700">
+        <h3 className="text-sm font-semibold text-white">Flow Analysis</h3>
+        <div className="text-xs text-slate-400">
+          Data Flow
         </div>
       </div>
       
       {/* Sankey Canvas */}
-      <div className="flex-1 overflow-auto p-4">
-        <svg width="100%" height="450" viewBox="0 0 900 450">
+      <div className="flex-1 min-h-0 p-2 overflow-auto">
+        <svg width="100%" height="100%" viewBox="0 0 800 350" preserveAspectRatio="xMidYMid meet">
           <defs>
             {sankeyData.nodes.map(node => (
               <linearGradient key={node.id} id={`gradient-${node.id}`} x1="0%" y1="0%" x2="0%" y2="100%">

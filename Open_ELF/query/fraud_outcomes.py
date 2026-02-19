@@ -285,7 +285,7 @@ class FraudOutcomeTracker:
             else:
                 period = 'all_time'
 
-            for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+            for row in cursor.fetchall():
                 results.append(DetectorAccuracy(
                     detector_name=row['detector_name'],
                     time_period=period,
@@ -363,7 +363,7 @@ class FraudOutcomeTracker:
             cursor = conn.execute(query, params)
             results = []
 
-            for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+            for row in cursor.fetchall():
                 results.append(DomainAccuracy(
                     domain=row['domain'],
                     total_reports=row['total_reports'],
@@ -407,7 +407,7 @@ class FraudOutcomeTracker:
                 LIMIT ?
             """, (limit,))
 
-            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
 
         finally:
             conn.close()
@@ -429,7 +429,7 @@ class FraudOutcomeTracker:
         conn = self._get_connection()
         try:
             cursor = conn.execute("SELECT * FROM classification_accuracy")
-            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
 
@@ -453,7 +453,7 @@ class FraudOutcomeTracker:
         conn = self._get_connection()
         try:
             cursor = conn.execute("SELECT * FROM detector_confusion_matrix")
-            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
 

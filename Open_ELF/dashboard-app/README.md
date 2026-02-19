@@ -36,6 +36,33 @@ bun install
 bun run dev
 ```
 
+## Environment Variables
+
+Before running the dashboard, you need to configure your environment variables:
+
+1. Copy the example environment file:
+   ```bash
+   cd backend
+   cp .env.example .env
+   ```
+
+2. Edit the `.env` file and fill in your values:
+   - `SESSION_ENCRYPTION_KEY` - Required for session encryption (already generated)
+   - `DEV_ACCESS_TOKEN` - Required for development mode authentication
+   - Other optional variables for GitHub OAuth, Redis, etc.
+
+To generate a new `DEV_ACCESS_TOKEN`, use:
+```bash
+openssl rand -hex 32
+```
+
+For the `SESSION_ENCRYPTION_KEY`, you can generate a new one with:
+```bash
+python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+See `backend/.env.example` for all available configuration options.
+
 ## URLs
 
 - **Dashboard**: http://localhost:3001

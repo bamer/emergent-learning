@@ -139,7 +139,45 @@ from routers.auth import init_redis
 
 # Timeline Dashboard Integration (now handled directly in analytics router)
 def integrate_timeline_dashboard(app):
-    pass
+    """
+    Integrate timeline dashboard components with existing FastAPI app.
+
+    Args:
+        app: FastAPI application instance
+    """
+    try:
+        # Add Open_ELF to path for timeline dashboard integration
+        import sys
+        from pathlib import Path
+
+        current = Path(__file__).resolve()
+        for parent in current.parents:
+            open_elf_path = parent / "Open_ELF"
+            if open_elf_path.exists():
+                sys.path.insert(0, str(open_elf_path))
+                break
+
+        # Import and mount timeline dashboard router
+        from timeline_dashboard.timeline_api import router as timeline_router
+
+        # Mount the timeline router under the same prefix as analytics
+        app.include_router(timeline_router, prefix="/api/v1")
+
+        logger.info("Timeline dashboard integration mounted successfully!")
+        logger.info("Available timeline endpoints:")
+        logger.info("  GET /api/v1/timeline/events - Get timeline events")
+        logger.info("  GET /api/v1/timeline/stats - Get timeline statistics")
+        logger.info("  GET /api/v1/timeline/recent - Get recent events")
+        logger.info("  GET /api/v1/timeline/event-types - Get available event types")
+        logger.info(
+            "  GET /api/v1/timeline/events-by-type - Get events grouped by type"
+        )
+
+    except ImportError as e:
+        logger.warning(f"Could not integrate timeline dashboard: {e}")
+        logger.warning("Make sure Open_ELF is in the Python path")
+    except Exception as e:
+        logger.error(f"Error during timeline dashboard integration: {e}")
 
 
 # =====================================================================
@@ -707,6 +745,13 @@ async def startup_event():
         logger.info(f"Initial session index scan: {session_count} sessions")
     except Exception as e:
         logger.error(f"Failed to scan session index on startup: {e}", exc_info=True)
+
+    # Integrate timeline dashboard
+    try:
+        integrate_timeline_dashboard(app)
+        logger.info("Timeline dashboard integration completed")
+    except Exception as e:
+        logger.error(f"Failed to integrate timeline dashboard: {e}", exc_info=True)
 
     # Start background monitoring
     asyncio.create_task(monitor_changes())

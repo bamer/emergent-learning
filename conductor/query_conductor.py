@@ -75,7 +75,7 @@ class ConductorQuery:
                 ORDER BY created_at DESC
                 LIMIT ?
             """, (limit,))
-            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
 
     def get_workflow_run(self, run_id: int) -> Optional[Dict]:
         """Get detailed workflow run with all executions."""
@@ -100,7 +100,7 @@ class ConductorQuery:
                 ORDER BY created_at
             """, (run_id,))
             executions = []
-            for exec_row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+            for exec_row in cursor.fetchall():
                 exec_dict = dict(exec_row)
                 exec_dict["findings"] = json.loads(exec_dict.get("findings_json", "[]"))
                 exec_dict["files_modified"] = json.loads(exec_dict.get("files_modified", "[]"))
@@ -114,7 +114,7 @@ class ConductorQuery:
                 ORDER BY created_at
             """, (run_id,))
             decisions = []
-            for dec_row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+            for dec_row in cursor.fetchall():
                 dec_dict = dict(dec_row)
                 dec_dict["data"] = json.loads(dec_dict.get("decision_data", "{}"))
                 decisions.append(dec_dict)
@@ -131,7 +131,7 @@ class ConductorQuery:
                 WHERE status = 'running'
                 ORDER BY started_at DESC
             """)
-            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
 
     # =========================================================================
     # Failure Queries
@@ -169,7 +169,7 @@ class ConductorQuery:
                     LIMIT ?
                 """, (limit,))
 
-            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
 
     def get_blockers(self, limit: int = 20) -> List[Dict]:
         """Get blocker trails and findings."""
@@ -186,7 +186,7 @@ class ConductorQuery:
                 ORDER BY t.created_at DESC
                 LIMIT ?
             """, (limit,))
-            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
 
     # =========================================================================
     # Trail Queries
@@ -229,7 +229,7 @@ class ConductorQuery:
                 LIMIT ?
             """, params)
 
-            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
 
     def get_hotspots(self, run_id: int = None, limit: int = 20) -> List[Dict]:
         """Get locations with most trail activity."""
@@ -256,7 +256,7 @@ class ConductorQuery:
                 LIMIT ?
             """, params + [limit])
 
-            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
 
     # =========================================================================
     # Execution Queries
@@ -293,7 +293,7 @@ class ConductorQuery:
                     LIMIT ?
                 """, (limit,))
 
-            return [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
 
     def get_execution_details(self, exec_id: int) -> Optional[Dict]:
         """Get full details of a node execution including prompt and result."""
@@ -325,7 +325,7 @@ class ConductorQuery:
                 FROM workflow_runs
                 GROUP BY status
             """)
-            stats["runs_by_status"] = dict(cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
+            stats["runs_by_status"] = dict(cursor.fetchall())
 
             # Node execution counts by status
             cursor.execute("""
@@ -333,7 +333,7 @@ class ConductorQuery:
                 FROM node_executions
                 GROUP BY status
             """)
-            stats["executions_by_status"] = dict(cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
+            stats["executions_by_status"] = dict(cursor.fetchall())
 
             # Trail counts by scent
             cursor.execute("""
@@ -341,7 +341,7 @@ class ConductorQuery:
                 FROM trails
                 GROUP BY scent
             """)
-            stats["trails_by_scent"] = dict(cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire)
+            stats["trails_by_scent"] = dict(cursor.fetchall())
 
             # Total counts
             cursor.execute("SELECT COUNT(*) FROM workflow_runs")

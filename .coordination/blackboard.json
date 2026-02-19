@@ -1,18 +1,64 @@
 {
-  "timestamp": "2026-02-09T00:17:33.467075",
-  "agents": {
-    "test_agent": {
-      "status": "active",
-      "pid": 623034,
-      "last_heartbeat": "2026-02-09T00:17:27.373018",
-      "capabilities": [
-        "testing"
-      ]
+  "timestamp": "2026-02-18T14:58:00.000000",
+  "status": "operational",
+  "system_mode": "normal",
+  "stop_requested": false,
+  "active_agents": [
+    "unified_orchestrator",
+    "event_bridge",
+    "sentinel",
+    "background_learning_capture",
+    "semantic_service"
+  ],
+  "orchestrator": {
+    "status": "healthy",
+    "uptime_seconds": 67220,
+    "events_processed": 355542,
+    "last_check": "2026-02-18T14:58:00",
+    "last_update": "2026-02-18T14:58:00"
+  },
+  "disk": {
+    "usage_percent": 87,
+    "available_gb": 39,
+    "status": "warning",
+    "trend": "stable",
+    "total_elf_gb": 23
+  },
+  "database": {
+    "status": "healthy",
+    "integrity": "ok",
+    "heuristics": 197,
+    "learnings": 5182,
+    "trails": 142959,
+    "pheromone_trails": 1786
+  },
+  "services": {
+    "event_bridge": {
+      "status": "healthy",
+      "uptime": "18h 50m",
+      "events_processed": 355542
+    },
+    "unified_orchestrator": {
+      "status": "healthy",
+      "uptime": "0h 50m"
+    },
+    "sentinel": {
+      "status": "via_wrapper",
+      "pid": "3258558"
+    },
+    "background_learning_capture": {
+      "status": "healthy",
+      "uptime": "40h 38m"
+    },
+    "ceo_inbox_monitor": {
+      "status": "offline",
+      "known_issue": "FileNotFoundError",
+      "pending_items": 31
     }
   },
-  "agent_files": [],
-  "stop_requested": false,
-  "status": "active",
-  "last_check": "2026-02-09T00:17:33.467099",
-  "active_tasks": 0
+  "recommendations": [
+    "System stable - continue monitoring",
+    "CEO inbox requires code fix for file handling",
+    "Disk at 87% - monitor for increase"
+  ]
 }

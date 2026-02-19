@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { ThemeProvider, NotificationProvider, useNotificationContext, DataProvider, useDataContext, CosmicSettingsProvider, CosmicAudioProvider, GameProvider, useGame, useCosmicSettings, useTheme } from './context'
 import { DashboardLayout } from './layouts/DashboardLayout'
 import { useWebSocket, useAPI } from './hooks'
@@ -12,17 +12,22 @@ import {
   AlertsPanel,
   KnowledgeGraph,
   LearningVelocity,
-  SessionHistoryPanel,
-  AssumptionsPanel,
-  SpikeReportsPanel,
-  InvariantsPanel,
-  FraudReviewPanel,
-  SemanticSearchPanel,
-  MonitoringPanel
 } from './components'
-import { AdvancedVisualizations, WorkflowBuilder } from './components/visualizations'
-import { LivePanel } from './components/live'
-import { CosmicTimelineView, CosmicRunsView } from './components/cosmic-view'
+
+// Lazy load heavy components
+const SessionHistoryPanel = React.lazy(() => import('./components/SessionHistoryPanel'))
+const AssumptionsPanel = React.lazy(() => import('./components/AssumptionsPanel'))
+const SpikeReportsPanel = React.lazy(() => import('./components/SpikeReportsPanel'))
+const InvariantsPanel = React.lazy(() => import('./components/invariants-panel'))
+const FraudReviewPanel = React.lazy(() => import('./components/FraudReviewPanel'))
+const SemanticSearchPanel = React.lazy(() => import('./components/SemanticSearchPanel'))
+const MonitoringPanel = React.lazy(() => import('./components/MonitoringPanel'))
+const AdvancedVisualizations = React.lazy(() => import('./components/visualizations/AdvancedVisualizations'))
+const WorkflowBuilder = React.lazy(() => import('./components/visualizations/WorkflowBuilder'))
+const LivePanel = React.lazy(() => import('./components/live/LivePanel'))
+const CosmicTimelineView = React.lazy(() => import('./components/cosmic-view/CosmicTimelineView'))
+const CosmicRunsView = React.lazy(() => import('./components/cosmic-view/CosmicRunsView'))
+
 import {
   TimelineEvent,
 } from './types'
@@ -422,35 +427,77 @@ function AppContent() {
             />
           )}
 
-          {activeTab === 'sessions' && <SessionHistoryPanel />}
-          {activeTab === 'live' && <LivePanel />}
-          {activeTab === 'assumptions' && <AssumptionsPanel />}
-          {activeTab === 'spikes' && <SpikeReportsPanel />}
-          {activeTab === 'invariants' && <InvariantsPanel />}
-          {activeTab === 'fraud' && <FraudReviewPanel />}
+          {activeTab === 'sessions' && (
+            <Suspense fallback={<div>Loading...</div>}>
+              <SessionHistoryPanel />
+            </Suspense>
+          )}
+          {activeTab === 'live' && (
+            <Suspense fallback={<div>Loading...</div>}>
+              <LivePanel />
+            </Suspense>
+          )}
+          {activeTab === 'assumptions' && (
+            <Suspense fallback={<div>Loading...</div>}>
+              <AssumptionsPanel />
+            </Suspense>
+          )}
+          {activeTab === 'spikes' && (
+            <Suspense fallback={<div>Loading...</div>}>
+              <SpikeReportsPanel />
+            </Suspense>
+          )}
+          {activeTab === 'invariants' && (
+            <Suspense fallback={<div>Loading...</div>}>
+              <InvariantsPanel />
+            </Suspense>
+          )}
+          {activeTab === 'fraud' && (
+            <Suspense fallback={<div>Loading...</div>}>
+              <FraudReviewPanel />
+            </Suspense>
+          )}
 
           {activeTab === 'timeline' && (
-            <CosmicTimelineView
-              events={timelineEvents}
-              heuristics={normalizedHeuristics}
-              onEventClick={() => { }}
-            />
+            <Suspense fallback={<div>Loading timeline...</div>}>
+              <CosmicTimelineView
+                events={timelineEvents}
+                heuristics={normalizedHeuristics}
+                onEventClick={() => { }}
+              />
+            </Suspense>
           )}
 
           {activeTab === 'query' && <QueryInterface />}
 
-          {activeTab === 'semantic' && <SemanticSearchPanel />}
+          {activeTab === 'semantic' && (
+            <Suspense fallback={<div>Loading...</div>}>
+              <SemanticSearchPanel />
+            </Suspense>
+          )}
 
-          {activeTab === 'monitoring' && <MonitoringPanel />}
+          {activeTab === 'monitoring' && (
+            <Suspense fallback={<div>Loading...</div>}>
+              <MonitoringPanel />
+            </Suspense>
+          )}
 
           {/* Analytics is handled by DashboardLayout for Cosmic mode, but we keep this for grid mode */}
           {activeTab === 'analytics' && <LearningVelocity days={30} />}
 
           {/* Advanced Visualizations Tab */}
-          {activeTab === 'visualizations' && <AdvancedVisualizations />}
+          {activeTab === 'visualizations' && (
+            <Suspense fallback={<div>Loading visualizations...</div>}>
+              <AdvancedVisualizations />
+            </Suspense>
+          )}
 
           {/* Workflow Builder Tab */}
-          {activeTab === 'workflow' && <WorkflowBuilder />}
+          {activeTab === 'workflow' && (
+            <Suspense fallback={<div>Loading workflow builder...</div>}>
+              <WorkflowBuilder />
+            </Suspense>
+          )}
         </div>
       </DashboardLayout>
     </>

@@ -60,7 +60,7 @@ class FraudReviewer:
                 WHERE fr.review_outcome IS NULL OR fr.review_outcome = 'pending'
                 ORDER BY fr.fraud_score DESC
             """)
-            return [dict(row) for row in cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+            return [dict(row) for row in cursor.fetchall()]
         finally:
             conn.close()
 
@@ -98,7 +98,7 @@ class FraudReviewer:
                 WHERE fraud_report_id = ?
                 ORDER BY score DESC
             """, (fraud_report_id,))
-            signals = cursor.fetchall()  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+            signals = cursor.fetchall()
 
             # Convert to dict and parse evidence JSON
             report_dict = dict(report)

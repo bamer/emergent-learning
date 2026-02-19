@@ -72,7 +72,7 @@ def test_database_schema(temp_base):
         ORDER BY name
     """)
 
-    tables = [row[0] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+    tables = [row[0] for row in cursor.fetchall()]
     conn.close()
 
     expected = [

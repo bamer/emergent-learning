@@ -24,6 +24,9 @@ ELF_DIR = Path.home() / ".opencode" / "emergent-learning"
 DB_PATH = ELF_DIR / "memory" / "index.db"
 LOG_FILE = ELF_DIR / ".coordination" / "learning-capture.log"
 
+# Sentinel log position tracking (prevents re-reading already-processed content)
+SENTINEL_LOG_POSITION_FILE = ELF_DIR / ".coordination" / "sentinel-log-position.json"
+
 # Ollama configuration
 OLLAMA_SERVER = "http://localhost:11434"
 EMBEDDING_MODEL = "nomic-embed-text"
@@ -111,6 +114,26 @@ LEARNING_PATTERNS = [
     (r"\[LEARNING:\s*([a-z0-9\-]+)\]\s*([^.]+)", "explicit"),
     (r"\[LEARN:\s*([a-z0-9\-]+)\]\s*([^.]+)", "explicit"),
 ]
+
+
+def get_sentinel_log_position() -> int:
+    """Get last read byte position in sentinel log."""
+    try:
+        if SENTINEL_LOG_POSITION_FILE.exists():
+            data = json.loads(SENTINEL_LOG_POSITION_FILE.read_text())
+            return data.get("position", 0)
+    except Exception:
+        pass
+    return 0
+
+
+def save_sentinel_log_position(position: int):
+    """Save last read byte position in sentinel log."""
+    try:
+        SENTINEL_LOG_POSITION_FILE.parent.mkdir(parents=True, exist_ok=True)
+        SENTINEL_LOG_POSITION_FILE.write_text(json.dumps({"position": position}))
+    except Exception as e:
+        logger.debug(f"Could not save sentinel log position: {e}")
 
 
 def get_current_project_path() -> Path | None:
@@ -522,15 +545,33 @@ def capture_from_event_chronicle():
 
 
 def capture_from_sentinel_log():
-    """Capture learnings from sentinel log."""
+    """Capture learnings from sentinel log (only new content since last run)."""
     try:
         sentinel_log = ELF_DIR / ".coordination" / "sentinel-log.md"
         if not sentinel_log.exists():
             return
 
-        # Read last hour of entries
-        content = sentinel_log.read_text()
-        heuristics = extract_heuristics_from_text(content, "sentinel")
+        file_size = sentinel_log.stat().st_size
+        last_position = get_sentinel_log_position()
+
+        # Nothing new to read
+        if last_position >= file_size:
+            logger.debug("No new content in sentinel log since last read")
+            return
+
+        # Read only the new bytes since last position
+        with open(sentinel_log, "r", encoding="utf-8", errors="replace") as f:
+            f.seek(last_position)
+            new_content = f.read()
+
+        # Advance position bookmark immediately (even if extraction finds nothing,
+        # so we don't re-process the same text on the next cycle)
+        save_sentinel_log_position(file_size)
+
+        if not new_content.strip():
+            return
+
+        heuristics = extract_heuristics_from_text(new_content, "sentinel")
 
         captured = 0
         for h in heuristics:
@@ -538,9 +579,9 @@ def capture_from_sentinel_log():
                 captured += 1
 
         if captured > 0:
-            logger.info(f"👁️  Captured {captured} heuristics from sentinel log")
+            logger.info(f"👁️  Captured {captured} heuristics from sentinel log ({file_size - last_position} new bytes)")
         else:
-            logger.debug(f"👁️  Processed sentinel log but captured 0 heuristics")
+            logger.debug(f"👁️  Processed {file_size - last_position} new bytes from sentinel log, 0 heuristics")
 
     except Exception as e:
         logger.error(f"Error capturing from sentinel log: {e}")

@@ -36,3 +36,13 @@ Sentinel should only escalate to CEO when actual anomalies are detected, not for
 
 ---
 
+## H-295: Always verify health endpoint implementations return consistent JSON structure before deploying monitoring scripts
+
+**Confidence**: 0.9
+**Source**: observation
+**Created**: 2026-02-18
+
+Health endpoints must return JSON with fields: status, service, overall, timestamp and Content-Type: application/json header. HTML responses or missing 'overall' field break monitoring. Discovered during system analysis where OpenCode returned HTML and Event Bridge lacked 'overall' field.
+
+---
+

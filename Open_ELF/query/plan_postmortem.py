@@ -63,7 +63,7 @@ def get_active_plans(
 
         return [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l'accumulation mémoire
+        ]
     except sqlite3.OperationalError:
         # Table doesn't exist yet
         return []
@@ -118,7 +118,7 @@ def get_recent_postmortems(
 
         return [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l'accumulation mémoire
+        ]
     except sqlite3.OperationalError:
         # Table doesn't exist yet
         return []
@@ -166,7 +166,7 @@ def get_plan_postmortem_pairs(
 
         return [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l'accumulation mémoire
+        ]
     except sqlite3.OperationalError:
         return []
     finally:

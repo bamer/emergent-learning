@@ -98,7 +98,7 @@ class Dashboard:
 
         trend = {
             row["status"]: row["count"] for row in cursor.fetchall()
-        }  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        }
 
         result["trend_24h"] = trend
 
@@ -138,7 +138,7 @@ class Dashboard:
 
         operations = [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        ]
 
         conn.close()
 
@@ -198,7 +198,7 @@ class Dashboard:
 
         by_type = [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        ]
 
         # Calculate success rates
         for op in by_type:
@@ -249,7 +249,7 @@ class Dashboard:
 
         by_day = [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        ]
 
         # Failed operations by day
         cursor.execute(
@@ -269,7 +269,7 @@ class Dashboard:
 
         failed_ops_by_day = [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        ]
 
         # Recent failures from learnings
         cursor.execute(
@@ -290,7 +290,7 @@ class Dashboard:
 
         recent_failures = [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        ]
 
         conn.close()
 
@@ -331,7 +331,7 @@ class Dashboard:
 
         size_history = [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        ]
 
         # Record counts by table
         counts = {}
@@ -410,7 +410,7 @@ class Dashboard:
 
         durations = [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        ]
 
         conn.close()
 
@@ -448,7 +448,7 @@ class Dashboard:
 
         recent_learnings = [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        ]
 
         # Recent heuristics
         cursor.execute(
@@ -469,7 +469,7 @@ class Dashboard:
 
         recent_heuristics = [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        ]
 
         # Top validated heuristics
         cursor.execute(
@@ -490,7 +490,7 @@ class Dashboard:
 
         top_heuristics = [
             dict(row) for row in cursor.fetchall()
-        ]  # Ajouté LIMIT pour éviter l\'accumulation mémoire
+        ]
 
         conn.close()
 

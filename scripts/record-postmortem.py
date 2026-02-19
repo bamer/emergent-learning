@@ -138,7 +138,7 @@ def list_recent_postmortems(limit: int = 10) -> list:
         LIMIT ?
     """, (limit,))
 
-    results = [dict(row) for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire]
+    results = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return results
 

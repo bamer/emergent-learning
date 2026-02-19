@@ -165,25 +165,25 @@ export function GanttChart({ data, onTaskSelect }: GanttChartProps) {
   }, [timeRange])
   
   return (
-    <div className="w-full h-full flex flex-col bg-slate-900 rounded-lg overflow-hidden">
+    <div className="w-full h-full min-h-[300px] flex flex-col bg-slate-900 rounded-lg">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-700">
-        <h3 className="text-lg font-semibold text-white">Run Schedule</h3>
-        <div className="flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-slate-500"></div>
+      <div className="flex items-center justify-between p-2 border-b border-slate-700">
+        <h3 className="text-sm font-semibold text-white">Run Schedule</h3>
+        <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded bg-slate-500"></div>
             <span className="text-slate-400">Pending</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-blue-500"></div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded bg-blue-500"></div>
             <span className="text-slate-400">Running</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-emerald-500"></div>
-            <span className="text-slate-400">Completed</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded bg-emerald-500"></div>
+            <span className="text-slate-400">Done</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-red-500"></div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded bg-red-500"></div>
             <span className="text-slate-400">Failed</span>
           </div>
         </div>
@@ -191,10 +191,10 @@ export function GanttChart({ data, onTaskSelect }: GanttChartProps) {
       
       {/* Timeline header */}
       <div className="flex border-b border-slate-700 bg-slate-800">
-        <div className="w-48 flex-shrink-0 p-2 text-xs font-medium text-slate-400 border-r border-slate-700">
+        <div className="w-32 flex-shrink-0 p-1 text-xs font-medium text-slate-400 border-r border-slate-700">
           Task
         </div>
-        <div className="flex-1 relative p-2">
+        <div className="flex-1 relative p-1">
           <div className="flex justify-between text-xs text-slate-500">
             {timeMarkers.filter((_, i) => i % 4 === 0).map((marker, i) => (
               <span key={i}>{formatTime(marker)}</span>
@@ -214,7 +214,7 @@ export function GanttChart({ data, onTaskSelect }: GanttChartProps) {
       </div>
       
       {/* Task rows */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 min-h-0 overflow-auto">
         {tasks.map((task, index) => (
           <motion.div 
             key={task.id}
@@ -227,13 +227,13 @@ export function GanttChart({ data, onTaskSelect }: GanttChartProps) {
             transition={{ delay: index * 0.05 }}
           >
             {/* Task name */}
-            <div className="w-48 flex-shrink-0 p-3 border-r border-slate-700">
-              <div className="text-sm text-white font-medium truncate">{task.name}</div>
+            <div className="w-40 flex-shrink-0 p-2 border-r border-slate-700">
+              <div className="text-xs text-white font-medium truncate">{task.name}</div>
               <div className="text-xs text-slate-500">{task.assignee}</div>
             </div>
             
             {/* Timeline bar */}
-            <div className="flex-1 relative h-14 p-2">
+            <div className="flex-1 relative h-10 p-1">
               <div className="absolute inset-2 bg-slate-800 rounded">
                 <motion.div
                   className="h-full rounded relative overflow-hidden"

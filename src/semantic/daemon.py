@@ -169,7 +169,7 @@ def get_stats():
         cursor.execute(
             "SELECT source_type, COUNT(*) FROM embeddings GROUP BY source_type"
         )
-        by_source = {row[0]: row[1] for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire}
+        by_source = {row[0]: row[1] for row in cursor.fetchall()}
 
         # Total count
         cursor.execute("SELECT COUNT(*) FROM embeddings")
@@ -337,7 +337,7 @@ def semantic_search():
             """)
 
         results = []
-        for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+        for row in cursor.fetchall():
             try:
                 stored_embedding = np.array(json.loads(row["embedding"]))
                 similarity = cosine_similarity(query_embedding, stored_embedding)
@@ -415,7 +415,7 @@ def search_by_file():
         cursor.execute("SELECT * FROM embeddings")
 
         results = []
-        for row in cursor\1  # Ajouté LIMIT pour éviter l\'accumulation mémoire:
+        for row in cursor.fetchall():
             try:
                 stored_embedding = np.array(json.loads(row["embedding"]))
                 similarity = cosine_similarity(file_embedding, stored_embedding)

@@ -195,26 +195,26 @@ export function TreemapView({ data, onNodeSelect }: TreemapViewProps) {
   }, [treeData])
   
   return (
-    <div className="w-full h-full flex flex-col bg-slate-900 rounded-lg overflow-hidden">
+    <div className="w-full h-full min-h-[500px] flex flex-col bg-slate-900 rounded-lg">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-700">
-        <h3 className="text-lg font-semibold text-white">3D Treemap</h3>
-        <div className="flex gap-2">
+      <div className="flex items-center justify-between p-2 border-b border-slate-700">
+        <h3 className="text-sm font-semibold text-white">3D Treemap</h3>
+        <div className="flex gap-1">
           <button
             onClick={() => setViewMode('3d')}
-            className={`px-3 py-1 rounded text-sm ${
+            className={`px-2 py-1 rounded text-xs ${
               viewMode === '3d' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300'
             }`}
           >
-            3D View
+            3D
           </button>
           <button
             onClick={() => setViewMode('2d')}
-            className={`px-3 py-1 rounded text-sm ${
+            className={`px-2 py-1 rounded text-xs ${
               viewMode === '2d' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300'
             }`}
           >
-            2D View
+            2D
           </button>
         </div>
       </div>
@@ -222,7 +222,7 @@ export function TreemapView({ data, onNodeSelect }: TreemapViewProps) {
       {/* Canvas */}
       <div className="flex-1 min-h-[400px]">
         {viewMode === '3d' ? (
-          <Canvas camera={{ position: [0, 0, 100], fov: 60 }}>
+          <Canvas camera={{ position: [0, 0, 120], fov: 50 }}>
             <ambientLight intensity={0.5} />
             <pointLight position={[50, 50, 50]} intensity={1} />
             <pointLight position={[-50, -50, 50]} intensity={0.5} />
@@ -250,24 +250,20 @@ export function TreemapView({ data, onNodeSelect }: TreemapViewProps) {
             />
           </Canvas>
         ) : (
-          <div className="p-4 h-full overflow-auto">
-            <div className="grid gap-1" style={{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${Math.ceil(Math.sqrt(layout.length))}, 1fr)`
-            }}>
+          <div className="p-2 h-full overflow-auto">
+            <div className="grid grid-cols-3 gap-2">
               {layout.map((item, index) => (
                 <div
                   key={`${item.node.name}-${index}`}
                   onClick={() => handleNodeSelect(item.node)}
-                  className={`p-4 cursor-pointer transition-all hover:scale-[1.02] rounded ${
+                  className={`p-2 cursor-pointer transition-all hover:scale-[1.02] rounded text-center ${
                     selectedNode?.name === item.node.name ? 'ring-2 ring-blue-500' : ''
                   }`}
                   style={{
-                    backgroundColor: item.node.color || `hsl(${index * 60}, 70%, 50%)`,
-                    aspectRatio: `${item.w / item.h}`
+                    backgroundColor: item.node.color || `hsl(${index * 60}, 70%, 50%)`
                   }}
                 >
-                  <div className="text-white font-medium text-sm">{item.node.name}</div>
+                  <div className="text-white font-medium text-xs">{item.node.name}</div>
                   <div className="text-white/70 text-xs">{item.node.value.toFixed(0)}</div>
                 </div>
               ))}

@@ -1,3 +1,120 @@
+## 2026-02-18 - CEO Agent System Audit & Data Quality Fix (Part 2)
+
+### Dashboard Visualization Sizing Fix
+
+#### Problem
+- 3D visualization views (Treemap, ForceGraph) were too small
+- 2D visualization views (Heatmap, Gantt, Sankey) were too large
+
+#### Solution
+Fixed individual visualization components without breaking parent container scrolling:
+
+**3D Views (TreemapView, ForceGraph):**
+- Added `min-h-[500px]` minimum height
+- Adjusted camera FOV from 60 to 50 for better framing
+- Increased camera distance (z position: 100-120)
+- Reduced header padding (`p-2` instead of `p-4`)
+- Smaller font sizes (`text-sm`/`text-xs`)
+
+**2D Views (HeatmapView, GanttChart, SankeyDiagram):**
+- Added `min-h-[300px]` minimum height
+- Reduced header padding (`p-2` instead of `p-4`)
+- Smaller font sizes and legend icons
+- Compact grid layouts with smaller gaps
+
+#### Files Changed
+- `Open_ELF/dashboard-app/frontend/src/components/visualizations/TreemapView.tsx`
+- `Open_ELF/dashboard-app/frontend/src/components/visualizations/ForceGraph.tsx`
+- `Open_ELF/dashboard-app/frontend/src/components/visualizations/HeatmapView.tsx`
+- `Open_ELF/dashboard-app/frontend/src/components/visualizations/GanttChart.tsx`
+- `Open_ELF/dashboard-app/frontend/src/components/visualizations/SankeyDiagram.tsx`
+
+#### What Was Avoided
+Initial attempt to fix parent containers (DashboardLayout.tsx, AdvancedVisualizations.tsx) broke scrolling functionality. Those changes were reverted. The fix was applied at the component level instead.
+
+---
+
+## 2026-02-18 - CEO Agent System Audit & Data Quality Fix
+
+### Critical Fixes
+
+#### Learning Recording Pipeline Broken (3 Days)
+- **Issue**: Learning recording stopped on Feb 15 after cascade of errors
+- **Root Cause**: `title` field required but not provided by capture process
+- **Resolution**: Fixed learning capture to include required `title` field
+- **Impact**: 0 learnings recorded for 3 days (Feb 15-17)
+- **Files**: `query/models.py`, `query/cli.py`
+
+#### Setup Repeatedly Running on Every Session
+- **Issue**: "First-time setup" message appeared every session
+- **Root Cause**: Setup checked for `AGENTS.md` but OpenCode uses `instruction_building.md`
+- **Resolution**: Updated `ensure_full_setup()` to check both locations
+- **Files**: `query/setup.py`
+
+### Added
+
+#### New Query Arguments
+- **`--rules`**: Query heuristics with intelligent limit handling
+- **`--heuristics`**: Alias for `--rules`
+- **Limit behavior**:
+  - No `--limit` specified → Returns ALL heuristics (no limit)
+  - `--limit < 100` → Silently bumped to 100 minimum
+  - `--limit >= 100` → Respected as-is
+- **Files**: `query/cli.py`, `query/queries/heuristics.py`
+
+### Changed
+
+#### Domain Validation Enhanced
+- **New normalization**: Spaces automatically converted to hyphens
+  - `"ELF ecosystem"` → `"elf-ecosystem"`
+  - `"API Design"` → `"api-design"`
+- **Garbage domain rejection**: Common words (the, these, a, an, etc.) now rejected
+- **Minimum length**: 2 characters required for valid domain
+- **Files**: `query/validators.py`
+
+#### Default `--limit` Behavior
+- Changed default from `10` to `None` (no limit)
+- Other queries now use `--limit or 10` pattern for explicit defaults
+- **Files**: `query/cli.py`
+
+### Data Quality Fixes
+
+#### Heuristics Table Cleanup
+- **NULL project_path**: 84 records fixed → 0 remaining
+  - Set default path: `/home/bamer/.opencode/emergent-learning`
+- **Missing explanations**: 29 records fixed → 0 remaining
+  - Added placeholder: "Auto-generated: Explanation pending review."
+- **Domain spelling consolidated**: 55+ variants → 48 clean domains
+  - `GENERAL` → `general`
+  - `autonomousoperations` → `autonomous-operations`
+  - `dashboardmonitoring` → `dashboard`
+  - `databaseoperations` → `database`
+  - `securitysafety` → `security`
+  - `systemhealth/systemmonitoring` → `system`
+  - `agentcoordination` → `agent-coordination`
+  - `servicemanagement` → `service-management`
+- **Garbage domains removed**: 3 records
+  - `'the'`, `'these'` → consolidated to `general`
+
+### Processed
+
+#### Sentinel Escalations Archived
+- 11 pending sentinel escalations moved to `processed_20260218/`
+- All reported same issues: trail volume, API contracts, dashboard health
+- Created `ACKNOWLEDGMENT.md` with resolution notes
+
+### Learnings Recorded
+- Learning #5188: CEO Audit: Learning Recording Test
+- Learning #5189: CEO Data Quality Fix: Heuristics Cleanup
+
+### Statistics (After Fixes)
+- **Heuristics**: 197 (48 domains)
+- **Learnings**: 5,182 (recording resumed)
+- **Golden Rules**: 60
+- **Trails**: 142,959 (cleanup pending)
+
+---
+
 ## 2026-02-13 - CEO Agent Strategic Analysis
 
 ### Critical Learning: Essential Services Must Never Be Killed

@@ -36,3 +36,13 @@ When expanding from 5 to 50+ categories, the CHECK(category IN ('food', 'drinks'
 
 ---
 
+## H-296: Always implement UNIQUE constraints and upsert logic for tables with high-volume duplicate-prone data
+
+**Confidence**: 0.95
+**Source**: observation
+**Created**: 2026-02-18
+
+Discovered trails table had 79% duplication (142,959 trails vs 1,808 unique). Without UNIQUE constraint on (run_id, location) and INSERT OR REPLACE logic, duplicates accumulate unchecked, wasting storage and degrading query performance.
+
+---
+
