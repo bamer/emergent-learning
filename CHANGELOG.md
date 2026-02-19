@@ -1,3 +1,65 @@
+## 2026-02-19 - Dashboard Connection Error Fixes & API Route Standardization
+
+### Critical Problem: Dashboard Panels Showing "Connection Error"
+
+#### Issue
+- **Multiple dashboard monitoring panels** displayed "Connection Error" despite backend services running correctly
+- **Affected panels**: Sentinel Monitor, Event Bridge, Ollama Embeddings, Orchestrator, Chronicle
+- **Root cause 1**: Duplicate API prefix in monitoring router (`/api/v1/api/v1/...`)
+- **Root cause 2**: SentinelMonitorPanel defaulting to wrong port (4096 instead of 8888)
+
+#### Root Causes Identified
+1. **Double prefix in router mounting**:
+   - Router defined with `APIRouter(prefix="/api/v1")`
+   - main.py mounted with `app.include_router(router, prefix="/api/v1")`
+   - Result: Endpoints at `/api/v1/api/v1/monitoring/...` instead of `/api/v1/monitoring/...`
+
+2. **Hardcoded wrong default port**:
+   - `SentinelMonitorPanel.tsx` had `baseUrl = 'http://localhost:4096'`
+   - Dashboard backend runs on port 8888
+   - 4096 is OpenCode's internal server port
+
+#### Resolution
+
+**1. Monitoring Router Prefix Fix** (`Open_ELF/dashboard-app/backend/routers/monitoring.py`)
+```python
+# Before: router = APIRouter(prefix="/api/v1", tags=["monitoring"])
+# After:
+router = APIRouter(tags=["monitoring"])
+```
+
+**2. SentinelMonitorPanel Port Fix** (`Open_ELF/dashboard-app/frontend/src/components/monitoring/SentinelMonitorPanel.tsx`)
+```typescript
+// Before: const baseUrl = apiBaseUrl || 'http://localhost:4096';
+// After:
+const baseUrl = apiBaseUrl || 'http://localhost:8888';
+```
+
+#### Files Changed
+- `Open_ELF/dashboard-app/backend/routers/monitoring.py` - Removed duplicate prefix
+- `Open_ELF/dashboard-app/frontend/src/components/monitoring/SentinelMonitorPanel.tsx` - Fixed default port
+
+#### Impact
+- ✅ **All monitoring panels now connect correctly**
+- ✅ **Sentinel Monitor**: Shows real-time sentinel status
+- ✅ **Event Bridge**: Shows bridge running status
+- ✅ **Orchestrator**: Shows orchestrator health
+- ✅ **Ollama Embeddings**: Shows embedding service status
+- ✅ **Event Chronicle**: Shows event statistics
+
+#### Lessons Learned
+1. **Never double-prefix API routes** - Router prefix + include_router prefix = double prefix
+2. **Frontend default URLs must match backend ports** - Document the standard port (8888)
+3. **Test API endpoints directly with curl** - Browser caching can hide 404 errors
+4. **Centralize port configuration** - Consider using a config file or environment variable
+
+#### Prevention Measures
+- Added to developer guidelines: API route mounting rules
+- Port standardization: Backend=8888, Frontend=3001
+- Pre-commit hook suggestion: Check for duplicate prefixes
+
+---
+
 ## 2026-02-19 - Database Unification & Semantic Embedding System Fix
 
 ### Critical Problem: Multiple Database Files Causing Data Loss

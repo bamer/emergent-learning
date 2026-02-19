@@ -227,7 +227,7 @@ export function SentinelMonitorPanel({
   const [expandedCycles, setExpandedCycles] = useState<Set<number>>(new Set());
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['overview']));
 
-  const baseUrl = apiBaseUrl || 'http://localhost:4096';
+  const baseUrl = apiBaseUrl || 'http://localhost:8888';
 
   // Fetch current sentinel status
   const fetchSentinelStatus = useCallback(async () => {

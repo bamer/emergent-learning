@@ -396,5 +396,84 @@ Before committing new code:
 
 ---
 
-**Last Updated:** 2026-02-11
-**Version:** 1.0
+## API Development Guidelines
+
+### Router Mounting Rules (CRITICAL)
+
+**Never add prefix to both the router AND the include_router call.**
+
+This is a common mistake that causes 404 errors and "Connection Error" in the dashboard.
+
+#### Incorrect (Double Prefix)
+
+```python
+# ❌ WRONG - Double prefix creates /api/v1/api/v1/...
+# In routers/monitoring.py
+router = APIRouter(prefix="/api/v1", tags=["monitoring"])
+
+# In main.py
+app.include_router(monitoring_router, prefix="/api/v1")
+# Result: Endpoints at /api/v1/api/v1/monitoring/... (WRONG!)
+```
+
+#### Correct (Single Prefix)
+
+```python
+# ✅ CORRECT - Prefix only in main.py
+# In routers/monitoring.py
+router = APIRouter(tags=["monitoring"])
+
+# In main.py
+app.include_router(monitoring_router, prefix="/api/v1")
+# Result: Endpoints at /api/v1/monitoring/... (CORRECT!)
+```
+
+#### Alternative (Prefix in Router)
+
+```python
+# ✅ ALSO CORRECT - Prefix only in router
+# In routers/monitoring.py
+router = APIRouter(prefix="/monitoring", tags=["monitoring"])
+
+# In main.py
+app.include_router(monitoring_router, prefix="/api/v1")
+# Result: Endpoints at /api/v1/monitoring/... (CORRECT!)
+```
+
+### Port Configuration (STANDARD)
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| Dashboard Backend | 8888 | FastAPI/uvicorn API server |
+| Dashboard Frontend | 3001 | Vite dev server |
+| Semantic Daemon | 5001 | Embedding/search service |
+| OpenCode Server | 4096 | OpenCode internal API |
+
+### Frontend API URLs
+
+Frontend components MUST use the correct backend port:
+
+```typescript
+// ✅ CORRECT - Use dashboard backend port
+const baseUrl = apiBaseUrl || 'http://localhost:8888';
+
+// ❌ WRONG - Never hardcode OpenCode internal port
+const baseUrl = apiBaseUrl || 'http://localhost:4096';
+```
+
+### Testing API Endpoints
+
+Always verify endpoints with curl before debugging frontend:
+
+```bash
+# Test endpoint directly
+curl http://localhost:8888/api/v1/sentinel/status | jq
+
+# If 404, check for double prefix
+curl -v http://localhost:8888/api/v1/sentinel/status 2>&1 | grep "404"
+```
+
+---
+
+**Last Updated:** 2026-02-19
+**Version:** 1.1

@@ -46,3 +46,13 @@ Discovered trails table had 79% duplication (142,959 trails vs 1,808 unique). Wi
 
 ---
 
+## H-304: Composite covering indexes on date+category+amount columns provide 43% performance improvement for aggregation queries on SQLite with 60K+ records
+
+**Confidence**: 0.9
+**Source**: observation
+**Created**: 2026-02-19
+
+
+
+---
+

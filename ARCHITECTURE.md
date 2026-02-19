@@ -258,6 +258,35 @@ python Open_ELF/orchestrator/event_bridge.py start
 python core/event_bridge_v2.py start
 ```
 
+## Dashboard Architecture
+
+### Port Configuration (STANDARD)
+
+| Service | Port | URL | Description |
+|---------|------|-----|-------------|
+| Dashboard Backend | 8888 | http://localhost:8888 | FastAPI/uvicorn API server |
+| Dashboard Frontend | 3001 | http://localhost:3001 | Vite dev server (React) |
+| Semantic Daemon | 5001 | http://localhost:5001 | Embedding/search service |
+| OpenCode Server | 4096 | http://localhost:4096 | OpenCode internal API |
+
+**Important:** Frontend components MUST use port 8888 for API calls, NOT port 4096.
+
+### API Route Mounting Rules
+
+**CRITICAL:** Never add prefix to both router AND include_router call.
+
+```python
+# ❌ WRONG - Double prefix creates /api/v1/api/v1/...
+router = APIRouter(prefix="/api/v1", tags=["monitoring"])
+app.include_router(router, prefix="/api/v1")
+
+# ✅ CORRECT - Single prefix
+router = APIRouter(tags=["monitoring"])
+app.include_router(router, prefix="/api/v1")
+```
+
+For detailed troubleshooting, see [DASHBOARD_TROUBLESHOOTING.md](./docs/DASHBOARD_TROUBLESHOOTING.md).
+
 ## Troubleshooting
 
 ### Sentinel not starting
@@ -290,5 +319,5 @@ Check `logs/` directory for detailed error messages.
 
 ---
 
-**Last Updated**: 2026-02-09
-**Version**: 3.0 (Refactored)
+**Last Updated**: 2026-02-19
+**Version**: 3.1 (Added Dashboard Architecture section)
