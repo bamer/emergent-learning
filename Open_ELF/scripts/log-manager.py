@@ -10,7 +10,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from typing import List, Dict, Tuple
 
-LOGS_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
+LOGS_DIR = Path("/home/bamer/OPC_ELF/Open_ELF/logs")
 
 
 def analyze_log_files() -> Dict[str, List[Path]]:

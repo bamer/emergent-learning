@@ -1,9 +1,0 @@
-# ShellCheck configuration for Emergent Learning Framework
-
-# Disable checks that are expected in this codebase
-# SC1090: Can't follow non-constant source
-# SC1091: Not following sourced file
-disable=SC1090,SC1091
-
-# Source path for resolving relative sources
-source-path=SCRIPTDIR

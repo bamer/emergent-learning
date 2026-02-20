@@ -6,7 +6,7 @@ Provides standardized logging across all Open_ELF components
 =====================================================================
 DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 THIS IS MANDATORY: ALL LOGS MUST GO TO 
-/home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+/home/bamer/OPC_ELF/Open_ELF/logs/
 ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 =====================================================================
 """
@@ -64,13 +64,13 @@ class OpenELFLogger:
     =====================================================================
     DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
     THIS IS MANDATORY: ALL LOGS MUST GO TO 
-    /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+    /home/bamer/OPC_ELF/Open_ELF/logs/
     ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
     =====================================================================
     """
 
     # MANDATORY LOGS DIRECTORY - DO NOT CHANGE
-    LOGS_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
+    LOGS_DIR = Path("/home/bamer/OPC_ELF/Open_ELF/logs")
 
     def __init__(self, component: str, level: int = logging.INFO):
         self.component = component

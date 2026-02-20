@@ -18,7 +18,7 @@ class Config:
         self._defaults = self._get_defaults()
         self._validators = self._get_validators()
         self._config_path = Path(
-            "/home/bamer/.opencode/emergent-learning/Open_ELF/core/config.json"
+            "/home/bamer/OPC_ELF/Open_ELF/core/config.json"
         )
 
         # Load configuration
@@ -27,7 +27,7 @@ class Config:
     def _get_defaults(self) -> Dict[str, Any]:
         """Get default configuration values."""
         return {
-            "database.path": "/home/bamer/.opencode/emergent-learning/Open_ELF/data.db",
+            "database.path": "/home/bamer/OPC_ELF/Open_ELF/data.db",
             "logging.level": "INFO",
             "api.base_url": "http://localhost:8000",
             "component.default": {},

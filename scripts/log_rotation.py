@@ -114,7 +114,7 @@ def main():
     log_dir = (
         sys.argv[2]
         if len(sys.argv) > 2
-        else "/home/bamer/.opencode/emergent-learning/Open_ELF/logs"
+        else "/home/bamer/OPC_ELF/Open_ELF/logs"
     )
 
     rotator = LogRotator(log_dir, max_size_mb=10, max_files=5)

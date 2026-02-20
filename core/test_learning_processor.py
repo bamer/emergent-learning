@@ -12,6 +12,7 @@ Tests key improvements:
 import sys
 import json
 from pathlib import Path
+from Open_ELF.utils.elf_logging import get_logger
 
 # Add paths
 sys.path.insert(0, str(Path(__file__).parent))
@@ -32,7 +33,7 @@ except ImportError:
     import logging
 
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger(__name__)
+    logger = get_logger("unknown")
 
 try:
     from learning_processor import LearningProcessor, ToolEvent

@@ -33,7 +33,6 @@ with open(eb_v2_file, 'r') as f:
 
 # Modifier pour importer log_event et l'utiliser
 old_import = """# Setup logging
-import logging
 
 try:
     from Open_ELF.utils.elf_logging import get_logger
@@ -43,13 +42,11 @@ except ImportError:
     import logging
 
     logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger("event_bridge")"""
+    logger = get_logger("event_bridge")"""
 
 new_import = """# Setup logging
-import logging
 
 try:
-    from Open_ELF.utils.elf_logging import get_logger, log_event
 
     logger = get_logger("event_bridge", level=logging.DEBUG)
     LOG_EVENT_AVAILABLE = True
@@ -57,7 +54,7 @@ except ImportError:
     import logging
 
     logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger("event_bridge")
+    logger = get_logger("event_bridge")
     LOG_EVENT_AVAILABLE = False"""
 
 if old_import in eb_content:
@@ -401,5 +398,5 @@ print("1. EventBridge v2 enregistre maintenant dans event_chronicle")
 print("2. UnifiedOrchestrator poll event_chronicle (pas de création d'instance)")
 print("3. Plus de logs en double")
 print("\nÀ tester avec:")
-print("  cd /home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator")
+print("  cd /home/bamer/OPC_ELF/Open_ELF/orchestrator")
 print("  python orchestrator.py start")

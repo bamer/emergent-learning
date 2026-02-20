@@ -1,8 +1,7 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -40,15 +39,9 @@ from utils.outcome_inference import (
     extract_content_from_result,
 )
 
-try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+from Open_ELF.utils.elf_logging import get_logger
 
-    logger = get_logger("auto_capture")
-except ImportError:
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("auto_capture")
+logger = get_logger("auto_capture")
 
 
 class AutoCapture:
@@ -299,9 +292,7 @@ class AutoCapture:
                 (f"-{self.lookback_hours} hours",),
             )
 
-            failures = (
-                cursor.fetchall()
-            )
+            failures = cursor.fetchall()
             captured = 0
 
             for f in failures:
@@ -367,9 +358,7 @@ class AutoCapture:
                 (f"-{self.lookback_hours} hours",),
             )
 
-            successes = (
-                cursor.fetchall()
-            )
+            successes = cursor.fetchall()
             captured = 0
 
             for s in successes:

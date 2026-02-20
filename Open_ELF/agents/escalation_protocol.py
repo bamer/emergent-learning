@@ -3,7 +3,7 @@
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO 
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -215,7 +215,7 @@ class EscalationProtocol:
         # 3. Set priority flags
 
         # For now, we'll simulate this by creating a file
-        ceo_inbox = Path("/home/bamer/.opencode/emergent-learning/ceo-inbox")
+        ceo_inbox = Path("/home/bamer/OPC_ELF/ceo-inbox")
         ceo_inbox.mkdir(exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

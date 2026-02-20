@@ -2,10 +2,11 @@
 """Backfill missing heuristic embeddings in the global ELF database."""
 
 import json
-import logging
+
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+from Open_ELF.utils.elf_logging import get_logger
 
 import requests
 
@@ -19,7 +20,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s] [%(levelname)s] [backfill-heuristic-embeddings] %(message)s",
 )
-logger = logging.getLogger(__name__)
+logger = get_logger("unknown")
 
 
 def generate_embedding(text: str):

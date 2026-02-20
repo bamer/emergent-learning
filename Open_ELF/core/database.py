@@ -89,7 +89,7 @@ class DatabaseManager:
 
 
 # Global database manager instance
-default_db_path = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/data.db")
+default_db_path = Path("/home/bamer/OPC_ELF/Open_ELF/data.db")
 global_db = DatabaseManager(default_db_path)
 
 

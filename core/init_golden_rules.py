@@ -22,7 +22,7 @@ try:
 except ImportError:
     import logging
 
-    logger = logging.getLogger("init_golden_rules")
+    logger = get_logger("init_golden_rules")
 
 
 

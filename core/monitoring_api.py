@@ -32,7 +32,7 @@ try:
 except ImportError:
     import logging
 
-    logger = logging.getLogger(__name__)
+    logger = get_logger("unknown")
 
 # Setup paths
 SCRIPT_DIR = Path(__file__).resolve().parent

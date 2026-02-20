@@ -3,7 +3,7 @@
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 

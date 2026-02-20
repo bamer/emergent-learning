@@ -19,7 +19,7 @@ Usage:
 """
 
 import json
-import logging
+
 import os
 import sqlite3
 import sys
@@ -27,6 +27,7 @@ import time
 import argparse
 from datetime import datetime
 from pathlib import Path
+from Open_ELF.utils.elf_logging import get_logger
 from typing import Optional, List, Dict, Any
 
 import requests
@@ -49,7 +50,7 @@ logging.basicConfig(
     format="[%(asctime)s] [%(levelname)s] [embedding-daemon] %(message)s",
     handlers=[logging.FileHandler(LOG_PATH), logging.StreamHandler(sys.stdout)],
 )
-logger = logging.getLogger(__name__)
+logger = get_logger("unknown")
 
 
 class EmbeddingDaemon:

@@ -20,7 +20,7 @@ def _import_mission_store():
         The mission_store module
     """
     backend_path = Path(
-        "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/mission_store.py"
+        "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/mission_store.py"
     )
 
     if not backend_path.exists():

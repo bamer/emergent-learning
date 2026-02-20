@@ -26,8 +26,9 @@ Usage:
 
 import time
 import threading
-import logging
+
 from typing import Dict, Optional, Callable, Any
+from Open_ELF.utils.elf_logging import get_logger
 from dataclasses import dataclass, field
 from enum import Enum
 from functools import wraps
@@ -35,7 +36,7 @@ from datetime import datetime
 import json
 from pathlib import Path
 
-logger = logging.getLogger("circuit_breaker")
+logger = get_logger("circuit_breaker")
 
 
 class CircuitState(Enum):

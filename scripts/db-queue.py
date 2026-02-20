@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 import sys
 
-BASE_DIR = Path("/home/bamer/.opencode/emergent-learning")
+BASE_DIR = Path("/home/bamer/OPC_ELF")
 QUEUE_DIR = BASE_DIR / "memory" / "queue"
 DB_PATH = BASE_DIR / "memory" / "index.db"
 

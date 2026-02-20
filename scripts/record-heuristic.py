@@ -19,8 +19,8 @@ import os
 import sys
 import re
 from pathlib import Path
+from Open_ELF.utils.elf_logging import get_logger
 from datetime import datetime
-import logging
 
 # Setup logging
 script_dir = Path(__file__).parent
@@ -37,7 +37,7 @@ logging.basicConfig(
         logging.StreamHandler(sys.stderr)
     ]
 )
-logger = logging.getLogger(__name__)
+logger = get_logger("unknown")
 
 # Database path
 db_path = base_dir / "memory" / "index.db"

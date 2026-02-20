@@ -3,7 +3,7 @@
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -20,19 +20,13 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import Dict, Any, List, Optional
 
 # Import escalation tracker
-try:
-    from Open_ELF.agents.escalation_tracker import (
-        get_escalations_by_agent,
-        get_escalation_by_id,
-    )
-    from Open_ELF.utils.elf_logging import get_logger
+from Open_ELF.agents.escalation_tracker import (
+    get_escalations_by_agent,
+    get_escalation_by_id,
+)
+from Open_ELF.utils.elf_logging import get_logger
 
-    logger = get_logger("escalation_monitoring")
-except ImportError:
-    from escalation_tracker import get_escalations_by_agent, get_escalation_by_id
-    import logging
-
-    logger = logging.getLogger("escalation_monitoring")
+logger = get_logger("escalation_monitoring")
 
 router = APIRouter(prefix="/api/v1/monitoring", tags=["escalations"])
 

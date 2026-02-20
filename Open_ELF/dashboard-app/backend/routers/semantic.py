@@ -2,7 +2,7 @@
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO 
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -22,17 +22,10 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel
 from pathlib import Path
 
-# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
-try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+# Import centralized logger
+from Open_ELF.utils.elf_logging import get_logger
 
-    logger = get_logger("semantic")
-except ImportError:
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("semantic")
-
+logger = get_logger("semantic")
 router = APIRouter(prefix="/api/v1/semantic", tags=["semantic"])
 
 BASE_DIR = Path.home() / ".opencode" / "emergent-learning"

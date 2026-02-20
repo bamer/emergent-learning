@@ -3,7 +3,7 @@
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO 
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -23,17 +23,10 @@ from pathlib import Path
 from typing import List, Dict, Optional, Any
 import re
 
-# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
-try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
-    logger = get_logger("session_index")
-except ImportError:
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("session_index")
+# Import centralized logger
+from Open_ELF.utils.elf_logging import get_logger
 
-logger = logging.getLogger(__name__)
-
+logger = get_logger("session_index")
 @dataclass
 class SessionMetadata:
     """Lightweight metadata for a session."""

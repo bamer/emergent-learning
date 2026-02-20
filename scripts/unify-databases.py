@@ -3,7 +3,7 @@
 Unify ELF Memory Databases
 
 Problem: Multiple index.db files caused confusion and data loss
-Solution: Single source of truth at /home/bamer/.opencode/emergent-learning/memory/index.db
+Solution: Single source of truth at /home/bamer/OPC_ELF/memory/index.db
 
 This script:
 1. Identifies all ELF database files

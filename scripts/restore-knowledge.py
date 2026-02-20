@@ -5,7 +5,7 @@ import sqlite3
 from pathlib import Path
 from datetime import datetime
 
-BASE_DIR = Path('/home/bamer/.opencode/emergent-learning')
+BASE_DIR = Path('/home/bamer/OPC_ELF')
 MEMORY_DIR = BASE_DIR / 'memory'
 
 def restore_heuristics():

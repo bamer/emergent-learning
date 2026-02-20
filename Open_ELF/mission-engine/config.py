@@ -18,8 +18,8 @@ class MissionEngineConfig:
     
     # Chemins
     agents_dir: Path = field(default_factory=lambda: Path("/home/bamer/.opencode/agents/OPC_ELF_System_Agents"))
-    missions_db_path: Path = field(default_factory=lambda: Path("/home/bamer/.opencode/emergent-learning/Open_ELF/mission-engine/data/missions.db"))
-    logs_dir: Path = field(default_factory=lambda: Path("/home/bamer/.opencode/emergent-learning/Open_ELF/mission-engine/logs"))
+    missions_db_path: Path = field(default_factory=lambda: Path("/home/bamer/OPC_ELF/Open_ELF/mission-engine/data/missions.db"))
+    logs_dir: Path = field(default_factory=lambda: Path("/home/bamer/OPC_ELF/Open_ELF/mission-engine/logs"))
     
     # Timeouts
     agent_timeout: int = field(default=600)  # 10 minutes
@@ -45,8 +45,8 @@ class MissionEngineConfig:
             opencode_url=os.getenv("OPENCODE_URL", "http://localhost:4096"),
             event_bridge_url=os.getenv("EVENT_BRIDGE_URL", "http://localhost:9998"),
             agents_dir=Path(os.getenv("AGENTS_DIR", "/home/bamer/.opencode/agents/OPC_ELF_System_Agents")),
-            missions_db_path=Path(os.getenv("MISSIONS_DB_PATH", "/home/bamer/.opencode/emergent-learning/Open_ELF/mission-engine/data/missions.db")),
-            logs_dir=Path(os.getenv("MISSION_LOGS_DIR", "/home/bamer/.opencode/emergent-learning/Open_ELF/mission-engine/logs")),
+            missions_db_path=Path(os.getenv("MISSIONS_DB_PATH", "/home/bamer/OPC_ELF/Open_ELF/mission-engine/data/missions.db")),
+            logs_dir=Path(os.getenv("MISSION_LOGS_DIR", "/home/bamer/OPC_ELF/Open_ELF/mission-engine/logs")),
             agent_timeout=int(os.getenv("AGENT_TIMEOUT", "600")),
             mission_timeout=int(os.getenv("MISSION_TIMEOUT", "3600")),
             live_tab_auto_refresh=os.getenv("LIVE_TAB_AUTO_REFRESH", "true").lower() == "true",

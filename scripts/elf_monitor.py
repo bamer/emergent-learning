@@ -17,9 +17,10 @@ import json
 import sqlite3
 import subprocess
 import time
-import logging
+
 from datetime import datetime, timedelta
 from pathlib import Path
+from Open_ELF.utils.elf_logging import get_logger
 from typing import Dict, List, Optional, Tuple
 
 # Configuration
@@ -40,7 +41,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[logging.FileHandler(ALERT_LOG), logging.StreamHandler()],
 )
-logger = logging.getLogger("ELFMonitor")
+logger = get_logger("ELFMonitor")
 
 
 class ELFMonitor:

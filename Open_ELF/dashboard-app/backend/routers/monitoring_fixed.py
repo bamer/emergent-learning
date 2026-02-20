@@ -1,3 +1,4 @@
+import logging
 # TEMPORAIRE: Copie de monitoring.py pour debug
 # Nous allons restaurer le premier endpoint sentinel/status
 

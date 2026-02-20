@@ -1,0 +1,35 @@
+{
+  "name": "emergent-learning",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "ELF IA Agent System - Emergent Learning Framework",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bamer/emergent-learning"
+  },
+  "author": "ELF Team",
+  "license": "MIT",
+  "dependencies": {
+    "@opencode-ai/sdk": "^1.2.9",
+    "@opencode-ai/plugin": "^1.2.6"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "scripts": {
+    "start:orchestrator": "python3 Open_ELF/orchestrator/unified_orchestrator.py start",
+    "start:sentinel": "python3 core/sentinel.py",
+    "start:ceo": "python3 Open_ELF/agents/ceo_inbox_monitor.py start",
+    "start:all": "concurrently \"npm run start:orchestrator\" \"npm run start:sentinel\" \"npm run start:ceo\"",
+    "stop:all": "pkill -f unified_orchestrator.py; pkill -f sentinel.py; pkill -f ceo_inbox_monitor.py",
+    "test:sdk": "bun test:sdk.mjs",
+    "test:agent": "python3 -c \"from Open_ELF.agents.agent_manager import AgentManager; m = AgentManager(); print('✅ AgentManager OK')\"",
+    "install:deps": "bun install",
+    "clean": "rm -rf node_modules bun.lock && bun install"
+  },
+  "engines": {
+    "bun": ">=1.3.0",
+    "node": ">=20.0.0"
+  }
+}

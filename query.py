@@ -1,1 +1,0 @@
-/home/bamer/.opencode/emergent-learning/Open_ELF/query/query.py

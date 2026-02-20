@@ -1,9 +1,10 @@
+import logging
 #!/usr/bin/env python3
 
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -26,13 +27,14 @@ Dependencies:
 
 import asyncio
 import json
-import logging
+
 import subprocess
 import sys
 import threading
 import requests
 from datetime import datetime
 from pathlib import Path
+from Open_ELF.utils.elf_logging import get_logger
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 import aiofiles
@@ -40,7 +42,7 @@ import aiofiles
 # Constants
 OPENCODE_SERVER = "http://localhost:4096"
 EVENT_BRIDGE_URL = "http://localhost:9998"
-ELF_DIR = Path("/home/bamer/.opencode/emergent-learning")
+ELF_DIR = Path("/home/bamer/OPC_ELF")
 OPEN_ELF_DIR = ELF_DIR / "Open_ELF"
 
 # Path configuration
@@ -55,7 +57,7 @@ CEO_INBOX_DIR = ELF_DIR / "ceo-inbox"
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger("UnifiedOrchestrator")
+logger = get_logger("UnifiedOrchestrator")
 
 # Event logging to database
 _database_logging_available = False

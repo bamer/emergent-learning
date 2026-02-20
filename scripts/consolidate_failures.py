@@ -32,7 +32,7 @@ try:
     logger = get_logger("consolidate_failures")
 except ImportError:
     import logging
-    logger = logging.getLogger("consolidate_failures")
+    logger = get_logger("consolidate_failures")
     logger.setLevel(logging.INFO)
 
 # Database path

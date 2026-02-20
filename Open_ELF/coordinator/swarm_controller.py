@@ -156,7 +156,7 @@ class SwarmController:
     def _store_learnings(self, learnings: List[Dict[str, str]], task_id: str):
         try:
             import sqlite3
-            db_path = Path("/home/bamer/.opencode/emergent-learning/memory/index.db")
+            db_path = Path("/home/bamer/OPC_ELF/memory/index.db")
             conn = sqlite3.connect(str(db_path), timeout=10)
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA busy_timeout=5000")

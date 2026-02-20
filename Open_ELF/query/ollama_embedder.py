@@ -2,7 +2,7 @@
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO 
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -47,7 +47,7 @@ DEFAULT_EMBEDDING_DIM = 768
 OLLAMA_API_URL = "http://localhost:11434/api/embeddings"
 
 # Database path for embedding statistics
-DB_PATH = Path("/home/bamer/.opencode/emergent-learning/memory/index.db")
+DB_PATH = Path("/home/bamer/OPC_ELF/memory/index.db")
 
 
 def get_embedding_statistics() -> Dict[str, Any]:

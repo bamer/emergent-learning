@@ -16,12 +16,12 @@ from typing import Dict, List, Optional
 
 class ELFStateDetector:
     def __init__(self):
-        self.elf_dir = Path("/home/bamer/.opencode/emergent-learning")
-        self.log_dir = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
+        self.elf_dir = Path("/home/bamer/OPC_ELF")
+        self.log_dir = Path("/home/bamer/OPC_ELF/Open_ELF/logs")
         self.dashboard_port = 3000  # Port du dashboard
         self.api_port = 8000  # Port de l'API backend
         self.state_file = Path(
-            "/home/bamer/.opencode/emergent-learning/Open_ELF/logs/elf_state.json"
+            "/home/bamer/OPC_ELF/Open_ELF/logs/elf_state.json"
         )
 
         # Processus ELF typiques à surveiller

@@ -18,7 +18,7 @@ Usage:
 
 import argparse
 import json
-import logging
+
 import os
 import signal
 import sys
@@ -26,6 +26,7 @@ import time
 import threading
 from datetime import datetime
 from pathlib import Path
+from Open_ELF.utils.elf_logging import get_logger
 from typing import Dict, Any, Optional
 
 # Setup paths
@@ -41,7 +42,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger("elf_system")
+logger = get_logger("elf_system")
 
 # Try to import components
 try:

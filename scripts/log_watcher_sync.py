@@ -14,10 +14,10 @@ from datetime import datetime
 from typing import Dict, List
 
 # Configuration
-LOG_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
-ROTATION_SCRIPT = "/home/bamer/.opencode/emergent-learning/scripts/auto_log_rotation.py"
-WATCH_CONFIG = "/home/bamer/.opencode/emergent-learning/scripts/watch_config.json"
-STATUS_FILE = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs/sentinel_status.json")
+LOG_DIR = Path("/home/bamer/OPC_ELF/Open_ELF/logs")
+ROTATION_SCRIPT = "/home/bamer/OPC_ELF/scripts/auto_log_rotation.py"
+WATCH_CONFIG = "/home/bamer/OPC_ELF/scripts/watch_config.json"
+STATUS_FILE = Path("/home/bamer/OPC_ELF/Open_ELF/logs/sentinel_status.json")
 
 # Seuils par fichier (taille en MB)
 DEFAULT_THRESHOLDS = {

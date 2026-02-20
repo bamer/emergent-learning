@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 
-BASE_DIR = Path('/home/bamer/.opencode/emergent-learning/memory')
+BASE_DIR = Path('/home/bamer/OPC_ELF/memory')
 
 DATABASES = {
     'building.db': '''

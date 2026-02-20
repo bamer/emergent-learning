@@ -3,7 +3,7 @@
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO 
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -22,47 +22,47 @@ from pathlib import Path
 
 # Liste des fichiers à mettre à jour (priorité haute puis moyenne)
 HIGH_PRIORITY_FILES = [
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/agents/agent_manager.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/agents/sentinel_monitor.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator/event_bridge.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator/unified_orchestrator.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/sentinel/elf_sentinel.py",
+    "/home/bamer/OPC_ELF/Open_ELF/agents/agent_manager.py",
+    "/home/bamer/OPC_ELF/Open_ELF/agents/sentinel_monitor.py",
+    "/home/bamer/OPC_ELF/Open_ELF/orchestrator/event_bridge.py",
+    "/home/bamer/OPC_ELF/Open_ELF/orchestrator/unified_orchestrator.py",
+    "/home/bamer/OPC_ELF/Open_ELF/sentinel/elf_sentinel.py",
 ]
 
 MEDIUM_PRIORITY_FILES = [
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/agents/alert_agent.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/agents/escalation_protocol.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/agents/pattern_response_handler.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/core/central_orchestrator.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/mission-engine/mission_engine.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/mission-engine/mission_live_handler.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/query/agent_config.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/query/fraud_detector.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/query/launch_agents.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/query/migrations.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/scripts/record-heuristic.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/timeline_dashboard/timeline_api.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/utils/event_logger.py",
+    "/home/bamer/OPC_ELF/Open_ELF/agents/alert_agent.py",
+    "/home/bamer/OPC_ELF/Open_ELF/agents/escalation_protocol.py",
+    "/home/bamer/OPC_ELF/Open_ELF/agents/pattern_response_handler.py",
+    "/home/bamer/OPC_ELF/Open_ELF/core/central_orchestrator.py",
+    "/home/bamer/OPC_ELF/Open_ELF/mission-engine/mission_engine.py",
+    "/home/bamer/OPC_ELF/Open_ELF/mission-engine/mission_live_handler.py",
+    "/home/bamer/OPC_ELF/Open_ELF/query/agent_config.py",
+    "/home/bamer/OPC_ELF/Open_ELF/query/fraud_detector.py",
+    "/home/bamer/OPC_ELF/Open_ELF/query/launch_agents.py",
+    "/home/bamer/OPC_ELF/Open_ELF/query/migrations.py",
+    "/home/bamer/OPC_ELF/Open_ELF/scripts/record-heuristic.py",
+    "/home/bamer/OPC_ELF/Open_ELF/timeline_dashboard/timeline_api.py",
+    "/home/bamer/OPC_ELF/Open_ELF/utils/event_logger.py",
 ]
 
 DASHBOARD_FILES = [
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/main.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/routers/admin.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/routers/agents.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/routers/auth.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/routers/fraud.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/routers/heuristics.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/routers/live.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/routers/monitoring.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/routers/orchestrator.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/routers/persistence.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/routers/semantic.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/routers/sessions.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/routers/workflows.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/session_index.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/utils/auto_capture.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/utils/broadcast.py",
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/dashboard-app/backend/utils/database.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/main.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/routers/admin.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/routers/agents.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/routers/auth.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/routers/fraud.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/routers/heuristics.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/routers/live.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/routers/monitoring.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/routers/orchestrator.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/routers/persistence.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/routers/semantic.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/routers/sessions.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/routers/workflows.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/session_index.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/utils/auto_capture.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/utils/broadcast.py",
+    "/home/bamer/OPC_ELF/Open_ELF/dashboard-app/backend/utils/database.py",
 ]
 
 

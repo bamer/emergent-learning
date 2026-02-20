@@ -1,8 +1,7 @@
-
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
-# THIS IS MANDATORY: ALL LOGS MUST GO TO 
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# THIS IS MANDATORY: ALL LOGS MUST GO TO
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -25,16 +24,11 @@ from dataclasses import dataclass
 
 from queue import Queue, Empty
 
-# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
-try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
-    logger = get_logger("database")
-except ImportError:
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("database")
+# Import centralized logger
+from Open_ELF.utils.elf_logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("database")
+
 
 def get_base_path() -> Path:
     """
@@ -43,11 +37,13 @@ def get_base_path() -> Path:
     """
     return Path.home() / ".opencode" / "emergent-learning"
 
+
 EMERGENT_LEARNING_PATH = get_base_path()
 GLOBAL_DB_PATH = EMERGENT_LEARNING_PATH / "memory" / "index.db"
 
 # Legacy alias
 DB_PATH = GLOBAL_DB_PATH
+
 
 @dataclass
 class ProjectContext:
@@ -58,8 +54,10 @@ class ProjectContext:
     project_root: Optional[Path] = None
     project_db_path: Optional[Path] = None
 
+
 # Global project context (set at startup)
 _current_project: Optional[ProjectContext] = None
+
 
 def detect_project_context(start_path: Optional[Path] = None) -> ProjectContext:
     """
@@ -103,11 +101,13 @@ def detect_project_context(start_path: Optional[Path] = None) -> ProjectContext:
 
     return ProjectContext(has_project=False)
 
+
 def init_project_context(start_path: Optional[Path] = None):
     """Initialize the global project context at startup."""
     global _current_project
     _current_project = detect_project_context(start_path)
     return _current_project
+
 
 def get_project_context() -> ProjectContext:
     """Get the current project context."""
@@ -116,6 +116,7 @@ def get_project_context() -> ProjectContext:
         _current_project = detect_project_context()
     return _current_project
 
+
 def escape_like(s: str) -> str:
     """Escape SQL LIKE wildcards to prevent wildcard injection."""
     return (
@@ -123,6 +124,7 @@ def escape_like(s: str) -> str:
         .replace("%", chr(92) + "%")
         .replace("_", chr(92) + "_")
     )
+
 
 class SimpleConnectionManager:
     """
@@ -174,12 +176,14 @@ class SimpleConnectionManager:
         """No-op since connections are not pooled."""
         pass
 
+
 # Keep ConnectionPool for backward compatibility but use SimpleConnectionManager internally
 ConnectionPool = SimpleConnectionManager
 
 # Global connection managers
 _pools: Dict[str, SimpleConnectionManager] = {}
 _pools_lock = threading.Lock()
+
 
 def get_pool(db_path: Path) -> SimpleConnectionManager:
     """Get or create a connection manager for the given database path."""
@@ -190,10 +194,12 @@ def get_pool(db_path: Path) -> SimpleConnectionManager:
             _pools[db_key] = SimpleConnectionManager(db_path)
         return _pools[db_key]
 
+
 def close_all_pools():
     """Close all connection managers (for shutdown)."""
     with _pools_lock:
         _pools.clear()
+
 
 def init_game_tables(conn):
     """Initialize game-related tables if they don't exist."""
@@ -239,6 +245,7 @@ def init_game_tables(conn):
 
     conn.commit()
 
+
 @contextmanager
 def get_db(scope: str = "global"):
     """Get database connection from connection pool with row factory."""
@@ -267,6 +274,7 @@ def get_db(scope: str = "global"):
     finally:
         pool.return_connection(conn)
 
+
 @contextmanager
 def get_global_db():
     """Get global database connection from pool."""
@@ -276,6 +284,7 @@ def get_global_db():
         yield conn
     finally:
         pool.return_connection(conn)
+
 
 @contextmanager
 def get_project_db():
@@ -293,9 +302,11 @@ def get_project_db():
     finally:
         pool.return_connection(conn)
 
+
 def dict_from_row(row) -> dict:
     """Convert sqlite3.Row to dict."""
     return dict(row) if row else {}
+
 
 def get_db_connection(db_path: Optional[Path] = None) -> sqlite3.Connection:
     """
@@ -321,10 +332,12 @@ def get_db_connection(db_path: Optional[Path] = None) -> sqlite3.Connection:
 
     return conn
 
+
 async def initialize_database():
     """Ensure database directory exists."""
     GLOBAL_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     return True
+
 
 async def create_tables():
     """Create all necessary database tables."""

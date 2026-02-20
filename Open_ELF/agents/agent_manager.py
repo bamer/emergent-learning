@@ -3,7 +3,7 @@
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -64,8 +64,11 @@ DEFAULT_AGENTS_DIRS = [
 ]
 DEFAULT_OPENCODE_URL = "http://localhost:4096"
 DEFAULT_MODEL = "model: llamacpp/nemotron-v3-coder"  # Modèle rapide et gratuit
-DEFAULT_WORKDIR = Path("/home/bamer/.opencode/emergent-learning")
-SDK_CLIENT_PATH = Path(__file__).with_name("opencode_sdk_client.mjs")
+DEFAULT_WORKDIR = Path("/home/bamer/OPC_ELF")
+# SDK client path - using scripts directory for correct module resolution
+# Note: The old opencode_sdk_client.mjs in agents/ is deprecated due to module resolution issues
+# The @opencode-ai/sdk package.json exports are broken, so we use direct path import
+SDK_CLIENT_PATH = Path(__file__).parents[2] / "scripts" / "sdk-client.mjs"
 
 
 class AgentConfig:
@@ -188,7 +191,7 @@ class AgentManager:
     ):
         """Log agent interaction to JSONL session file for inter-session memory."""
         try:
-            logs_dir = Path("/home/bamer/.opencode/emergent-learning/sessions/logs")
+            logs_dir = Path("/home/bamer/OPC_ELF/sessions/logs")
             logs_dir.mkdir(parents=True, exist_ok=True)
 
             date_str = datetime.now().strftime("%Y-%m-%d")
@@ -438,7 +441,8 @@ class AgentManager:
 
     def _sdk_request(self, action: str, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Send request to OpenCode SDK client with process locking to prevent duplicate spawns."""
-        sdk_path = self.workdir / "Open_ELF/agents/opencode_sdk_client.mjs"
+        # Use the new SDK client path in scripts/ directory for correct module resolution
+        sdk_path = SDK_CLIENT_PATH
 
         if not sdk_path.exists():
             return {"success": False, "error": f"SDK client not found: {sdk_path}"}

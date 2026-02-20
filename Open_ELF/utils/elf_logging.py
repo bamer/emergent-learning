@@ -5,7 +5,7 @@ ELF Unified Logging System
 All agents and daemons MUST use this logging system.
 
 Features:
-- Centralized file logging to /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+- Centralized file logging to /home/bamer/OPC_ELF/Open_ELF/logs/
 - Database event logging to event_chronicle table
 - Crash policy: Critical errors will crash the system
 - Agent-specific loggers with consistent formatting

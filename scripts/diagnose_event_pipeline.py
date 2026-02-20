@@ -14,7 +14,7 @@ def check_event_bridge_status():
     """Check EventBridge heartbeat"""
     try:
         with open(
-            "/home/bamer/.opencode/emergent-learning/.coordination/event-bridge-heartbeat.json"
+            "/home/bamer/OPC_ELF/.coordination/event-bridge-heartbeat.json"
         ) as f:
             status = json.load(f)
 
@@ -43,7 +43,7 @@ def check_recent_tools():
     try:
         # Read event bridge log
         with open(
-            "/home/bamer/.opencode/emergent-learning/Open_ELF/logs/event_bridge.log"
+            "/home/bamer/OPC_ELF/Open_ELF/logs/event_bridge.log"
         ) as f:
             lines = f.readlines()
 

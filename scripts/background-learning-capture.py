@@ -13,9 +13,10 @@ import json
 import sqlite3
 import re
 import time
-import logging
+
 from datetime import datetime, timedelta
 from pathlib import Path
+from Open_ELF.utils.elf_logging import get_logger
 import requests
 import subprocess
 
@@ -41,7 +42,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[logging.FileHandler(LOG_FILE), logging.StreamHandler()],
 )
-logger = logging.getLogger(__name__)
+logger = get_logger("unknown")
 
 # Valid domain patterns (letters, numbers, hyphens only)
 VALID_DOMAIN_PATTERN = re.compile(r"^[a-z0-9][a-z0-9\-]*[a-z0-9]$|^[a-z0-9]$")

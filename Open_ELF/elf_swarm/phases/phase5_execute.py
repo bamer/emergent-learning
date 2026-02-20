@@ -32,7 +32,7 @@ def execute_tasks(orchestrator, plan: dict, max_attempts: int = 3) -> None:
 
     import sys
 
-    sys.path.insert(0, "/home/bamer/.opencode/emergent-learning")
+    sys.path.insert(0, "/home/bamer/OPC_ELF")
     from Open_ELF.elf_swarm.plan_parser import parse_plan
 
     # Parse plan

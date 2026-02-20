@@ -25,7 +25,7 @@ Usage:
 
 import asyncio
 import json
-import logging
+
 import os
 import signal
 import subprocess
@@ -36,11 +36,12 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
+from Open_ELF.utils.elf_logging import get_logger
 from typing import Dict, List, Optional, Any, Callable
 import requests
 
 # Setup logging
-logger = logging.getLogger("service_manager")
+logger = get_logger("service_manager")
 
 # Try to import circuit breaker
 try:
@@ -137,7 +138,7 @@ class ServiceManager:
         "event_bridge": ServiceConfig(
             name="event_bridge",
             command=["python3", "event_bridge_v2.py", "start"],
-            working_dir=Path("/home/bamer/.opencode/emergent-learning/core"),
+            working_dir=Path("/home/bamer/OPC_ELF/core"),
             priority=ServicePriority.HIGH,
             health_check_url="http://localhost:9998/status",
             health_check_interval=30.0,
@@ -147,12 +148,12 @@ class ServiceManager:
             process_pattern="event_bridge_v2.py",
             port=9998,
             dependencies=["opencode"],
-            pid_file=Path("/home/bamer/.opencode/emergent-learning/.coordination/event_bridge_v2.pid")
+            pid_file=Path("/home/bamer/OPC_ELF/.coordination/event_bridge_v2.pid")
         ),
         "semantic_daemon": ServiceConfig(
             name="semantic_daemon",
             command=["python3", "daemon.py", "--port", "5001"],
-            working_dir=Path("/home/bamer/.opencode/emergent-learning/semantic"),
+            working_dir=Path("/home/bamer/OPC_ELF/semantic"),
             priority=ServicePriority.HIGH,
             health_check_url="http://localhost:5001/health",
             health_check_interval=60.0,
@@ -165,7 +166,7 @@ class ServiceManager:
         "orchestrator": ServiceConfig(
             name="orchestrator",
             command=["python3", "unified_orchestrator.py", "start"],
-            working_dir=Path("/home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator"),
+            working_dir=Path("/home/bamer/OPC_ELF/Open_ELF/orchestrator"),
             priority=ServicePriority.NORMAL,
             health_check_url="http://localhost:9998/status",  # Same as EventBridge
             health_check_interval=30.0,
@@ -178,7 +179,7 @@ class ServiceManager:
         "sentinel": ServiceConfig(
             name="sentinel",
             command=["python3", "sentinel.py"],
-            working_dir=Path("/home/bamer/.opencode/emergent-learning/core"),
+            working_dir=Path("/home/bamer/OPC_ELF/core"),
             priority=ServicePriority.NORMAL,
             health_check_command=["pgrep", "-f", "core/sentinel.py"],
             health_check_interval=60.0,
@@ -191,7 +192,7 @@ class ServiceManager:
         "learning_capture": ServiceConfig(
             name="learning_capture",
             command=["python3", "background-learning-capture.py"],
-            working_dir=Path("/home/bamer/.opencode/emergent-learning/scripts"),
+            working_dir=Path("/home/bamer/OPC_ELF/scripts"),
             priority=ServicePriority.LOW,
             health_check_command=["pgrep", "-f", "background-learning-capture.py"],
             health_check_interval=120.0,
@@ -204,7 +205,7 @@ class ServiceManager:
         "ceo_monitor": ServiceConfig(
             name="ceo_monitor",
             command=["python3", "ceo_inbox_monitor.py", "start"],
-            working_dir=Path("/home/bamer/.opencode/emergent-learning/Open_ELF/agents"),
+            working_dir=Path("/home/bamer/OPC_ELF/Open_ELF/agents"),
             priority=ServicePriority.LOW,
             health_check_command=["pgrep", "-f", "ceo_inbox_monitor.py"],
             health_check_interval=120.0,

@@ -39,7 +39,6 @@ EVENT_BRIDGE_PID = COORDINATION_DIR / "event_bridge_v2.pid"
 EVENT_BRIDGE_PORT = 9998
 
 # Setup logging
-import logging
 
 try:
     from Open_ELF.utils.elf_logging import get_logger
@@ -49,7 +48,7 @@ except ImportError:
     import logging
 
     logging.basicConfig(level=logging.DEBUG)
-    logger = logging.getLogger("event_bridge")
+    logger = get_logger("event_bridge")
 
 
 # ============================================================================

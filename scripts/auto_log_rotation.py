@@ -18,16 +18,16 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 # Configuration
-LOG_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
+LOG_DIR = Path("/home/bamer/OPC_ELF/Open_ELF/logs")
 CONFIG_FILE = Path(
-    "/home/bamer/.opencode/emergent-learning/scripts/log_rotation_config.json"
+    "/home/bamer/OPC_ELF/scripts/log_rotation_config.json"
 )
 MAX_SIZE_MB = 5  # Rotation quand fichier dépasse 5MB
 MAX_AGE_HOURS = 24  # Rotation quand fichier plus vieux que 24h
 MAX_ARCHIVES = 10  # Nombre maximum d'archives à garder
 CRITICAL_SIZE_MB = 20  # Taille critique pour alerte
 STATUS_FILE = Path(
-    "/home/bamer/.opencode/emergent-learning/Open_ELF/logs/auto_rotation_status.json"
+    "/home/bamer/OPC_ELF/Open_ELF/logs/auto_rotation_status.json"
 )
 
 

@@ -3,7 +3,7 @@
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO 
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -54,7 +54,7 @@ class AISentinel:
     def __init__(self, name="Dashboard Sentinel AI", model="nemotron-v3-coder"):
         self.name = name
         self.model = model
-        self.db_path = "/home/bamer/.opencode/emergent-learning/memory/index.db"
+        self.db_path = "/home/bamer/OPC_ELF/memory/index.db"
         self.frontend_url = "http://localhost:3001"
         self.backend_url = "http://localhost:8888"
         self.conversation_history = []
@@ -69,7 +69,7 @@ class AISentinel:
 
         # Initialize ELF Heuristic Manager
         try:
-            sys.path.append("/home/bamer/.opencode/emergent-learning")
+            sys.path.append("/home/bamer/OPC_ELF")
             from agents.elf_heuristic_discovery import ELFHeuristicManager
 
             self.elf_manager = ELFHeuristicManager(self.db_path)
@@ -803,7 +803,7 @@ class AISentinel:
                 logger.info("🔧 Attempting automatic service recovery...")
                 # Log recovery attempt
                 with open(
-                    "/home/bamer/.opencode/emergent-learning/Open_ELF/logs/recovery_attempts.log",
+                    "/home/bamer/OPC_ELF/Open_ELF/logs/recovery_attempts.log",
                     "a",
                 ) as f:
                     f.write(f"{datetime.now().isoformat()}: Recovery attempt\n")

@@ -2,7 +2,7 @@
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO 
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -22,17 +22,11 @@ from slowapi.util import get_remote_address
 
 from utils.database import get_db
 
-# Import centralized logger (NOUVEAU SYSTÈME UNIFIÉ)
-try:
-    from Open_ELF.utils.elf_logging import get_logger, log_critical, log_error, log_warning, log_info
+# Import centralized logger
+from Open_ELF.utils.elf_logging import get_logger
 
-    logger = get_logger("auth")
-except ImportError:
-    import logging
-
-    logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("auth")
-audit_logger = logging.getLogger(f"{__name__}.audit")
+logger = get_logger("auth")
+audit_logger = get_logger(f"{__name__}.audit".replace(__name__, "audit"))
 
 # Router
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])

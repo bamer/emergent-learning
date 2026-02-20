@@ -2,7 +2,7 @@
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO 
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 
@@ -18,8 +18,8 @@ import sys
 import time
 import subprocess
 from pathlib import Path
+from Open_ELF.utils.elf_logging import get_logger
 from datetime import datetime, timedelta
-import logging
 
 # Add parent directories to path for imports
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -36,7 +36,7 @@ except ImportError:
     import logging
 
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("watchdog_sentinel")
+    logger = get_logger("watchdog_sentinel")
 
 # Configuration
 SENTINEL_LOG_PATH = ELF_DIR / "logs" / "elf_sentinel.log"

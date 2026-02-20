@@ -32,8 +32,8 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 
-DB_PATH = Path("/home/bamer/.opencode/emergent-learning/memory/index.db")
-COORDINATION_DIR = Path("/home/bamer/.opencode/emergent-learning/.coordination")
+DB_PATH = Path("/home/bamer/OPC_ELF/memory/index.db")
+COORDINATION_DIR = Path("/home/bamer/OPC_ELF/.coordination")
 BLACKBOARD_PATH = COORDINATION_DIR / "blackboard.json"
 REGISTRY_PATH = COORDINATION_DIR / "agent_registry.json"
 

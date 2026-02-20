@@ -5,7 +5,7 @@ Test script for Open_ELF Orchestrator
 
 import sys
 
-sys.path.insert(0, "/home/bamer/.opencode/emergent-learning/Open_ELF/orchestrator")
+sys.path.insert(0, "/home/bamer/OPC_ELF/Open_ELF/orchestrator")
 
 from orchestrator import UnifiedOrchestrator, OpenCodeClient
 

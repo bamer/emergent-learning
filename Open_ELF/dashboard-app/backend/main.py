@@ -1,3 +1,4 @@
+import logging
 #!/usr/bin/env python3
 """
 Emergent Learning Dashboard - Backend API
@@ -61,11 +62,13 @@ def _import_get_base_path() -> Optional[callable]:
 
 # Add Open_ELF to Python path for timeline dashboard integration
 def _add_open_elf_to_path():
+    """Add the project root to path so Open_ELF can be imported as a module."""
     current = Path(__file__).resolve()
     for parent in current.parents:
-        open_elf_path = parent / "Open_ELF"
-        if open_elf_path.exists():
-            sys.path.insert(0, str(open_elf_path))
+        # Look for the directory that CONTAINS Open_ELF
+        if (parent / "Open_ELF").exists():
+            # Add the parent (project root), not Open_ELF itself
+            sys.path.insert(0, str(parent))
             break
 
 
@@ -183,7 +186,7 @@ def integrate_timeline_dashboard(app):
 # =====================================================================
 # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
 # THIS IS MANDATORY: ALL LOGS MUST GO TO
-# /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
+# /home/bamer/OPC_ELF/Open_ELF/logs/
 # ANYONE WHO CHANGES THIS WILL BE EXECUTED WITHOUT PRIOR NOTICE
 # =====================================================================
 # Import centralized logger (UNIFIED ELF LOGGING SYSTEM)
@@ -198,8 +201,8 @@ except ImportError:
     # Fallback to standard logging if elf_logging unavailable
     # DO NOT REMOVE THIS COMMENT THE ELF LOGGUER IS FUCKING MANDATORY
     # TIMESTAMPS ARE MANDATORY FOR EVERY LOG LINE
-    # MANDATORY: ALL LOGS MUST GO TO /home/bamer/.opencode/emergent-learning/Open_ELF/logs/
-    LOG_DIR = Path("/home/bamer/.opencode/emergent-learning/Open_ELF/logs")
+    # MANDATORY: ALL LOGS MUST GO TO /home/bamer/OPC_ELF/Open_ELF/logs/
+    LOG_DIR = Path("/home/bamer/OPC_ELF/Open_ELF/logs")
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     LOG_FILE = LOG_DIR / "dashboard.log"
 

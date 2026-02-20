@@ -55,7 +55,7 @@ except ImportError:
     import logging
 
     logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("sentinel")
+    logger = get_logger("sentinel")
     LOGGING_AVAILABLE = False
 
     def log_sentinel_check(*args, **kwargs):

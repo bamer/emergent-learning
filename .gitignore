@@ -1,99 +1,74 @@
-# Python
+# Dependencies
+node_modules/
+.venv/
+venv/
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
-venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-.pytest_cache/
-.coverage
-htmlcov/
-**/event-bridge-heartbeat.json*
-event-bridge-heartbeat.json
-*event-bridge-heartbeat.json*
 
+# Databases (big files, may contain data)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
 
-# Virtual environments
-.venv
-*.venv
-
-# Node
-node_modules/
-package-lock.json
-yarn.lock
-dist/
-build/
-.next/
-
-# Logs
+# Logs (generated data)
 logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
 
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# IDE
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.project
-.pydevproject
-.settings/
-.code-workspace
 
 # Build artifacts
-.cache/
-.ruff_cache/
+dist/
+build/
+*.egg-info/
 
-# Temporary files
-*.tmp
-*.bak
-*.swp
-*.swo
-*~
-*.db-shm
-*.db-wal
-memory/index.db.pre-*
-
-# Environment files
+# Environment and secrets
 .env
-.env.local
-.env.*.local
-.coordination/event-bridge-heartbeat.json
-.coordination/event-bridge-heartbeat.json
-.gitignore
-.coordination/sentinel-log.md
-.coordination/event-bridge-heartbeat.json
-.coordination/event-bridge-heartbeat.json
+.env.*
+*.pem
+*.key
+secrets/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large generated files
+*.pid
+package-lock.json
+bun.lock
+
+# Temporary and cache files
+.cache/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Coordination/runtime files
+.coordination/
+.enhanced-event-bridge.pid
+
+# Session data (may contain personal info)
+sessions/logs/
+
+# Memory databases (runtime data)
+memory/*.db
+memory/*.db-shm
+memory/*.db-wal
+Open_ELF/memory/*.db
+Open_ELF/memory/*.db-shm
+Open_ELF/memory/*.db-wal
+
+# Open_ELF runtime files
+Open_ELF/logs/
+Open_ELF/.coordination/
